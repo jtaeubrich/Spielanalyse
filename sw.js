@@ -1,9 +1,10 @@
-const CACHE_NAME = "handball-spielanalyse-v28";
+const CACHE_NAME = "handball-spielanalyse-v29";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icons/apple-touch-icon.png",
+  "./icons/logo-ball-flow.svg",
+  "./icons/apple-touch-icon-v29.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
 ];
