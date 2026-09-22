@@ -1,12 +1,12 @@
-const CACHE_NAME = "handball-spielanalyse-v33";
+const CACHE_NAME = "handball-spielanalyse-v34";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icons/logo-ball-flow.svg",
-  "./icons/apple-touch-icon-v29.png",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  "./icons/logo-ball-flow.svg?v=34",
+  "./icons/apple-touch-icon-v29.png?v=34",
+  "./icons/icon-192.png?v=34",
+  "./icons/icon-512.png?v=34"
 ];
 
 self.addEventListener("install", event => {
