@@ -177,7 +177,7 @@
   <header class="top">
     <div class="brand">Handball<span>Match Flow</span></div>
     <div class="score"><img class="score-logo" src="./icons/logo-ball-flow.svg" alt=""><strong class="team" id="homeName">Mein Team</strong><span class="numbers" id="score">0 : 0</span><strong class="team" id="awayName">Gegner</strong></div>
-    <div class="filebar"><button class="btn primary" id="saveBtn">Spiel speichern</button><button class="btn" id="saveAsBtn" title="Eine neue JSON-Datei erzeugen">Kopie exportieren</button></div>
+    <div class="filebar"><button class="btn primary" id="saveBtn">Spiel speichern</button><button class="btn" id="saveAsBtn" title="Eine neue JSON-Datei erzeugen">Kopie exportieren</button><button class="btn" id="supportBtn" type="button" title="Mit Ko-fi unterstützen" aria-label="Projekt mit Ko-fi unterstützen">♥ Unterstützen</button></div>
   </header>
   <nav class="tabbar" aria-label="Arbeitsbereiche"><button class="tab active" data-tab="setup">Setup</button><button class="tab" id="matchTabButton" data-tab="match">Match</button><button class="tab" data-tab="analysis">Analyse</button><button class="tab" data-tab="video">Video</button><button class="tab" data-tab="data">Daten editieren</button></nav>
 
@@ -575,6 +575,7 @@
   for(const id of ["editorTeamFilter","editorTypeFilter"])$(id).onchange=renderDataEditor;
   $("preRoll").onchange=e=>{state.video.preRoll=Math.max(0,Number(e.target.value)||0);update()};$("postRoll").onchange=e=>{state.video.postRoll=Math.max(0,Number(e.target.value)||0);update()};
   function toast(s){$("toast").textContent=s;$("toast").classList.remove("hidden");setTimeout(()=>$("toast").classList.add("hidden"),1400)}
+  $("supportBtn").onclick=()=>{window.open("https://ko-fi.com/jantaeubrich","_blank","noopener");toast("Ko-fi-Link geöffnet")};
   $("runBtn").onclick=()=>{if(gameRunning){gameBase=currentGameSeconds();gameRunning=false;state.timer.active=false;$("runBtn").textContent="▶ SPIELZEIT STARTEN";$("runBtn").classList.remove("stop")}else{gameStarted=performance.now();gameRunning=true;state.timer.active=true;$("runBtn").textContent="■ SPIELZEIT STOPPEN";$("runBtn").classList.add("stop")}};
   document.querySelectorAll(".poss").forEach(b=>b.onclick=()=>{state.possession=b.dataset.team;update()});document.querySelectorAll("[data-flow]").forEach(b=>b.onclick=()=>begin(b.dataset.flow));
   $("triggerActionBtn").onclick=beginTriggerFlow;$("triggerDecisionShot").onclick=()=>{if(!pendingTriggerAction)return;begin("shot",pendingTriggerAction)};$("triggerDecisionAbort").onclick=()=>{draft=null;pendingTriggerAction=null;showStep("idle");$("flowHint").textContent="Bereit für den nächsten Angriff"};
