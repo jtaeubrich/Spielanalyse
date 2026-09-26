@@ -85,7 +85,12 @@
       .top{gap:5px;margin-bottom:5px}
       .score{gap:6px;padding:5px 8px;border-radius:9px}
       .score strong{font-size:12px}.score .numbers{font-size:18px}.score .team{max-width:38vw}
-      .filebar{gap:4px}
+      .filebar{display:flex!important;justify-content:flex-start!important;align-items:center;gap:4px;flex-wrap:nowrap;width:100%;overflow:visible}
+      .filebar .btn{white-space:nowrap;flex:0 0 auto}
+      #saveBtn{flex:0 1 auto}
+      #supportBtn,#helpBtn{display:inline-flex!important;align-items:center;justify-content:center}
+      #supportBtn{padding-left:8px;padding-right:8px}
+      #helpBtn{padding-left:8px;padding-right:8px}
       .btn{min-height:34px;padding:6px 8px;border-radius:8px;font-size:11px}
       .tabbar{gap:3px;margin-bottom:6px;padding:3px;border-radius:9px}
       .tab{min-width:72px;padding:6px 8px;border-radius:7px;font-size:11px}
@@ -766,7 +771,7 @@
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=40",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=44",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
