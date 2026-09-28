@@ -692,30 +692,81 @@
     if(!events.length)throw Error("Im ACTA-Spielverlauf wurden keine unterstützten Ereignisse erkannt.");
     return events;
   }
+  function actaMatchScore(a,j){
+    const jt=actaJsonType(j);
+    if(jt!==a.type||j.team!==a.team)return Infinity;
+
+    const jsonScoreKnown=Number.isFinite(Number(j.scoreH))&&Number.isFinite(Number(j.scoreA));
+    if(a.type==="goal"&&a.scoreH!==null&&a.scoreA!==null&&jsonScoreKnown){
+      if(Number(j.scoreH)!==a.scoreH||Number(j.scoreA)!==a.scoreA)return Infinity;
+    }
+
+    const distance=Math.abs((Number(j.time)||0)-a.time);
+    let score=distance;
+
+    const actaNrKnown=a.pNr!==null&&a.pNr!==undefined;
+    const jsonNrKnown=j.pNr!==null&&j.pNr!==undefined&&String(j.pNr).trim()!=="";
+    if(actaNrKnown&&jsonNrKnown){
+      if(String(a.pNr)===String(j.pNr))score-=45;
+      else score+=75;
+    }else if(actaNrKnown!==jsonNrKnown){
+      score+=20;
+    }
+
+    if(a.type==="goal"){
+      if(Boolean(j.is7)===Boolean(a.is7))score-=10;
+      else score+=30;
+    }
+
+    return score;
+  }
+  function actaMatchLimit(a){
+    if(a.type==="goal")return 240;
+    if(["2min","yellow","red","blue"].includes(a.type))return 120;
+    if(a.type==="timeout")return 90;
+    if(a.type==="miss")return 120;
+    return 120;
+  }
   function buildActaComparison(actaEvents){
     const jsonEvents=state.events.filter(e=>actaRelevantTypes.has(actaJsonType(e))),used=new Set(),result=[];
     for(const a of actaEvents){
-      let candidate=null,candidateIndex=-1,best=Infinity;
+      let candidate=null,candidateIndex=-1,bestScore=Infinity,bestDistance=Infinity;
       for(let i=0;i<jsonEvents.length;i++){
         if(used.has(i))continue;
-        const j=jsonEvents[i],jt=actaJsonType(j);
-        if(jt!==a.type||j.team!==a.team)continue;
-        if(a.type==="goal"&&a.scoreH!==null&&a.scoreA!==null&&Number.isFinite(Number(j.scoreH))&&Number.isFinite(Number(j.scoreA))){
-          if(Number(j.scoreH)!==a.scoreH||Number(j.scoreA)!==a.scoreA)continue;
-        }
+        const j=jsonEvents[i],score=actaMatchScore(a,j);
+        if(!Number.isFinite(score))continue;
         const distance=Math.abs((Number(j.time)||0)-a.time);
-        if(distance<best){best=distance;candidate=j;candidateIndex=i}
+        if(score<bestScore||(score===bestScore&&distance<bestDistance)){
+          bestScore=score;bestDistance=distance;candidate=j;candidateIndex=i;
+        }
       }
-      if(candidate&&best<=180){
+
+      const maxDistance=actaMatchLimit(a);
+      if(candidate&&bestDistance<=maxDistance){
         used.add(candidateIndex);
         const diffs=[];
-        if(Math.abs((Number(candidate.time)||0)-a.time)>1)diffs.push(`Zeit ${candidate.displayTime||fmt(candidate.time||0)} → ${a.displayTime}`);
+        if(bestDistance>1)diffs.push(`Zeit ${candidate.displayTime||fmt(candidate.time||0)} → ${a.displayTime}`);
         if(a.pNr!==null&&String(candidate.pNr??"")!==String(a.pNr))diffs.push(`Spieler #${candidate.pNr??"?"} → #${a.pNr}`);
         if(a.type==="goal"&&Boolean(candidate.is7)!==Boolean(a.is7))diffs.push(a.is7?"als 7m-Tor markieren":"7m-Markierung entfernen");
-        result.push({kind:diffs.length?"update":"ok",acta:a,json:candidate,diffs,selected:diffs.length>0});
-      }else result.push({kind:"add",acta:a,json:null,diffs:["Ereignis fehlt in der Spiel-JSON"],selected:true});
+
+        const reasons=[];
+        if(a.type==="goal"&&a.scoreH!==null&&a.scoreA!==null)reasons.push(`Spielstand ${a.scoreH}:${a.scoreA}`);
+        if(a.pNr!==null&&String(candidate.pNr??"")===String(a.pNr))reasons.push(`Spieler #${a.pNr}`);
+        reasons.push(`Δt ${bestDistance}s`);
+
+        result.push({
+          kind:diffs.length?"update":"ok",
+          acta:a,
+          json:candidate,
+          diffs,
+          matchInfo:reasons.join(" · "),
+          selected:diffs.length>0
+        });
+      }else{
+        result.push({kind:"add",acta:a,json:null,diffs:["Ereignis fehlt in der Spiel-JSON"],matchInfo:"Kein ausreichend sicherer Treffer",selected:true});
+      }
     }
-    jsonEvents.forEach((j,i)=>{if(!used.has(i))result.push({kind:"remove",acta:null,json:j,diffs:["Ereignis nur in der Spiel-JSON"],selected:false})});
+    jsonEvents.forEach((j,i)=>{if(!used.has(i))result.push({kind:"remove",acta:null,json:j,diffs:["Ereignis nur in der Spiel-JSON"],matchInfo:"Nicht durch ACTA zugeordnet",selected:false})});
     return result.sort((x,y)=>Number(x.acta?.time??x.json?.time??0)-Number(y.acta?.time??y.json?.time??0));
   }
   function actaEventText(a){
@@ -732,7 +783,7 @@
     if(!actaComparison.length){host.innerHTML='<div class="acta-empty">Keine Vergleichsdaten vorhanden.</div>';summary.replaceChildren();return}
     const counts={ok:0,update:0,add:0,remove:0};actaComparison.forEach(x=>counts[x.kind]++);
     summary.innerHTML=`<span class="badge">${counts.ok} identisch</span><span class="badge">${counts.update} Korrekturen</span><span class="badge">${counts.add} fehlen in JSON</span><span class="badge">${counts.remove} nur in JSON</span>`;
-    const table=document.createElement("table");table.className="acta-table";table.innerHTML="<thead><tr><th>✓</th><th>Status</th><th>ACTA</th><th>JSON</th><th>Änderung</th></tr></thead>";
+    const table=document.createElement("table");table.className="acta-table";table.innerHTML="<thead><tr><th>✓</th><th>Status</th><th>ACTA</th><th>JSON</th><th>Matching</th><th>Änderung</th></tr></thead>";
     const body=document.createElement("tbody");
     actaComparison.forEach(row=>{
       const tr=document.createElement("tr"),check=document.createElement("input");check.type="checkbox";check.checked=Boolean(row.selected);check.disabled=row.kind==="ok";check.onchange=()=>row.selected=check.checked;
@@ -740,8 +791,9 @@
       const tdStatus=document.createElement("td"),badge=document.createElement("span");badge.className="acta-status "+row.kind;badge.textContent={ok:"OK",update:"Korrigieren",add:"Ergänzen",remove:"Nur JSON"}[row.kind];tdStatus.append(badge);
       const tdActa=document.createElement("td");tdActa.textContent=actaEventText(row.acta);
       const tdJson=document.createElement("td");tdJson.textContent=jsonEventText(row.json);
+      const tdMatch=document.createElement("td");tdMatch.className="acta-change";tdMatch.textContent=row.matchInfo||"";
       const tdDiff=document.createElement("td");tdDiff.className="acta-change";tdDiff.textContent=row.diffs.join(" · ")||"Keine Abweichung";
-      tr.append(tdCheck,tdStatus,tdActa,tdJson,tdDiff);body.append(tr);
+      tr.append(tdCheck,tdStatus,tdActa,tdJson,tdMatch,tdDiff);body.append(tr);
     });
     table.append(body);host.replaceChildren(table);
     $("actaSelectChanges").disabled=false;$("actaClearSelection").disabled=false;$("actaApply").disabled=false;
