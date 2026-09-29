@@ -311,7 +311,7 @@
           <h3>Synchronisation</h3><div class="sync-row"><button class="btn" id="markH1" type="button">Anpfiff H1 setzen</button><button class="btn" id="markH2" type="button">Anpfiff H2 setzen</button></div><div class="sync-state" id="syncState">H1: nicht gesetzt · H2: nicht gesetzt</div>
           <datalist id="eventTagSuggestions"></datalist>
         </section>
-        <section class="panel video-card video-presets-card preset-panel"><h2>Clip-Vorlagen</h2><div class="preset-row"><select class="field" id="clipPresetSelect" aria-label="Clip-Vorlage"><option value="">Keine Vorlage gespeichert</option></select><button class="btn" id="applyClipPreset" type="button">Vorlage anwenden</button></div><div class="preset-summary" id="clipPresetSummary">Aktuelle Filter können als wiederverwendbare Vorlage gespeichert werden.</div><div class="preset-actions"><button class="btn primary" id="newClipPreset" type="button">Aktuelle Filter speichern</button><button class="btn" id="editClipPreset" type="button">Bearbeiten</button><button class="btn" id="duplicateClipPreset" type="button">Duplizieren</button><button class="btn danger" id="deleteClipPreset" type="button">Löschen</button><button class="btn" id="importClipPresets" type="button">Vorlagen importieren</button><button class="btn" id="exportClipPresets" type="button">Vorlagen exportieren</button><input class="hidden" id="clipPresetInput" type="file" accept="application/json,.json"></div><button class="btn primary" id="generatePresetClips" type="button" disabled>Clips aus Vorlage erzeugen</button><div class="generated-clips" id="generatedClips"></div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><h3>Spieler-Upload</h3><p class="preset-summary">Erzeugt ein JSON-Paket für den späteren lokalen FFmpeg-/YouTube-Uploader. Pro Spieler wird eine dauerhafte Playlist-Zuordnung vorgesehen.</p><div class="preset-actions"><button class="btn primary" id="exportPlayerUploadPackage" type="button">Upload-Paket für Spielerclips</button></div><div class="preset-summary" id="playerUploadSummary"></div></section>
+        <section class="panel video-card video-presets-card preset-panel"><h2>Clip-Vorlagen</h2><div class="preset-row"><select class="field" id="clipPresetSelect" aria-label="Clip-Vorlage"><option value="">Keine Vorlage gespeichert</option></select><button class="btn" id="applyClipPreset" type="button">Vorlage anwenden</button></div><div class="preset-summary" id="clipPresetSummary">Aktuelle Filter können als wiederverwendbare Vorlage gespeichert werden.</div><div class="preset-actions"><button class="btn primary" id="newClipPreset" type="button">Aktuelle Filter speichern</button><button class="btn" id="editClipPreset" type="button">Bearbeiten</button><button class="btn" id="duplicateClipPreset" type="button">Duplizieren</button><button class="btn danger" id="deleteClipPreset" type="button">Löschen</button><button class="btn" id="importClipPresets" type="button">Vorlagen importieren</button><button class="btn" id="exportClipPresets" type="button">Vorlagen exportieren</button><input class="hidden" id="clipPresetInput" type="file" accept="application/json,.json"></div><button class="btn primary" id="generatePresetClips" type="button" disabled>Clips aus Vorlage erzeugen</button><div class="generated-clips" id="generatedClips"></div></section>
       </div>
     </div>
   </section>
@@ -361,7 +361,7 @@
     <section class="help-section" id="helpVideo">
       <h3>Video</h3>
       <p>Im Video-Tab können ein lokales Video oder ein YouTube-Video geladen und mit den Spielereignissen verknüpft werden.</p>
-      <ul><li>Ereignisse können über Filter ausgewählt und direkt angesprungen werden.</li><li>Vor- und Nachlauf bestimmen den sichtbaren Bereich um ein Ereignis.</li><li>Bei lokalen Videos können ausgewählte Szenen als Clips exportiert werden.</li><li>Clip-Vorlagen speichern wiederkehrende Filter- und Exportkonfigurationen.</li><li><strong>Upload-Paket für Spielerclips:</strong> erzeugt eine JSON-Datei mit allen gültigen Szenen pro eigenem Spieler. Der spätere lokale Uploader kann daraus Clips schneiden, YouTube-Videos hochladen und sie einer dauerhaft zugeordneten Spieler-Playlist hinzufügen.</li><li>Videoannotation erlaubt Zeichnungen und Kommentare für die Nachanalyse.</li></ul>
+      <ul><li>Ereignisse können über Filter ausgewählt und direkt angesprungen werden.</li><li>Vor- und Nachlauf bestimmen den sichtbaren Bereich um ein Ereignis.</li><li>Bei lokalen Videos können ausgewählte Szenen als Clips exportiert werden.</li><li>Clip-Vorlagen speichern wiederkehrende Filter- und Exportkonfigurationen.</li><li><strong>Upload-Manifest:</strong> Beim Erzeugen von Clips aus einer Vorlage wird automatisch ein passendes JSON-Manifest erzeugt. Es enthält exakt dieselben Gruppen, Szenen und Dateinamen. Bei Aufteilung nach Spieler, Torwart oder Abwehrspieler wird die dauerhafte Spieler-Playlist direkt zugeordnet.</li><li>Videoannotation erlaubt Zeichnungen und Kommentare für die Nachanalyse.</li></ul>
       <div class="help-note">Bei YouTube wird das Video über den eingebetteten Player gesteuert. Ein direkter Clip-Export wie bei lokalen Dateien ist derzeit nicht vorgesehen.</div>
     </section>
     <section class="help-section" id="helpData">
@@ -621,103 +621,7 @@
   function presetGroups(preset){if(!preset)return[];const filters={...preset.filters},split=preset.splitBy||"none";if(["player","defender","keeper"].includes(split))filters.player="all";if(split==="tag")filters.tag="all";if(split==="phase")filters.phase="all";if(split==="zone")filters.zone="all";if(split==="target")filters.target="all";const events=filteredEvents(filters.team||"all",filters.player||"all",filters.type||"all",filters.zone||"all",filters.target||"all",filters.phase||"all",filters.tag||"all");if(split==="none")return events.length?[{key:"all",label:preset.name,events}]:[];const groups=new Map();for(const event of events){const raw=splitValue(event,split),values=Array.isArray(raw)?raw:[raw];for(const value of values){if(!value)continue;if(!groups.has(value.key))groups.set(value.key,{key:value.key,label:value.label,events:[]});groups.get(value.key).events.push(event)}}return[...groups.values()].sort((a,b)=>a.label.localeCompare(b.label,"de"))}
   function presetEntries(group,preset){const pre=Math.max(0,Number(preset.clip?.preRoll)||0),post=Math.max(0,Number(preset.clip?.postRoll)||0);return group.events.map(event=>{const at=eventVideoSeconds(event);return{event,index:state.events.indexOf(event),at,start:Number.isFinite(at)?Math.max(0,at-pre):NaN,end:Number.isFinite(at)?at+post:NaN,groupLabel:group.label}}).filter(item=>Number.isFinite(item.start)&&Number.isFinite(item.end)&&item.end>item.start)}
   
-  function uploadPlayerEvents(playerId){
-    return state.events.filter(event=>{
-      if(!eventMatchesPlayer(event,playerId))return false;
-      const at=eventVideoSeconds(event);
-      return Number.isFinite(at);
-    }).sort((a,b)=>(a.time||0)-(b.time||0));
-  }
-  function uploadPlayerSegments(player){
-    const pre=Math.max(0,Number(state.video.preRoll)||0),post=Math.max(0,Number(state.video.postRoll)||0);
-    return uploadPlayerEvents(player.id).map(event=>{
-      const at=eventVideoSeconds(event),start=Math.max(0,at-pre),end=at+post;
-      return{
-        eventId:event.id??null,
-        eventIndex:state.events.indexOf(event),
-        eventType:event.type,
-        eventLabel:eventLabels[event.type]||event.type||"Ereignis",
-        gameTime:event.displayTime||fmt(event.time||0),
-        videoTime:at,
-        start,
-        end,
-        tags:normalizedTags(event),
-        attackPhase:event.attackPhase||null,
-        zone:event.z||null,
-        target:event.gz||null,
-        comment:eventAnnotation(event)?.comment||""
-      };
-    }).filter(segment=>Number.isFinite(segment.start)&&Number.isFinite(segment.end)&&segment.end>segment.start);
-  }
-  function playerUploadPackage(){
-    const players=(state[ownTeam]?.players||[]).map(player=>{
-      const segments=uploadPlayerSegments(player);
-      if(!segments.length)return null;
-      const stableId=String(player.id??player.nr??(`${player.vorname||""}-${player.nachname||""}`)).trim();
-      const displayName=[player.vorname,player.nachname].filter(Boolean).join(" ").trim()||playerName(player);
-      const safeName=displayName.replace(/[^a-z0-9äöüß_-]+/gi,"_");
-      return{
-        playerId:stableId,
-        playerNumber:player.nr??null,
-        playerName:displayName,
-        playlist:{
-          key:`player:${stableId}`,
-          suggestedName:`TSV Kronshagen · ${displayName}`,
-          youtubePlaylistId:null,
-          youtubePlaylistUrl:null
-        },
-        output:{
-          fileBase:`${safeFileBase()}_${safeName}`,
-          title:`${state.gameName} · ${displayName}`,
-          visibility:"unlisted"
-        },
-        segmentCount:segments.length,
-        segments
-      };
-    }).filter(Boolean);
-    return{
-      format:"handball-match-flow-player-upload-package",
-      version:1,
-      createdAt:new Date().toISOString(),
-      game:{
-        name:state.gameName,
-        ownTeam:state[ownTeam]?.name||"Mein Team",
-        opponent:state[opponentTeam()]?.name||"Gegner",
-        durationPerHalf:Number(state.timer.duration)||null
-      },
-      source:{
-        localFileName:state.video.localFileName||state.videoFileName||null,
-        youtubeId:state.video.youtubeId||null,
-        youtubeUrl:state.video.youtubeUrl||null
-      },
-      clip:{
-        preRoll:Number(state.video.preRoll)||0,
-        postRoll:Number(state.video.postRoll)||0,
-        mergeMode:"one-video-per-player"
-      },
-      youtube:{
-        playlistStrategy:"persistent-player-playlist",
-        defaultVisibility:"unlisted",
-        playlistRegistryFile:"handball_player_playlists.json"
-      },
-      players
-    };
-  }
-  function updatePlayerUploadSummary(){
-    const host=$("playerUploadSummary");if(!host)return;
-    const data=playerUploadPackage(),segments=data.players.reduce((sum,p)=>sum+p.segmentCount,0);
-    const source=data.source.localFileName||data.source.youtubeUrl||"keine Videoquelle";
-    host.textContent=`${data.players.length} Spieler · ${segments} Szenen · Quelle: ${source}`;
-  }
-  $("exportPlayerUploadPackage").onclick=()=>{
-    const data=playerUploadPackage();
-    if(!data.players.length)return toast("Keine eigenen Spieler mit gültigen Videozeiten gefunden.");
-    if(!data.source.localFileName&&!data.source.youtubeUrl)return toast("Keine Videoquelle im Spiel hinterlegt.");
-    const name=safeFileBase()+"_spieler_upload_paket.json";
-    downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),name);
-    toast(`Upload-Paket für ${data.players.length} Spieler exportiert`);
-  };
-function renderClipPresetPreview(){updatePlayerUploadSummary();const preset=selectedClipPreset(),host=$("clipPresetSummary");if(!preset){host.textContent="Aktuelle Filter können als wiederverwendbare Vorlage gespeichert werden.";return}const groups=presetGroups(preset),entries=groups.flatMap(group=>presetEntries(group,preset)),duration=entries.reduce((sum,item)=>sum+item.end-item.start,0),missing=groups.reduce((sum,group)=>sum+group.events.length,0)-entries.length;host.textContent=`${groups.length} ${groups.length===1?"Clip-Gruppe":"Clip-Gruppen"} · ${entries.length} Ereignisse · ca. ${fmt(duration)} Gesamtdauer${missing?` · ${missing} ohne gültige Videozeit`:""}`}
+function renderClipPresetPreview(){const preset=selectedClipPreset(),host=$("clipPresetSummary");if(!preset){host.textContent="Aktuelle Filter können als wiederverwendbare Vorlage gespeichert werden.";return}const groups=presetGroups(preset),entries=groups.flatMap(group=>presetEntries(group,preset)),duration=entries.reduce((sum,item)=>sum+item.end-item.start,0),missing=groups.reduce((sum,group)=>sum+group.events.length,0)-entries.length;host.textContent=`${groups.length} ${groups.length===1?"Clip-Gruppe":"Clip-Gruppen"} · ${entries.length} Ereignisse · ca. ${fmt(duration)} Gesamtdauer${missing?` · ${missing} ohne gültige Videozeit`:""}`}
   function renderClipPresetList(){const select=$("clipPresetSelect");if(!select)return;const value=select.value;select.replaceChildren(new Option(clipPresets.length?"Vorlage auswählen":"Keine Vorlage gespeichert",""));for(const preset of [...clipPresets].sort((a,b)=>a.name.localeCompare(b.name,"de")))select.add(new Option(preset.name,preset.id));select.value=clipPresets.some(preset=>preset.id===value)?value:"";renderClipPresetPreview()}
   $("clipPresetSelect").onchange=renderClipPresetPreview;
   $("newClipPreset").onclick=()=>openClipPresetDialog();
@@ -1028,9 +932,32 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   $("exportSelectedEvents").onclick=()=>handleExport(true);$("exportAllEvents").onclick=()=>handleExport(false);
   function presetFileBase(preset,group){return(preset.output?.fileName||"Clip_{Gruppe}").replaceAll("{Gruppe}",group.label).replaceAll("{Spieler}",group.label).replaceAll("{Vorlage}",preset.name)}
   function clearGeneratedClips(){for(const url of generatedClipUrls)URL.revokeObjectURL(url);generatedClipUrls=[];$("generatedClips").replaceChildren()}
-  function showGeneratedClips(results){clearGeneratedClips();const host=$("generatedClips");for(const result of results){const url=URL.createObjectURL(result.blob);generatedClipUrls.push(url);const row=document.createElement("div"),name=document.createElement("span"),link=document.createElement("a");row.className="generated-clip";name.textContent=result.name;link.className="btn primary";link.href=url;link.download=result.name;link.textContent="Herunterladen";row.append(name,link);host.append(row)}}
+  function showGeneratedClips(results,manifest=null){clearGeneratedClips();const host=$("generatedClips");for(const result of results){const url=URL.createObjectURL(result.blob);generatedClipUrls.push(url);const row=document.createElement("div"),name=document.createElement("span"),link=document.createElement("a");row.className="generated-clip";name.textContent=result.name;link.className="btn primary";link.href=url;link.download=result.name;link.textContent="Herunterladen";row.append(name,link);host.append(row)}if(manifest){const blob=new Blob([JSON.stringify(manifest,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob);generatedClipUrls.push(url);const row=document.createElement("div"),name=document.createElement("span"),link=document.createElement("a");row.className="generated-clip";name.textContent="Upload-Manifest";link.className="btn";link.href=url;link.download=manifest.fileName;link.textContent="Manifest herunterladen";row.append(name,link);host.append(row)}}
+  function clipManifestPlayerTarget(group,preset){
+    let id=null;
+    if(["player","defender","keeper"].includes(preset.splitBy||"none"))id=group.key;
+    else if(preset.filters?.player&&preset.filters.player!=="all")id=preset.filters.player;
+    if(id===null||id===undefined)return null;
+    const player=getPlayer(id);
+    if(!player||player.team!==ownTeam)return null;
+    const stableId=String(player.id??player.nr??(`${player.vorname||""}-${player.nachname||""}`)).trim();
+    const displayName=[player.vorname,player.nachname].filter(Boolean).join(" ").trim()||playerName(player);
+    return{type:"player",key:`player:${stableId}`,playerId:stableId,playerNumber:player.nr??null,playerName:displayName,suggestedPlaylistName:`TSV Kronshagen · ${displayName}`};
+  }
+  function clipManifestSegment(item){const event=item.event;return{eventId:event.id??null,eventIndex:item.index,eventType:event.type,eventLabel:eventLabels[event.type]||event.type||"Ereignis",gameTime:event.displayTime||fmt(event.time||0),videoTime:item.at,start:item.start,end:item.end,tags:normalizedTags(event),attackPhase:event.attackPhase||null,zone:event.z||null,target:event.gz||null,comment:eventAnnotation(event)?.comment||""}}
+  function buildPresetUploadManifest(preset,groups,results){
+    const combined=preset.output?.mode==="combined",outputs=[];
+    if(combined){
+      const file=results[0]?.name||presetFileBase(preset,{label:preset.name})+".mp4",targets=[...new Map(groups.map(group=>clipManifestPlayerTarget(group,preset)).filter(Boolean).map(target=>[target.key,target])).values()];
+      outputs.push({outputId:"combined",label:preset.name,fileName:file,fileBase:file.replace(/\.[^.]+$/,""),title:`${state.gameName} · ${preset.name}`,visibility:"unlisted",playlistTargets:targets,segments:groups.flatMap(group=>group.entries.map(clipManifestSegment))});
+    }else{
+      groups.forEach((group,index)=>{const file=results[index]?.name||presetFileBase(preset,group)+".mp4",target=clipManifestPlayerTarget(group,preset);outputs.push({outputId:String(group.key??index),label:group.label,fileName:file,fileBase:file.replace(/\.[^.]+$/,""),title:`${state.gameName} · ${group.label}`,visibility:"unlisted",playlistTargets:target?[target]:[],segments:group.entries.map(clipManifestSegment)})});
+    }
+    const fileName=safeFileBase()+"_"+preset.name.replace(/[^a-z0-9äöüß_-]+/gi,"_")+"_upload_manifest.json";
+    return{format:"handball-match-flow-clip-upload-manifest",version:1,fileName,createdAt:new Date().toISOString(),game:{name:state.gameName,ownTeam:state[ownTeam]?.name||"Mein Team",opponent:state[opponentTeam()]?.name||"Gegner",durationPerHalf:Number(state.timer.duration)||null},source:{localFileName:state.video.localFileName||state.videoFileName||null,youtubeId:state.video.youtubeId||null,youtubeUrl:state.video.youtubeUrl||null},preset,outputs};
+  }
   function downloadPresetCutList(preset,groups){const data={format:"handball-match-flow-preset-cutlist",version:1,preset,gameName:state.gameName,source:{youtubeId:state.video.youtubeId||null,youtubeUrl:state.video.youtubeUrl||null,localFileName:state.video.localFileName||null},groups:groups.map(group=>({label:group.label,clips:presetEntries(group,preset).map(item=>({eventIndex:item.index,eventId:item.event.id??null,start:item.start,end:item.end,videoTime:item.at,event:item.event}))}))};downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),safeFileBase()+"_"+preset.name.replace(/[^a-z0-9äöüß_-]+/gi,"_")+"_schnittliste.json")}
-  $("generatePresetClips").onclick=async()=>{if(exportBusy)return;if(!localVideoReady)return toast("Für die Clip-Erzeugung bitte ein lokales Video laden.");const preset=selectedClipPreset();if(!preset)return toast("Zuerst eine Clip-Vorlage auswählen.");const groups=presetGroups(preset).map(group=>({...group,entries:presetEntries(group,preset)})).filter(group=>group.entries.length);if(!groups.length)return toast("Diese Vorlage findet keine Ereignisse mit gültiger Videozeit.");exportBusy=true;clearGeneratedClips();updateClipExportAvailability();try{const results=[];if(preset.output?.mode==="combined"){const entries=groups.flatMap(group=>group.entries);results.push(await exportLocalClip(entries,{download:false,fileBase:presetFileBase(preset,{label:preset.name}),statusPrefix:`1/1 · `}))}else{for(let i=0;i<groups.length;i++){const group=groups[i];results.push(await exportLocalClip(group.entries,{download:false,fileBase:presetFileBase(preset,group),statusPrefix:`${i+1}/${groups.length} · `}))}}showGeneratedClips(results);$("exportStatus").textContent=`${results.length} ${results.length===1?"Clip":"Clips"} erstellt. Unten einzeln herunterladen.`}catch(error){$("exportStatus").textContent=error.message||"Clip-Erzeugung fehlgeschlagen.";toast(error.message||"Clip-Erzeugung fehlgeschlagen.")}finally{exportBusy=false;updateClipExportAvailability()}};
+  $("generatePresetClips").onclick=async()=>{if(exportBusy)return;if(!localVideoReady)return toast("Für die Clip-Erzeugung bitte ein lokales Video laden.");const preset=selectedClipPreset();if(!preset)return toast("Zuerst eine Clip-Vorlage auswählen.");const groups=presetGroups(preset).map(group=>({...group,entries:presetEntries(group,preset)})).filter(group=>group.entries.length);if(!groups.length)return toast("Diese Vorlage findet keine Ereignisse mit gültiger Videozeit.");exportBusy=true;clearGeneratedClips();updateClipExportAvailability();try{const results=[];if(preset.output?.mode==="combined"){const entries=groups.flatMap(group=>group.entries);results.push(await exportLocalClip(entries,{download:false,fileBase:presetFileBase(preset,{label:preset.name}),statusPrefix:`1/1 · `}))}else{for(let i=0;i<groups.length;i++){const group=groups[i];results.push(await exportLocalClip(group.entries,{download:false,fileBase:presetFileBase(preset,group),statusPrefix:`${i+1}/${groups.length} · `}))}}const manifest=buildPresetUploadManifest(preset,groups,results);showGeneratedClips(results,manifest);$("exportStatus").textContent=`${results.length} ${results.length===1?"Clip":"Clips"} plus Upload-Manifest erstellt.`}catch(error){$("exportStatus").textContent=error.message||"Clip-Erzeugung fehlgeschlagen.";toast(error.message||"Clip-Erzeugung fehlgeschlagen.")}finally{exportBusy=false;updateClipExportAvailability()}};
   $("flowBack").onclick=()=>{if(currentStep==='idle')return;showStep(previousFlowStep())};
   $("flowNext").onclick=()=>{if(!draft)return;if(currentStep==='player'){draft.attacker=null;nextAfterAttacker()}else if(draft.flow==='shot'&&shotStepOrder.includes(currentStep))advanceShotPage();else if(currentStep==='shotTag')openTags();else if(currentStep==='error'){draft.errorType=null;draft.result='error';$("commitEvent").click()}else if(currentStep==='penalty')choosePenalized(null)};
   $("flowCancel").onclick=()=>{draft=null;keyStamp=null;$("flowHint").textContent='Bereit für den nächsten Angriff';showStep('idle');};
@@ -1076,7 +1003,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=48",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=49",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
