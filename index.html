@@ -678,14 +678,14 @@
     return out;
   }
   function seasonTeamAggregate(role){
-    let shots=0,decided=0,goals=0,misses=0,saves=0,against=0,errors=0,blocks=0,steals=0;
+    let shots=0,decided=0,goals=0,misses=0,saves=0,against=0,errors=0,blocks=0,steals=0,penalties=0;
     for(const game of selectedSeasonGames()){
       const team=role==="own"?game.ownTeam:game.opponentTeam,opp=team==="home"?"away":"home",events=game.state.events||[];
       const teamShots=events.filter(e=>{const attack=e.type==="save"||e.type==="block"?(e.team==="home"?"away":"home"):e.team;return ["shot","goal","save","miss","block"].includes(e.type)&&attack===team});
       shots+=teamShots.length;decided+=teamShots.filter(e=>e.type!=="shot").length;goals+=teamShots.filter(e=>e.type==="goal").length;misses+=teamShots.filter(e=>e.type==="miss").length;
-      saves+=events.filter(e=>e.type==="save"&&e.team===team).length;against+=events.filter(e=>e.type==="goal"&&e.team===opp).length;errors+=events.filter(e=>e.type==="error"&&e.team===team).length;blocks+=events.filter(e=>e.type==="block"&&e.team===team).length;steals+=events.filter(e=>e.type==="steal"&&e.team===team).length;
+      saves+=events.filter(e=>e.type==="save"&&e.team===team).length;against+=events.filter(e=>e.type==="goal"&&e.team===opp).length;errors+=events.filter(e=>e.type==="error"&&e.team===team).length;blocks+=events.filter(e=>e.type==="block"&&e.team===team).length;steals+=events.filter(e=>e.type==="steal"&&e.team===team).length;penalties+=events.filter(e=>["yellow","2min","2plus2","red","blue"].includes(e.type)&&e.team===team).length;
     }
-    return{goals,misses,shotRate:pct(goals,decided),attackEff:pct(goals,decided+errors),saves,saveRate:pct(saves,saves+against),steals,blocks,errors};
+    return{goals,misses,shotRate:pct(goals,decided),attackEff:pct(goals,decided+errors),saves,saveRate:pct(saves,saves+against),steals,blocks,errors,penalties};
   }
   function renderSeasonTrend(){
     const games=selectedSeasonGames(),svg=$("seasonTrend"),maxScore=Math.max(1,...games.flatMap(game=>{const x=seasonGameSummary(game);return[x.goals,x.against]})),count=Math.max(1,games.length-1),own=[],opp=[];
@@ -696,7 +696,7 @@
   }
   function renderSeasonComparison(){
     const own=seasonTeamAggregate("own"),opp=seasonTeamAggregate("opponent"),games=Math.max(1,selectedSeasonGames().length),average=seasonCompareMode==="average";
-    const rows=[["Tore","goals","count"],["Fehlwürfe","misses","count"],["Wurfquote","shotRate","percent"],["Angriffseff.","attackEff","percent"],["Paraden","saves","count"],["Paraden-Quote","saveRate","percent"],["Steals","steals","count"],["Blocks","blocks","count"],["Fehler","errors","count"]];
+    const rows=[["Tore","goals","count"],["Fehlwürfe","misses","count"],["Wurfquote","shotRate","percent"],["Angriffseff.","attackEff","percent"],["Paraden","saves","count"],["Paraden-Quote","saveRate","percent"],["Steals","steals","count"],["Blocks","blocks","count"],["Fehler","errors","count"],["Strafen","penalties","count"]];
     $("seasonCompareLegend").innerHTML='<span><i style="background:var(--cyan)"></i>Mein Team</span><span><i style="background:#f5a000"></i>Gegner</span>';
     $("seasonCompareAbsolute").classList.toggle("selected",!average);$("seasonCompareAverage").classList.toggle("selected",average);
     $("seasonCompare").innerHTML=rows.map(([label,key,kind])=>{
@@ -1299,7 +1299,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=56",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=57",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
