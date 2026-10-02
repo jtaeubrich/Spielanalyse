@@ -79,7 +79,7 @@
     .season-compare-track span{position:absolute;top:4px;width:var(--bar);height:16px;min-width:2px;max-width:82%;background:#163747;border:1.5px solid;border-radius:6px}
     .season-compare-side.own .season-compare-track span{right:0;left:auto;border-color:var(--cyan)}
     .season-compare-side.opponent .season-compare-track span{left:0;right:auto;border-color:#f5a000}
-    .season-compare-side.own .season-compare-value{right:-40px;text-align:left}
+    .season-compare-side.own .season-compare-value{right:calc(var(--bar) + 6px);text-align:right}
     .season-compare-side.opponent .season-compare-value{left:calc(var(--bar) + 6px);text-align:left}
     @media(max-width:700px){
       .season-compare-section .comparison{width:96%;max-width:100%}
@@ -89,7 +89,7 @@
       .season-compare-value{font-size:9px}
       .season-compare-track{height:20px}
       .season-compare-track span{top:3px;height:14px;max-width:78%}
-      .season-compare-side.own .season-compare-value{right:-28px}
+      .season-compare-side.own .season-compare-value{right:calc(var(--bar) + 4px)}
       .season-compare-side.opponent .season-compare-value{left:calc(var(--bar) + 4px)}
     }
     @media screen and (min-width:1200px){
@@ -1343,7 +1343,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=63",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=64",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
