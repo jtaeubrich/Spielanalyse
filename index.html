@@ -354,7 +354,7 @@
       </section>
       <section class="panel season-card wide">
         <h2>Eigene Spieler & Torhüter</h2>
-        <div style="overflow:auto"><table class="stats-table"><thead><tr><th>Spieler</th><th>Spiele</th><th>Würfe</th><th>Tore</th><th>Wurfquote</th><th>Paraden</th><th>Gegentore</th><th>TW-Quote</th><th>Abwehraktionen</th><th>Techn. Fehler</th></tr></thead><tbody id="seasonPlayerRows"></tbody></table></div>
+        <div style="overflow:auto"><table class="stats-table"><thead><tr><th>Spieler</th><th>Spiele</th><th>Würfe</th><th title="Tore bei Feldspielern, Paraden bei Torhütern">Tore / Paraden</th><th title="Wurfquote bei Feldspielern, Paradenquote bei Torhütern">Quote</th><th>Techn. Fehler</th></tr></thead><tbody id="seasonPlayerRows"></tbody></table></div>
       </section>
     </div>
   </section>
@@ -427,7 +427,7 @@
       <p>Der Analyse-Tab wertet die gespeicherten Ereignisse aus. Filter können nach Team, Spieler, Ereignistyp, Abwurfposition, Wurfziel und Spielsituation gesetzt werden.</p>
       <ul><li>Übersicht über Tore, Würfe, Paraden und technische Fehler.</li><li>Spielverlauf und Teamvergleich.</li><li>Wurf- und Torwartauswertungen nach Position und Ziel.</li><li>Spielerstatistiken und Torwartquote.</li><li>Gefilterte Szenen können direkt an den Video-Tab übergeben werden.</li><li>Die Analyse kann als PDF ausgegeben werden.</li></ul>
     </section>
-    <section class="help-section" id="helpSeason"><h3>Saison</h3><p>Im Saison-Tab können mehrere Spiel-JSONs gleichzeitig geladen und ausgewählt werden. Filter, grafische Übersichten, Wurfkarten und Statistiken werden über die ausgewählten Spiele aggregiert. Der Team-Vergleich kann zwischen absoluten Saisonwerten und Durchschnittswerten pro ausgewähltem Spiel umgeschaltet werden. Die Spielertabelle enthält ausschließlich das eigene Team. Die Saison wird zusätzlich automatisch lokal in IndexedDB gespeichert und beim nächsten Start wiederhergestellt. Über Saison exportieren/importieren kann sie als einzelne Backup-Datei zwischen Geräten übertragen werden. Die Originaldateien werden dabei nicht verändert; Video bleibt bewusst spielbezogen.</p></section>
+    <section class="help-section" id="helpSeason"><h3>Saison</h3><p>Im Saison-Tab können mehrere Spiel-JSONs gleichzeitig geladen und ausgewählt werden. Filter, grafische Übersichten, Wurfkarten und Statistiken werden über die ausgewählten Spiele aggregiert. Der Team-Vergleich kann zwischen absoluten Saisonwerten und Durchschnittswerten pro ausgewähltem Spiel umgeschaltet werden. Die Spielertabelle enthält ausschließlich das eigene Team; Feldspieler werden mit Toren/Wurfquote, Torhüter mit Paraden/TW-Quote dargestellt. Die Saison wird zusätzlich automatisch lokal in IndexedDB gespeichert und beim nächsten Start wiederhergestellt. Über Saison exportieren/importieren kann sie als einzelne Backup-Datei zwischen Geräten übertragen werden. Die Originaldateien werden dabei nicht verändert; Video bleibt bewusst spielbezogen.</p></section>
     <section class="help-section" id="helpVideo">
       <h3>Video</h3>
       <p>Im Video-Tab können ein lokales Video oder ein YouTube-Video geladen und mit den Spielereignissen verknüpft werden.</p>
@@ -735,14 +735,13 @@
     const players=new Map();
     for(const game of games){
       const ownPlayers=game.state[game.ownTeam]?.players||[];
-      for(const player of ownPlayers){const key=seasonPlayerKey(player);if(!key)continue;if(!players.has(key))players.set(key,{label:seasonPlayerLabel(player),games:new Set(),shots:0,goals:0,saves:0,against:0,defense:0,errors:0});players.get(key).games.add(game.id)}
+      for(const player of ownPlayers){const key=seasonPlayerKey(player);if(!key)continue;if(!players.has(key))players.set(key,{label:seasonPlayerLabel(player),isTW:Boolean(player.isTW),games:new Set(),shots:0,goals:0,saves:0,against:0,errors:0});const seasonPlayer=players.get(key);seasonPlayer.isTW=seasonPlayer.isTW||Boolean(player.isTW);seasonPlayer.games.add(game.id)}
       for(const event of game.state.events||[]){
         const key=seasonEventPlayerKey(event,game),p=key?players.get(key):null;if(p){if(["goal","save","miss","block","shot"].includes(event.type)&&event.team===game.ownTeam){p.shots++;if(event.type==="goal")p.goals++}if(event.type==="error"&&event.team===game.ownTeam)p.errors++;if(event.type==="save"&&event.team===game.opponentTeam)p.saves++}
         if(event.type==="goal"&&event.team===game.opponentTeam){const keeper=(game.state[game.ownTeam]?.players||[]).find(x=>String(x.id)===String(event.againstTwId));const kp=keeper?players.get(seasonPlayerKey(keeper)):null;if(kp)kp.against++}
-        for(const tag of event.playerTags||[]){if(tag.team!==game.ownTeam)continue;const defender=(game.state[game.ownTeam]?.players||[]).find(x=>String(x.id)===String(tag.pId));const dp=defender?players.get(seasonPlayerKey(defender)):null;if(dp)dp.defense++}
       }
     }
-    $("seasonPlayerRows").innerHTML=[...players.values()].sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const wp=p.shots?p.goals/p.shots*100:0,tp=(p.saves+p.against)?p.saves/(p.saves+p.against)*100:0;return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.shots}</td><td>${p.goals}</td><td>${p.shots?wp.toFixed(0)+" %":"–"}</td><td>${p.saves}</td><td>${p.against}</td><td>${p.saves+p.against?tp.toFixed(0)+" %":"–"}</td><td>${p.defense}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="10">Keine Spielerdaten vorhanden.</td></tr>';
+    $("seasonPlayerRows").innerHTML=[...players.values()].sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const wp=p.shots?p.goals/p.shots*100:0,tp=(p.saves+p.against)?p.saves/(p.saves+p.against)*100:0,value=p.isTW?p.saves:p.goals,quote=p.isTW?(p.saves+p.against?tp.toFixed(0)+" %":"–"):(p.shots?wp.toFixed(0)+" %":"–");return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.isTW?"–":p.shots}</td><td>${value}</td><td>${quote}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="6">Keine Spielerdaten vorhanden.</td></tr>';
     renderSeasonGraphics();
   }
   function renderSeason(){const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
@@ -1300,7 +1299,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=55",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=56",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
