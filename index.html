@@ -66,9 +66,12 @@
     .season-compare-head h2{margin-bottom:0}
     .season-compare-toggle{display:flex;gap:4px}
     .season-compare-toggle .selected{border-color:var(--cyan);background:#123d4c;color:#fff}
+    #seasonTab{max-width:100%;overflow-x:hidden}
     .season-page,.season-page>*{min-width:0;max-width:100%}
+    .season-page{width:100%;overflow-x:hidden}
+    .season-page .panel{min-width:0;max-width:100%}
     .season-compare-section{min-width:0;max-width:100%;overflow:hidden}
-    .season-compare-section .comparison{width:88%;max-width:980px;min-width:0}
+    .season-compare-section .comparison{width:84%;max-width:900px;min-width:0}
     .season-compare-section .compare-row{grid-template-columns:minmax(0,1fr) 108px minmax(0,1fr);gap:8px;min-width:0;width:100%}
     .season-compare-side{display:grid;grid-template-columns:44px minmax(0,1fr);gap:6px;align-items:center;min-width:0}
     .season-compare-value{font-size:13px;font-weight:850;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
@@ -77,7 +80,7 @@
     .season-compare-side.own .season-compare-track span{border-color:var(--cyan)}
     .season-compare-side.opponent .season-compare-track span{border-color:#f5a000}
     @media(max-width:700px){
-      .season-compare-section .comparison{width:100%;max-width:100%}
+      .season-compare-section .comparison{width:96%;max-width:100%}
       .season-compare-section .compare-row{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr);gap:4px}
       .season-compare-section .compare-label{font-size:9px;overflow-wrap:anywhere}
       .season-compare-side{grid-template-columns:32px minmax(0,1fr);gap:3px}
@@ -105,7 +108,8 @@
     .annotation-tools-toggle{display:none}
     .video-pane.match-context .annotation-section{display:none!important}
     @media(max-width:760px){
-      html,body{max-width:100%;overflow-x:hidden}
+      html,body{width:100%;max-width:100%;overflow-x:hidden}
+      #seasonTab,#seasonTab .season-page,#seasonTab .viz-card,#seasonTab .season-card{max-width:100%;min-width:0;overflow-x:hidden}
       body{font-size:12.5px;line-height:1.28}
       .app{padding:4px;padding-top:max(4px,env(safe-area-inset-top));padding-right:max(4px,env(safe-area-inset-right));padding-bottom:max(4px,env(safe-area-inset-bottom));padding-left:max(4px,env(safe-area-inset-left))}
       .top{gap:5px;margin-bottom:5px}
@@ -705,13 +709,13 @@
     const own=seasonTeamAggregate("own"),opp=seasonTeamAggregate("opponent"),games=Math.max(1,selectedSeasonGames().length),average=seasonCompareMode==="average";
     const rows=[["Tore","goals","count"],["Fehlwürfe","misses","count"],["Wurfquote","shotRate","percent"],["Angriffseff.","attackEff","percent"],["Paraden","saves","count"],["Paraden-Quote","saveRate","percent"],["Steals","steals","count"],["Blocks","blocks","count"],["Fehler","errors","count"],["Strafen (2 Min.)","penalties","count"]];
     const displayValue=(data,key,kind)=>kind==="count"&&average?data[key]/games:data[key];
-    const values=rows.flatMap(([,key,kind])=>[displayValue(own,key,kind),displayValue(opp,key,kind)]);
-    const scale=Math.max(100,...values.map(v=>Number(v)||0));
+    const countValues=rows.filter(([, ,kind])=>kind==="count").flatMap(([,key,kind])=>[displayValue(own,key,kind),displayValue(opp,key,kind)]);
+    const countScale=Math.max(1,...countValues.map(v=>Number(v)||0));
     const format=(value,kind)=>kind==="percent"?Math.round(value)+"%":average?value.toFixed(1):String(Math.round(value));
     $("seasonCompareLegend").innerHTML='<span><i style="background:var(--cyan)"></i>Mein Team</span><span><i style="background:#f5a000"></i>Gegner</span>';
     $("seasonCompareAbsolute").classList.toggle("selected",!average);$("seasonCompareAverage").classList.toggle("selected",average);
     $("seasonCompare").innerHTML=rows.map(([label,key,kind])=>{
-      const leftValue=displayValue(own,key,kind),rightValue=displayValue(opp,key,kind),left=Math.min(100,leftValue/scale*100),right=Math.min(100,rightValue/scale*100);
+      const leftValue=displayValue(own,key,kind),rightValue=displayValue(opp,key,kind),scale=kind==="percent"?100:countScale,left=Math.min(100,leftValue/scale*100),right=Math.min(100,rightValue/scale*100);
       return `<div class="compare-row"><div class="season-compare-side own"><b class="season-compare-value">${format(leftValue,kind)}</b><div class="season-compare-track" style="--bar:${left}%"><span></span></div></div><div class="compare-label">${label}</div><div class="season-compare-side opponent"><b class="season-compare-value">${format(rightValue,kind)}</b><div class="season-compare-track" style="--bar:${right}%"><span></span></div></div></div>`
     }).join("");
   }
