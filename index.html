@@ -42,7 +42,7 @@
     .side{min-height:0;align-self:start}.actions{grid-template-columns:1fr 1fr}
     .side .footerbuttons [data-back],#cancelFlow{display:none}.side .footerbuttons{justify-content:flex-end}
     .step-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 10px;width:100%}.step-head h2{margin:0;min-width:0}.backbar{margin:0 0 0 auto;padding:0;display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-shrink:0}.backbar button{padding:7px 10px;font-size:13px;white-space:nowrap}.backbar button:disabled{opacity:.4;cursor:default}#idleStep .backbar{display:none!important}
-    .video-frame{aspect-ratio:16/9;min-height:220px;background:#030a0f;border-radius:14px;overflow:hidden;margin:12px 0;display:grid;place-items:center}.video-stage,.video-surface,.video-surface>div,.video-surface iframe,.video-surface video{width:100%;height:100%}.video-stage{position:relative}.video-surface video{display:block;object-fit:contain;background:#000}.annotation-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;touch-action:none}.annotation-canvas.drawing{pointer-events:auto;cursor:crosshair}.video-pane.match-context .annotation-toolbar,.video-pane.match-context .annotation-canvas,.video-pane.match-context .video-comment-overlay{display:none!important}.video-comment-overlay{position:absolute;left:4%;right:4%;bottom:5%;padding:8px 12px;border-radius:9px;background:#050b10c9;color:white;text-align:center;font-weight:850;font-size:clamp(14px,2vw,24px);text-shadow:0 1px 3px #000;pointer-events:none}.video-comment-overlay:empty{display:none}.video-form{display:flex;gap:8px;flex-wrap:wrap}.video-form input{margin:0;min-width:0;flex:1}.video-control-groups{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:12px}.video-control-group{display:flex;flex-direction:column;gap:5px}.video-control-label{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.06em}.video-controls,.annotation-toolbar,.export-actions,.preset-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.video-control-group .video-controls{margin-bottom:0}.video-controls .selected,.annotation-toolbar .selected{background:#164b5a;border-color:var(--cyan)}.annotation-toolbar select,.annotation-toolbar input{width:auto;margin:0}.annotation-toolbar input[type=color]{width:44px;min-width:44px;padding:3px}.video-size{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}.video-size input{flex:1;accent-color:var(--cyan)}.clip{position:relative;min-width:0;max-width:100%}.clip.selected{border-color:var(--cyan);box-shadow:inset 0 0 0 1px var(--cyan)}.clip.highlight{background:#302a12;border-color:var(--amber)}.clip-check{position:absolute;right:10px;top:10px;width:19px;height:19px;accent-color:var(--cyan)}.clip-content{min-width:0;overflow:hidden;padding-right:28px}.clip-title,.clip-primary,.clip-secondary{display:block;overflow-wrap:anywhere}.clip-secondary{color:var(--muted);font-size:13px}.event-tags,.tag-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.event-tag,.tag-chip{border-radius:999px;background:#183747;color:#bfeef5;padding:3px 7px;font-size:12px}.tag-chip{border:1px solid var(--line);cursor:pointer}.event-editor,.preset-panel{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.event-editor-grid{display:grid;grid-template-columns:auto minmax(140px,1fr) auto;gap:8px;align-items:center}.export-status,.preset-summary{color:var(--muted);font-size:13px;margin:4px 0 10px}.preset-row{display:grid;grid-template-columns:minmax(180px,1fr) auto;gap:8px}.generated-clips{display:grid;gap:6px;margin:8px 0}.generated-clip{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#091822}.preset-form{min-width:min(760px,90vw)}.preset-form-grid{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:10px}.preset-form-grid label{font-size:13px;color:var(--muted)}.preset-form-grid .wide{grid-column:1/-1}@media(max-width:700px){.preset-row,.preset-form-grid{grid-template-columns:1fr}.preset-form-grid .wide{grid-column:auto}#videoTab .video-page,#videoTab .video-content-grid{gap:8px}#videoTab .video-card,#videoTab .workspace{padding:10px;border-radius:14px}#videoTab .video-filter-card h2,#videoTab .annotation-toolbar{display:none!important}#videoTab .video-filter-card .filterbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#videoTab .video-filter-card .field{width:100%;min-width:0;margin:0;padding:8px;font-size:12px}#videoTab .video-form{gap:6px}#videoTab .video-form .field,#videoTab .video-form .btn{padding:8px;font-size:12px}#videoTab .video-frame{min-height:0;margin:8px 0}#videoTab #videoMessage{margin:5px 0;font-size:12px}#videoTab .video-control-groups{gap:8px;margin-bottom:6px}#videoTab .video-control-group{gap:3px}#videoTab .video-control-label{font-size:9px;letter-spacing:.05em}#videoTab .video-controls{gap:4px;margin-bottom:0}#videoTab .video-controls .btn{padding:6px 8px;border-radius:9px;font-size:12px}.video-events-card{width:100%;max-width:100%;min-width:0;min-height:0;padding:10px}.video-events-card h2{margin-bottom:8px;font-size:18px}.video-events-card .playlist{gap:5px}.video-events-card .clip{width:100%;padding:7px 8px;border-radius:9px}.video-events-card .clip-check{right:7px;top:7px;width:17px;height:17px}.video-events-card .clip-content{padding-right:23px}.video-events-card .clip-title,.video-events-card .clip-primary{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.video-events-card .clip-title{font-size:13px}.video-events-card .clip-primary{font-size:12px;color:var(--muted)}.video-events-card .clip-secondary,.video-events-card .event-tags{display:none}.video-events-card .clip-video-time{font-size:11px;color:var(--cyan)}#videoTab .video-events-card .event-editor:has(.empty){display:none}#videoTab .video-events-card .event-editor{max-height:none;margin-top:8px;padding-top:8px}#videoTab .video-events-card .event-editor h2{font-size:15px}#videoTab .video-events-card .event-editor-grid{grid-template-columns:minmax(0,1fr) auto;gap:5px}#videoTab .video-events-card .event-editor .field,#videoTab .video-events-card .event-editor .btn{margin:4px 0;padding:7px;font-size:12px}}
+    .video-frame{aspect-ratio:16/9;min-height:220px;background:#030a0f;border-radius:14px;overflow:hidden;margin:12px 0;display:grid;place-items:center}.video-stage,.video-surface,.video-surface>div,.video-surface iframe,.video-surface video{width:100%;height:100%}.video-stage{position:relative}.video-surface video{display:block;object-fit:contain;background:#000}.annotation-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;touch-action:none}.annotation-canvas.drawing{pointer-events:auto;cursor:crosshair}.video-pane.match-context .annotation-toolbar,.video-pane.match-context .annotation-canvas,.video-pane.match-context .video-comment-overlay{display:none!important}.video-comment-overlay{position:absolute;left:4%;right:4%;bottom:5%;padding:8px 12px;border-radius:9px;background:#050b10c9;color:white;text-align:center;font-weight:850;font-size:clamp(14px,2vw,24px);text-shadow:0 1px 3px #000;pointer-events:none}.video-comment-overlay:empty{display:none}.video-form{display:flex;gap:8px;flex-wrap:wrap}.video-form input{margin:0;min-width:0;flex:1}.video-control-groups{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-bottom:12px}.video-control-group{display:flex;flex-direction:column;gap:5px}.video-control-label{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.06em}.video-controls,.annotation-toolbar,.export-actions,.preset-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.video-control-group .video-controls{margin-bottom:0}.video-controls .selected,.annotation-toolbar .selected{background:#164b5a;border-color:var(--cyan)}.annotation-toolbar select,.annotation-toolbar input{width:auto;margin:0}.annotation-toolbar input[type=color]{width:44px;min-width:44px;padding:3px}.video-size{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}.video-size input{flex:1;accent-color:var(--cyan)}.clip{position:relative;min-width:0;max-width:100%}.clip.selected{border-color:var(--cyan);box-shadow:inset 0 0 0 1px var(--cyan)}.clip.highlight{background:#302a12;border-color:var(--amber)}.clip-check{position:absolute;right:10px;top:10px;width:19px;height:19px;accent-color:var(--cyan)}.clip-content{min-width:0;overflow:hidden;padding-right:28px}.clip-title,.clip-primary,.clip-secondary{display:block;overflow-wrap:anywhere}.clip-secondary{color:var(--muted);font-size:13px}.event-tags,.tag-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.event-tag,.tag-chip{border-radius:999px;background:#183747;color:#bfeef5;padding:3px 7px;font-size:12px}.tag-chip{border:1px solid var(--line);cursor:pointer}.event-editor,.preset-panel{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.event-editor-grid{display:grid;grid-template-columns:auto minmax(140px,1fr) auto;gap:8px;align-items:center}.export-status,.preset-summary{color:var(--muted);font-size:13px;margin:4px 0 10px}.preset-row{display:grid;grid-template-columns:minmax(180px,1fr) auto;gap:8px}.generated-clips{display:grid;gap:6px;margin:8px 0}.generated-clip{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#091822}.preset-form{min-width:min(760px,90vw)}.preset-form-grid{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:10px}.preset-form-grid label{font-size:13px;color:var(--muted)}.preset-form-grid .wide{grid-column:1/-1}.season-page{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.season-card.wide{grid-column:1/-1}.season-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.season-game-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.season-game-item{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#091822}.season-game-item input{margin-top:3px}.season-game-meta{color:var(--muted);font-size:12px;margin-top:2px}.season-card .metric-grid{margin-top:8px}@media(max-width:700px){.season-page{grid-template-columns:1fr}.season-game-list{grid-template-columns:1fr}}@media(max-width:700px){.preset-row,.preset-form-grid{grid-template-columns:1fr}.preset-form-grid .wide{grid-column:auto}#videoTab .video-page,#videoTab .video-content-grid{gap:8px}#videoTab .video-card,#videoTab .workspace{padding:10px;border-radius:14px}#videoTab .video-filter-card h2,#videoTab .annotation-toolbar{display:none!important}#videoTab .video-filter-card .filterbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#videoTab .video-filter-card .field{width:100%;min-width:0;margin:0;padding:8px;font-size:12px}#videoTab .video-form{gap:6px}#videoTab .video-form .field,#videoTab .video-form .btn{padding:8px;font-size:12px}#videoTab .video-frame{min-height:0;margin:8px 0}#videoTab #videoMessage{margin:5px 0;font-size:12px}#videoTab .video-control-groups{gap:8px;margin-bottom:6px}#videoTab .video-control-group{gap:3px}#videoTab .video-control-label{font-size:9px;letter-spacing:.05em}#videoTab .video-controls{gap:4px;margin-bottom:0}#videoTab .video-controls .btn{padding:6px 8px;border-radius:9px;font-size:12px}.video-events-card{width:100%;max-width:100%;min-width:0;min-height:0;padding:10px}.video-events-card h2{margin-bottom:8px;font-size:18px}.video-events-card .playlist{gap:5px}.video-events-card .clip{width:100%;padding:7px 8px;border-radius:9px}.video-events-card .clip-check{right:7px;top:7px;width:17px;height:17px}.video-events-card .clip-content{padding-right:23px}.video-events-card .clip-title,.video-events-card .clip-primary{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.video-events-card .clip-title{font-size:13px}.video-events-card .clip-primary{font-size:12px;color:var(--muted)}.video-events-card .clip-secondary,.video-events-card .event-tags{display:none}.video-events-card .clip-video-time{font-size:11px;color:var(--cyan)}#videoTab .video-events-card .event-editor:has(.empty){display:none}#videoTab .video-events-card .event-editor{max-height:none;margin-top:8px;padding-top:8px}#videoTab .video-events-card .event-editor h2{font-size:15px}#videoTab .video-events-card .event-editor-grid{grid-template-columns:minmax(0,1fr) auto;gap:5px}#videoTab .video-events-card .event-editor .field,#videoTab .video-events-card .event-editor .btn{margin:4px 0;padding:7px;font-size:12px}}
     .clockhead{flex-wrap:wrap;gap:8px}.game-time-row{display:flex;align-items:center;gap:8px;min-width:0}.time-nudges{display:flex;align-items:center;gap:4px;flex-wrap:nowrap}.time-nudges .tiny{padding:6px 7px;white-space:nowrap}.time-edit{display:flex;gap:5px;align-items:center;margin:0 0 0 auto}.time-edit input{width:82px;margin:0;padding:7px 8px}.time-edit .btn{padding:7px 10px}.time{font-size:40px}.run{min-height:65px;font-size:22px}.players,.tags{max-height:470px}
     .court{width:100%;height:auto;display:block;background:#12383e;border-radius:12px}.court .zone{fill:#27616b;stroke:#97d9df;stroke-width:.045;cursor:pointer}.court .zone.alt{fill:#215660}.court .zone:hover,.court .zone:focus{fill:#3e95a5;outline:none}
     .court .zone.selected{fill:var(--cyan);stroke:#e9fdff;stroke-width:.1}.shot-placement .btn.selected{border-color:var(--cyan);background:#123d4c;color:#fff}.court text{fill:white;font:.52px system-ui;text-anchor:middle;dominant-baseline:middle}.court .line{fill:none;stroke:white;stroke-width:.07;pointer-events:none}.court .selected{fill:#18879c;stroke:#ffca55;stroke-width:.15}.court .sector-label{font-size:.52px;font-weight:850}.court .distance-label{font-size:.46px;fill:#cce5eb}
@@ -186,7 +186,7 @@
     <div class="score"><img class="score-logo" src="./icons/logo-ball-flow.svg" alt=""><strong class="team" id="homeName">Mein Team</strong><span class="numbers" id="score">0 : 0</span><strong class="team" id="awayName">Gegner</strong></div>
     <div class="filebar"><button class="btn primary" id="saveBtn">Spiel speichern</button><button class="btn" id="saveAsBtn" title="Eine neue JSON-Datei erzeugen">Kopie exportieren</button><button class="btn" id="supportBtn" type="button" title="Mit Ko-fi unterstützen" aria-label="Projekt mit Ko-fi unterstützen">♥ Unterstützen</button><button class="btn" id="helpBtn" type="button" title="Dokumentation öffnen" aria-label="Dokumentation öffnen">? Hilfe</button></div>
   </header>
-  <nav class="tabbar" aria-label="Arbeitsbereiche"><button class="tab active" data-tab="setup">Setup</button><button class="tab" id="matchTabButton" data-tab="match">Match</button><button class="tab" data-tab="analysis">Analyse</button><button class="tab" data-tab="video">Video</button><button class="tab" data-tab="data">Daten editieren</button></nav>
+  <nav class="tabbar" aria-label="Arbeitsbereiche"><button class="tab active" data-tab="setup">Setup</button><button class="tab" id="matchTabButton" data-tab="match">Match</button><button class="tab" data-tab="analysis">Analyse</button><button class="tab" data-tab="season">Saison</button><button class="tab" data-tab="video">Video</button><button class="tab" data-tab="data">Daten editieren</button></nav>
 
   <section class="tab-pane active" id="setupTab">
     <div class="setup-grid">
@@ -291,6 +291,37 @@
     </div>
   </section>
 
+  <section class="tab-pane" id="seasonTab">
+    <div class="season-page">
+      <section class="panel season-card wide">
+        <div class="clockhead"><div><h2>Saisonanalyse</h2><p class="editor-help">Mehrere Spiel-JSONs laden und gemeinsam auswerten. Die einzelnen Dateien werden dabei nicht verändert.</p></div><span class="badge" id="seasonStatus">Keine Spiele geladen</span></div>
+        <div class="season-tools"><label class="btn primary" for="seasonGameInput">Spiel-JSONs laden</label><input id="seasonGameInput" type="file" accept=".json,application/json" multiple hidden><button class="btn" id="seasonSelectAll" type="button">Alle auswählen</button><button class="btn" id="seasonSelectNone" type="button">Auswahl aufheben</button><button class="btn danger" id="seasonClearGames" type="button">Saison leeren</button></div>
+        <div id="seasonGameList" class="season-game-list"><div class="empty">Noch keine Saisonspiele geladen.</div></div>
+      </section>
+      <section class="panel season-card wide">
+        <h2>Filter</h2>
+        <div class="filterbar">
+          <select class="field" id="seasonTeamFilter"><option value="all">Alle Teams</option><option value="own">Mein Team</option><option value="opponent">Gegner</option></select>
+          <select class="field" id="seasonPlayerFilter"><option value="all">Alle Spieler</option></select>
+          <select class="field" id="seasonTypeFilter"><option value="all">Alle Aktionen</option><option value="shot">Alle Würfe</option><option value="goal">Tore</option><option value="save">Paraden</option><option value="miss">Fehlwürfe</option><option value="error">Technische Fehler</option><option value="2min">Zeitstrafen</option><option value="keyMoment">Schlüsselmomente</option></select>
+          <select class="field" id="seasonZoneFilter"><option value="all">Alle Abwurfpositionen</option></select>
+          <select class="field" id="seasonTargetFilter"><option value="all">Alle Wurfziele</option></select>
+          <select class="field" id="seasonPhaseFilter"><option value="all">Alle Spielsituationen</option></select>
+          <select class="field" id="seasonTagFilter"><option value="all">Alle Tags</option></select>
+        </div>
+      </section>
+      <section class="panel season-card wide"><h2>Übersicht</h2><div class="metric-grid" id="seasonStats"></div></section>
+      <section class="panel season-card wide">
+        <h2>Verlauf nach Spiel</h2>
+        <div style="overflow:auto"><table class="stats-table"><thead><tr><th>Spiel</th><th>Tore</th><th>Gegentore</th><th>Eigene Würfe</th><th>Wurfquote</th><th>Gegnerische Würfe</th><th>Paraden</th><th>TW-Quote</th><th>Techn. Fehler</th></tr></thead><tbody id="seasonGameRows"></tbody></table></div>
+      </section>
+      <section class="panel season-card wide">
+        <h2>Spieler & Torhüter</h2>
+        <div style="overflow:auto"><table class="stats-table"><thead><tr><th>Spieler</th><th>Spiele</th><th>Würfe</th><th>Tore</th><th>Wurfquote</th><th>Paraden</th><th>Gegentore</th><th>TW-Quote</th><th>Abwehraktionen</th><th>Techn. Fehler</th></tr></thead><tbody id="seasonPlayerRows"></tbody></table></div>
+      </section>
+    </div>
+  </section>
+
   <section class="tab-pane" id="videoTab">
     <div class="video-page">
       <section class="panel video-card video-filter-card">
@@ -333,7 +364,7 @@
   <div class="help-head"><h2>Dokumentation · Handball Match Flow</h2><button class="btn" id="helpCloseBtn" type="button">Schließen</button></div>
   <div class="help-body">
     <nav class="help-toc" aria-label="Hilfe-Inhalt">
-      <a href="#helpSetup">Setup</a><a href="#helpMatch">Match</a><a href="#helpAnalysis">Analyse</a><a href="#helpVideo">Video</a><a href="#helpData">Daten editieren</a><a href="#helpFiles">Dateien & PWA</a>
+      <a href="#helpSetup">Setup</a><a href="#helpMatch">Match</a><a href="#helpAnalysis">Analyse</a><a href="#helpSeason">Saison</a><a href="#helpVideo">Video</a><a href="#helpData">Daten editieren</a><a href="#helpFiles">Dateien & PWA</a>
     </nav>
     <section class="help-section" id="helpSetup">
       <h3>Setup</h3>
@@ -359,6 +390,7 @@
       <p>Der Analyse-Tab wertet die gespeicherten Ereignisse aus. Filter können nach Team, Spieler, Ereignistyp, Abwurfposition, Wurfziel und Spielsituation gesetzt werden.</p>
       <ul><li>Übersicht über Tore, Würfe, Paraden und technische Fehler.</li><li>Spielverlauf und Teamvergleich.</li><li>Wurf- und Torwartauswertungen nach Position und Ziel.</li><li>Spielerstatistiken und Torwartquote.</li><li>Gefilterte Szenen können direkt an den Video-Tab übergeben werden.</li><li>Die Analyse kann als PDF ausgegeben werden.</li></ul>
     </section>
+    <section class="help-section" id="helpSeason"><h3>Saison</h3><p>Im Saison-Tab können mehrere Spiel-JSONs gleichzeitig geladen und ausgewählt werden. Filter und Statistiken werden über die ausgewählten Spiele aggregiert. Die Originaldateien werden dabei nicht verändert; Video bleibt bewusst spielbezogen.</p></section>
     <section class="help-section" id="helpVideo">
       <h3>Video</h3>
       <p>Im Video-Tab können ein lokales Video oder ein YouTube-Video geladen und mit den Spielereignissen verknüpft werden.</p>
@@ -393,7 +425,7 @@
     {id:"standard-defense-by-player",name:"Alle Abwehraktionen je Spieler",builtIn:true,filters:{team:"all",player:"all",type:"all",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"defender",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Abwehr_{Spieler}"}},
     {id:"standard-saves-by-keeper",name:"Alle Paraden je Torwart",builtIn:true,filters:{team:"own",player:"all",type:"save",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"keeper",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Paraden_{Spieler}"}}
   ];
-  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null;
+  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[];
   let gameRunning=false, gameBase=0, gameStarted=0;
   let videoRunning=false, videoBase=0, videoStarted=0;
   let liveClockRunning=false,liveClockBase=0,liveClockStarted=0,liveClockInitialized=false;
@@ -494,7 +526,131 @@
   function seekEvent(e){const exact=eventVideoSeconds(e),stayInMatch=activeTab==="match"&&matchReviewMode;if(!stayInMatch)showTab("video");activeVideoEventIndex=state.events.indexOf(e);renderVideoPlaylist();renderAnnotation();if(!Number.isFinite(exact)||exact<0)return toast(`Für dieses Ereignis fehlt der Syncpunkt der ${e.half||1}. Halbzeit.`);if(!mediaReady())return toast("Zuerst das passende YouTube- oder lokale Video laden.");stopGame();const pre=Math.max(0,Number(state.video.preRoll)||0),post=Math.max(0,Number(state.video.postRoll)||0),start=Math.max(0,exact-pre);clipStopAt=exact+post;mediaSeek(start);Promise.resolve(mediaPlay()).catch(()=>{});setTimeout(()=>{if(mediaReady()&&clipStopAt!==null)mediaSeek(start)},150);mediaLast=null;$("videoMessage").textContent=`Szene bei ${fmt(exact,true)} · ${pre} s davor / ${post} s danach.`}
 
   function syncVideoReviewHeight(){if(activeTab!=="video")return;const module=$("videoModule"),card=$("videoEventsCard");if(!module||!card)return;requestAnimationFrame(()=>{const moduleHeight=Math.round(module.getBoundingClientRect().height);if(moduleHeight>0)card.style.height=Math.max(360,moduleHeight)+"px"})}
-  function showTab(name){if(name==="match"&&state.isHistorical)name="analysis";activeTab=name;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));document.querySelectorAll(".tab-pane").forEach(p=>p.classList.toggle("active",p.id===name+"Tab"));const module=$("videoModule"),host=name==="video"?$("videoPlayerHost"):name==="match"?$("matchVideoHost"):null;if(host&&module.parentElement!==host)host.append(module);module.classList.toggle("match-context",name==="match");if(name==="match"){drawingEnabled=false;drawingDraft=null;$("annotationCanvas").classList.remove("drawing");$("drawToggle").classList.remove("selected");$("drawToggle").textContent="Zeichnen"}if(name==="analysis")renderAnalysis();if(name==="video"){renderAnnotation();renderVideoPlaylist();syncVideoReviewHeight()}if(name==="data")renderDataEditor()}
+
+  function seasonOwnTeam(game){
+    const home=String(game.state?.home?.name||"").toLowerCase(),away=String(game.state?.away?.name||"").toLowerCase();
+    if(home.includes("kronshagen"))return"home";
+    if(away.includes("kronshagen"))return"away";
+    const currentOwn=String(state[ownTeam]?.name||"").trim().toLowerCase();
+    if(currentOwn&&home===currentOwn)return"home";
+    if(currentOwn&&away===currentOwn)return"away";
+    return"away";
+  }
+  function seasonPlayerKey(player){
+    if(!player)return null;
+    const first=String(player.vorname||"").trim().toLocaleLowerCase("de"),last=String(player.nachname||"").trim().toLocaleLowerCase("de"),nr=String(player.nr??"").trim();
+    return [last,first,nr].join("|");
+  }
+  function seasonPlayerLabel(player){return player?playerName(player):"Unbekannt"}
+  function seasonGameId(fileName,data,index=0){
+    const raw=[fileName||"",data.gameName||"",data.home?.name||"",data.away?.name||"",data.events?.length||0,index].join("|");
+    let h=2166136261;for(let i=0;i<raw.length;i++){h^=raw.charCodeAt(i);h=Math.imul(h,16777619)}return "sg-"+(h>>>0).toString(16);
+  }
+  function seasonNormalizeGame(data,fileName,index){
+    if(!data||!Array.isArray(data.events)||!data.home||!data.away)throw Error("Keine gültige Spiel-JSON.");
+    const game={id:seasonGameId(fileName,data,index),fileName:fileName||"Spiel.json",state:data,selected:true};
+    game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":"home";return game;
+  }
+  async function loadSeasonFiles(files){
+    const loaded=[],errors=[];
+    for(let i=0;i<files.length;i++){
+      const file=files[i];
+      try{const data=JSON.parse(await file.text()),game=seasonNormalizeGame(data,file.name,i);loaded.push(game)}
+      catch(error){errors.push(file.name)}
+    }
+    const map=new Map(seasonGames.map(game=>[game.id,game]));for(const game of loaded)map.set(game.id,game);seasonGames=[...map.values()];
+    renderSeason();
+    toast(errors.length?`${loaded.length} Spiele geladen · ${errors.length} Datei(en) übersprungen`:`${loaded.length} Spiele geladen`);
+  }
+  function selectedSeasonGames(){return seasonGames.filter(game=>game.selected)}
+  function seasonEventPlayerKey(event,game){
+    const players=[...(game.state.home?.players||[]),...(game.state.away?.players||[])];
+    const id=event.type==="save"?(event.pId??event.throwerId):(event.pId??event.throwerId??event.attackerId);
+    const p=players.find(player=>String(player.id)===String(id));
+    if(p)return seasonPlayerKey(p);
+    const name=String(event.pName||event.throwerName||event.attackerName||"").trim().toLocaleLowerCase("de");
+    return name?name+"|event":null;
+  }
+  function seasonEventMatchesTeam(event,game,filter){
+    if(filter==="all")return true;const team=filter==="own"?game.ownTeam:game.opponentTeam;
+    return event.team===team||(event.playerTags||[]).some(tag=>tag.team===team);
+  }
+  function seasonEventMatchesPlayer(event,game,key){
+    if(key==="all")return true;
+    if(seasonEventPlayerKey(event,game)===key)return true;
+    const players=[...(game.state.home?.players||[]),...(game.state.away?.players||[])];
+    return (event.playerTags||[]).some(tag=>{const p=players.find(player=>String(player.id)===String(tag.pId));return p&&seasonPlayerKey(p)===key});
+  }
+  function seasonMatchesType(event,type){return type==="all"||(type==="shot"&&["shot","goal","miss","save","block"].includes(event.type))||(type==="2min"&&["2min","2plus2"].includes(event.type))||event.type===type}
+  function seasonDimension(value,filter){return filter==="all"||(filter==="OT"&&["OTL","OTM","OTR"].includes(String(value??"")))||String(value??"")===String(filter)}
+  function seasonFilteredEntries(){
+    const team=$("seasonTeamFilter")?.value||"all",player=$("seasonPlayerFilter")?.value||"all",type=$("seasonTypeFilter")?.value||"all",zone=$("seasonZoneFilter")?.value||"all",target=$("seasonTargetFilter")?.value||"all",phase=$("seasonPhaseFilter")?.value||"all",tag=$("seasonTagFilter")?.value||"all",out=[];
+    for(const game of selectedSeasonGames())for(const event of game.state.events||[]){
+      const tags=Array.isArray(event.tags)?event.tags.map(String):[];
+      if(!seasonEventMatchesTeam(event,game,team)||!seasonEventMatchesPlayer(event,game,player)||!seasonMatchesType(event,type)||!seasonDimension(event.z,zone)||!seasonDimension(event.gz,target)||!seasonDimension(event.attackPhase,phase)||(tag!=="all"&&!tags.includes(tag)))continue;
+      out.push({game,event});
+    }
+    return out;
+  }
+  function seasonMetric(label,value,sub=""){return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${sub?`<small>${escapeHtml(sub)}</small>`:""}</div>`}
+  function seasonPopulateFilters(){
+    const games=selectedSeasonGames().length?selectedSeasonGames():seasonGames;
+    const playerMap=new Map(),zones=new Set(),targets=new Set(),phases=new Set(),tags=new Set();
+    for(const game of games){
+      const players=game.state[game.ownTeam]?.players||[];
+      for(const player of players){const key=seasonPlayerKey(player);if(key&&!playerMap.has(key))playerMap.set(key,seasonPlayerLabel(player))}
+      for(const event of game.state.events||[]){if(event.z)zones.add(event.z);if(event.gz)targets.add(event.gz);if(event.attackPhase)phases.add(event.attackPhase);for(const tag of Array.isArray(event.tags)?event.tags:[])if(String(tag).trim())tags.add(String(tag).trim())}
+    }
+    const refill=(id,values,allLabel)=>{const el=$(id),old=el.value;el.replaceChildren(new Option(allLabel,"all"));for(const [value,label] of values)el.add(new Option(label,value));el.value=[...el.options].some(o=>o.value===old)?old:"all"};
+    refill("seasonPlayerFilter",[...playerMap.entries()].sort((a,b)=>a[1].localeCompare(b[1],"de")),"Alle Spieler");
+    refill("seasonZoneFilter",[...zones].sort().map(v=>[v,v]),"Alle Abwurfpositionen");
+    refill("seasonTargetFilter",[...targets].sort().map(v=>[v,v]),"Alle Wurfziele");
+    refill("seasonPhaseFilter",[...phases].sort((a,b)=>a.localeCompare(b,"de")).map(v=>[v,v]),"Alle Spielsituationen");
+    refill("seasonTagFilter",[...tags].sort((a,b)=>a.localeCompare(b,"de")).map(v=>[v,v]),"Alle Tags");
+  }
+  function seasonGameSummary(game){
+    const events=game.state.events||[],own=game.ownTeam,opp=game.opponentTeam;
+    const ownShots=events.filter(e=>e.team===own&&["goal","save","miss","block","shot"].includes(e.type)),oppShots=events.filter(e=>e.team===opp&&["goal","save","miss","block","shot"].includes(e.type));
+    const goals=events.filter(e=>e.team===own&&e.type==="goal").length,against=events.filter(e=>e.team===opp&&e.type==="goal").length;
+    const saves=events.filter(e=>e.team===opp&&e.type==="save").length;
+    const errors=events.filter(e=>e.team===own&&e.type==="error").length;
+    return{goals,against,ownShots:ownShots.length,oppShots:oppShots.length,saves,errors,shotPct:ownShots.length?goals/ownShots.length*100:0,savePct:(saves+against)?saves/(saves+against)*100:0};
+  }
+  function renderSeasonGames(){
+    const host=$("seasonGameList");if(!host)return;host.replaceChildren();
+    if(!seasonGames.length){host.innerHTML='<div class="empty">Noch keine Saisonspiele geladen.</div>';return}
+    for(const game of seasonGames){
+      const label=document.createElement("label");label.className="season-game-item";
+      const check=document.createElement("input");check.type="checkbox";check.checked=game.selected;check.onchange=()=>{game.selected=check.checked;seasonPopulateFilters();renderSeasonAnalysis()};
+      const wrap=document.createElement("div"),strong=document.createElement("strong"),meta=document.createElement("div");strong.textContent=game.state.gameName||game.fileName;meta.className="season-game-meta";meta.textContent=`${game.state[game.ownTeam]?.name||"Mein Team"} · ${game.state[game.opponentTeam]?.name||"Gegner"} · ${(game.state.events||[]).length} Events`;wrap.append(strong,meta);label.append(check,wrap);host.append(label)
+    }
+  }
+  function renderSeasonAnalysis(){
+    const games=selectedSeasonGames(),entries=seasonFilteredEntries(),events=entries.map(x=>x.event);
+    $("seasonStatus").textContent=`${games.length} von ${seasonGames.length} Spielen ausgewählt`;
+    const shots=events.filter(e=>["shot","goal","save","miss","block"].includes(e.type)).length,goals=events.filter(e=>e.type==="goal").length,errors=events.filter(e=>e.type==="error").length,penalties=events.filter(e=>["2min","2plus2"].includes(e.type)).length;
+    $("seasonStats").innerHTML=[seasonMetric("Spiele",games.length),seasonMetric("Gefilterte Events",events.length),seasonMetric("Würfe",shots),seasonMetric("Tore",goals,shots?`${Math.round(goals/shots*100)} %`:"0 %"),seasonMetric("Techn. Fehler",errors),seasonMetric("Zeitstrafen",penalties)].join("");
+    $("seasonGameRows").innerHTML=games.map(game=>{const x=seasonGameSummary(game);return `<tr><td>${escapeHtml(game.state.gameName||game.fileName)}</td><td>${x.goals}</td><td>${x.against}</td><td>${x.ownShots}</td><td>${x.shotPct.toFixed(0)} %</td><td>${x.oppShots}</td><td>${x.saves}</td><td>${x.savePct.toFixed(0)} %</td><td>${x.errors}</td></tr>`}).join("")||'<tr><td colspan="9">Keine Spiele ausgewählt.</td></tr>';
+    const players=new Map();
+    for(const game of games){
+      const ownPlayers=game.state[game.ownTeam]?.players||[];
+      for(const player of ownPlayers){const key=seasonPlayerKey(player);if(!key)continue;if(!players.has(key))players.set(key,{label:seasonPlayerLabel(player),games:new Set(),shots:0,goals:0,saves:0,against:0,defense:0,errors:0});players.get(key).games.add(game.id)}
+      for(const event of game.state.events||[]){
+        const key=seasonEventPlayerKey(event,game),p=key?players.get(key):null;if(p){if(["goal","save","miss","block","shot"].includes(event.type)&&event.team===game.ownTeam){p.shots++;if(event.type==="goal")p.goals++}if(event.type==="error"&&event.team===game.ownTeam)p.errors++;if(event.type==="save"&&event.team===game.opponentTeam)p.saves++}
+        if(event.type==="goal"&&event.team===game.opponentTeam){const keeper=(game.state[game.ownTeam]?.players||[]).find(x=>String(x.id)===String(event.againstTwId));const kp=keeper?players.get(seasonPlayerKey(keeper)):null;if(kp)kp.against++}
+        for(const tag of event.playerTags||[]){if(tag.team!==game.ownTeam)continue;const defender=(game.state[game.ownTeam]?.players||[]).find(x=>String(x.id)===String(tag.pId));const dp=defender?players.get(seasonPlayerKey(defender)):null;if(dp)dp.defense++}
+      }
+    }
+    $("seasonPlayerRows").innerHTML=[...players.values()].sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const wp=p.shots?p.goals/p.shots*100:0,tp=(p.saves+p.against)?p.saves/(p.saves+p.against)*100:0;return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.shots}</td><td>${p.goals}</td><td>${p.shots?wp.toFixed(0)+" %":"–"}</td><td>${p.saves}</td><td>${p.against}</td><td>${p.saves+p.against?tp.toFixed(0)+" %":"–"}</td><td>${p.defense}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="10">Keine Spielerdaten vorhanden.</td></tr>';
+  }
+  function renderSeason(){renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
+  $("seasonGameInput").onchange=event=>{const files=[...(event.target.files||[])];event.target.value="";if(files.length)loadSeasonFiles(files)};
+  $("seasonSelectAll").onclick=()=>{seasonGames.forEach(game=>game.selected=true);renderSeason()};
+  $("seasonSelectNone").onclick=()=>{seasonGames.forEach(game=>game.selected=false);renderSeason()};
+  $("seasonClearGames").onclick=()=>{seasonGames=[];renderSeason();toast("Saisonliste geleert")};
+  for(const id of ["seasonTeamFilter","seasonPlayerFilter","seasonTypeFilter","seasonZoneFilter","seasonTargetFilter","seasonPhaseFilter","seasonTagFilter"])$(id).onchange=renderSeasonAnalysis;
+
+  function showTab(name){if(name==="match"&&state.isHistorical)name="analysis";activeTab=name;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));document.querySelectorAll(".tab-pane").forEach(p=>p.classList.toggle("active",p.id===name+"Tab"));const module=$("videoModule"),host=name==="video"?$("videoPlayerHost"):name==="match"?$("matchVideoHost"):null;if(host&&module.parentElement!==host)host.append(module);module.classList.toggle("match-context",name==="match");if(name==="match"){drawingEnabled=false;drawingDraft=null;$("annotationCanvas").classList.remove("drawing");$("drawToggle").classList.remove("selected");$("drawToggle").textContent="Zeichnen"}if(name==="analysis")renderAnalysis();if(name==="season")renderSeason();if(name==="video"){renderAnnotation();renderVideoPlaylist();syncVideoReviewHeight()}if(name==="data")renderDataEditor()}
   document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 
   const internalGameDbName="handball-spielanalyse",internalGameStore="games",internalGameKey="current";
@@ -1004,7 +1160,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=51",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=52",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
