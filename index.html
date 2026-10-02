@@ -73,26 +73,24 @@
     .season-compare-section{min-width:0;max-width:100%;overflow:hidden}
     .season-compare-section .comparison{width:84%;max-width:900px;min-width:0}
     .season-compare-section .compare-row{grid-template-columns:minmax(0,1fr) 108px minmax(0,1fr);gap:8px;min-width:0;width:100%}
-    .season-compare-side{position:relative;display:block;height:24px;min-width:0}
+    .season-compare-side{position:relative;display:block;height:24px;min-width:0;overflow:visible}
     .season-compare-value{position:absolute;top:50%;z-index:2;transform:translateY(-50%);font-size:13px;font-weight:850;white-space:nowrap;font-variant-numeric:tabular-nums}
     .season-compare-track{position:absolute;inset:0;min-width:0;overflow:visible}
     .season-compare-track span{position:absolute;top:4px;width:var(--bar);height:16px;min-width:2px;max-width:82%;background:#163747;border:1.5px solid;border-radius:6px}
     .season-compare-side.own .season-compare-track span{right:0;left:auto;border-color:var(--cyan)}
     .season-compare-side.opponent .season-compare-track span{left:0;right:auto;border-color:#f5a000}
-    .season-compare-side.own .season-compare-value{right:calc(var(--bar) + 6px);text-align:right}
-    .season-compare-side.opponent .season-compare-value{left:6px;text-align:left}
-    .season-compare-side.opponent .season-compare-track span{margin-left:42px}
+    .season-compare-side.own .season-compare-value{right:-40px;text-align:left}
+    .season-compare-side.opponent .season-compare-value{left:calc(var(--bar) + 6px);text-align:left}
     @media(max-width:700px){
       .season-compare-section .comparison{width:96%;max-width:100%}
-      .season-compare-section .compare-row{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr);gap:4px}
+      .season-compare-section .compare-row{grid-template-columns:minmax(0,1fr) 84px minmax(0,1fr);gap:6px}
       .season-compare-section .compare-label{font-size:9px;overflow-wrap:anywhere}
       .season-compare-side{height:20px}
       .season-compare-value{font-size:9px}
       .season-compare-track{height:20px}
       .season-compare-track span{top:3px;height:14px;max-width:78%}
-      .season-compare-side.own .season-compare-value{right:calc(var(--bar) + 4px)}
-      .season-compare-side.opponent .season-compare-value{left:3px}
-      .season-compare-side.opponent .season-compare-track span{margin-left:30px}
+      .season-compare-side.own .season-compare-value{right:-28px}
+      .season-compare-side.opponent .season-compare-value{left:calc(var(--bar) + 4px)}
     }
     @media screen and (min-width:1200px){
       #analysisCompareSection .comparison{width:86%;max-width:1320px;gap:8px}
@@ -1345,7 +1343,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=62",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=63",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
