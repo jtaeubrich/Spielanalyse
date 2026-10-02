@@ -1187,7 +1187,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   $("helpCloseBtn").onclick=()=>$("helpDialog").close();
   $("helpDialog").onclick=event=>{if(event.target===$("helpDialog"))$("helpDialog").close()};
   $("runBtn").onclick=()=>{if(gameRunning){gameBase=currentGameSeconds();gameRunning=false;state.timer.active=false;$("runBtn").textContent="▶ SPIELZEIT STARTEN";$("runBtn").classList.remove("stop")}else{gameStarted=performance.now();gameRunning=true;state.timer.active=true;$("runBtn").textContent="■ SPIELZEIT STOPPEN";$("runBtn").classList.add("stop")}};
-  document.querySelectorAll(".poss").forEach(b=>b.onclick=()=>{state.possession=b.dataset.team;update()});document.querySelectorAll("[data-flow]").forEach(b=>b.onclick=()=>begin(b.dataset.flow));
+  document.querySelectorAll(".poss").forEach(b=>b.onclick=()=>{const team=b.dataset.team;state.possession=team;if(draft&&currentStep==="player"){draft.team=team;draft.attacker=null;draft.assistPId=null;draft.assistChosen=false;draft.keeper=null;if(draft.flow==="shot")configureShotDetailPages();renderPlayers()}update()});document.querySelectorAll("[data-flow]").forEach(b=>b.onclick=()=>begin(b.dataset.flow));
   $("triggerActionBtn").onclick=beginTriggerFlow;$("triggerDecisionShot").onclick=()=>{if(!pendingTriggerAction)return;begin("shot",pendingTriggerAction)};$("triggerDecisionAbort").onclick=()=>{draft=null;pendingTriggerAction=null;showStep("idle");$("flowHint").textContent="Bereit für den nächsten Angriff"};
   document.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>{const x=b.dataset.back;if(x==="idle"){draft=null;pendingTriggerAction=null;showStep("idle")}else showStep(x)});$("commitEvent").onclick=commit;$("commitKey").onclick=keyCommit;
   $("halfBtn").onclick=()=>{if(gameRunning)$("runBtn").click();state.timer.half=state.timer.half===1?2:1;gameBase=0;update()};
@@ -1346,7 +1346,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=66",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=67",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
