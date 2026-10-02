@@ -311,12 +311,32 @@
         </div>
       </section>
       <section class="panel season-card wide"><h2>Übersicht</h2><div class="metric-grid" id="seasonStats"></div></section>
+      <section class="panel viz-card wide">
+        <section><h2>Saisonverlauf</h2><div class="legend" id="seasonTrendLegend"></div><svg class="chart-svg" id="seasonTrend" viewBox="0 0 1000 280" role="img" aria-label="Tore und Gegentore nach Spiel"></svg></section>
+        <section class="team-compare-section"><h2>Team-Vergleich · Saison</h2><div class="legend" id="seasonCompareLegend"></div><div class="comparison" id="seasonCompare"></div></section>
+      </section>
+      <section class="panel viz-card wide">
+        <section><div class="donut-row" id="seasonDonuts"></div></section>
+        <section><h2 style="margin-top:24px">Tore nach Spielsituation</h2><div class="phase-grid" id="seasonPhases"></div></section>
+      </section>
+      <section class="panel viz-card wide print-map-card">
+        <h2>Unsere Offensive · Saison</h2>
+        <p class="editor-help">Aggregierte Abwurfpositionen und Wurfziele aus den ausgewählten Spielen. Die Saisonansicht öffnet bewusst keine Videos.</p>
+        <div class="shotmap-stack"><div class="goal-viz" id="seasonOffenseGoalMap"></div><div class="court-viz" id="seasonOffenseCourtMap"></div></div>
+        <div class="map-legend"><span><i class="legend-swatch success"></i>Grün: Tore</span><span><i class="legend-swatch failure"></i>Rot: Paraden, Fehlwürfe und Blocks</span><span>Prozent: Torquote</span></div>
+      </section>
+      <section class="panel viz-card wide print-map-card">
+        <h2>Unsere Defensive · Saison</h2>
+        <p class="editor-help">Aggregierte gegnerische Würfe auf unser Tor aus den ausgewählten Spielen. Die Saisonansicht öffnet bewusst keine Videos.</p>
+        <div class="shotmap-stack"><div class="goal-viz" id="seasonDefenseGoalMap"></div><div class="court-viz" id="seasonDefenseCourtMap"></div></div>
+        <div class="map-legend"><span><i class="legend-swatch success"></i>Grün: Paraden, Fehlwürfe und Blocks</span><span><i class="legend-swatch failure"></i>Rot: Gegentore</span><span>Prozent: Abwehrerfolg</span></div>
+      </section>
       <section class="panel season-card wide">
         <h2>Verlauf nach Spiel</h2>
         <div style="overflow:auto"><table class="stats-table"><thead><tr><th>Spiel</th><th>Tore</th><th>Gegentore</th><th>Eigene Würfe</th><th>Wurfquote</th><th>Gegnerische Würfe</th><th>Paraden</th><th>TW-Quote</th><th>Techn. Fehler</th></tr></thead><tbody id="seasonGameRows"></tbody></table></div>
       </section>
       <section class="panel season-card wide">
-        <h2>Spieler & Torhüter</h2>
+        <h2>Eigene Spieler & Torhüter</h2>
         <div style="overflow:auto"><table class="stats-table"><thead><tr><th>Spieler</th><th>Spiele</th><th>Würfe</th><th>Tore</th><th>Wurfquote</th><th>Paraden</th><th>Gegentore</th><th>TW-Quote</th><th>Abwehraktionen</th><th>Techn. Fehler</th></tr></thead><tbody id="seasonPlayerRows"></tbody></table></div>
       </section>
     </div>
@@ -390,7 +410,7 @@
       <p>Der Analyse-Tab wertet die gespeicherten Ereignisse aus. Filter können nach Team, Spieler, Ereignistyp, Abwurfposition, Wurfziel und Spielsituation gesetzt werden.</p>
       <ul><li>Übersicht über Tore, Würfe, Paraden und technische Fehler.</li><li>Spielverlauf und Teamvergleich.</li><li>Wurf- und Torwartauswertungen nach Position und Ziel.</li><li>Spielerstatistiken und Torwartquote.</li><li>Gefilterte Szenen können direkt an den Video-Tab übergeben werden.</li><li>Die Analyse kann als PDF ausgegeben werden.</li></ul>
     </section>
-    <section class="help-section" id="helpSeason"><h3>Saison</h3><p>Im Saison-Tab können mehrere Spiel-JSONs gleichzeitig geladen und ausgewählt werden. Filter und Statistiken werden über die ausgewählten Spiele aggregiert. Die Originaldateien werden dabei nicht verändert; Video bleibt bewusst spielbezogen.</p></section>
+    <section class="help-section" id="helpSeason"><h3>Saison</h3><p>Im Saison-Tab können mehrere Spiel-JSONs gleichzeitig geladen und ausgewählt werden. Filter, grafische Übersichten, Wurfkarten und Statistiken werden über die ausgewählten Spiele aggregiert. Die Spielertabelle enthält ausschließlich das eigene Team. Die Originaldateien werden dabei nicht verändert; Video bleibt bewusst spielbezogen.</p></section>
     <section class="help-section" id="helpVideo">
       <h3>Video</h3>
       <p>Im Video-Tab können ein lokales Video oder ein YouTube-Video geladen und mit den Spielereignissen verknüpft werden.</p>
@@ -625,6 +645,62 @@
       const wrap=document.createElement("div"),strong=document.createElement("strong"),meta=document.createElement("div");strong.textContent=game.state.gameName||game.fileName;meta.className="season-game-meta";meta.textContent=`${game.state[game.ownTeam]?.name||"Mein Team"} · ${game.state[game.opponentTeam]?.name||"Gegner"} · ${(game.state.events||[]).length} Events`;wrap.append(strong,meta);label.append(check,wrap);host.append(label)
     }
   }
+
+  function seasonShotEntries(role="all"){
+    const teamFilter=$("seasonTeamFilter")?.value||"all",player=$("seasonPlayerFilter")?.value||"all",zone=$("seasonZoneFilter")?.value||"all",target=$("seasonTargetFilter")?.value||"all",phase=$("seasonPhaseFilter")?.value||"all",tag=$("seasonTagFilter")?.value||"all",out=[];
+    for(const game of selectedSeasonGames())for(const event of game.state.events||[]){
+      if(!["shot","goal","save","miss","block"].includes(event.type))continue;
+      const attackTeam=event.type==="save"||event.type==="block"?(event.team==="home"?"away":"home"):event.team;
+      const wanted=role==="own"?game.ownTeam:role==="opponent"?game.opponentTeam:null;
+      if(wanted&&attackTeam!==wanted)continue;
+      if(teamFilter!=="all"&&!seasonEventMatchesTeam(event,game,teamFilter))continue;
+      if(!seasonEventMatchesPlayer(event,game,player)||!seasonDimension(event.z,zone)||!seasonDimension(event.gz,target)||!seasonDimension(event.attackPhase,phase))continue;
+      const tags=Array.isArray(event.tags)?event.tags.map(String):[];if(tag!=="all"&&!tags.includes(tag))continue;
+      out.push({game,event});
+    }
+    return out;
+  }
+  function seasonTeamAggregate(role){
+    let shots=0,decided=0,goals=0,misses=0,saves=0,against=0,errors=0,blocks=0,steals=0;
+    for(const game of selectedSeasonGames()){
+      const team=role==="own"?game.ownTeam:game.opponentTeam,opp=team==="home"?"away":"home",events=game.state.events||[];
+      const teamShots=events.filter(e=>{const attack=e.type==="save"||e.type==="block"?(e.team==="home"?"away":"home"):e.team;return ["shot","goal","save","miss","block"].includes(e.type)&&attack===team});
+      shots+=teamShots.length;decided+=teamShots.filter(e=>e.type!=="shot").length;goals+=teamShots.filter(e=>e.type==="goal").length;misses+=teamShots.filter(e=>e.type==="miss").length;
+      saves+=events.filter(e=>e.type==="save"&&e.team===team).length;against+=events.filter(e=>e.type==="goal"&&e.team===opp).length;errors+=events.filter(e=>e.type==="error"&&e.team===team).length;blocks+=events.filter(e=>e.type==="block"&&e.team===team).length;steals+=events.filter(e=>e.type==="steal"&&e.team===team).length;
+    }
+    return{goals,misses,shotRate:pct(goals,decided),attackEff:pct(goals,decided+errors),saves,saveRate:pct(saves,saves+against),steals,blocks,errors};
+  }
+  function renderSeasonTrend(){
+    const games=selectedSeasonGames(),svg=$("seasonTrend"),maxScore=Math.max(1,...games.flatMap(game=>{const x=seasonGameSummary(game);return[x.goals,x.against]})),count=Math.max(1,games.length-1),own=[],opp=[];
+    games.forEach((game,index)=>{const x=55+(games.length===1?.5:index/count)*910,m=seasonGameSummary(game);own.push([x,245-m.goals/maxScore*190]);opp.push([x,245-m.against/maxScore*190])});
+    const grid=[0,1,2,3,4].map(i=>`<line class="chart-grid" x1="55" y1="${245-i*47.5}" x2="965" y2="${245-i*47.5}"/>`).join(""),path=pts=>pts.map((p,i)=>(i?"L":"M")+p.join(" ")).join(" "),dots=(pts,cls)=>pts.map(p=>`<circle class="${cls}" cx="${p[0]}" cy="${p[1]}" r="4"/>`).join("");
+    svg.innerHTML=games.length?`${grid}<path class="chart-home" d="${path(own)}"/><path class="chart-away" d="${path(opp)}"/>${dots(own,"chart-dot-home")}${dots(opp,"chart-dot-away")}<text class="chart-axis" x="55" y="268">Spiel 1</text><text class="chart-axis" x="900" y="268">Spiel ${games.length}</text>`:'<text class="chart-axis" x="410" y="145">Keine Spiele ausgewählt</text>';
+    $("seasonTrendLegend").innerHTML='<span><i style="background:var(--cyan)"></i>Eigene Tore</span><span><i style="background:#f5a000"></i>Gegentore</span>';
+  }
+  function renderSeasonComparison(){
+    const own=seasonTeamAggregate("own"),opp=seasonTeamAggregate("opponent"),rows=[["Tore","goals",""],["Fehlwürfe","misses",""],["Wurfquote","shotRate","%"],["Angriffseff.","attackEff","%"],["Paraden","saves",""],["Paraden-Quote","saveRate","%"],["Steals","steals",""],["Blocks","blocks",""],["Fehler","errors",""]];
+    $("seasonCompareLegend").innerHTML='<span><i style="background:var(--cyan)"></i>Mein Team</span><span><i style="background:#f5a000"></i>Gegner</span>';
+    $("seasonCompare").innerHTML=rows.map(([label,key,suffix])=>{const scale=suffix==="%"?100:Math.max(1,own[key],opp[key]),left=Math.min(100,own[key]/scale*100),right=Math.min(100,opp[key]/scale*100);return `<div class="compare-row"><div class="bar-left" style="--bar:${left}%"><b>${own[key]}${suffix}</b><span></span></div><div class="compare-label">${label}</div><div class="bar-right" style="--bar:${right}%"><span></span><b>${opp[key]}${suffix}</b></div></div>`}).join("");
+  }
+  function renderSeasonDonuts(){
+    const ownShots=seasonShotEntries("own").map(x=>x.event),oppShots=seasonShotEntries("opponent").map(x=>x.event),decided=ownShots.filter(e=>e.type!=="shot"),goals=ownShots.filter(e=>e.type==="goal").length;
+    let errors=0;for(const game of selectedSeasonGames())errors+=(game.state.events||[]).filter(e=>e.type==="error"&&e.team===game.ownTeam).length;
+    const saves=oppShots.filter(e=>e.type==="save").length,against=oppShots.filter(e=>e.type==="goal").length,items=[["Wurfquote",pct(goals,decided.length),"Offensive"],["Angriffseffektivität",pct(goals,decided.length+errors),`${decided.length+errors} auswertbare Angriffe`],["Paraden",pct(saves,saves+against),"Defensive"]];
+    $("seasonDonuts").innerHTML=items.map(([label,value,sub],i)=>`<div class="donut-wrap"><h3>${label}</h3><div class="donut" style="--value:${value};--ring:${i===1?'#f5a000':'var(--green)'}"><strong>${value}%</strong></div><small>${sub}</small></div>`).join("");
+  }
+  function renderSeasonPhases(){
+    const shots=seasonShotEntries("own").map(x=>x.event),phases=attackPhases.concat([["7-Meter","7-Meter"]]);
+    $("seasonPhases").innerHTML=phases.map(([value,label])=>{const ps=shots.filter(e=>(e.z==="7M"?"7-Meter":e.attackPhase)===value),decided=ps.filter(e=>e.type!=="shot"),g=ps.filter(e=>e.type==="goal").length;return `<div class="phase-stat"><strong>${g} / ${decided.length}</strong><b>${pct(g,decided.length)}%</b><span>${label}</span></div>`}).join("");
+  }
+  function renderSeasonShotMaps(){
+    const renderStatic=(shots,goalId,courtId,mode)=>{
+      renderShotMap(shots,goalId,courtId,mode,mode==="offense"?"own":"opponent");
+      for(const id of [goalId,courtId]){const host=$(id),clone=host.cloneNode(true);host.replaceWith(clone)}
+    };
+    renderStatic(seasonShotEntries("own").map(x=>x.event),"seasonOffenseGoalMap","seasonOffenseCourtMap","offense");
+    renderStatic(seasonShotEntries("opponent").map(x=>x.event),"seasonDefenseGoalMap","seasonDefenseCourtMap","defense");
+  }
+  function renderSeasonGraphics(){renderSeasonTrend();renderSeasonComparison();renderSeasonDonuts();renderSeasonPhases();renderSeasonShotMaps()}
   function renderSeasonAnalysis(){
     const games=selectedSeasonGames(),entries=seasonFilteredEntries(),events=entries.map(x=>x.event);
     $("seasonStatus").textContent=`${games.length} von ${seasonGames.length} Spielen ausgewählt`;
@@ -642,6 +718,7 @@
       }
     }
     $("seasonPlayerRows").innerHTML=[...players.values()].sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const wp=p.shots?p.goals/p.shots*100:0,tp=(p.saves+p.against)?p.saves/(p.saves+p.against)*100:0;return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.shots}</td><td>${p.goals}</td><td>${p.shots?wp.toFixed(0)+" %":"–"}</td><td>${p.saves}</td><td>${p.against}</td><td>${p.saves+p.against?tp.toFixed(0)+" %":"–"}</td><td>${p.defense}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="10">Keine Spielerdaten vorhanden.</td></tr>';
+    renderSeasonGraphics();
   }
   function renderSeason(){renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
   $("seasonGameInput").onchange=event=>{const files=[...(event.target.files||[])];event.target.value="";if(files.length)loadSeasonFiles(files)};
@@ -1160,7 +1237,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=52",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=53",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
