@@ -66,23 +66,24 @@
     .season-compare-head h2{margin-bottom:0}
     .season-compare-toggle{display:flex;gap:4px}
     .season-compare-toggle .selected{border-color:var(--cyan);background:#123d4c;color:#fff}
-    .season-compare-section{min-width:0}
-    .season-compare-section .comparison{width:90%;max-width:1060px;min-width:0}
-    .season-compare-section .compare-row{grid-template-columns:minmax(130px,1fr) 118px minmax(130px,1fr);gap:8px;min-width:0}
-    .season-compare-section .bar-left,.season-compare-section .bar-right{height:24px;font-size:13px;min-width:0;overflow:visible}
-    .season-compare-section .bar-left span,.season-compare-section .bar-right span{top:4px;height:16px;max-width:calc(100% - 48px)}
-    .season-compare-section .bar-left b,.season-compare-section .bar-right b{min-width:38px}
-    .season-compare-section .bar-left b{right:calc(min(var(--bar),calc(100% - 48px)) + 6px)}
-    .season-compare-section .bar-right b{left:calc(min(var(--bar),calc(100% - 48px)) + 6px)}
+    .season-page,.season-page>*{min-width:0;max-width:100%}
+    .season-compare-section{min-width:0;max-width:100%;overflow:hidden}
+    .season-compare-section .comparison{width:88%;max-width:980px;min-width:0}
+    .season-compare-section .compare-row{grid-template-columns:minmax(0,1fr) 108px minmax(0,1fr);gap:8px;min-width:0;width:100%}
+    .season-compare-side{display:grid;grid-template-columns:44px minmax(0,1fr);gap:6px;align-items:center;min-width:0}
+    .season-compare-value{font-size:13px;font-weight:850;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+    .season-compare-track{position:relative;height:24px;min-width:0;overflow:hidden}
+    .season-compare-track span{position:absolute;left:0;top:4px;width:var(--bar);height:16px;min-width:2px;max-width:100%;background:#163747;border:1.5px solid;border-radius:6px}
+    .season-compare-side.own .season-compare-track span{border-color:var(--cyan)}
+    .season-compare-side.opponent .season-compare-track span{border-color:#f5a000}
     @media(max-width:700px){
-      .season-compare-section .comparison{width:96%}
-      .season-compare-section .compare-row{grid-template-columns:minmax(86px,1fr) 82px minmax(86px,1fr);gap:4px}
-      .season-compare-section .compare-label{font-size:10px}
-      .season-compare-section .bar-left,.season-compare-section .bar-right{font-size:10px}
-      .season-compare-section .bar-left b,.season-compare-section .bar-right b{min-width:28px}
-      .season-compare-section .bar-left span,.season-compare-section .bar-right span{max-width:calc(100% - 36px)}
-      .season-compare-section .bar-left b{right:calc(min(var(--bar),calc(100% - 36px)) + 4px)}
-      .season-compare-section .bar-right b{left:calc(min(var(--bar),calc(100% - 36px)) + 4px)}
+      .season-compare-section .comparison{width:100%;max-width:100%}
+      .season-compare-section .compare-row{grid-template-columns:minmax(0,1fr) 76px minmax(0,1fr);gap:4px}
+      .season-compare-section .compare-label{font-size:9px;overflow-wrap:anywhere}
+      .season-compare-side{grid-template-columns:32px minmax(0,1fr);gap:3px}
+      .season-compare-value{font-size:9px}
+      .season-compare-track{height:20px}
+      .season-compare-track span{top:3px;height:14px}
     }
     @media screen and (min-width:1200px){
       #analysisCompareSection .comparison{width:86%;max-width:1320px;gap:8px}
@@ -104,6 +105,7 @@
     .annotation-tools-toggle{display:none}
     .video-pane.match-context .annotation-section{display:none!important}
     @media(max-width:760px){
+      html,body{max-width:100%;overflow-x:hidden}
       body{font-size:12.5px;line-height:1.28}
       .app{padding:4px;padding-top:max(4px,env(safe-area-inset-top));padding-right:max(4px,env(safe-area-inset-right));padding-bottom:max(4px,env(safe-area-inset-bottom));padding-left:max(4px,env(safe-area-inset-left))}
       .top{gap:5px;margin-bottom:5px}
@@ -702,13 +704,15 @@
   function renderSeasonComparison(){
     const own=seasonTeamAggregate("own"),opp=seasonTeamAggregate("opponent"),games=Math.max(1,selectedSeasonGames().length),average=seasonCompareMode==="average";
     const rows=[["Tore","goals","count"],["Fehlwürfe","misses","count"],["Wurfquote","shotRate","percent"],["Angriffseff.","attackEff","percent"],["Paraden","saves","count"],["Paraden-Quote","saveRate","percent"],["Steals","steals","count"],["Blocks","blocks","count"],["Fehler","errors","count"],["Strafen (2 Min.)","penalties","count"]];
+    const displayValue=(data,key,kind)=>kind==="count"&&average?data[key]/games:data[key];
+    const values=rows.flatMap(([,key,kind])=>[displayValue(own,key,kind),displayValue(opp,key,kind)]);
+    const scale=Math.max(100,...values.map(v=>Number(v)||0));
+    const format=(value,kind)=>kind==="percent"?Math.round(value)+"%":average?value.toFixed(1):String(Math.round(value));
     $("seasonCompareLegend").innerHTML='<span><i style="background:var(--cyan)"></i>Mein Team</span><span><i style="background:#f5a000"></i>Gegner</span>';
     $("seasonCompareAbsolute").classList.toggle("selected",!average);$("seasonCompareAverage").classList.toggle("selected",average);
     $("seasonCompare").innerHTML=rows.map(([label,key,kind])=>{
-      const leftValue=kind==="count"&&average?own[key]/games:own[key],rightValue=kind==="count"&&average?opp[key]/games:opp[key];
-      const scale=Math.max(1,leftValue,rightValue),maxBar=82,left=Math.min(maxBar,leftValue/scale*maxBar),right=Math.min(maxBar,rightValue/scale*maxBar);
-      const format=value=>kind==="percent"?Math.round(value)+"%":average?value.toFixed(1):String(Math.round(value));
-      return `<div class="compare-row"><div class="bar-left" style="--bar:${left}%"><b>${format(leftValue)}</b><span></span></div><div class="compare-label">${label}</div><div class="bar-right" style="--bar:${right}%"><span></span><b>${format(rightValue)}</b></div></div>`
+      const leftValue=displayValue(own,key,kind),rightValue=displayValue(opp,key,kind),left=Math.min(100,leftValue/scale*100),right=Math.min(100,rightValue/scale*100);
+      return `<div class="compare-row"><div class="season-compare-side own"><b class="season-compare-value">${format(leftValue,kind)}</b><div class="season-compare-track" style="--bar:${left}%"><span></span></div></div><div class="compare-label">${label}</div><div class="season-compare-side opponent"><b class="season-compare-value">${format(rightValue,kind)}</b><div class="season-compare-track" style="--bar:${right}%"><span></span></div></div></div>`
     }).join("");
   }
   function renderSeasonDonuts(){
@@ -1303,7 +1307,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=58",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=59",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
