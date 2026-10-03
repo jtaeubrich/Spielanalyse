@@ -496,7 +496,7 @@
     </section>
     <section class="help-section" id="helpFiles">
       <h3>Dateien, Speichern & PWA</h3>
-      <p><strong>Überzahl / Unterzahl:</strong> Die Analyse wird aus den Zeitstempeln der erfassten 2-Minuten-, 2+2-, Rot- und Blau-Ereignisse abgeleitet. Die Spielerzahl-Tabelle unterscheidet die tatsächlich rekonstruierbaren Konstellationen (z. B. 6:5 oder 5:4). Angriffe werden über Ereignisse mit <code>endedPossessionOf</code> gezählt.</p><p><strong>Spiel speichern</strong> aktualisiert eine bereits geöffnete Datei, sofern der Browser den File System Access unterstützt. <strong>Kopie exportieren</strong> erzeugt eine neue JSON-Datei.</p>
+      <p><strong>Überzahl / Unterzahl:</strong> Die Analyse wird aus den Zeitstempeln der erfassten 2-Minuten-, 2+2-, Rot- und Blau-Ereignisse abgeleitet. Die Spielerzahl-Tabelle unterscheidet die tatsächlich rekonstruierbaren Konstellationen (z. B. 6:5 oder 5:4). Angriffe werden konsistent zur normalen Angriffseffektivität als Torabschluss (Tor, Parade, Fehlwurf oder Block) oder technischer Fehler gezählt.</p><p><strong>Spiel speichern</strong> aktualisiert eine bereits geöffnete Datei, sofern der Browser den File System Access unterstützt. <strong>Kopie exportieren</strong> erzeugt eine neue JSON-Datei.</p>
       <p>Auf iPhone/iPad kann das Speichern je nach Browser/PWA als Download erfolgen. Die App speichert zusätzlich automatisch einen internen Zwischenstand, damit ein laufendes Spiel nach einem Neustart wiederhergestellt werden kann.</p>
       <p>Globale Einstellungen für Tags, Deckungen und Auslösehandlungen können separat als JSON-Datei gespeichert und auf ein anderes Gerät übertragen werden.</p>
     </section>
@@ -950,11 +950,13 @@
     for(let i=0;i<points.length-1;i++){const start=points[i],end=points[i+1],seconds=end-start;if(seconds<=0)continue;const active=activeAt(start+.0001);for(const team of ["home","away"]){const st=strength(team,active);if(st.mode==="even")continue;if(st.mode==="powerPlay")stats[team].powerPlaySeconds+=seconds;else stats[team].shortHandedSeconds+=seconds;strengthBucket(team,st.key).seconds+=seconds}}
     for(const {event,index} of events){
       const time=Math.max(0,Number(event.time)||0),eventReal=Number(event.realTime),active=activeAt(time,eventReal,index);
+      const attackingTeam=["save","block"].includes(event.type)?(event.endedPossessionOf||(["home","away"].includes(event.team)?(event.team==="home"?"away":"home"):null)):event.team;
+      const countsAsAttackEnd=["goal","miss","save","block","error"].includes(event.type);
       for(const team of ["home","away"]){
         const st=strength(team,active);if(st.mode==="even")continue;const bucket=strengthBucket(team,st.key),other=team==="home"?"away":"home";
         if(event.type==="goal"&&event.team===team){bucket.goalsFor++;if(st.mode==="powerPlay")stats[team].powerPlayGoals++;else stats[team].shortHandedGoals++}
         if(event.type==="goal"&&event.team===other){bucket.goalsAgainst++;if(st.mode==="powerPlay")stats[team].powerPlayAgainstGoals++;else stats[team].shortHandedAgainstGoals++}
-        if(event.endedPossessionOf===team){bucket.attacks++;if(st.mode==="powerPlay")stats[team].powerPlayAttacks++;else stats[team].shortHandedAttacks++}
+        if(countsAsAttackEnd&&attackingTeam===team){bucket.attacks++;if(st.mode==="powerPlay")stats[team].powerPlayAttacks++;else stats[team].shortHandedAttacks++}
       }
     }
     for(const team of ["home","away"]){const x=stats[team];x.powerPlayAttackEff=pct(x.powerPlayGoals,x.powerPlayAttacks);x.shortHandedAttackEff=pct(x.shortHandedGoals,x.shortHandedAttacks);x.powerPlayNet=x.powerPlayGoals-x.powerPlayAgainstGoals;x.shortHandedNet=x.shortHandedGoals-x.shortHandedAgainstGoals;x.powerPlayNetPer2=x.powerPlaySeconds?x.powerPlayNet*120/x.powerPlaySeconds:0;x.shortHandedNetPer2=x.shortHandedSeconds?x.shortHandedNet*120/x.shortHandedSeconds:0}
@@ -1432,7 +1434,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=68",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=69",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
