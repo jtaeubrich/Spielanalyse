@@ -57,8 +57,9 @@
     .match-review-mode #matchReviewCaptureHost>#idleStep>h2{margin-top:0}
     @media(max-width:1099px){
       .match-review-mode #matchReviewTopHost>.time-management>.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .match-review-mode #matchGrid{grid-template-columns:1fr}
-      .match-review-mode #matchGrid>.side>.events .eventlist{max-height:320px}
+      .match-review-mode #matchGrid{grid-template-columns:minmax(0,var(--video-share,62%)) minmax(132px,1fr);gap:8px}
+      .match-review-mode #matchGrid>.side>.events{padding:8px}
+      .match-review-mode #matchGrid>.side>.events .eventlist{max-height:48vh}
       .match-review-mode #matchReviewEventEditorHost{display:block!important;margin-top:12px}
       .match-review-mode #matchReviewEventEditorHost>.event-editor{margin:0;padding-top:12px;border-top:1px solid var(--line)}
     }
@@ -271,7 +272,22 @@
       .print-report-header{display:block!important;grid-column:1/-1;padding:0 0 5mm;border-bottom:2px solid var(--cyan)}.print-report-header h1{margin:0;font-size:24px}.print-report-header strong{color:var(--cyan);font-size:18px}.print-report-header p{margin:3px 0 0;color:var(--muted);font-size:11px}
       .panel{box-shadow:none!important;break-inside:avoid-page;border-radius:12px}.analysis-card,.viz-card{padding:10px!important}.chart-svg{min-height:0;max-height:165mm;margin-inline:auto}.metric-grid{grid-template-columns:repeat(5,1fr)!important}.metric{padding:8px!important}.metric strong{font-size:20px!important}#analysisProgressCard{display:contents!important}#analysisTrendSection,#analysisCompareSection{grid-column:1/-1;width:100%;margin:0 auto;background:linear-gradient(145deg,#10202bfa,#0b1720fa);border:1px solid var(--line);border-radius:12px;padding:10px;break-inside:avoid-page}#analysisCompareSection{margin-top:0!important;padding-top:10px!important}.comparison{width:min(820px,100%)!important;margin:12px auto 0!important}.donut-row{grid-template-columns:repeat(3,minmax(130px,1fr))!important}.phase-grid{grid-template-columns:repeat(5,minmax(110px,1fr))!important}.compare-row{grid-template-columns:minmax(180px,1fr) 112px minmax(180px,1fr)!important}.goal-viz{grid-template-columns:52px minmax(150px,1fr) 52px!important;grid-template-rows:52px auto!important}.analysis-goal-inner{min-height:240px!important}.shotmap-stack{gap:8mm!important}.goal-viz,.court-viz{max-width:155mm!important}#analysisDetailCard,.print-map-card,.team-player-card{grid-column:1/-1!important;width:100%;margin-inline:auto}.team-player-card{overflow:visible;break-inside:auto!important}.team-player-card>div{overflow:visible!important}.stats-table{font-size:11px}.stats-table thead{display:table-header-group}.stats-table tr{break-inside:avoid-page;page-break-inside:avoid}.stats-table th,.stats-table td{padding:5px!important}.print-excluded{display:none!important}.print-page-start{break-before:page;page-break-before:always}.print-map-card{break-inside:avoid-page}.print-map-card .shotmap-stack{flex-direction:row!important;align-items:flex-start!important;justify-content:center!important;gap:12px!important}.print-map-card .goal-viz,.print-map-card .court-viz{width:min(48%,125mm)!important;max-width:125mm!important}
     }
-  @media(max-width:560px){.video-event-data-grid{grid-template-columns:1fr}.video-event-data-grid .wide{grid-column:auto}}</style>
+  @media(max-width:560px){.video-event-data-grid{grid-template-columns:1fr}.video-event-data-grid .wide{grid-column:auto}}
+    .match-review-mode #videoSize{min-width:90px}
+    .match-review-mode .video-size{display:flex!important;margin-top:8px}
+    @media(max-width:700px){
+      .match-review-mode #matchGrid{grid-template-columns:minmax(0,var(--video-share,60%)) minmax(118px,1fr);gap:5px}
+      .match-review-mode #matchGrid>.side>.events{padding:5px;border-radius:12px}
+      .match-review-mode #matchGrid>.side>.events .clockhead{margin-bottom:5px!important}
+      .match-review-mode #matchGrid>.side>.events .clockhead .label{font-size:9px}
+      .match-review-mode #matchGrid>.side>.events .eventlist{max-height:42vh;gap:3px}
+      .match-review-mode #matchGrid>.side>.events .event{grid-template-columns:38px 1fr auto;gap:3px;padding:5px;font-size:9px}
+      .match-review-mode #matchGrid>.side>.events .eventmeta{font-size:8px}
+      .match-review-mode #matchGrid>.side>.events .delete{font-size:15px}
+      .match-review-mode .video-size{font-size:10px;gap:5px}
+      .match-review-mode .video-size output{min-width:34px}
+    }
+</style>
 </head>
 <body>
 <div class="app">
@@ -331,7 +347,7 @@
         <div class="annotation-section" id="annotationSection"><button class="btn annotation-tools-toggle" id="annotationToolsToggle" type="button" aria-expanded="false"><span>Zeichenwerkzeuge</span><span aria-hidden="true">▾</span></button><div class="annotation-toolbar" aria-label="Videoannotation"><button class="btn" id="drawToggle" type="button">Zeichnen</button><select class="field" id="drawTool" aria-label="Zeichenwerkzeug"><option value="pen">Freihand</option><option value="arrow">Pfeil</option><option value="circle">Kreis</option></select><input class="field" id="drawColor" type="color" value="#ffca55" aria-label="Zeichenfarbe"><button class="btn" id="undoDrawing" type="button">Zeichnung zurück</button><button class="btn danger" id="clearDrawing" type="button">Zeichnung löschen</button></div></div>
         <div class="video-control-groups" aria-label="Videosteuerung"><div class="video-control-group"><span class="video-control-label">Tempo</span><div class="video-controls"><button class="btn" data-rate="0.5">0,5×</button><button class="btn selected" data-rate="1">1×</button><button class="btn" data-rate="1.25">1,25×</button><button class="btn" data-rate="1.5">1,5×</button></div></div><div class="video-control-group"><span class="video-control-label">Abspielposition</span><div class="video-controls"><button class="btn" type="button" data-video-seek="-5" aria-label="5 Sekunden zurück">−5 s</button><button class="btn" type="button" data-video-seek="-1" aria-label="1 Sekunde zurück">−1 s</button><button class="btn" type="button" data-video-seek="1" aria-label="1 Sekunde vor">+1 s</button><button class="btn" type="button" data-video-seek="5" aria-label="5 Sekunden vor">+5 s</button></div></div></div>
         <div class="match-review-sync" aria-label="Video mit Live-Ereignissen synchronisieren"><button class="btn" id="matchMarkH1" type="button">Anpfiff H1 setzen</button><button class="btn" id="matchMarkH2" type="button">Anpfiff H2 setzen</button><span class="sync-state" id="matchSyncState">H1: nicht gesetzt · H2: nicht gesetzt</span></div>
-        <label class="video-size" for="videoSize"><span>Videobreite</span><input id="videoSize" type="range" min="42" max="68" value="56"><output id="videoSizeValue">56 %</output></label>
+        <label class="video-size" for="videoSize"><span>Videobreite</span><input id="videoSize" type="range" min="45" max="72" value="60"><output id="videoSizeValue">56 %</output></label>
         <div class="match-review-window" id="matchReviewWindow">
           <strong>Szenenwiedergabe</strong>
           <label>Vorlauf (s)<input class="field" id="matchPreRoll" type="number" min="0" step="0.5" value="4"></label>
@@ -365,7 +381,7 @@
 </div>
       <div class="step" id="triggerStep"><span class="label">Auslösehandlung</span><h2>Auslösehandlung wählen</h2><p>Links eine Auslösehandlung auswählen und anschließend rechts den Torabschluss starten.</p><div class="trigger-picker"><div class="trigger-picker-list" id="triggerActionList"></div><div class="trigger-picker-actions"><button class="choice goal" id="triggerDecisionShot" type="button" disabled>◎ Torabschluss</button><button class="choice error" id="triggerDecisionAbort" type="button">× Abbruch</button></div></div></div>
       <div class="step" id="playerStep"><span class="label">Schritt 1</span><h2>Angreifender Spieler</h2><p id="playerTeamText"></p><div class="players" id="playerList"></div></div>
-      <div class="step" id="locationStep"><span class="label">Torwurf</span><h2>Torwurfdetails</h2><p>Wähle die gewünschten Angaben oder überspringe sie mit „Weiter“.</p><div class="shot-detail-grid shot-placement" id="shotDetailPage1"><section id="shotFieldLocation" data-shot-field="location"><h3>Abwurfort</h3><div class="options" id="locationList"></div><p><strong>Layout der Video-Nachanalyse:</strong> Oben stehen Scouting-Modus, Torhüter, Deckungsformationen, Spielzeit, Videozeit und Ballbesitz. Darunter liegen Video und Ereignisliste nebeneinander. Auf breiten Ansichten steht die Event-Bearbeitung direkt unter der Ereignisliste und die Neuerfassung unter dem Video; auf schmalen Ansichten folgen Event-Bearbeitung und danach die Neuerfassung unter dem Video.</p></section><section id="shotFieldTarget" data-shot-field="target"><h3>Wurfziel</h3><div class="options" id="targetList"></div></section></div></div>
+      <div class="step" id="locationStep"><span class="label">Torwurf</span><h2>Torwurfdetails</h2><p>Wähle die gewünschten Angaben oder überspringe sie mit „Weiter“.</p><div class="shot-detail-grid shot-placement" id="shotDetailPage1"><section id="shotFieldLocation" data-shot-field="location"><h3>Abwurfort</h3><div class="options" id="locationList"></div></section><section id="shotFieldTarget" data-shot-field="target"><h3>Wurfziel</h3><div class="options" id="targetList"></div></section></div></div>
       <div class="step" id="phaseStep"><span class="label">Torwurf</span><h2>Torwurfdetails</h2><p>Wähle die gewünschten Angaben oder überspringe sie mit „Weiter“.</p><div class="shot-detail-grid phase-result-grid" id="shotDetailPage2"><section id="shotFieldPhase" data-shot-field="phase"><h3>Spielsituation</h3><p>Positionsangriff ist vorausgewählt.</p><div class="options" id="phaseList"></div></section><section id="shotFieldResult" data-shot-field="result"><h3>Ergebnis</h3><p>Wie endete der Torwurf?</p><div class="options result-options" id="shotResultList"><button class="option" data-result="goal">Tor</button><button class="option" data-result="save">Parade</button><button class="option" data-result="block">Block</button><button class="option hidden" id="missResultButton" data-result="miss">Fehlwurf</button></div><div class="result-auto hidden" id="missResultHint">Fehlwurf – durch das Wurfziel automatisch erkannt.</div></section><section id="shotFieldAssist" data-shot-field="assist"><h3>Assist</h3><p>Optionaler Assist-Geber bei einem Tor unserer Mannschaft.</p><div class="players compact-players" id="assistList"></div></section></div></div>
       <div class="step" id="shotTagStep"><span class="label">Torwurf</span><h2>Tag auswählen</h2><p>Optional genau einen Tag für diesen Torwurf auswählen.</p><div class="tags" id="shotTagList"></div></div>
       <div class="step" id="errorStep"><span class="label">Schritt 2</span><h2>Technischer Fehler</h2><p>Fehlerart auswählen.</p><div class="options" id="errorList"></div></div>
@@ -1432,9 +1448,9 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function updateRate(){if(!mediaReady())return;const actual=localVideoReady?localVideo.playbackRate:yt.getPlaybackRate();document.querySelectorAll('[data-rate]').forEach(b=>{b.classList.toggle('selected',Number(b.dataset.rate)===actual);b.setAttribute('aria-pressed',String(Number(b.dataset.rate)===actual));});state.video.playbackRate=actual;}
   document.querySelectorAll('[data-rate]').forEach(b=>b.onclick=()=>{if(!mediaReady())return toast('Zuerst ein YouTube- oder lokales Video laden.');const rate=Number(b.dataset.rate);advanceGame();if(localVideoReady)localVideo.playbackRate=rate;else{if(!yt.getAvailablePlaybackRates().includes(rate))return toast('Diese Geschwindigkeit ist für dieses Video nicht verfügbar.');yt.setPlaybackRate(rate)}updateRate();});
   document.querySelectorAll('[data-video-seek]').forEach(button=>button.onclick=()=>{if(!mediaReady())return toast('Zuerst ein YouTube- oder lokales Video laden.');const delta=Number(button.dataset.videoSeek),next=Math.max(0,mediaSeconds()+delta);clipStopAt=null;mediaSeek(next);mediaLast=null;$("videoMessage").textContent=`Video ${delta>0?"+":""}${delta} Sekunden gesprungen.`});
-  function setVideoSize(value){const size=Math.min(68,Math.max(42,Number(value)||56));document.documentElement.style.setProperty('--video-share',size+'%');$("videoSize").value=String(size);$("videoSizeValue").value=size+' %';try{localStorage.setItem('handballMatchFlow.videoSize',String(size))}catch{}}
+  function setVideoSize(value){const size=Math.min(72,Math.max(45,Number(value)||60));document.documentElement.style.setProperty('--video-share',size+'%');$("videoSize").value=String(size);$("videoSizeValue").value=size+' %';try{localStorage.setItem('handballMatchFlow.videoSize',String(size))}catch{}}
   $("videoSize").oninput=e=>setVideoSize(e.target.value);
-  let savedVideoSize=56;try{savedVideoSize=localStorage.getItem('handballMatchFlow.videoSize')||56}catch{}setVideoSize(savedVideoSize);
+  let savedVideoSize=60;try{savedVideoSize=localStorage.getItem('handballMatchFlow.videoSize')||60}catch{}setVideoSize(savedVideoSize);
   function setAnnotationToolsOpen(open){const section=$("annotationSection"),toggle=$("annotationToolsToggle");section.classList.toggle("open",open);toggle.setAttribute("aria-expanded",String(open));toggle.lastElementChild.textContent=open?"▴":"▾";if(!open){drawingEnabled=false;drawingDraft=null;$("annotationCanvas").classList.remove("drawing");$("drawToggle").classList.remove("selected");$("drawToggle").textContent="Zeichnen";renderAnnotation()}}
   $("annotationToolsToggle").onclick=()=>setAnnotationToolsOpen(!$("annotationSection").classList.contains("open"));
   function updateClipExportAvailability(){const disabled=!localVideoReady||exportBusy;for(const id of ["exportSelectedEvents","exportAllEvents","generatePresetClips"]){const button=$(id);if(button)button.disabled=disabled}if(!localVideoReady&&!exportBusy){$("exportStatus").textContent=ytReady?"YouTube-Video geladen. Für den Clip-Export bitte ein lokales Video laden.":"Für den Clip-Export bitte ein lokales Video laden."}}
@@ -1540,7 +1556,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=73",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=74",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
