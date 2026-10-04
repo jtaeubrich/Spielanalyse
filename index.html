@@ -287,6 +287,43 @@
       .match-review-mode .video-size{font-size:10px;gap:5px}
       .match-review-mode .video-size output{min-width:34px}
     }
+
+    /* Video-Nachanalyse: Ereignisse bleiben immer rechts neben dem Video. */
+    body.match-review-mode #matchTab #matchGrid,
+    body.live-mode.match-review-mode #matchTab #matchGrid{
+      display:grid!important;
+      grid-template-columns:minmax(0,var(--video-share,60%)) minmax(118px,1fr)!important;
+      gap:8px!important;
+      align-items:start!important;
+    }
+    body.match-review-mode #matchTab #matchVideoHost{
+      grid-column:1!important;
+      min-width:0!important;
+      width:100%!important;
+    }
+    body.match-review-mode #matchTab #matchGrid>.side{
+      grid-column:2!important;
+      min-width:0!important;
+      width:auto!important;
+      max-width:none!important;
+      margin:0!important;
+      display:block!important;
+    }
+    body.match-review-mode #matchTab #matchGrid>.side>.events{
+      width:100%!important;
+      min-width:0!important;
+      margin:0!important;
+    }
+    body.match-review-mode #matchTab .video-size{
+      display:flex!important;
+    }
+    @media(max-width:700px){
+      body.match-review-mode #matchTab #matchGrid,
+      body.live-mode.match-review-mode #matchTab #matchGrid{
+        grid-template-columns:minmax(0,var(--video-share,60%)) minmax(108px,1fr)!important;
+        gap:5px!important;
+      }
+    }
 </style>
 </head>
 <body>
@@ -1556,7 +1593,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=74",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=75",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
