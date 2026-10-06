@@ -515,7 +515,7 @@
     <div class="video-page">
       <section class="panel video-card video-filter-card">
         <h2>Filter</h2>
-        <div class="filterbar"><select class="field" id="videoTeamFilter"><option value="all">Alle Teams</option><option value="own">Mein Team</option><option value="opponent">Gegner</option></select><select class="field" id="videoPlayerFilter"><option value="all">Alle Spieler</option></select><select class="field" id="videoTypeFilter"><option value="all">Alle Aktionen</option><option value="shot">Alle Würfe</option><option value="goal">Tore</option><option value="save">Paraden</option><option value="miss">Fehlwürfe</option><option value="error">Fehler</option><option value="2min">Strafen</option><option value="keyMoment">Schlüsselmomente</option></select><select class="field" id="videoZoneFilter"><option value="all">Alle Abwurfpositionen</option></select><select class="field" id="videoTargetFilter"><option value="all">Alle Wurfziele</option></select><select class="field" id="videoPhaseFilter"><option value="all">Alle Spielsituationen</option></select><select class="field" id="videoTagFilter"><option value="all">Alle Tags</option><option value="__highlight__">Nur Highlights</option></select></div>
+        <div class="filterbar"><select class="field" id="videoTeamFilter"><option value="all">Alle Teams</option><option value="own">Mein Team</option><option value="opponent">Gegner</option></select><select class="field" id="videoPlayerFilter"><option value="all">Alle Spieler</option></select><select class="field" id="videoTypeFilter"><option value="all">Alle Aktionen</option><option value="shot">Alle Würfe</option><option value="goal">Tore</option><option value="save">Paraden</option><option value="miss">Fehlwürfe</option><option value="defense">Abwehraktionen</option><option value="error">Fehler</option><option value="2min">Strafen</option><option value="keyMoment">Schlüsselmomente</option></select><select class="field" id="videoZoneFilter"><option value="all">Alle Abwurfpositionen</option></select><select class="field" id="videoTargetFilter"><option value="all">Alle Wurfziele</option></select><select class="field" id="videoPhaseFilter"><option value="all">Alle Spielsituationen</option></select><select class="field" id="videoTagFilter"><option value="all">Alle Tags</option><option value="__highlight__">Nur Highlights</option></select></div>
       </section>
       <div class="video-content-grid">
         <div id="videoPlayerHost"></div>
@@ -612,7 +612,7 @@
   let state=structuredClone(baseState), draft=null, ownTeam="away",myTeamLeft=true,analysisMode="live",matchReviewMode=false,activeTab="setup",persistenceReady=false;
   const builtInClipPresets=[
     {id:"standard-goals-by-player",name:"Alle Tore je Spieler",builtIn:true,filters:{team:"own",player:"all",type:"goal",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"player",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Tore_{Spieler}"}},
-    {id:"standard-defense-by-player",name:"Alle Abwehraktionen je Spieler",builtIn:true,filters:{team:"all",player:"all",type:"all",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"defender",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Abwehr_{Spieler}"}},
+    {id:"standard-defense-by-player",name:"Alle Abwehraktionen je Spieler",builtIn:true,filters:{team:"all",player:"all",type:"defense",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"defender",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Abwehr_{Spieler}"}},
     {id:"standard-saves-by-keeper",name:"Alle Paraden je Torwart",builtIn:true,filters:{team:"own",player:"all",type:"save",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"keeper",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Paraden_{Spieler}"}}
   ];
   let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonCompareMode="absolute";
@@ -623,7 +623,7 @@
   const playerName=p=>p?`${p.nr!==null&&p.nr!==undefined&&String(p.nr).trim()!==""?"#"+p.nr+" ":"#? "}${p.vorname||""} ${p.nachname||""}`.trim():"Unbekannt";
   const allPlayers=()=>[...(state.home?.players||[]).map(p=>({...p,team:"home"})),...(state.away?.players||[]).map(p=>({...p,team:"away"}))];
   const getPlayer=id=>allPlayers().find(p=>String(p.id)===String(id));
-  function loadClipPresets(){try{const value=JSON.parse(localStorage.getItem("handballMatchFlow.clipPresets")||"[]");clipPresets=Array.isArray(value)?value.filter(p=>p&&p.id&&p.name):[]}catch{clipPresets=[]}for(const preset of builtInClipPresets)if(!clipPresets.some(item=>item.id===preset.id))clipPresets.push(structuredClone(preset));try{localStorage.setItem("handballMatchFlow.clipPresets",JSON.stringify(clipPresets))}catch{}}
+  function loadClipPresets(){try{const value=JSON.parse(localStorage.getItem("handballMatchFlow.clipPresets")||"[]");clipPresets=Array.isArray(value)?value.filter(p=>p&&p.id&&p.name):[]}catch{clipPresets=[]}for(const preset of builtInClipPresets){const existing=clipPresets.find(item=>item.id===preset.id);if(!existing)clipPresets.push(structuredClone(preset));else if(existing.builtIn&&preset.id==="standard-defense-by-player"&&(existing.filters?.type==="all"||!existing.filters?.type))existing.filters={...existing.filters,type:"defense"}}try{localStorage.setItem("handballMatchFlow.clipPresets",JSON.stringify(clipPresets))}catch{}}
   function saveClipPresets(){try{localStorage.setItem("handballMatchFlow.clipPresets",JSON.stringify(clipPresets))}catch{}renderClipPresetList()}
   loadClipPresets();
   const tagLibraryFormat="handball-match-flow-tags",globalSettingsFormat="handball-match-flow-settings";
@@ -707,7 +707,18 @@
   function renderEvents(){const el=$("eventList"),review=activeTab==="match"&&matchReviewMode,items=review?matchReviewEntries():[...state.events].sort((a,b)=>(b.time||0)-(a.time||0)).slice(0,12).map(event=>({event,index:state.events.indexOf(event),video:eventVideoSeconds(event)}));if(!items.length){el.innerHTML='<div class="empty">'+(review?'Keine Ereignisse mit berechenbarer Videozeit.':'Noch keine Ereignisse erfasst.')+'</div>';return}el.innerHTML=items.map(({event:e,index,video})=>{const jumpable=Number.isFinite(video),current=review&&index===activeVideoEventIndex;return `<div class="event${jumpable?' jumpable':''}${current?' current':''}"${jumpable?` data-event-index="${index}" role="button" tabindex="0" title="Zum Ereignis im Video springen"`:''}><span class="eventtime">${review&&jumpable?fmt(video,true):(e.displayTime||fmt(e.time||0))}</span><div><strong>${eventLabels[e.type]||e.type}</strong><div class="eventmeta">${review?(e.displayTime||fmt(e.time||0))+" · ":""}${escapeHtml(e.pName||e.throwerName||e.note||"")}${e.playerTags?.length?` · Abwehr: ${e.playerTags.map(t=>escapeHtml(t.pName)).join(", ")}`:e.defenderUnknown?" · Abwehr: Unbekannt":""}</div></div><button class="delete" data-id="${e.id}" aria-label="Ereignis löschen">×</button></div>`}).join("");el.querySelectorAll(".event.jumpable").forEach(row=>{const index=Number(row.dataset.eventIndex),jump=()=>review?seekMatchReviewEvent(index):seekEvent(state.events[index]);row.onclick=jump;row.onkeydown=ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();jump()}}});el.querySelectorAll(".delete").forEach(b=>b.onclick=ev=>{ev.stopPropagation();state.events=state.events.filter(e=>String(e.id)!==b.dataset.id);activeVideoEventIndex=null;reviewPinnedEventIndex=null;update()})}
   const eventLabels={shot:"Torwurf",goal:"Tor",save:"Parade",miss:"Fehlwurf",block:"Block",error:"Technischer Fehler",yellow:"Gelbe Karte","2min":"2 Minuten","2plus2":"2+2 Minuten",red:"Rote Karte",blue:"Blaue Karte",keyMoment:"Schlüsselmoment"};
   const eventPlayerIds=e=>new Set([e.pId,e.throwerId,e.attackerId,e.assistPId,e.againstTwId,...(e.playerTags||[]).map(t=>t.pId)].filter(v=>v!==null&&v!==undefined&&v!=="").map(String));
-  const eventMatchesPlayer=(e,id)=>id==="all"||eventPlayerIds(e).has(String(id));
+  const eventDefensePlayerIds=e=>new Set((e.playerTags||[]).map(t=>t.pId).filter(v=>v!==null&&v!==undefined&&v!=="").map(String));
+  const eventAttackPlayerId=e=>["save","block"].includes(e.type)?(e.throwerId??e.attackerId):(e.pId??e.attackerId??e.throwerId);
+  function eventMatchesPlayer(e,id,type="all"){
+    if(id==="all")return true;
+    const pid=String(id);
+    if(type==="defense")return eventDefensePlayerIds(e).has(pid);
+    if(type==="save")return String(e.pId??"")===pid;
+    if(type==="shot"||type==="goal"||type==="miss")return String(eventAttackPlayerId(e)??"")===pid;
+    if(type==="error"||type==="2min")return String(e.pId??"")===pid;
+    if(type==="keyMoment")return eventDefensePlayerIds(e).has(pid)||String(e.pId??"")===pid;
+    return eventPlayerIds(e).has(pid);
+  }
   function eventMatchesRole(e,role){if(role==="all")return true;const team=role==="own"?ownTeam:opponentTeam();return e.team===team||(e.playerTags||[]).some(t=>t.team===team)}
   const eventDefenseNames=e=>(e.playerTags||[]).filter(t=>t.team===ownTeam).map(t=>t.pName||playerName(getPlayer(t.pId)));
   const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
@@ -715,8 +726,8 @@
   const usedEventTags=()=>[...new Set(state.events.flatMap(normalizedTags))].sort((a,b)=>a.localeCompare(b,"de"));
   const eventMatchesTag=(e,tag)=>tag==="all"||(tag==="__highlight__"&&Boolean(e.highlight))||normalizedTags(e).includes(tag);
   const matchesDimension=(value,filter)=>filter==="all"||(filter==="OT"&&["OTL","OTM","OTR"].includes(String(value??"")))||String(value??"")===String(filter);
-  const eventMatchesType=(e,type)=>type==="all"||(type==="shot"&&["shot","goal","miss","save","block"].includes(e.type))||(type==="2min"&&penaltyEventTypes.includes(e.type))||e.type===type;
-  function filteredEvents(team,player,type,zone="all",target="all",phase="all",tag="all"){return state.events.filter(e=>eventMatchesRole(e,team)&&eventMatchesPlayer(e,player)&&eventMatchesType(e,type)&&matchesDimension(e.z,zone)&&matchesDimension(e.gz,target)&&matchesDimension(e.attackPhase,phase)&&eventMatchesTag(e,tag)).sort((a,b)=>(a.time||0)-(b.time||0))}
+  const eventMatchesType=(e,type)=>type==="all"||(type==="shot"&&["shot","goal","miss","save","block"].includes(e.type))||(type==="defense"&&eventDefensePlayerIds(e).size>0)||(type==="2min"&&penaltyEventTypes.includes(e.type))||e.type===type;
+  function filteredEvents(team,player,type,zone="all",target="all",phase="all",tag="all"){return state.events.filter(e=>eventMatchesRole(e,team)&&eventMatchesPlayer(e,player,type)&&eventMatchesType(e,type)&&matchesDimension(e.z,zone)&&matchesDimension(e.gz,target)&&matchesDimension(e.attackPhase,phase)&&eventMatchesTag(e,tag)).sort((a,b)=>(a.time||0)-(b.time||0))}
   function populatePlayerFilter(select,role="all"){const value=select.value||"all",teams=role==="own"?[ownTeam]:role==="opponent"?[opponentTeam()]:[ownTeam,opponentTeam()];select.replaceChildren(new Option("Alle Spieler","all"));for(const team of teams){const group=document.createElement("optgroup");group.label=team===ownTeam?"Mein Team":"Gegner";for(const p of state[team].players||[])group.append(new Option(playerName(p),String(p.id)));select.append(group)}select.value=[...select.options].some(o=>o.value===value)?value:"all"}
   function eventDescription(e){const main=e.type==="save"?e.throwerName||e.pName:e.pName||e.attackerName||e.note||"Ohne Spieler";const defense=eventDefenseNames(e);return{title:eventLabels[e.type]||e.type||"Ereignis",main,defense}}
   function syncPointSeconds(value){if(value===null||value===undefined||value==="")return NaN;return Number(value)/(state.video.syncUnit==="ms"?1000:1)}
@@ -1614,7 +1625,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=80",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=81",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
