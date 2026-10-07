@@ -664,10 +664,22 @@
     <section class="help-section" id="helpSeason"><h3>Saison</h3><p>Im Saison-Tab können mehrere Spiel-JSONs gleichzeitig geladen und ausgewählt werden. Filter, grafische Übersichten, Wurfkarten und Statistiken werden über die ausgewählten Spiele aggregiert. Der Team-Vergleich kann zwischen absoluten Saisonwerten und Durchschnittswerten pro ausgewähltem Spiel umgeschaltet werden. Die Spielertabelle enthält ausschließlich das eigene Team; Feldspieler werden mit Toren/Wurfquote, Torhüter mit Paraden/TW-Quote dargestellt. Strafen werden pro Spieler als 2-Minuten-Einheiten gezählt (2 Min. = 1, 2+2 = 2, Rot = 1). Bereits geladene Spiel-JSONs können durch erneutes Laden automatisch aktualisiert werden; alternativ steht pro Spiel „Aktualisieren“ zur Verfügung. Einzelne Spiele können direkt aus der Saison gelöscht werden. Die Saison wird zusätzlich automatisch lokal in IndexedDB gespeichert und beim nächsten Start wiederhergestellt. Über Saison exportieren/importieren kann sie als einzelne Backup-Datei zwischen Geräten übertragen werden. Die Originaldateien werden dabei nicht verändert; Video bleibt bewusst spielbezogen.</p></section>
     <section class="help-section" id="helpVideo">
       <h3>Video</h3>
-      <p>Im Video-Tab können ein lokales Video oder ein YouTube-Video geladen und mit den Spielereignissen verknüpft werden.</p>
-      <ul><li>Ereignisse können über Filter ausgewählt und direkt angesprungen werden.</li><li>Vor- und Nachlauf bestimmen den sichtbaren Bereich um ein Ereignis.</li><li>Bei lokalen Videos können ausgewählte Szenen als Clips exportiert werden.</li><li>Clip-Vorlagen speichern wiederkehrende Filter- und Exportkonfigurationen.</li><li><strong>Upload-Manifest:</strong> Beim Erzeugen von Clips aus einer Vorlage wird automatisch ein passendes JSON-Manifest erzeugt. Es enthält exakt dieselben Gruppen, Szenen und Dateinamen. Bei Aufteilung nach Spieler, Torwart oder Abwehrspieler wird die dauerhafte Spieler-Playlist direkt zugeordnet.</li><li>Videoannotation erlaubt Zeichnungen und Kommentare für die Nachanalyse.</li></ul>
-      <div class="help-note">Bei YouTube wird das Video über den eingebetteten Player gesteuert. Ein direkter Clip-Export wie bei lokalen Dateien ist derzeit nicht vorgesehen.</div>
-    <p><strong>Ereignis direkt am Video bearbeiten:</strong> Wähle rechts ein Ereignis aus. Unter dem Video können Spielzeit, Videozeit, Team, Ereignisart sowie ereignisspezifische Angaben wie Spieler, Werfer, Torwart, Assist, Spielsituation, Abwurfposition, Wurfziel, Deckung, Auslösehandlung und Abwehrzuordnung korrigiert werden.</p></section>
+      <p>Im Video-Tab können ein lokales Video oder ein YouTube-Video geladen und mit den Spielereignissen verknüpft werden. Ereignisse lassen sich filtern, direkt anspringen und nachträglich bearbeiten.</p>
+      <ul>
+        <li><strong>Vor- und Nachlauf:</strong> bestimmen den sichtbaren Bereich vor und nach einem Ereignis.</li>
+        <li><strong>Direkt-Clip:</strong> Bei einem geladenen lokalen Video erscheint für jedes Ereignis ein aktiver <em>Clip</em>-Button. Ohne lokales Video bleibt er sichtbar, ist aber deaktiviert.</li>
+        <li><strong>Social-Media-Export:</strong> Für einen Einzelclip stehen Original/YouTube (16:9), Instagram Feed (4:5) sowie Reel/Story/Short (9:16) zur Auswahl. Bei 4:5 und 9:16 bleibt das vollständige Spielbild erhalten und wird in einen neutralen Rahmen eingebettet.</li>
+        <li><strong>Beschriftung:</strong> Im Social-Media-Rahmen können Spiel, Aktion, Spieler und Spielzeit eingeblendet werden.</li>
+        <li><strong>Teilen:</strong> Unterstützt das Gerät das Teilen von Dateien, wird der fertige Clip direkt an das systemeigene Teilen-Menü übergeben. Andernfalls wird die Datei gespeichert.</li>
+        <li><strong>Videoproduktion und Clip-Vorlagen:</strong> Diese Funktionen sind als einklappbare Profi-Werkzeuge angeordnet, damit der normale Video-Workflow übersichtlich bleibt.</li>
+        <li><strong>Clip-Vorlagen:</strong> speichern wiederkehrende Filter-, Gruppierungs- und Exportkonfigurationen, z. B. alle Tore je Spieler oder alle Paraden je Torwart.</li>
+        <li><strong>Upload-Manifest:</strong> Beim Erzeugen von Clips aus einer Vorlage wird automatisch ein JSON-Manifest erzeugt. Es enthält Gruppen, Szenen, Zeitbereiche, Dateinamen und Playlist-Ziele für den lokalen Spielanalyse-Companion.</li>
+        <li><strong>Videoannotation:</strong> Zeichnungen und Kommentare können in exportierte Clips eingebrannt werden.</li>
+      </ul>
+      <div class="help-note"><strong>Dateiformat:</strong> Beim Browser-Export wird MP4 bevorzugt, sofern der Browser dies über MediaRecorder unterstützt. Andernfalls kann WebM verwendet werden. Für den plattformübergreifenden Upload erzeugt der lokale Companion MP4 mit H.264/AAC.</div>
+      <div class="help-note">Bei YouTube wird das Video über den eingebetteten Player gesteuert. Ein direkter Clip-Export aus einem eingebetteten YouTube-Video ist nicht vorgesehen; Direkt-Clips benötigen eine lokal geladene Videodatei.</div>
+      <p><strong>Ereignis direkt am Video bearbeiten:</strong> Wähle rechts ein Ereignis aus. Unter dem Video können Spielzeit, Videozeit, Team, Ereignisart sowie ereignisspezifische Angaben wie Spieler, Werfer, Torwart, Assist, Spielsituation, Abwurfposition, Wurfziel, Deckung, Auslösehandlung und Abwehrzuordnung korrigiert werden.</p>
+    </section>
     <section class="help-section" id="helpData">
       <h3>Daten editieren</h3>
       <p>Hier können einzelne gespeicherte Ereignisse nachträglich kontrolliert und korrigiert werden. Filter helfen dabei, bestimmte Teams oder Ereignistypen schnell zu finden.</p>
@@ -1713,7 +1725,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=87",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=88",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
