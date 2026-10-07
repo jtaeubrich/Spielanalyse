@@ -1630,13 +1630,16 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     return{type:"player",key:`player:${stableId}`,playerId:stableId,playerNumber:player.nr??null,playerName:displayName,suggestedPlaylistName:`TSV Kronshagen · ${displayName}`};
   }
   function clipManifestSegment(item){const event=item.event;return{eventId:event.id??null,eventIndex:item.index,eventType:event.type,eventLabel:eventLabels[event.type]||event.type||"Ereignis",gameTime:event.displayTime||fmt(event.time||0),videoTime:item.at,start:item.start,end:item.end,tags:normalizedTags(event),attackPhase:event.attackPhase||null,zone:event.z||null,target:event.gz||null,comment:eventAnnotation(event)?.comment||""}}
+  function clipPresetContentLabel(preset){const type=preset?.filters?.type;if(type==="goal")return"Tore";if(type==="defense")return"Abwehraktionen";if(type==="save")return"Paraden";if(type==="shot")return"Würfe";if(type==="miss")return"Fehlwürfe";return preset?.name||"Clips"}
+  function clipGameDate(){const match=String(state.gameName||"").match(/\b(\d{2}\.\d{2}\.\d{4})\b/);return match?match[1]:""}
+  function clipYoutubeTitle(preset,target=null){const date=clipGameDate(),home=state.home?.name||"Heim",away=state.away?.name||"Gast",content=clipPresetContentLabel(preset),parts=[];if(date)parts.push(date);parts.push(home+" - "+away,content);if(target?.playerName)parts.push(target.playerName);return parts.join(" · ")}
   function buildPresetUploadManifest(preset,groups,results){
     const combined=preset.output?.mode==="combined",outputs=[];
     if(combined){
       const file=results[0]?.name||presetFileBase(preset,{label:preset.name})+".mp4",targets=[...new Map(groups.map(group=>clipManifestPlayerTarget(group,preset)).filter(Boolean).map(target=>[target.key,target])).values()];
-      outputs.push({outputId:"combined",label:preset.name,fileName:file,fileBase:file.replace(/\.[^.]+$/,""),title:`${state.gameName} · ${preset.name}`,visibility:"unlisted",playlistTargets:targets,segments:groups.flatMap(group=>group.entries.map(clipManifestSegment))});
+      outputs.push({outputId:"combined",label:preset.name,fileName:file,fileBase:file.replace(/\.[^.]+$/,""),title:clipYoutubeTitle(preset),visibility:"unlisted",playlistTargets:targets,segments:groups.flatMap(group=>group.entries.map(clipManifestSegment))});
     }else{
-      groups.forEach((group,index)=>{const file=results[index]?.name||presetFileBase(preset,group)+".mp4",target=clipManifestPlayerTarget(group,preset);outputs.push({outputId:String(group.key??index),label:group.label,fileName:file,fileBase:file.replace(/\.[^.]+$/,""),title:`${state.gameName} · ${group.label}`,visibility:"unlisted",playlistTargets:target?[target]:[],segments:group.entries.map(clipManifestSegment)})});
+      groups.forEach((group,index)=>{const file=results[index]?.name||presetFileBase(preset,group)+".mp4",target=clipManifestPlayerTarget(group,preset);outputs.push({outputId:String(group.key??index),label:group.label,fileName:file,fileBase:file.replace(/\.[^.]+$/,""),title:clipYoutubeTitle(preset,target),visibility:"unlisted",playlistTargets:target?[target]:[],segments:group.entries.map(clipManifestSegment)})});
     }
     const fileName=safeFileBase()+"_"+preset.name.replace(/[^a-z0-9äöüß_-]+/gi,"_")+"_upload_manifest.json";
     return{format:"handball-match-flow-clip-upload-manifest",version:1,fileName,createdAt:new Date().toISOString(),game:{name:state.gameName,ownTeam:state[ownTeam]?.name||"Mein Team",opponent:state[opponentTeam()]?.name||"Gegner",durationPerHalf:Number(state.timer.duration)||null},source:{localFileName:state.video.localFileName||state.videoFileName||null,youtubeId:state.video.youtubeId||null,youtubeUrl:state.video.youtubeUrl||null},preset,outputs};
@@ -1687,7 +1690,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=83",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=84",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
