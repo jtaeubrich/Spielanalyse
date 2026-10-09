@@ -411,19 +411,19 @@
         <p class="number-help">„Mein Team“ wird beim Laden anhand des Mannschaftsnamens TSV Kronshagen zugeordnet.</p>
       </div>
       <div class="panel setup-card">
-        <h2>Handball360 / handball.net</h2>
-        <p class="number-help">Offizielle Ereignisse können direkt über den Handball360-Link geladen werden. Als Grundlage dient der von Wilm bereitgestellte Cloudflare-Worker. Alternativ bleibt der Import einer bereits gespeicherten API-JSON möglich.</p>
+        <h2>Neues Spiel aus Handball360</h2>
+        <p class="number-help">Handball360-/handball.net-Link einfügen und daraus direkt ein neues Spiel im normalen Spielanalyse-JSON-Format anlegen. Danach können im Match-Tab zusätzliche Events erfasst, das Spiel bearbeitet, gespeichert und ein YouTube- oder lokales Video verknüpft werden.</p>
         <div class="form-grid">
-          <label>Spiel-Link<input class="field" id="handballNetUrl" placeholder="https://www.handball.net/match/378110"></label>
+          <label>Handball360-Spiel-Link<input class="field" id="handballNetUrl" placeholder="https://www.handball.net/match/378110"></label>
           <label>YouTube-Video (optional)<input class="field" id="handballNetYoutube" placeholder="https://youtu.be/..."></label>
         </div>
         <div class="setup-actions">
-          <button class="btn primary" id="handballNetFetch" type="button">Daten direkt laden</button>
-          <label class="btn" for="handballNetJsonInput">API-JSON laden</label><input id="handballNetJsonInput" type="file" accept=".json,.txt,application/json,text/plain" hidden>
-          <button class="btn primary" id="handballNetCreate" type="button" disabled>Neues Spiel erzeugen</button>
-          <button class="btn" id="handballNetMerge" type="button" disabled>Aktuelles Spiel ergänzen</button>
+          <button class="btn primary" id="handballNetCreateDirect" type="button">Neues Spiel aus Link anlegen</button>
+          <label class="btn" for="handballNetJsonInput">API-JSON als Fallback laden</label><input id="handballNetJsonInput" type="file" accept=".json,.txt,application/json,text/plain" hidden>
+          <button class="btn" id="handballNetCreate" type="button" disabled>Spiel aus geladener API-JSON anlegen</button>
+          <button class="btn" id="handballNetMerge" type="button" disabled>Bestehendes Spiel abgleichen/ergänzen</button>
         </div>
-        <p class="number-help" id="handballNetStatus">Noch keine handball.net-Ereignisse geladen.</p>
+        <p class="number-help" id="handballNetStatus">Noch kein Handball360-Spiel geladen.</p>
       </div>
       <div class="panel setup-card">
         <h2>Kader bearbeiten</h2>
@@ -646,7 +646,7 @@
       <h3>Setup</h3>
       <p>Im Setup wird ein Spiel vorbereitet. Hier werden Spielname, Spielzeit, Mannschaften und Kader festgelegt.</p>
       <h4>Spielverwaltung</h4>
-      <ul><li><strong>Neues Spiel:</strong> startet eine neue Erfassung.</li><li><strong>Spiel fortsetzen:</strong> lädt eine vorhandene JSON-Datei und öffnet sie wieder für die Live-Erfassung.</li><li><strong>Spiel laden:</strong> lädt eine Datei für Analyse und Videoauswertung, ohne sie als laufendes Spiel zu behandeln.</li><li><strong>Handball360 / handball.net:</strong> Der Spiel-Link kann direkt über den Cloudflare-Worker geladen werden. Aus den offiziellen Events kann ein neues Video-Scouting-Spiel erzeugt oder ein geladenes Spiel um fehlende Tore, Zeitstrafen, Verwarnungen, Auszeiten und 7-m-Fehlwürfe ergänzt werden. Vorhandene Analyse-Details werden nicht überschrieben. Der manuelle API-JSON-Import bleibt als Fallback erhalten.</li></ul>
+      <ul><li><strong>Neues Spiel:</strong> startet eine neue Erfassung.</li><li><strong>Spiel fortsetzen:</strong> lädt eine vorhandene JSON-Datei und öffnet sie wieder für die Live-Erfassung.</li><li><strong>Spiel laden:</strong> lädt eine Datei für Analyse und Videoauswertung, ohne sie als laufendes Spiel zu behandeln.</li><li><strong>Handball360 / handball.net:</strong> Mit „Neues Spiel aus Link anlegen“ wird aus einem Handball360-/handball.net-Link direkt ein normales Spielanalyse-Spiel erzeugt. Die offiziellen Events bilden den Startbestand; anschließend lassen sich im Match-Tab weitere Ereignisse erfassen, Details ergänzen, Videos verknüpfen und die Datei über „Spiel speichern“ im normalen JSON-Format sichern. Der manuelle API-JSON-Import bleibt als Fallback erhalten; ein bestehendes Spiel kann weiterhin abgeglichen und ergänzt werden.</li></ul>
       <h4>Kader bearbeiten</h4>
       <p>Spieler können manuell angelegt oder aus Excel/CSV/JSON importiert werden. Torhüter werden über die TW-Markierung gekennzeichnet und können als aktive Torhüter gesetzt werden.</p>
       <h4>Torwurf-Erfassung</h4>
@@ -1181,9 +1181,9 @@
   function hbMergeGame(){if(!handballNetImport)return;const x=handballNetImport;hbAddPlayers(state.home,x.homePlayers);hbAddPlayers(state.away,x.awayPlayers);if(!state.home.name||state.home.name==="Gegner")state.home.name=x.teams.home;if(!state.away.name||state.away.name==="Mein Team")state.away.name=x.teams.away;let added=0;for(const e of x.normalized){if(state.events.some(current=>hbEventMatches(current,e)))continue;state.events.push(structuredClone(e));added++}state.events.sort((a,b)=>Number(a.time||0)-Number(b.time||0));state.officialSource={provider:"handball.net",matchId:x.matchId,importedAt:new Date().toISOString()};const youtube=String($("handballNetYoutube")?.value||"").trim();if(youtube){state.video.youtubeUrl=youtube;state.video.youtubeId=youtubeVideoId(youtube)}normalize();update();toast(added?(added+" fehlende offizielle Ereignisse ergänzt"):"Keine fehlenden offiziellen Ereignisse gefunden")}
   const HANDBALL_NET_WORKER="https://patient-dawn-2398.wilm-schomburg-77d.workers.dev";
   const HANDBALL_NET_WORKER_TOKEN="oeffentlicher-test-token";
-  async function hbFetchFromWorker(){const id=handballNetMatchId($("handballNetUrl")?.value);if(!id)return toast("Bitte gültigen handball.net-Spiel-Link eingeben.");const button=$("handballNetFetch"),oldText=button.textContent;button.disabled=true;button.textContent="Lade …";hbStatus("Offizielle Spieldaten werden geladen …");try{const response=await fetch(HANDBALL_NET_WORKER+"/match/"+encodeURIComponent(id),{method:"GET",headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"}});if(!response.ok){let details="";try{details=(await response.text()).trim()}catch{}throw Error("Worker antwortet mit HTTP "+response.status+(details?": "+details.slice(0,180):""))}const raw=await response.json();hbSetImport(raw);if(handballNetImport)handballNetImport.matchId=id;toast("handball.net-Daten geladen")}catch(error){handballNetImport=null;hbRefreshButtons();const message=error?.message||"handball.net-Daten konnten nicht geladen werden.";hbStatus(message+" API-JSON kann weiterhin manuell geladen werden.");toast(message)}finally{button.disabled=false;button.textContent=oldText}}
+  async function hbFetchFromWorker({createAfterLoad=false}={}){const id=handballNetMatchId($("handballNetUrl")?.value);if(!id)return toast("Bitte gültigen handball.net-Spiel-Link eingeben.");const button=$("handballNetCreateDirect"),oldText=button?.textContent||"";if(button){button.disabled=true;button.textContent="Lade Spieldaten …"}hbStatus("Offizielle Spieldaten werden geladen …");try{const response=await fetch(HANDBALL_NET_WORKER+"/match/"+encodeURIComponent(id),{method:"GET",headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"}});if(!response.ok){let details="";try{details=(await response.text()).trim()}catch{}throw Error("Worker antwortet mit HTTP "+response.status+(details?": "+details.slice(0,180):""))}const raw=await response.json();hbSetImport(raw);if(handballNetImport)handballNetImport.matchId=id;if(createAfterLoad){hbCreateGame();hbStatus("Spiel "+id+" wurde als normales Spielanalyse-Spiel angelegt. Zusätzliche Events und Video-Verknüpfungen können jetzt ergänzt werden.")}else toast("handball.net-Daten geladen")}catch(error){handballNetImport=null;hbRefreshButtons();const message=error?.message||"handball.net-Daten konnten nicht geladen werden.";hbStatus(message+" API-JSON kann weiterhin manuell geladen werden.");toast(message)}finally{if(button){button.disabled=false;button.textContent=oldText}}}
   $("handballNetJsonInput").onchange=async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;try{hbSetImport(JSON.parse(await file.text()))}catch(error){handballNetImport=null;hbRefreshButtons();hbStatus(error?.message||"API-JSON konnte nicht gelesen werden.");toast(error?.message||"API-JSON konnte nicht gelesen werden")}};
-  $("handballNetFetch").onclick=hbFetchFromWorker;
+  $("handballNetCreateDirect").onclick=()=>hbFetchFromWorker({createAfterLoad:true});
   $("handballNetCreate").onclick=hbCreateGame;
   $("handballNetMerge").onclick=hbMergeGame;
 
@@ -1756,7 +1756,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=94",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=95",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
