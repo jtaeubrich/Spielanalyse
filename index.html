@@ -411,19 +411,14 @@
         <p class="number-help">„Mein Team“ wird beim Laden anhand des Mannschaftsnamens TSV Kronshagen zugeordnet.</p>
       </div>
       <div class="panel setup-card">
-        <h2>Neues Spiel aus Handball360</h2>
-        <p class="number-help">Handball360-/handball.net-Link einfügen und daraus direkt ein neues Spiel im normalen Spielanalyse-JSON-Format anlegen. Danach können im Match-Tab zusätzliche Events erfasst, das Spiel bearbeitet, gespeichert und ein YouTube- oder lokales Video verknüpft werden.</p>
-        <div class="form-grid">
-          <label>Handball360-Spiel-Link<input class="field" id="handballNetUrl" placeholder="https://www.handball.net/match/378110"></label>
-          <label>YouTube-Video (optional)<input class="field" id="handballNetYoutube" placeholder="https://youtu.be/..."></label>
-        </div>
+        <h2>Handball360 · Import / Abgleich</h2>
+        <p class="number-help">Für ein neues Spiel nutze oben „Neues Spiel“ und wähle anschließend Handball360. Hier bleibt der Datei-Import als Fallback sowie der Abgleich eines bereits geladenen Spiels verfügbar.</p>
         <div class="setup-actions">
-          <button class="btn primary" id="handballNetCreateDirect" type="button">Neues Spiel aus Link anlegen</button>
-          <label class="btn" for="handballNetJsonInput">API-JSON als Fallback laden</label><input id="handballNetJsonInput" type="file" accept=".json,.txt,application/json,text/plain" hidden>
-          <button class="btn" id="handballNetCreate" type="button" disabled>Spiel aus geladener API-JSON anlegen</button>
+          <label class="btn" for="handballNetJsonInput">API-JSON laden</label><input id="handballNetJsonInput" type="file" accept=".json,.txt,application/json,text/plain" hidden>
+          <button class="btn" id="handballNetCreate" type="button" disabled>Spiel aus API-JSON anlegen</button>
           <button class="btn" id="handballNetMerge" type="button" disabled>Bestehendes Spiel abgleichen/ergänzen</button>
         </div>
-        <p class="number-help" id="handballNetStatus">Noch kein Handball360-Spiel geladen.</p>
+        <p class="number-help" id="handballNetStatus">Noch keine Handball360-Daten geladen.</p>
       </div>
       <div class="panel setup-card">
         <h2>Kader bearbeiten</h2>
@@ -633,6 +628,31 @@
     <div class="panel editor-card"><div class="clockhead"><h2>Daten editieren</h2><span class="badge" id="editorCount"></span></div><p class="editor-help">Änderungen werden direkt in das geladene Spiel übernommen und beim Speichern in die JSON-Datei geschrieben.</p><div class="filterbar"><select class="field" id="editorTeamFilter"><option value="all">Alle Teams</option><option value="own">Mein Team</option><option value="opponent">Gegner</option></select><select class="field" id="editorTypeFilter"><option value="all">Alle Aktionen</option><option value="goal">Tore</option><option value="save">Paraden</option><option value="miss">Fehlwürfe</option><option value="error">Technische Fehler</option><option value="2min">Zeitstrafen</option><option value="keyMoment">Schlüsselmomente</option></select></div><div class="editor-table-wrap"><table class="editor-table"><thead><tr><th>Spielzeit</th><th>Video/Realzeit (s)</th><th>Team</th><th>Ereignis</th><th>Spieler</th><th>Werfer bei Parade</th><th>Spielsituation</th><th>Abwurfposition</th><th>Wurfziel</th><th>Aktionen</th></tr></thead><tbody id="dataEditorRows"></tbody></table></div></div>
   </section>
 </div>
+<dialog id="newGameDialog">
+  <form id="newGameChoiceForm">
+    <div id="newGameChoiceStep">
+      <h2>Neues Spiel anlegen</h2>
+      <p class="number-help">Wie möchtest du das neue Spiel anlegen?</p>
+      <div class="setup-actions">
+        <button class="btn primary" id="newGameManual" type="button">Manuell anlegen</button>
+        <button class="btn primary" id="newGameHandball360" type="button">Über Handball360</button>
+      </div>
+      <div class="footerbuttons"><button class="btn" id="newGameCancel" type="button">Abbrechen</button></div>
+    </div>
+    <div id="newGameHandball360Step" class="hidden">
+      <h2>Neues Spiel über Handball360</h2>
+      <p class="number-help">Füge den Link zur Spielseite ein. Die offiziellen Spieldaten werden geladen und anschließend als normales, bearbeitbares Spielanalyse-Spiel angelegt.</p>
+      <label>Handball360-/handball.net-Link<input class="field" id="handballNetUrl" inputmode="url" placeholder="https://www.handball.net/match/378110"></label>
+      <label>YouTube-Video (optional)<input class="field" id="handballNetYoutube" inputmode="url" placeholder="https://youtu.be/..."></label>
+      <p class="number-help" id="newGameHandball360Status"></p>
+      <div class="footerbuttons">
+        <button class="btn" id="newGameHandball360Back" type="button">Zurück</button>
+        <button class="btn primary" id="handballNetCreateDirect" type="submit">Spiel anlegen</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="analysisExportDialog" class="analysis-export-dialog"><form id="analysisExportForm"><h2>Analyse als PDF</h2><p class="number-help">Wähle die Bereiche für die Druckansicht. Nicht gepflegte Auswertungen werden automatisch deaktiviert.</p><div class="export-selection-actions"><button class="btn" id="selectAllAnalysisSections" type="button">Alles auswählen</button><button class="btn" id="selectAvailableAnalysisSections" type="button">Nur vorhandene Daten</button><button class="btn" id="clearAnalysisSections" type="button">Auswahl aufheben</button></div><div class="export-section-list" id="analysisExportSections"></div><div class="footerbuttons"><button class="btn" id="cancelAnalysisExport" type="button">Abbrechen</button><button class="btn primary" type="submit">Druckansicht öffnen</button></div></form></dialog>
 
 <dialog id="clipPresetDialog"><form id="clipPresetForm" class="preset-form"><h2 id="clipPresetDialogTitle">Clip-Vorlage speichern</h2><div class="preset-form-grid"><label class="wide">Name<input class="field" id="presetName" required></label><label>Team<select class="field" id="presetTeam"></select></label><label>Spieler<select class="field" id="presetPlayer"></select></label><label>Ereignis<select class="field" id="presetType"></select></label><label>Spielsituation<select class="field" id="presetPhase"></select></label><label>Abwurfposition<select class="field" id="presetZone"></select></label><label>Wurfziel<select class="field" id="presetTarget"></select></label><label>Tag<select class="field" id="presetTag"></select></label><label>Eigene Clips erzeugen für<select class="field" id="presetSplitBy"><option value="none">Keine Aufteilung</option><option value="player">Jeden Spieler</option><option value="defender">Jeden Abwehrspieler</option><option value="keeper">Jeden Torwart</option><option value="tag">Jeden Tag</option><option value="phase">Jede Spielsituation</option><option value="zone">Jede Abwurfposition</option><option value="target">Jedes Wurfziel</option></select></label><label>Ausgabe<select class="field" id="presetOutputMode"><option value="individual">Ein Clip je Gruppe</option><option value="combined">Ein gemeinsamer Clip</option></select></label><label>Vorlauf in Sekunden<input class="field" id="presetPreRoll" type="number" min="0" step="0.5"></label><label>Nachlauf in Sekunden<input class="field" id="presetPostRoll" type="number" min="0" step="0.5"></label><label class="wide">Dateiname<input class="field" id="presetFileName" placeholder="z. B. Tore_{Spieler}"></label></div><p class="preset-summary">Bei einer Aufteilung wird für jeden vorhandenen Wert mit passenden Ereignissen eine Gruppe erzeugt.</p><div class="footerbuttons"><button class="btn" type="button" id="cancelClipPreset">Abbrechen</button><button class="btn primary" type="submit">Vorlage speichern</button></div></form></dialog>
@@ -646,7 +666,7 @@
       <h3>Setup</h3>
       <p>Im Setup wird ein Spiel vorbereitet. Hier werden Spielname, Spielzeit, Mannschaften und Kader festgelegt.</p>
       <h4>Spielverwaltung</h4>
-      <ul><li><strong>Neues Spiel:</strong> startet eine neue Erfassung.</li><li><strong>Spiel fortsetzen:</strong> lädt eine vorhandene JSON-Datei und öffnet sie wieder für die Live-Erfassung.</li><li><strong>Spiel laden:</strong> lädt eine Datei für Analyse und Videoauswertung, ohne sie als laufendes Spiel zu behandeln.</li><li><strong>Handball360 / handball.net:</strong> Mit „Neues Spiel aus Link anlegen“ wird aus einem Handball360-/handball.net-Link direkt ein normales Spielanalyse-Spiel erzeugt. Die offiziellen Events bilden den Startbestand; anschließend lassen sich im Match-Tab weitere Ereignisse erfassen, Details ergänzen, Videos verknüpfen und die Datei über „Spiel speichern“ im normalen JSON-Format sichern. Der manuelle API-JSON-Import bleibt als Fallback erhalten; ein bestehendes Spiel kann weiterhin abgeglichen und ergänzt werden.</li></ul>
+      <ul><li><strong>Neues Spiel:</strong> öffnet zuerst die Auswahl „Manuell anlegen“ oder „Über Handball360“. Manuell startet die bisherige leere Erfassung. Über Handball360 wird nach dem Spiel-Link gefragt und daraus ein normales, weiter bearbeitbares Spielanalyse-Spiel erzeugt.</li><li><strong>Spiel fortsetzen:</strong> lädt eine vorhandene JSON-Datei und öffnet sie wieder für die Live-Erfassung.</li><li><strong>Spiel laden:</strong> lädt eine Datei für Analyse und Videoauswertung, ohne sie als laufendes Spiel zu behandeln.</li><li><strong>Handball360 / handball.net:</strong> Mit „Neues Spiel aus Link anlegen“ wird aus einem Handball360-/handball.net-Link direkt ein normales Spielanalyse-Spiel erzeugt. Die offiziellen Events bilden den Startbestand; anschließend lassen sich im Match-Tab weitere Ereignisse erfassen, Details ergänzen, Videos verknüpfen und die Datei über „Spiel speichern“ im normalen JSON-Format sichern. Der manuelle API-JSON-Import bleibt als Fallback erhalten; ein bestehendes Spiel kann weiterhin abgeglichen und ergänzt werden.</li></ul>
       <h4>Kader bearbeiten</h4>
       <p>Spieler können manuell angelegt oder aus Excel/CSV/JSON importiert werden. Torhüter werden über die TW-Markierung gekennzeichnet und können als aktive Torhüter gesetzt werden.</p>
       <h4>Torwurf-Erfassung</h4>
@@ -1157,7 +1177,14 @@
   $("saveTagLibraryFile").onclick=saveTagLibraryFile;
   $("saveTagLibraryAs").onclick=()=>saveTagLibraryAs();
   if(typeof window.showSaveFilePicker!=="function")$("saveTagLibraryAs").classList.add("hidden");
-  $("newGame").onclick=()=>{setMatchReviewMode(false,{announce:false});stopGame();mediaPause();state=structuredClone(baseState);state.isHistorical=false;ownTeam="away";gameBase=videoBase=liveClockBase=0;gameRunning=videoRunning=liveClockRunning=false;draft=null;selectedVideoEvents.clear();activeVideoEventIndex=null;currentGameFileHandle=null;currentGameFileName=null;normalize();setAnalysisMode("live");update();showTab("match");toast("Neues Spiel angelegt")};
+  function startManualGame(){setMatchReviewMode(false,{announce:false});stopGame();mediaPause();state=structuredClone(baseState);state.isHistorical=false;ownTeam="away";gameBase=videoBase=liveClockBase=0;gameRunning=videoRunning=liveClockRunning=false;draft=null;selectedVideoEvents.clear();activeVideoEventIndex=null;currentGameFileHandle=null;currentGameFileName=null;normalize();setAnalysisMode("live");update();showTab("match");toast("Neues Spiel angelegt")}
+  function showNewGameChoice(){const dialog=$("newGameDialog");$("newGameChoiceStep").classList.remove("hidden");$("newGameHandball360Step").classList.add("hidden");$("newGameHandball360Status").textContent="";dialog.showModal()}
+  $("newGame").onclick=showNewGameChoice;
+  $("newGameCancel").onclick=()=>$("newGameDialog").close();
+  $("newGameManual").onclick=()=>{$("newGameDialog").close();startManualGame()};
+  $("newGameHandball360").onclick=()=>{$("newGameChoiceStep").classList.add("hidden");$("newGameHandball360Step").classList.remove("hidden");$("handballNetUrl").focus()};
+  $("newGameHandball360Back").onclick=()=>{$("newGameHandball360Step").classList.add("hidden");$("newGameChoiceStep").classList.remove("hidden")};
+  $("newGameDialog").onclick=event=>{if(event.target===$("newGameDialog"))$("newGameDialog").close()};
   $("continueGame").onclick=()=>pickGameFile(false);$("loadGame").onclick=()=>pickGameFile(true);
   let handballNetImport=null;
   function handballNetMatchId(value){const text=String(value||"").trim(),match=text.match(/(?:handball\.net\/match\/)?(\d{4,})/i);return match?match[1]:null}
@@ -1181,9 +1208,9 @@
   function hbMergeGame(){if(!handballNetImport)return;const x=handballNetImport;hbAddPlayers(state.home,x.homePlayers);hbAddPlayers(state.away,x.awayPlayers);if(!state.home.name||state.home.name==="Gegner")state.home.name=x.teams.home;if(!state.away.name||state.away.name==="Mein Team")state.away.name=x.teams.away;let added=0;for(const e of x.normalized){if(state.events.some(current=>hbEventMatches(current,e)))continue;state.events.push(structuredClone(e));added++}state.events.sort((a,b)=>Number(a.time||0)-Number(b.time||0));state.officialSource={provider:"handball.net",matchId:x.matchId,importedAt:new Date().toISOString()};const youtube=String($("handballNetYoutube")?.value||"").trim();if(youtube){state.video.youtubeUrl=youtube;state.video.youtubeId=youtubeVideoId(youtube)}normalize();update();toast(added?(added+" fehlende offizielle Ereignisse ergänzt"):"Keine fehlenden offiziellen Ereignisse gefunden")}
   const HANDBALL_NET_WORKER="https://patient-dawn-2398.wilm-schomburg-77d.workers.dev";
   const HANDBALL_NET_WORKER_TOKEN="oeffentlicher-test-token";
-  async function hbFetchFromWorker({createAfterLoad=false}={}){const id=handballNetMatchId($("handballNetUrl")?.value);if(!id)return toast("Bitte gültigen handball.net-Spiel-Link eingeben.");const button=$("handballNetCreateDirect"),oldText=button?.textContent||"";if(button){button.disabled=true;button.textContent="Lade Spieldaten …"}hbStatus("Offizielle Spieldaten werden geladen …");try{const response=await fetch(HANDBALL_NET_WORKER+"/match/"+encodeURIComponent(id),{method:"GET",headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"}});if(!response.ok){let details="";try{details=(await response.text()).trim()}catch{}throw Error("Worker antwortet mit HTTP "+response.status+(details?": "+details.slice(0,180):""))}const raw=await response.json();hbSetImport(raw);if(handballNetImport)handballNetImport.matchId=id;if(createAfterLoad){hbCreateGame();hbStatus("Spiel "+id+" wurde als normales Spielanalyse-Spiel angelegt. Zusätzliche Events und Video-Verknüpfungen können jetzt ergänzt werden.")}else toast("handball.net-Daten geladen")}catch(error){handballNetImport=null;hbRefreshButtons();const message=error?.message||"handball.net-Daten konnten nicht geladen werden.";hbStatus(message+" API-JSON kann weiterhin manuell geladen werden.");toast(message)}finally{if(button){button.disabled=false;button.textContent=oldText}}}
+  async function hbFetchFromWorker({createAfterLoad=false}={}){const id=handballNetMatchId($("handballNetUrl")?.value);if(!id){$("newGameHandball360Status").textContent="Bitte einen gültigen Handball360-/handball.net-Spiel-Link eingeben.";return toast("Bitte gültigen handball.net-Spiel-Link eingeben.")}const button=$("handballNetCreateDirect"),oldText=button?.textContent||"";if(button){button.disabled=true;button.textContent="Lade Spieldaten …"}$("newGameHandball360Status").textContent="Offizielle Spieldaten werden geladen …";hbStatus("Offizielle Spieldaten werden geladen …");try{const response=await fetch(HANDBALL_NET_WORKER+"/match/"+encodeURIComponent(id),{method:"GET",headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"}});if(!response.ok){let details="";try{details=(await response.text()).trim()}catch{}throw Error("Worker antwortet mit HTTP "+response.status+(details?": "+details.slice(0,180):""))}const raw=await response.json();hbSetImport(raw);if(handballNetImport)handballNetImport.matchId=id;if(createAfterLoad){hbCreateGame();hbStatus("Spiel "+id+" wurde als normales Spielanalyse-Spiel angelegt. Zusätzliche Events und Video-Verknüpfungen können jetzt ergänzt werden.");$("newGameHandball360Status").textContent="";$("newGameDialog").close()}else toast("handball.net-Daten geladen")}catch(error){handballNetImport=null;hbRefreshButtons();const message=error?.message||"handball.net-Daten konnten nicht geladen werden.";$("newGameHandball360Status").textContent=message;hbStatus(message+" API-JSON kann weiterhin manuell geladen werden.");toast(message)}finally{if(button){button.disabled=false;button.textContent=oldText}}}
   $("handballNetJsonInput").onchange=async e=>{const file=e.target.files?.[0];e.target.value="";if(!file)return;try{hbSetImport(JSON.parse(await file.text()))}catch(error){handballNetImport=null;hbRefreshButtons();hbStatus(error?.message||"API-JSON konnte nicht gelesen werden.");toast(error?.message||"API-JSON konnte nicht gelesen werden")}};
-  $("handballNetCreateDirect").onclick=()=>hbFetchFromWorker({createAfterLoad:true});
+  $("newGameChoiceForm").onsubmit=event=>{event.preventDefault();hbFetchFromWorker({createAfterLoad:true})};
   $("handballNetCreate").onclick=hbCreateGame;
   $("handballNetMerge").onclick=hbMergeGame;
 
@@ -1756,7 +1783,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=95",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=96",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
