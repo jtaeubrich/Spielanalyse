@@ -665,7 +665,7 @@
       <h4>Spielverwaltung</h4>
       <ul><li><strong>Neues Spiel:</strong> öffnet zuerst die Auswahl „Manuell anlegen“ oder „Über Handball360“. „Manuell anlegen“ setzt ein leeres Spiel auf und führt zurück ins Setup, damit Spielname, Spielzeit, Mannschaften und Kader wie bisher vorbereitet werden können. „Über Handball360“ fragt nach der vollständigen Spiel-URL, erkennt daraus automatisch die Spiel-ID und erzeugt ein normales, weiter bearbeitbares Spielanalyse-Spiel. Ein Video wird anschließend separat verknüpft.</li><li><strong>Spiel fortsetzen:</strong> lädt eine vorhandene JSON-Datei und öffnet sie wieder für die Live-Erfassung.</li><li><strong>Spiel laden:</strong> lädt eine Datei für Analyse und Videoauswertung, ohne sie als laufendes Spiel zu behandeln.</li><li><strong>Handball360 / handball.net:</strong> Die vollständige Spiel-URL wird über „Neues Spiel → Über Handball360“ eingegeben; die Spiel-ID wird daraus automatisch erkannt. Die offiziellen Events bilden den Startbestand; anschließend lassen sich im Match-Tab weitere Ereignisse erfassen, Details ergänzen, Videos verknüpfen und die Datei über „Spiel speichern“ im normalen JSON-Format sichern.</li></ul>
       <h4>Kader bearbeiten</h4>
-      <p>Spieler können manuell angelegt oder aus Excel/CSV/JSON importiert werden. Zusätzlich besitzt jedes Spielerprofil optional eine H360-ID (Handball360-/handball.net-Spieler-ID). Bei Handball360-Importen wird sie automatisch übernommen; JSON- und Excel-Kader können sie über <code>handballNetId</code> bzw. eine Spalte „Handball360-ID“/„H360-ID“ mitführen. Torhüter werden über die TW-Markierung gekennzeichnet und können als aktive Torhüter gesetzt werden.</p>
+      <p>Spieler können manuell angelegt oder aus Excel/CSV/JSON importiert werden. Zusätzlich besitzt jedes Spielerprofil optional eine H360-ID (Handball360-/handball.net-Spieler-ID). Bei Handball360-Importen wird die komplette Aufstellung aus dem <code>lineups</code>-Endpunkt übernommen – inklusive Rückennummer, Torwart-Markierung und H360-ID; falls keine Aufstellung verfügbar ist, wird auf Spieler aus den Events zurückgefallen. JSON- und Excel-Kader können die ID über <code>handballNetId</code> bzw. eine Spalte „Handball360-ID“/„H360-ID“ mitführen.</p>
       <h4>Torwurf-Erfassung</h4>
       <p>Hier wird festgelegt, welche Schritte bei einem Torabschluss abgefragt werden, z. B. Schütze, Abwurfort, Wurfziel, Spielsituation, Ergebnis, Tag, Abwehrzuordnung und Auslösehandlung.</p>
       <h4>Globale Einstellungen</h4>
@@ -1194,6 +1194,7 @@
   function hbDuration(events){const ends=events.filter(e=>e?.event_type?.id===10002&&hbHalf(e)===1).map(e=>hbMinuteSeconds(e.minute)/60).filter(Number.isFinite);const d=ends[0]||25;return [20,25,30].includes(Math.round(d))?Math.round(d):Math.max(1,Math.round(d))}
   function hbTeams(events){const home=events.find(e=>e?.is_home&&e?.team)?.team?.name||"Heim",away=events.find(e=>e?.is_home===false&&e?.team)?.team?.name||"Gast";return{home,away}}
   function hbRoster(events,isHome){const map=new Map();for(const e of events){if(Boolean(e?.is_home)!==Boolean(isHome)||!e?.player)continue;const p=e.player,key=String(p.id||hbNameKey(hbPlayerName(p)));if(!map.has(key))map.set(key,{id:p.id||("hb-"+key),nr:null,nachname:String(p.last_name||"").trim(),vorname:String(p.first_name||"").trim(),isTW:false,handballNetId:p.id||null})}return[...map.values()].sort((a,b)=>(a.nachname||"").localeCompare(b.nachname||"","de"))}
+  function hbRosterFromLineup(side){const entries=Array.isArray(side?.players)?side.players:[];return entries.filter(entry=>entry?.player&&!entry?.is_staff).map((entry,index)=>{const p=entry.player,hbId=String(p.id||"").trim(),fallbackKey=hbNameKey(hbPlayerName(p));return{id:hbId||("hb-lineup-"+fallbackKey+"-"+index),nr:entry.number??"",nachname:String(p.last_name||"").trim(),vorname:String(p.first_name||"").trim(),isTW:Boolean(entry.is_goalkeeper),handballNetId:hbId}}).sort((a,b)=>{const an=Number(a.nr),bn=Number(b.nr);if(Number.isFinite(an)&&Number.isFinite(bn)&&an!==bn)return an-bn;return(a.nachname||"").localeCompare(b.nachname||"","de")})}
   function hbNormalizeEvents(events,duration){const out=[];for(const e of events){const type=hbEventType(e);if(!type)continue;const half=hbHalf(e),local=hbMinuteSeconds(e.minute),time=(half-1)*duration*60+local,team=e.team?(e.is_home?"home":"away"):null;if(!team&&type!=="timeout")continue;const name=hbPlayerName(e.player),parts=name.split(/\s+/).filter(Boolean),last=parts.pop()||"",is7=String(e?.event_type?.name||"").toLocaleLowerCase("de").includes("siebenmeter");out.push({id:Number(e.id)||Date.now()+out.length,time,displayTime:fmt(time),half,realTime:null,attackPhase:is7?"7-Meter":null,tags:[],scoreH:Number(e?.score?.local)||0,scoreA:Number(e?.score?.visitor)||0,scoreChanged:type==="goal",defenderUnknown:false,playerTags:[],pId:e?.player?.id??null,pName:name?(last+", "+parts.join(" ")):"Unbekannt",pNr:null,team,type,endedPossessionOf:["goal","miss"].includes(type)?team:undefined,z:is7?"7M":undefined,gz:null,is7:is7||undefined,shotDistance:is7?7:undefined,shotLane:is7?"M":undefined,penalizedBank:false,officialTimestamp:e.timestamp||null,officialEventId:e.id??null,officialEventType:e?.event_type?.name||null,officialSource:"handball.net"});}return out.sort((a,b)=>a.time-b.time||Number(a.officialEventId||0)-Number(b.officialEventId||0))}
   function hbPrepare(raw){
     const matchMeta=Array.isArray(raw?.match?.data)?raw.match.data[0]:(Array.isArray(raw?.match)?raw.match[0]:null);
@@ -1217,6 +1218,10 @@
       away:String(matchMeta?.visitor?.name||matchMeta?.away?.name||eventTeams.away||"Gast")
     };
     const matchId=String(raw?.match_id||matchMeta?.id||handballNetMatchId($("handballNetUrl")?.value)||"")||null;
+    const lineupLocal=raw?.lineups?.data?.local||null,lineupVisitor=raw?.lineups?.data?.visitor||null;
+    const lineupHomePlayers=hbRosterFromLineup(lineupLocal),lineupAwayPlayers=hbRosterFromLineup(lineupVisitor);
+    const homePlayers=lineupHomePlayers.length?lineupHomePlayers:hbRoster(events,true);
+    const awayPlayers=lineupAwayPlayers.length?lineupAwayPlayers:hbRoster(events,false);
     return{
       events,
       normalized:hbNormalizeEvents(events,duration),
@@ -1225,14 +1230,15 @@
       matchId,
       matchDate:matchMeta?.date||null,
       competition:matchMeta?.phase?.competition?.name||null,
-      homePlayers:hbRoster(events,true),
-      awayPlayers:hbRoster(events,false),
+      homePlayers,
+      awayPlayers,
+      rosterSource:lineupHomePlayers.length||lineupAwayPlayers.length?"lineups":"events",
       matchMeta
     }
   }
   function hbStatus(text){const el=$("handballNetStatus");if(el)el.textContent=text}
   function hbRefreshButtons(){const ready=Boolean(handballNetImport),create=$("handballNetCreate"),merge=$("handballNetMerge");if(create)create.disabled=!ready;if(merge)merge.disabled=!ready}
-  function hbSetImport(raw){handballNetImport=hbPrepare(raw);const supported=handballNetImport.normalized.length,goals=handballNetImport.normalized.filter(e=>e.type==="goal").length;hbRefreshButtons();hbStatus(handballNetImport.teams.home+" – "+handballNetImport.teams.away+" · "+goals+" Tore · "+supported+" unterstützte offizielle Ereignisse geladen.")}
+  function hbSetImport(raw){handballNetImport=hbPrepare(raw);const supported=handballNetImport.normalized.length,goals=handballNetImport.normalized.filter(e=>e.type==="goal").length,players=handballNetImport.homePlayers.length+handballNetImport.awayPlayers.length,source=handballNetImport.rosterSource==="lineups"?"vollständige Aufstellungen":"Spieler aus Ereignissen";hbRefreshButtons();hbStatus(handballNetImport.teams.home+" – "+handballNetImport.teams.away+" · "+goals+" Tore · "+supported+" unterstützte offizielle Ereignisse · "+players+" Spieler ("+source+").")}
   function hbAddPlayers(target,players){const list=target.players||(target.players=[]);for(const p of players){const hbId=String(p.handballNetId||"").trim(),key=hbNameKey([p.vorname,p.nachname].filter(Boolean).join(" "));const existing=list.find(current=>(hbId&&String(current.handballNetId||"").trim()===hbId)||(key&&hbNameKey([current.vorname,current.nachname].filter(Boolean).join(" "))===key));if(existing){if(hbId&&!existing.handballNetId)existing.handballNetId=hbId;if((existing.nr===null||existing.nr===undefined||existing.nr==="")&&p.nr!==null&&p.nr!==undefined&&p.nr!=="")existing.nr=p.nr;if(!existing.isTW&&p.isTW)existing.isTW=true;continue}list.push(structuredClone(p))}}
   function hbEventMatches(existing,official){if(existing.team!==official.team)return false;const equivalent=(existing.type===official.type)||(official.type==="miss"&&official.is7&&existing.type==="save"&&existing.z==="7M");if(!equivalent)return false;if(Math.abs(Number(existing.time||0)-Number(official.time||0))>2)return false;if(official.type==="goal"&&(Number(existing.scoreH)!==Number(official.scoreH)||Number(existing.scoreA)!==Number(official.scoreA)))return false;const a=hbNameKey(existing.pName),b=hbNameKey(official.pName);return !a||a==="unbekannt"||!b||b==="unbekannt"||a===b}
   function hbCreateGame(){if(!handballNetImport)return;const x=handballNetImport,youtube=String($("handballNetYoutube")?.value||"").trim(),yt=youtubeVideoId(youtube);setMatchReviewMode(false,{announce:false});stopGame();mediaPause();state=structuredClone(baseState);state.gameName=((x.matchDate?new Date(x.matchDate).toLocaleDateString("de-DE")+" | ":"")+x.teams.home+" - "+x.teams.away).trim();state.home={name:x.teams.home,players:structuredClone(x.homePlayers)};state.away={name:x.teams.away,players:structuredClone(x.awayPlayers)};state.events=structuredClone(x.normalized);state.timer={...baseState.timer,duration:x.duration,half:1,secondsElapsed:0,active:false};state.gameTime=x.duration*120;state.isHistorical=false;state.isVideoscoutingFile=true;state.officialSource={provider:"handball.net",matchId:x.matchId,matchDate:x.matchDate||null,competition:x.competition||null,importedAt:new Date().toISOString()};state.video={...baseState.video,youtubeUrl:youtube||null,youtubeId:yt};currentGameFileHandle=null;currentGameFileName=null;gameBase=videoBase=liveClockBase=0;gameRunning=videoRunning=liveClockRunning=false;normalize();setAnalysisMode("video");restoreSavedVideoReference();update();showTab("match");toast("Spiel aus handball.net-Daten erzeugt")}
@@ -1812,7 +1818,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=105",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=106",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
