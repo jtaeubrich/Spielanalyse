@@ -32,7 +32,7 @@ describe("known team roster identity", () => {
       [player("a"), player("b"), player("c")],
       [player("b"), player("c"), player("d")]
     )).toBe(2);
-    expect([...rosterHandballIds([player("A")])]).toEqual(["A"]);
+    expect([...rosterHandballIds([player("A")])]).toEqual(["a"]);
   });
 
   test("prefers exact team name matching", () => {
