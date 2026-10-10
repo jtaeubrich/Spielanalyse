@@ -724,7 +724,7 @@
 import { scoreEvents } from "./src/game-model.js";
 import { handballNetMatchId, hbNameKey, hbPrepare } from "./src/handball360.js";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
-import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate } from "./src/season-core.js";
+import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots } from "./src/season-core.js";
 
 (async()=>{
   const shotSettingDefaults={attacker:true,location:true,target:true,phase:true,result:true,assist:false,tag:false,defense:true,trigger:true};
@@ -929,35 +929,24 @@ import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as core
     seasonGames=seasonGames.filter(item=>item.id!==id);renderSeason();persistSeasonSoon();toast("Saisonspiel entfernt");
   }
   function selectedSeasonGames(){return seasonGames.filter(game=>game.selected)}
-  function seasonEventPlayerKey(event,game){
-    const players=[...(game.state.home?.players||[]),...(game.state.away?.players||[])];
-    const id=event.type==="save"?(event.pId??event.throwerId):(event.pId??event.throwerId??event.attackerId);
-    const p=players.find(player=>String(player.id)===String(id));
-    if(p)return seasonPlayerKey(p);
-    const name=String(event.pName||event.throwerName||event.attackerName||"").trim().toLocaleLowerCase("de");
-    return name?name+"|event":null;
-  }
-  function seasonEventMatchesTeam(event,game,filter){
-    if(filter==="all")return true;const team=filter==="own"?game.ownTeam:game.opponentTeam;
-    return event.team===team||(event.playerTags||[]).some(tag=>tag.team===team);
-  }
-  function seasonEventMatchesPlayer(event,game,key){
-    if(key==="all")return true;
-    if(seasonEventPlayerKey(event,game)===key)return true;
-    const players=[...(game.state.home?.players||[]),...(game.state.away?.players||[])];
-    return (event.playerTags||[]).some(tag=>{const p=players.find(player=>String(player.id)===String(tag.pId));return p&&seasonPlayerKey(p)===key});
-  }
-  function seasonMatchesType(event,type){return type==="all"||(type==="shot"&&["shot","goal","miss","save","block"].includes(event.type))||(type==="2min"&&["2min","2plus2"].includes(event.type))||event.type===type}
-  function seasonDimension(value,filter){return filter==="all"||(filter==="OT"&&["OTL","OTM","OTR"].includes(String(value??"")))||String(value??"")===String(filter)}
-  function seasonFilteredEntries(){
-    const team=$("seasonTeamFilter")?.value||"all",player=$("seasonPlayerFilter")?.value||"all",type=$("seasonTypeFilter")?.value||"all",zone=$("seasonZoneFilter")?.value||"all",target=$("seasonTargetFilter")?.value||"all",phase=$("seasonPhaseFilter")?.value||"all",tag=$("seasonTagFilter")?.value||"all",out=[];
-    for(const game of selectedSeasonGames())for(const event of game.state.events||[]){
-      const tags=Array.isArray(event.tags)?event.tags.map(String):[];
-      if(!seasonEventMatchesTeam(event,game,team)||!seasonEventMatchesPlayer(event,game,player)||!seasonMatchesType(event,type)||!seasonDimension(event.z,zone)||!seasonDimension(event.gz,target)||!seasonDimension(event.attackPhase,phase)||(tag!=="all"&&!tags.includes(tag)))continue;
-      out.push({game,event});
+  function seasonEventPlayerKey(event,game){return coreSeasonEventPlayerKey(event,game,seasonPlayerKey)}
+  function seasonEventMatchesTeam(event,game,filter){return coreSeasonEventMatchesTeam(event,game,filter)}
+  function seasonEventMatchesPlayer(event,game,key){return coreSeasonEventMatchesPlayer(event,game,key,seasonPlayerKey)}
+  function seasonMatchesType(event,type){return coreSeasonMatchesType(event,type)}
+  function seasonDimension(value,filter){return coreSeasonDimension(value,filter)}
+  function seasonFilterValues(){
+    return{
+      team:$("seasonTeamFilter")?.value||"all",
+      player:$("seasonPlayerFilter")?.value||"all",
+      type:$("seasonTypeFilter")?.value||"all",
+      zone:$("seasonZoneFilter")?.value||"all",
+      target:$("seasonTargetFilter")?.value||"all",
+      phase:$("seasonPhaseFilter")?.value||"all",
+      tag:$("seasonTagFilter")?.value||"all",
+      playerKey:seasonPlayerKey
     }
-    return out;
   }
+  function seasonFilteredEntries(){return coreFilterSeasonEntries(selectedSeasonGames(),seasonFilterValues())}
   function seasonMetric(label,value,sub=""){return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${sub?`<small>${escapeHtml(sub)}</small>`:""}</div>`}
   function seasonPopulateFilters(){
     const games=selectedSeasonGames().length?selectedSeasonGames():seasonGames;
@@ -990,21 +979,8 @@ import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as core
     }
   }
 
-  function seasonShotEntries(role="all"){
-    const teamFilter=$("seasonTeamFilter")?.value||"all",player=$("seasonPlayerFilter")?.value||"all",zone=$("seasonZoneFilter")?.value||"all",target=$("seasonTargetFilter")?.value||"all",phase=$("seasonPhaseFilter")?.value||"all",tag=$("seasonTagFilter")?.value||"all",out=[];
-    for(const game of selectedSeasonGames())for(const event of game.state.events||[]){
-      if(!["shot","goal","save","miss","block"].includes(event.type))continue;
-      const attackTeam=event.type==="save"||event.type==="block"?(event.team==="home"?"away":"home"):event.team;
-      const wanted=role==="own"?game.ownTeam:role==="opponent"?game.opponentTeam:null;
-      if(wanted&&attackTeam!==wanted)continue;
-      if(teamFilter!=="all"&&!seasonEventMatchesTeam(event,game,teamFilter))continue;
-      if(!seasonEventMatchesPlayer(event,game,player)||!seasonDimension(event.z,zone)||!seasonDimension(event.gz,target)||!seasonDimension(event.attackPhase,phase))continue;
-      const tags=Array.isArray(event.tags)?event.tags.map(String):[];if(tag!=="all"&&!tags.includes(tag))continue;
-      out.push({game,event});
-    }
-    return out;
-  }
-  function seasonTeamAggregate(role){return coreSeasonTeamAggregate(selectedSeasonGames(),role)}
+  function seasonShotEntries(role="all"){const filters=seasonFilterValues();delete filters.type;return coreFilterSeasonShots(selectedSeasonGames(),role,filters)}
+    function seasonTeamAggregate(role){return coreSeasonTeamAggregate(selectedSeasonGames(),role)}
   function renderSeasonTrend(){
     const games=selectedSeasonGames(),svg=$("seasonTrend"),maxScore=Math.max(1,...games.flatMap(game=>{const x=seasonGameSummary(game);return[x.goals,x.against]})),count=Math.max(1,games.length-1),own=[],opp=[];
     games.forEach((game,index)=>{const x=55+(games.length===1?.5:index/count)*910,m=seasonGameSummary(game);own.push([x,245-m.goals/maxScore*190]);opp.push([x,245-m.against/maxScore*190])});
@@ -1748,7 +1724,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=118",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=119",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
