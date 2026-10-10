@@ -64,6 +64,35 @@ test("imports the Handball360 reference payload without using the live proxy", a
 
   await expect(page.locator("#score")).toHaveText("35 : 26");
   await expect(page.locator("#homeName")).toContainText("Mein Team · MEIN TEAM");
+
+  await expect.poll(async () => page.evaluate(async () => {
+    return await new Promise((resolve, reject) => {
+      const request = indexedDB.open("handball-spielanalyse", 3);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const db = request.result;
+        const tx = db.transaction("rosters", "readonly");
+        const getAll = tx.objectStore("rosters").getAll();
+        getAll.onerror = () => reject(getAll.error);
+        getAll.onsuccess = () => {
+          const records = getAll.result || [];
+          db.close();
+          resolve(records);
+        };
+      };
+    });
+  })).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      players: expect.arrayContaining([
+        expect.objectContaining({
+          handballNetId: expect.any(String)
+        })
+      ])
+    })
+  ]));
+
+  await page.getByRole("button", { name: "Setup" }).click();
+  await expect(page.locator("#rosterCollectionStatus")).toContainText("H360-ID");
 });
 
 test("setup stays usable on a mobile viewport", async ({ page, isMobile }) => {
