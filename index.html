@@ -728,7 +728,7 @@ import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeS
 import { rowsToPlayers as coreRowsToPlayers, parseRosterJson } from "./src/roster.js";
 import { handballNetMatchId, hbNameKey, hbPrepare } from "./src/handball360.js";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
-import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots } from "./src/season-core.js";
+import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
 import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL_SEASON_KEY, SESSION_STORAGE_KEY, buildInternalGameRecord, buildSeasonRecord, buildSeasonExport, buildSessionRecord, readInternalRecord, writeInternalRecord, deleteInternalRecord } from "./src/storage.js";
 
@@ -886,11 +886,8 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     if(currentOwn&&away===currentOwn)return"away";
     return"away";
   }
-  function seasonPlayerKey(player){
-    if(!player)return null;
-    const first=String(player.vorname||"").trim().toLocaleLowerCase("de"),last=String(player.nachname||"").trim().toLocaleLowerCase("de"),nr=String(player.nr??"").trim();
-    return [last,first,nr].join("|");
-  }
+  function seasonPlayerResolver(games=selectedSeasonGames().length?selectedSeasonGames():seasonGames){return coreCreateSeasonPlayerKeyResolver(games)}
+  function seasonPlayerKey(player){return seasonPlayerResolver()(player)}
   function seasonPlayerLabel(player){return player?playerName(player):"Unbekannt"}
   function seasonCurrentOwnName(){return String(state[ownTeam]?.name||"").trim()}
   function seasonGameId(fileName,data){return coreSeasonGameId(fileName,data)}
@@ -918,12 +915,12 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     seasonGames=seasonGames.filter(item=>item.id!==id);renderSeason();persistSeasonSoon();toast("Saisonspiel entfernt");
   }
   function selectedSeasonGames(){return seasonGames.filter(game=>game.selected)}
-  function seasonEventPlayerKey(event,game){return coreSeasonEventPlayerKey(event,game,seasonPlayerKey)}
+  function seasonEventPlayerKey(event,game){return coreSeasonEventPlayerKey(event,game,seasonPlayerResolver())}
   function seasonEventMatchesTeam(event,game,filter){return coreSeasonEventMatchesTeam(event,game,filter)}
-  function seasonEventMatchesPlayer(event,game,key){return coreSeasonEventMatchesPlayer(event,game,key,seasonPlayerKey)}
+  function seasonEventMatchesPlayer(event,game,key){return coreSeasonEventMatchesPlayer(event,game,key,seasonPlayerResolver())}
   function seasonMatchesType(event,type){return coreSeasonMatchesType(event,type)}
   function seasonDimension(value,filter){return coreSeasonDimension(value,filter)}
-  function seasonFilterValues(){
+  function seasonFilterValues(games=selectedSeasonGames().length?selectedSeasonGames():seasonGames){
     return{
       team:$("seasonTeamFilter")?.value||"all",
       player:$("seasonPlayerFilter")?.value||"all",
@@ -932,17 +929,17 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
       target:$("seasonTargetFilter")?.value||"all",
       phase:$("seasonPhaseFilter")?.value||"all",
       tag:$("seasonTagFilter")?.value||"all",
-      playerKey:seasonPlayerKey
+      playerKey:seasonPlayerResolver(games)
     }
   }
   function seasonFilteredEntries(){return coreFilterSeasonEntries(selectedSeasonGames(),seasonFilterValues())}
   function seasonMetric(label,value,sub=""){return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${sub?`<small>${escapeHtml(sub)}</small>`:""}</div>`}
   function seasonPopulateFilters(){
     const games=selectedSeasonGames().length?selectedSeasonGames():seasonGames;
-    const playerMap=new Map(),zones=new Set(),targets=new Set(),phases=new Set(),tags=new Set();
+    const playerMap=new Map(),zones=new Set(),targets=new Set(),phases=new Set(),tags=new Set(),playerKey=seasonPlayerResolver(games);
     for(const game of games){
       const players=game.state[game.ownTeam]?.players||[];
-      for(const player of players){const key=seasonPlayerKey(player);if(key&&!playerMap.has(key))playerMap.set(key,seasonPlayerLabel(player))}
+      for(const player of players){const key=playerKey(player);if(key&&!playerMap.has(key))playerMap.set(key,seasonPlayerLabel(player))}
       for(const event of game.state.events||[]){if(event.z)zones.add(event.z);if(event.gz)targets.add(event.gz);if(event.attackPhase)phases.add(event.attackPhase);for(const tag of Array.isArray(event.tags)?event.tags:[])if(String(tag).trim())tags.add(String(tag).trim())}
     }
     const refill=(id,values,allLabel)=>{const el=$(id),old=el.value;el.replaceChildren(new Option(allLabel,"all"));for(const [value,label] of values)el.add(new Option(label,value));el.value=[...el.options].some(o=>o.value===old)?old:"all"};
@@ -1026,7 +1023,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     const shots=events.filter(e=>["shot","goal","save","miss","block"].includes(e.type)).length,goals=events.filter(e=>e.type==="goal").length,errors=events.filter(e=>e.type==="error").length,penalties=events.filter(e=>["2min","2plus2"].includes(e.type)).length;
     $("seasonStats").innerHTML=[seasonMetric("Spiele",games.length),seasonMetric("Gefilterte Events",events.length),seasonMetric("Würfe",shots),seasonMetric("Tore",goals,shots?`${Math.round(goals/shots*100)} %`:"0 %"),seasonMetric("Techn. Fehler",errors),seasonMetric("Zeitstrafen",penalties)].join("");
     $("seasonGameRows").innerHTML=games.map(game=>{const x=seasonGameSummary(game);return `<tr><td>${escapeHtml(game.state.gameName||game.fileName)}</td><td>${x.goals}</td><td>${x.against}</td><td>${x.ownShots}</td><td>${x.shotPct.toFixed(0)} %</td><td>${x.oppShots}</td><td>${x.saves}</td><td>${x.savePct.toFixed(0)} %</td><td>${x.errors}</td></tr>`}).join("")||'<tr><td colspan="9">Keine Spiele ausgewählt.</td></tr>';
-    const players=coreSeasonPlayerAggregate(games,{playerKey:seasonPlayerKey,playerLabel:seasonPlayerLabel});
+    const players=coreSeasonPlayerAggregate(games,{playerKey:seasonPlayerResolver(games),playerLabel:seasonPlayerLabel});
     $("seasonPlayerRows").innerHTML=players.sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const quote=p.isTW?(p.saves+p.against?p.rate+" %":"–"):(p.decidedShots?p.rate+" %":"–");return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.isTW?"–":p.shots}</td><td>${p.value}</td><td>${p.assists}</td><td>${quote}</td><td>${p.penalties}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="8">Keine Spielerdaten vorhanden.</td></tr>';
     renderSeasonGraphics();
   }
@@ -1689,7 +1686,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=125",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=126",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
