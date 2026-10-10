@@ -118,6 +118,21 @@ export async function readInternalRecord(storeName, key, indexedDb = globalThis.
   }
 }
 
+export async function listInternalRecords(storeName, indexedDb = globalThis.indexedDB) {
+  const db = await openInternalDb(indexedDb);
+  try {
+    return await new Promise((resolve, reject) => {
+      const transaction = db.transaction(storeName, "readonly");
+      const request = transaction.objectStore(storeName).getAll();
+      request.onsuccess = () => resolve(Array.isArray(request.result) ? request.result : []);
+      request.onerror = () => reject(request.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
 export async function writeInternalRecord(storeName, record, indexedDb = globalThis.indexedDB) {
   const db = await openInternalDb(indexedDb);
   try {
