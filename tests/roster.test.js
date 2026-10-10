@@ -4,7 +4,9 @@ import {
   normalizeRosterPlayer,
   rowsToPlayers,
   parseRosterJson,
-  mergeRosterByHandballId
+  mergeRosterByHandballId,
+  rosterTeamKey,
+  mergeRosterCollection
 } from "../src/roster.js";
 
 describe("roster import core", () => {
@@ -139,5 +141,105 @@ describe("roster import core", () => {
     expect(merged[0].id).toBe("local");
     expect(merged[0].nr).toBe(14);
     expect(merged[0].handballNetId).toBe("hb-1");
+  });
+});
+
+
+describe("persistent roster collection", () => {
+  test("creates a stable team key", () => {
+    expect(rosterTeamKey("  TSV   Beispiel ")).toBe(rosterTeamKey("tsv beispiel"));
+    expect(rosterTeamKey("TSV Beispiel")).toMatch(/^team-[0-9a-f]+$/);
+  });
+
+  test("enriches an existing player with a newly discovered Handball360 ID", () => {
+    const existing = [{
+      id: "local-1",
+      nr: 8,
+      vorname: "Anna",
+      nachname: "Beispiel",
+      isTW: false,
+      handballNetId: ""
+    }];
+    const incoming = [{
+      id: "remote-1",
+      nr: 23,
+      vorname: "Anna",
+      nachname: "Beispiel",
+      isTW: false,
+      handballNetId: "hb-stable"
+    }];
+
+    const result = mergeRosterCollection(existing, incoming);
+
+    expect(result.players).toHaveLength(1);
+    expect(result.players[0].id).toBe("local-1");
+    expect(result.players[0].nr).toBe(23);
+    expect(result.players[0].handballNetId).toBe("hb-stable");
+    expect(result.enrichedIds).toBe(1);
+    expect(result.conflicts).toHaveLength(0);
+  });
+
+  test("keeps equal names with different Handball360 IDs as separate players", () => {
+    const existing = [{
+      id: "local-a",
+      nr: 8,
+      vorname: "Max",
+      nachname: "Muster",
+      handballNetId: "hb-a"
+    }];
+    const incoming = [{
+      id: "remote-b",
+      nr: 8,
+      vorname: "Max",
+      nachname: "Muster",
+      handballNetId: "hb-b"
+    }];
+
+    const result = mergeRosterCollection(existing, incoming);
+
+    expect(result.players).toHaveLength(2);
+    expect(result.players.map((p) => p.handballNetId).sort()).toEqual(["hb-a", "hb-b"]);
+    expect(result.conflicts).toHaveLength(1);
+    expect(result.conflicts[0].type).toBe("same-name-different-h360-id");
+  });
+
+  test("does not match a different Handball360 player only because the shirt number is equal", () => {
+    const existing = [{
+      id: "local-a",
+      nr: 10,
+      vorname: "Erster",
+      nachname: "Spieler",
+      handballNetId: "hb-a"
+    }];
+
+    const imported = normalizeRosterPlayer({
+      nr: 10,
+      vorname: "Zweiter",
+      nachname: "Spieler",
+      handballNetId: "hb-b"
+    }, 0, existing);
+
+    expect(imported.id).not.toBe("local-a");
+    expect(imported.handballNetId).toBe("hb-b");
+  });
+
+  test("preserves an existing Handball360 ID when incoming legacy data has none", () => {
+    const existing = [{
+      id: "local-1",
+      nr: 8,
+      vorname: "Anna",
+      nachname: "Beispiel",
+      handballNetId: "hb-stable"
+    }];
+    const incoming = [{
+      nr: 8,
+      vorname: "Anna",
+      nachname: "Beispiel"
+    }];
+
+    const result = mergeRosterCollection(existing, incoming);
+
+    expect(result.players).toHaveLength(1);
+    expect(result.players[0].handballNetId).toBe("hb-stable");
   });
 });
