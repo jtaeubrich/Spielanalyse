@@ -62,4 +62,22 @@ describe("Handball360 pure module", () => {
 
     expect(hbPrepare(clone, { fallbackMatchId: "999999" }).matchId).toBe("999999");
   });
+  test("retains lineup jersey numbers in rosters and event player numbers", () => {
+    const clone = structuredClone(payload);
+    const first = clone.events.data.find(e => e.player && e.is_home !== undefined);
+    expect(first).toBeDefined();
+    const playerId = first.player.id;
+    const side = first.is_home ? "local" : "visitor";
+    clone.lineups = { data: { [side]: { players: [{ number: 17, player: first.player }] } } };
+    const result = hbPrepare(clone);
+    expect(result.lineupNumbers).toBe(1);
+    expect((first.is_home ? result.homePlayers : result.awayPlayers)[0].nr).toBe(17);
+    expect(result.normalized.find(e => String(e.pId) === String(playerId))?.pNr).toBe(17);
+  });
+
+  test("an empty lineup never fabricates player numbers", () => {
+    const result = hbPrepare(payload);
+    expect(result.lineupNumbers).toBe(0);
+  });
+
 });
