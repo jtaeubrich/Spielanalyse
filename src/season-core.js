@@ -197,3 +197,155 @@ export function seasonPlayerAggregate(
     value: player.isTW ? player.saves : player.goals
   }));
 }
+
+
+export function seasonEventPlayerKey(event, game, playerKey) {
+  if (!event || !game?.state || typeof playerKey !== "function") return null;
+
+  const players = [
+    ...(game.state.home?.players || []),
+    ...(game.state.away?.players || [])
+  ];
+
+  const id =
+    event.type === "save"
+      ? event.pId ?? event.throwerId
+      : event.pId ?? event.throwerId ?? event.attackerId;
+
+  const player = players.find((candidate) => String(candidate.id) === String(id));
+  if (player) return playerKey(player);
+
+  const name = String(
+    event.pName || event.throwerName || event.attackerName || ""
+  )
+    .trim()
+    .toLocaleLowerCase("de");
+
+  return name ? name + "|event" : null;
+}
+
+export function seasonEventMatchesTeam(event, game, filter) {
+  if (filter === "all") return true;
+  const team = filter === "own" ? game?.ownTeam : game?.opponentTeam;
+  return (
+    event?.team === team ||
+    (event?.playerTags || []).some((tag) => tag.team === team)
+  );
+}
+
+export function seasonEventMatchesPlayer(event, game, key, playerKey) {
+  if (key === "all") return true;
+  if (seasonEventPlayerKey(event, game, playerKey) === key) return true;
+
+  const players = [
+    ...(game?.state?.home?.players || []),
+    ...(game?.state?.away?.players || [])
+  ];
+
+  return (event?.playerTags || []).some((tag) => {
+    const player = players.find(
+      (candidate) => String(candidate.id) === String(tag.pId)
+    );
+    return player && playerKey(player) === key;
+  });
+}
+
+export function seasonMatchesType(event, type) {
+  return (
+    type === "all" ||
+    (type === "shot" &&
+      ["shot", "goal", "miss", "save", "block"].includes(event?.type)) ||
+    (type === "2min" && ["2min", "2plus2"].includes(event?.type)) ||
+    event?.type === type
+  );
+}
+
+export function seasonDimension(value, filter) {
+  return (
+    filter === "all" ||
+    (filter === "OT" && ["OTL", "OTM", "OTR"].includes(String(value ?? ""))) ||
+    String(value ?? "") === String(filter)
+  );
+}
+
+export function filterSeasonEntries(
+  games = [],
+  {
+    team = "all",
+    player = "all",
+    type = "all",
+    zone = "all",
+    target = "all",
+    phase = "all",
+    tag = "all",
+    playerKey
+  } = {}
+) {
+  const out = [];
+
+  for (const game of games) {
+    for (const event of game?.state?.events || []) {
+      const tags = Array.isArray(event.tags) ? event.tags.map(String) : [];
+
+      if (
+        !seasonEventMatchesTeam(event, game, team) ||
+        !seasonEventMatchesPlayer(event, game, player, playerKey) ||
+        !seasonMatchesType(event, type) ||
+        !seasonDimension(event.z, zone) ||
+        !seasonDimension(event.gz, target) ||
+        !seasonDimension(event.attackPhase, phase) ||
+        (tag !== "all" && !tags.includes(tag))
+      ) {
+        continue;
+      }
+
+      out.push({ game, event });
+    }
+  }
+
+  return out;
+}
+
+export function filterSeasonShots(
+  games = [],
+  role = "all",
+  {
+    team = "all",
+    player = "all",
+    zone = "all",
+    target = "all",
+    phase = "all",
+    tag = "all",
+    playerKey
+  } = {}
+) {
+  const out = [];
+
+  for (const game of games) {
+    for (const event of game?.state?.events || []) {
+      if (!SHOT_TYPES.includes(event?.type)) continue;
+
+      const attackTeam = seasonAttackTeam(event);
+      const wanted =
+        role === "own"
+          ? game.ownTeam
+          : role === "opponent"
+            ? game.opponentTeam
+            : null;
+
+      if (wanted && attackTeam !== wanted) continue;
+      if (team !== "all" && !seasonEventMatchesTeam(event, game, team)) continue;
+      if (!seasonEventMatchesPlayer(event, game, player, playerKey)) continue;
+      if (!seasonDimension(event.z, zone)) continue;
+      if (!seasonDimension(event.gz, target)) continue;
+      if (!seasonDimension(event.attackPhase, phase)) continue;
+
+      const tags = Array.isArray(event.tags) ? event.tags.map(String) : [];
+      if (tag !== "all" && !tags.includes(tag)) continue;
+
+      out.push({ game, event });
+    }
+  }
+
+  return out;
+}
