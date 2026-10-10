@@ -1,0 +1,2706 @@
+{
+  "match_id": "378107",
+  "match_url": "https://www.handball.net/match/378107",
+  "match": {
+    "success": true,
+    "data": [
+      {
+        "id": "378107",
+        "duration": {
+          "minutes_per_period": 25
+        },
+        "local": {
+          "name": "HSG Herzhorn/Kollmar/Neuendorf"
+        },
+        "visitor": {
+          "name": "MEIN TEAM"
+        }
+      }
+    ]
+  },
+  "events": {
+    "data": [
+      {
+        "id": 43528492,
+        "minute": "00:00",
+        "global_minute": 0,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 10000,
+          "name": "Startseite Teil",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": null,
+        "is_home": false,
+        "timestamp": "2026-10-09T16:14:34+00:00",
+        "value": null,
+        "score": {
+          "local": 0,
+          "visitor": 0
+        }
+      },
+      {
+        "id": 43528491,
+        "minute": "01:03",
+        "global_minute": 1,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "01di90c",
+          "first_name": "Jakob Leo",
+          "last_name": "Liebich",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:15:39+00:00",
+        "value": null,
+        "score": {
+          "local": 0,
+          "visitor": 1
+        }
+      },
+      {
+        "id": 43528490,
+        "minute": "01:28",
+        "global_minute": 1,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1w7ltc4",
+          "first_name": "Calle",
+          "last_name": "Hensen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:16:04+00:00",
+        "value": null,
+        "score": {
+          "local": 0,
+          "visitor": 2
+        }
+      },
+      {
+        "id": 43528489,
+        "minute": "03:54",
+        "global_minute": 3,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1k5frei",
+          "first_name": "Nils Jannik",
+          "last_name": "Vogler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:18:31+00:00",
+        "value": null,
+        "score": {
+          "local": 1,
+          "visitor": 2
+        }
+      },
+      {
+        "id": 43528488,
+        "minute": "04:11",
+        "global_minute": 4,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "102u4np",
+          "first_name": "Lasse Bo",
+          "last_name": "Jepsen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:18:47+00:00",
+        "value": null,
+        "score": {
+          "local": 1,
+          "visitor": 3
+        }
+      },
+      {
+        "id": 43528487,
+        "minute": "04:49",
+        "global_minute": 4,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1jww5o6",
+          "first_name": "Fiete Johan",
+          "last_name": "Hinz",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:19:25+00:00",
+        "value": null,
+        "score": {
+          "local": 1,
+          "visitor": 4
+        }
+      },
+      {
+        "id": 43528486,
+        "minute": "05:30",
+        "global_minute": 5,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0cg0gnq",
+          "first_name": "Leonardo Luca",
+          "last_name": "Joest",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:20:05+00:00",
+        "value": null,
+        "score": {
+          "local": 2,
+          "visitor": 4
+        }
+      },
+      {
+        "id": 43528485,
+        "minute": "06:21",
+        "global_minute": 6,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0d7ue9i",
+          "first_name": "Matti",
+          "last_name": "Grüger",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:20:58+00:00",
+        "value": null,
+        "score": {
+          "local": 3,
+          "visitor": 4
+        }
+      },
+      {
+        "id": 43528484,
+        "minute": "07:09",
+        "global_minute": 7,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0cg0gnq",
+          "first_name": "Leonardo Luca",
+          "last_name": "Joest",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:21:44+00:00",
+        "value": null,
+        "score": {
+          "local": 4,
+          "visitor": 4
+        }
+      },
+      {
+        "id": 43528483,
+        "minute": "07:18",
+        "global_minute": 7,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "102u4np",
+          "first_name": "Lasse Bo",
+          "last_name": "Jepsen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:21:54+00:00",
+        "value": null,
+        "score": {
+          "local": 4,
+          "visitor": 5
+        }
+      },
+      {
+        "id": 43528482,
+        "minute": "08:04",
+        "global_minute": 8,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1jww5o6",
+          "first_name": "Fiete Johan",
+          "last_name": "Hinz",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:22:40+00:00",
+        "value": null,
+        "score": {
+          "local": 4,
+          "visitor": 6
+        }
+      },
+      {
+        "id": 43528481,
+        "minute": "08:25",
+        "global_minute": 8,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 2,
+          "name": "Verwarnung",
+          "is_goal": false,
+          "is_sanction": true,
+          "sanction_class": "warning"
+        },
+        "player": {
+          "id": "102u4np",
+          "first_name": "Lasse Bo",
+          "last_name": "Jepsen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:23:01+00:00",
+        "value": null,
+        "score": {
+          "local": 4,
+          "visitor": 6
+        }
+      },
+      {
+        "id": 43528480,
+        "minute": "12:13",
+        "global_minute": 12,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 30,
+          "name": "Auszeit",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:27:05+00:00",
+        "value": null,
+        "score": {
+          "local": 4,
+          "visitor": 6
+        }
+      },
+      {
+        "id": 43528479,
+        "minute": "12:31",
+        "global_minute": 12,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0cg0gnq",
+          "first_name": "Leonardo Luca",
+          "last_name": "Joest",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:28:35+00:00",
+        "value": null,
+        "score": {
+          "local": 5,
+          "visitor": 6
+        }
+      },
+      {
+        "id": 43528478,
+        "minute": "13:08",
+        "global_minute": 13,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0cg0gnq",
+          "first_name": "Leonardo Luca",
+          "last_name": "Joest",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:29:11+00:00",
+        "value": null,
+        "score": {
+          "local": 6,
+          "visitor": 6
+        }
+      },
+      {
+        "id": 43528477,
+        "minute": "13:32",
+        "global_minute": 13,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0xvn198",
+          "first_name": "Iven",
+          "last_name": "Wendler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:29:37+00:00",
+        "value": null,
+        "score": {
+          "local": 6,
+          "visitor": 7
+        }
+      },
+      {
+        "id": 43528476,
+        "minute": "14:09",
+        "global_minute": 14,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1h384bd",
+          "first_name": "Niklas",
+          "last_name": "Büttner",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:30:15+00:00",
+        "value": null,
+        "score": {
+          "local": 6,
+          "visitor": 8
+        }
+      },
+      {
+        "id": 43528475,
+        "minute": "15:02",
+        "global_minute": 15,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0uw6qtm",
+          "first_name": "Jespe Mats",
+          "last_name": "Täubrich",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:31:07+00:00",
+        "value": null,
+        "score": {
+          "local": 6,
+          "visitor": 9
+        }
+      },
+      {
+        "id": 43528474,
+        "minute": "15:31",
+        "global_minute": 15,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "02ynp9x",
+          "first_name": "Max Kornelius",
+          "last_name": "Fock",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:31:34+00:00",
+        "value": null,
+        "score": {
+          "local": 7,
+          "visitor": 9
+        }
+      },
+      {
+        "id": 43528473,
+        "minute": "15:43",
+        "global_minute": 15,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 13,
+          "name": "Zwei Minuten",
+          "is_goal": false,
+          "is_sanction": true,
+          "sanction_class": "suspension"
+        },
+        "player": {
+          "id": "1k5frei",
+          "first_name": "Nils Jannik",
+          "last_name": "Vogler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:32:37+00:00",
+        "value": null,
+        "score": {
+          "local": 7,
+          "visitor": 9
+        }
+      },
+      {
+        "id": 43528472,
+        "minute": "15:44",
+        "global_minute": 15,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1jww5o6",
+          "first_name": "Fiete Johan",
+          "last_name": "Hinz",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:33:02+00:00",
+        "value": null,
+        "score": {
+          "local": 7,
+          "visitor": 10
+        }
+      },
+      {
+        "id": 43528471,
+        "minute": "16:35",
+        "global_minute": 16,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 1004,
+          "name": "Siebenmeter Fehlwurf",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "00dv0rn",
+          "first_name": "Simon",
+          "last_name": "Boßlet",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:33:56+00:00",
+        "value": null,
+        "score": {
+          "local": 7,
+          "visitor": 10
+        }
+      },
+      {
+        "id": 43528470,
+        "minute": "16:52",
+        "global_minute": 16,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1w7ltc4",
+          "first_name": "Calle",
+          "last_name": "Hensen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:34:11+00:00",
+        "value": null,
+        "score": {
+          "local": 7,
+          "visitor": 11
+        }
+      },
+      {
+        "id": 43528469,
+        "minute": "17:31",
+        "global_minute": 17,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1h384bd",
+          "first_name": "Niklas",
+          "last_name": "Büttner",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:34:52+00:00",
+        "value": null,
+        "score": {
+          "local": 7,
+          "visitor": 12
+        }
+      },
+      {
+        "id": 43528468,
+        "minute": "18:40",
+        "global_minute": 18,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1k5frei",
+          "first_name": "Nils Jannik",
+          "last_name": "Vogler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:35:58+00:00",
+        "value": null,
+        "score": {
+          "local": 8,
+          "visitor": 12
+        }
+      },
+      {
+        "id": 43528467,
+        "minute": "18:43",
+        "global_minute": 18,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 13,
+          "name": "Zwei Minuten",
+          "is_goal": false,
+          "is_sanction": true,
+          "sanction_class": "suspension"
+        },
+        "player": {
+          "id": "0uw6qtm",
+          "first_name": "Jespe Mats",
+          "last_name": "Täubrich",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:36:04+00:00",
+        "value": null,
+        "score": {
+          "local": 8,
+          "visitor": 12
+        }
+      },
+      {
+        "id": 43528466,
+        "minute": "18:48",
+        "global_minute": 18,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 30,
+          "name": "Auszeit",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:36:09+00:00",
+        "value": null,
+        "score": {
+          "local": 8,
+          "visitor": 12
+        }
+      },
+      {
+        "id": 43528465,
+        "minute": "18:58",
+        "global_minute": 18,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1jww5o6",
+          "first_name": "Fiete Johan",
+          "last_name": "Hinz",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:37:44+00:00",
+        "value": null,
+        "score": {
+          "local": 8,
+          "visitor": 13
+        }
+      },
+      {
+        "id": 43528464,
+        "minute": "19:16",
+        "global_minute": 19,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0xj8rxz",
+          "first_name": "Rasmus",
+          "last_name": "Junge",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:37:59+00:00",
+        "value": null,
+        "score": {
+          "local": 9,
+          "visitor": 13
+        }
+      },
+      {
+        "id": 43528463,
+        "minute": "19:34",
+        "global_minute": 19,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1h384bd",
+          "first_name": "Niklas",
+          "last_name": "Büttner",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:38:18+00:00",
+        "value": null,
+        "score": {
+          "local": 9,
+          "visitor": 14
+        }
+      },
+      {
+        "id": 43528462,
+        "minute": "19:51",
+        "global_minute": 19,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0xj8rxz",
+          "first_name": "Rasmus",
+          "last_name": "Junge",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:38:33+00:00",
+        "value": null,
+        "score": {
+          "local": 10,
+          "visitor": 14
+        }
+      },
+      {
+        "id": 43528461,
+        "minute": "20:18",
+        "global_minute": 20,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0xj8rxz",
+          "first_name": "Rasmus",
+          "last_name": "Junge",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:39:01+00:00",
+        "value": null,
+        "score": {
+          "local": 11,
+          "visitor": 14
+        }
+      },
+      {
+        "id": 43528460,
+        "minute": "20:37",
+        "global_minute": 20,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "12pw1nw",
+          "first_name": "Jan",
+          "last_name": "Steiner",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:39:20+00:00",
+        "value": null,
+        "score": {
+          "local": 11,
+          "visitor": 15
+        }
+      },
+      {
+        "id": 43528459,
+        "minute": "21:33",
+        "global_minute": 21,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0xvn198",
+          "first_name": "Iven",
+          "last_name": "Wendler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:40:15+00:00",
+        "value": null,
+        "score": {
+          "local": 11,
+          "visitor": 16
+        }
+      },
+      {
+        "id": 43528458,
+        "minute": "22:24",
+        "global_minute": 22,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1w7ltc4",
+          "first_name": "Calle",
+          "last_name": "Hensen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:41:06+00:00",
+        "value": null,
+        "score": {
+          "local": 11,
+          "visitor": 17
+        }
+      },
+      {
+        "id": 43528457,
+        "minute": "22:57",
+        "global_minute": 22,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1jww5o6",
+          "first_name": "Fiete Johan",
+          "last_name": "Hinz",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:41:42+00:00",
+        "value": null,
+        "score": {
+          "local": 11,
+          "visitor": 18
+        }
+      },
+      {
+        "id": 43528456,
+        "minute": "22:57",
+        "global_minute": 22,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 13,
+          "name": "Zwei Minuten",
+          "is_goal": false,
+          "is_sanction": true,
+          "sanction_class": "suspension"
+        },
+        "player": {
+          "id": "00dv0rn",
+          "first_name": "Simon",
+          "last_name": "Boßlet",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:41:44+00:00",
+        "value": null,
+        "score": {
+          "local": 11,
+          "visitor": 18
+        }
+      },
+      {
+        "id": 43528455,
+        "minute": "22:57",
+        "global_minute": 22,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 30,
+          "name": "Auszeit",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:41:57+00:00",
+        "value": null,
+        "score": {
+          "local": 11,
+          "visitor": 18
+        }
+      },
+      {
+        "id": 43528454,
+        "minute": "23:29",
+        "global_minute": 23,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1k5frei",
+          "first_name": "Nils Jannik",
+          "last_name": "Vogler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:43:36+00:00",
+        "value": null,
+        "score": {
+          "local": 12,
+          "visitor": 18
+        }
+      },
+      {
+        "id": 43528453,
+        "minute": "23:46",
+        "global_minute": 23,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1w7ltc4",
+          "first_name": "Calle",
+          "last_name": "Hensen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:43:53+00:00",
+        "value": null,
+        "score": {
+          "local": 12,
+          "visitor": 19
+        }
+      },
+      {
+        "id": 43528452,
+        "minute": "25:00",
+        "global_minute": 25,
+        "block": " 1. Halbzeit",
+        "event_type": {
+          "id": 10002,
+          "name": "Teilende",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": null,
+        "is_home": false,
+        "timestamp": "2026-10-09T16:45:05+00:00",
+        "value": null,
+        "score": {
+          "local": 12,
+          "visitor": 19
+        }
+      },
+      {
+        "id": 43528451,
+        "minute": "00:00",
+        "global_minute": 25,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 10000,
+          "name": "Startseite Teil",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": null,
+        "is_home": false,
+        "timestamp": "2026-10-09T16:56:04+00:00",
+        "value": null,
+        "score": {
+          "local": 12,
+          "visitor": 19
+        }
+      },
+      {
+        "id": 43528450,
+        "minute": "00:42",
+        "global_minute": 25,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0d7ue9i",
+          "first_name": "Matti",
+          "last_name": "Grüger",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:56:49+00:00",
+        "value": null,
+        "score": {
+          "local": 13,
+          "visitor": 19
+        }
+      },
+      {
+        "id": 43528449,
+        "minute": "01:06",
+        "global_minute": 26,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "063a02s",
+          "first_name": "Jon Henri",
+          "last_name": "Trapp",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:57:12+00:00",
+        "value": null,
+        "score": {
+          "local": 13,
+          "visitor": 20
+        }
+      },
+      {
+        "id": 43528448,
+        "minute": "02:12",
+        "global_minute": 27,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1k5frei",
+          "first_name": "Nils Jannik",
+          "last_name": "Vogler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:58:50+00:00",
+        "value": null,
+        "score": {
+          "local": 14,
+          "visitor": 20
+        }
+      },
+      {
+        "id": 43528447,
+        "minute": "02:18",
+        "global_minute": 27,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0uw6qtm",
+          "first_name": "Jespe Mats",
+          "last_name": "Täubrich",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:58:56+00:00",
+        "value": null,
+        "score": {
+          "local": 14,
+          "visitor": 21
+        }
+      },
+      {
+        "id": 43528446,
+        "minute": "02:40",
+        "global_minute": 27,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0d7ue9i",
+          "first_name": "Matti",
+          "last_name": "Grüger",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T16:59:17+00:00",
+        "value": null,
+        "score": {
+          "local": 15,
+          "visitor": 21
+        }
+      },
+      {
+        "id": 43528445,
+        "minute": "03:07",
+        "global_minute": 28,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 39,
+          "name": "Siebenmeter Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0uw6qtm",
+          "first_name": "Jespe Mats",
+          "last_name": "Täubrich",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T16:59:45+00:00",
+        "value": null,
+        "score": {
+          "local": 15,
+          "visitor": 22
+        }
+      },
+      {
+        "id": 43528444,
+        "minute": "04:51",
+        "global_minute": 29,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0d7ue9i",
+          "first_name": "Matti",
+          "last_name": "Grüger",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:01:29+00:00",
+        "value": null,
+        "score": {
+          "local": 16,
+          "visitor": 22
+        }
+      },
+      {
+        "id": 43528443,
+        "minute": "05:15",
+        "global_minute": 30,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "063a02s",
+          "first_name": "Jon Henri",
+          "last_name": "Trapp",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:01:53+00:00",
+        "value": null,
+        "score": {
+          "local": 16,
+          "visitor": 23
+        }
+      },
+      {
+        "id": 43528442,
+        "minute": "05:55",
+        "global_minute": 30,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 39,
+          "name": "Siebenmeter Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0cg0gnq",
+          "first_name": "Leonardo Luca",
+          "last_name": "Joest",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:02:44+00:00",
+        "value": null,
+        "score": {
+          "local": 17,
+          "visitor": 23
+        }
+      },
+      {
+        "id": 43528441,
+        "minute": "06:18",
+        "global_minute": 31,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1jww5o6",
+          "first_name": "Fiete Johan",
+          "last_name": "Hinz",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:03:11+00:00",
+        "value": null,
+        "score": {
+          "local": 17,
+          "visitor": 24
+        }
+      },
+      {
+        "id": 43528440,
+        "minute": "07:12",
+        "global_minute": 32,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "102u4np",
+          "first_name": "Lasse Bo",
+          "last_name": "Jepsen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:04:07+00:00",
+        "value": null,
+        "score": {
+          "local": 17,
+          "visitor": 25
+        }
+      },
+      {
+        "id": 43528439,
+        "minute": "07:46",
+        "global_minute": 32,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1jww5o6",
+          "first_name": "Fiete Johan",
+          "last_name": "Hinz",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:04:39+00:00",
+        "value": null,
+        "score": {
+          "local": 17,
+          "visitor": 26
+        }
+      },
+      {
+        "id": 43528438,
+        "minute": "07:52",
+        "global_minute": 32,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 30,
+          "name": "Auszeit",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:04:50+00:00",
+        "value": null,
+        "score": {
+          "local": 17,
+          "visitor": 26
+        }
+      },
+      {
+        "id": 43528437,
+        "minute": "08:22",
+        "global_minute": 33,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "02ynp9x",
+          "first_name": "Max Kornelius",
+          "last_name": "Fock",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:06:27+00:00",
+        "value": null,
+        "score": {
+          "local": 18,
+          "visitor": 26
+        }
+      },
+      {
+        "id": 43528436,
+        "minute": "08:29",
+        "global_minute": 33,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0uw6qtm",
+          "first_name": "Jespe Mats",
+          "last_name": "Täubrich",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:06:35+00:00",
+        "value": null,
+        "score": {
+          "local": 18,
+          "visitor": 27
+        }
+      },
+      {
+        "id": 43528435,
+        "minute": "08:54",
+        "global_minute": 33,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0ps8kip",
+          "first_name": "Philipp",
+          "last_name": "Saß",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:07:00+00:00",
+        "value": null,
+        "score": {
+          "local": 19,
+          "visitor": 27
+        }
+      },
+      {
+        "id": 43528434,
+        "minute": "09:45",
+        "global_minute": 34,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 13,
+          "name": "Zwei Minuten",
+          "is_goal": false,
+          "is_sanction": true,
+          "sanction_class": "suspension"
+        },
+        "player": {
+          "id": "0cg0gnq",
+          "first_name": "Leonardo Luca",
+          "last_name": "Joest",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:07:54+00:00",
+        "value": null,
+        "score": {
+          "local": 19,
+          "visitor": 27
+        }
+      },
+      {
+        "id": 43528433,
+        "minute": "09:55",
+        "global_minute": 34,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "01di90c",
+          "first_name": "Jakob Leo",
+          "last_name": "Liebich",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:08:22+00:00",
+        "value": null,
+        "score": {
+          "local": 19,
+          "visitor": 28
+        }
+      },
+      {
+        "id": 43528432,
+        "minute": "10:18",
+        "global_minute": 35,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0d7ue9i",
+          "first_name": "Matti",
+          "last_name": "Grüger",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:08:44+00:00",
+        "value": null,
+        "score": {
+          "local": 20,
+          "visitor": 28
+        }
+      },
+      {
+        "id": 43528431,
+        "minute": "10:43",
+        "global_minute": 35,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1w7ltc4",
+          "first_name": "Calle",
+          "last_name": "Hensen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:09:10+00:00",
+        "value": null,
+        "score": {
+          "local": 20,
+          "visitor": 29
+        }
+      },
+      {
+        "id": 43528430,
+        "minute": "11:24",
+        "global_minute": 36,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 13,
+          "name": "Zwei Minuten",
+          "is_goal": false,
+          "is_sanction": true,
+          "sanction_class": "suspension"
+        },
+        "player": {
+          "id": "06o7akx",
+          "first_name": "Lucas",
+          "last_name": "Djakow",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:09:53+00:00",
+        "value": null,
+        "score": {
+          "local": 20,
+          "visitor": 29
+        }
+      },
+      {
+        "id": 43528429,
+        "minute": "12:17",
+        "global_minute": 37,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "02r1u67",
+          "first_name": "Fynn Jonas",
+          "last_name": "Greve",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:11:07+00:00",
+        "value": null,
+        "score": {
+          "local": 20,
+          "visitor": 30
+        }
+      },
+      {
+        "id": 43528428,
+        "minute": "13:49",
+        "global_minute": 38,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "111vo6o",
+          "first_name": "Max-Ferdinand",
+          "last_name": "von Saldern",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:12:39+00:00",
+        "value": null,
+        "score": {
+          "local": 21,
+          "visitor": 30
+        }
+      },
+      {
+        "id": 43528427,
+        "minute": "14:10",
+        "global_minute": 39,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0uw6qtm",
+          "first_name": "Jespe Mats",
+          "last_name": "Täubrich",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:13:01+00:00",
+        "value": null,
+        "score": {
+          "local": 21,
+          "visitor": 31
+        }
+      },
+      {
+        "id": 43528426,
+        "minute": "14:43",
+        "global_minute": 39,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "02r1u67",
+          "first_name": "Fynn Jonas",
+          "last_name": "Greve",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:13:33+00:00",
+        "value": null,
+        "score": {
+          "local": 21,
+          "visitor": 32
+        }
+      },
+      {
+        "id": 43528425,
+        "minute": "16:23",
+        "global_minute": 41,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 39,
+          "name": "Siebenmeter Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0d7ue9i",
+          "first_name": "Matti",
+          "last_name": "Grüger",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:15:13+00:00",
+        "value": null,
+        "score": {
+          "local": 22,
+          "visitor": 32
+        }
+      },
+      {
+        "id": 43528424,
+        "minute": "17:43",
+        "global_minute": 42,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 1004,
+          "name": "Siebenmeter Fehlwurf",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "0d7ue9i",
+          "first_name": "Matti",
+          "last_name": "Grüger",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:16:33+00:00",
+        "value": null,
+        "score": {
+          "local": 22,
+          "visitor": 32
+        }
+      },
+      {
+        "id": 43528423,
+        "minute": "18:02",
+        "global_minute": 43,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1w7ltc4",
+          "first_name": "Calle",
+          "last_name": "Hensen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:16:51+00:00",
+        "value": null,
+        "score": {
+          "local": 22,
+          "visitor": 33
+        }
+      },
+      {
+        "id": 43528422,
+        "minute": "18:44",
+        "global_minute": 43,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1w7ltc4",
+          "first_name": "Calle",
+          "last_name": "Hensen",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:17:34+00:00",
+        "value": null,
+        "score": {
+          "local": 22,
+          "visitor": 34
+        }
+      },
+      {
+        "id": 43528421,
+        "minute": "21:32",
+        "global_minute": 46,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "02ynp9x",
+          "first_name": "Max Kornelius",
+          "last_name": "Fock",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:20:22+00:00",
+        "value": null,
+        "score": {
+          "local": 23,
+          "visitor": 34
+        }
+      },
+      {
+        "id": 43528420,
+        "minute": "21:44",
+        "global_minute": 46,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 30,
+          "name": "Auszeit",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:20:38+00:00",
+        "value": null,
+        "score": {
+          "local": 23,
+          "visitor": 34
+        }
+      },
+      {
+        "id": 43528419,
+        "minute": "22:15",
+        "global_minute": 47,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1k5frei",
+          "first_name": "Nils Jannik",
+          "last_name": "Vogler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:22:20+00:00",
+        "value": null,
+        "score": {
+          "local": 24,
+          "visitor": 34
+        }
+      },
+      {
+        "id": 43528418,
+        "minute": "22:40",
+        "global_minute": 47,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1h384bd",
+          "first_name": "Niklas",
+          "last_name": "Büttner",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85814,
+          "name": "MEIN TEAM",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": false,
+        "timestamp": "2026-10-09T17:22:46+00:00",
+        "value": null,
+        "score": {
+          "local": 24,
+          "visitor": 35
+        }
+      },
+      {
+        "id": 43528417,
+        "minute": "23:17",
+        "global_minute": 48,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1k5frei",
+          "first_name": "Nils Jannik",
+          "last_name": "Vogler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:23:22+00:00",
+        "value": null,
+        "score": {
+          "local": 25,
+          "visitor": 35
+        }
+      },
+      {
+        "id": 43528416,
+        "minute": "24:13",
+        "global_minute": 49,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 15,
+          "name": "Tor",
+          "is_goal": true,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": {
+          "id": "1k5frei",
+          "first_name": "Nils Jannik",
+          "last_name": "Vogler",
+          "photo_url": null
+        },
+        "team": {
+          "id": 85850,
+          "name": "HSG HERZHORN/KOLLMAR/NEUENDORF",
+          "web": null,
+          "gender": {
+            "id": "M",
+            "name": "Male"
+          }
+        },
+        "is_home": true,
+        "timestamp": "2026-10-09T17:24:18+00:00",
+        "value": null,
+        "score": {
+          "local": 26,
+          "visitor": 35
+        }
+      },
+      {
+        "id": 43528415,
+        "minute": "25:00",
+        "global_minute": 50,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 10002,
+          "name": "Teilende",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": null,
+        "is_home": false,
+        "timestamp": "2026-10-09T17:25:03+00:00",
+        "value": null,
+        "score": {
+          "local": 26,
+          "visitor": 35
+        }
+      },
+      {
+        "id": 43601836,
+        "minute": "25:00",
+        "global_minute": 50,
+        "block": "2. Halbzeit",
+        "event_type": {
+          "id": 10001,
+          "name": "Spielende",
+          "is_goal": false,
+          "is_sanction": false,
+          "sanction_class": null
+        },
+        "player": null,
+        "team": null,
+        "is_home": false,
+        "timestamp": "2026-10-09T17:34:07+00:00",
+        "value": null,
+        "score": {
+          "local": 26,
+          "visitor": 35
+        }
+      }
+    ]
+  },
+  "lineups": {
+    "data": []
+  },
+  "additional_info": {
+    "data": []
+  }
+}
