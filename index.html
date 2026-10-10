@@ -724,6 +724,7 @@
 import { scoreEvents } from "./src/game-model.js";
 import { GAME_FORMAT, CURRENT_GAME_VERSION, migrateGameData, stampCurrentGameFormat } from "./src/game-format.js";
 import { GAME_FILE_TYPES, parseGameText, defaultGameFileName as coreDefaultGameFileName, gameOpenPickerOptions, gameSavePickerOptions, writeTextFileHandle } from "./src/game-files.js";
+import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeSeasonGame, normalizeSeasonArchive, parseSeasonText, mergeSeasonGames, readSeasonGameFiles } from "./src/season-files.js";
 import { handballNetMatchId, hbNameKey, hbPrepare } from "./src/handball360.js";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots } from "./src/season-core.js";
@@ -890,38 +891,20 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     return [last,first,nr].join("|");
   }
   function seasonPlayerLabel(player){return player?playerName(player):"Unbekannt"}
-  function seasonIdentityText(value){return String(value??"").trim().toLocaleLowerCase("de").replace(/\s+/g," ")}
-  function seasonGameId(fileName,data){
-    const date=data.gameDate??data.matchDate??data.date??"";
-    const raw=[seasonIdentityText(fileName),seasonIdentityText(data.gameName),seasonIdentityText(data.home?.name),seasonIdentityText(data.away?.name),seasonIdentityText(date)].join("|");
-    let h=2166136261;for(let i=0;i<raw.length;i++){h^=raw.charCodeAt(i);h=Math.imul(h,16777619)}return "sg-"+(h>>>0).toString(16);
-  }
-  function seasonNormalizeGame(data,fileName){
-    const migrated=migrateGameData(data);
-    if(!Array.isArray(migrated.events)||!migrated.home||!migrated.away)throw Error("Keine gültige Spiel-JSON.");
-    const game={id:seasonGameId(fileName,migrated),fileName:fileName||"Spiel.json",state:migrated,selected:true};
-    game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":"home";return game;
-  }
+  function seasonCurrentOwnName(){return String(state[ownTeam]?.name||"").trim()}
+  function seasonGameId(fileName,data){return coreSeasonGameId(fileName,data)}
+  function seasonNormalizeGame(data,fileName){return coreNormalizeSeasonGame(data,fileName,seasonCurrentOwnName())}
   async function loadSeasonFiles(files){
-    const loaded=[],errors=[];let added=0,updated=0;
-    for(const file of files){
-      try{const data=JSON.parse(await file.text()),game=seasonNormalizeGame(data,file.name);loaded.push(game)}
-      catch(error){errors.push(file.name)}
-    }
-    const map=new Map(seasonGames.map(game=>[game.id,game]));
-    for(const game of loaded){
-      const previous=map.get(game.id);
-      if(previous){game.selected=previous.selected!==false;updated++}else added++;
-      map.set(game.id,game);
-    }
-    seasonGames=[...map.values()];renderSeason();persistSeasonSoon();
-    const parts=[];if(added)parts.push(`${added} neu`);if(updated)parts.push(`${updated} aktualisiert`);if(errors.length)parts.push(`${errors.length} übersprungen`);
+    const {loaded,errors}=await readSeasonGameFiles(files,seasonCurrentOwnName());
+    const merged=mergeSeasonGames(seasonGames,loaded);
+    seasonGames=merged.games;renderSeason();persistSeasonSoon();
+    const parts=[];if(merged.added)parts.push(`${merged.added} neu`);if(merged.updated)parts.push(`${merged.updated} aktualisiert`);if(errors.length)parts.push(`${errors.length} übersprungen`);
     toast(parts.length?parts.join(" · "):"Keine Änderungen");
   }
   let seasonUpdateTargetId=null;
   async function updateSeasonGameFromFile(file,targetId){
     const target=seasonGames.find(game=>game.id===targetId);if(!target)throw Error("Saisonspiel nicht gefunden.");
-    const data=JSON.parse(await file.text()),replacement=seasonNormalizeGame(data,file.name);
+    const data=parseGameText(await file.text()),replacement=seasonNormalizeGame(data,file.name);
     if(replacement.id!==target.id&&!confirm("Die ausgewählte Datei scheint ein anderes Spiel zu sein. Dieses Saisonspiel trotzdem damit ersetzen?"))return false;
     replacement.id=target.id;replacement.selected=target.selected!==false;
     const index=seasonGames.findIndex(game=>game.id===target.id);seasonGames[index]=replacement;
@@ -1049,7 +1032,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
   function renderSeason(){const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
   $("seasonGameInput").onchange=event=>{const files=[...(event.target.files||[])];event.target.value="";if(files.length)loadSeasonFiles(files)};
   $("seasonUpdateInput").onchange=async event=>{const file=event.target.files?.[0],targetId=seasonUpdateTargetId;event.target.value="";seasonUpdateTargetId=null;if(!file||!targetId)return;try{await updateSeasonGameFromFile(file,targetId)}catch(error){toast(error?.message||"Saisonspiel konnte nicht aktualisiert werden")}};
-  $("seasonImportInput").onchange=async event=>{const file=event.target.files?.[0];event.target.value="";if(!file)return;try{applySeasonObject(JSON.parse(await file.text()));toast(`Saison mit ${seasonGames.length} Spielen importiert`)}catch(error){toast(error?.message||"Saison konnte nicht importiert werden")}};
+  $("seasonImportInput").onchange=async event=>{const file=event.target.files?.[0];event.target.value="";if(!file)return;try{const restored=parseSeasonText(await file.text(),seasonCurrentOwnName());seasonName=restored.name;seasonGames=restored.games;renderSeason();persistSeasonSoon();toast(`Saison mit ${seasonGames.length} Spielen importiert`)}catch(error){toast(error?.message||"Saison konnte nicht importiert werden")}};
   $("seasonExport").onclick=downloadSeasonExport;
   $("seasonName").onchange=event=>{seasonName=event.target.value.trim()||"Saison";event.target.value=seasonName;persistSeasonSoon()};
   $("seasonSelectAll").onclick=()=>{seasonGames.forEach(game=>game.selected=true);renderSeason();persistSeasonSoon()};
@@ -1078,10 +1061,8 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     toast(`Saison mit ${seasonGames.length} Spielen exportiert`);
   }
   function applySeasonObject(data){
-    if(!["handball-spielanalyse-season",["handball","match-flow-season"].join("-")].includes(data?.format)||!Array.isArray(data.games))throw Error("Keine gültige Saison-Datei.");
-    const restored=new Map();
-    data.games.forEach((item,index)=>{const raw=item?.data??item?.state;if(!raw)return;const game=seasonNormalizeGame(raw,item.fileName||`Spiel_${index+1}.json`);game.selected=item.selected!==false;restored.set(game.id,game)});
-    seasonName=String(data.name||"Saison").trim()||"Saison";seasonGames=[...restored.values()];renderSeason();persistSeasonSoon();
+    const restored=normalizeSeasonArchive(data,seasonCurrentOwnName());
+    seasonName=restored.name;seasonGames=restored.games;renderSeason();persistSeasonSoon();
   }
   async function restoreStoredSeason(){
     const saved=await readInternalSeason();if(!saved?.games?.length)return false;
@@ -1692,7 +1673,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=123",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=124",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
