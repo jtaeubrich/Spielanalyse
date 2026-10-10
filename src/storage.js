@@ -1,9 +1,10 @@
 export const INTERNAL_DB_NAME = "handball-spielanalyse";
-export const INTERNAL_DB_VERSION = 2;
+export const INTERNAL_DB_VERSION = 3;
 export const INTERNAL_GAME_STORE = "games";
 export const INTERNAL_GAME_KEY = "current";
 export const INTERNAL_SEASON_STORE = "seasons";
 export const INTERNAL_SEASON_KEY = "current";
+export const INTERNAL_ROSTER_STORE = "rosters";
 export const SESSION_STORAGE_KEY = "handballSpielanalyse.session";
 export const SEASON_FORMAT = "handball-spielanalyse-season";
 export const SEASON_VERSION = 1;
@@ -91,6 +92,9 @@ export function openInternalDb(indexedDb = globalThis.indexedDB) {
       if (!db.objectStoreNames.contains(INTERNAL_SEASON_STORE)) {
         db.createObjectStore(INTERNAL_SEASON_STORE, { keyPath: "id" });
       }
+      if (!db.objectStoreNames.contains(INTERNAL_ROSTER_STORE)) {
+        db.createObjectStore(INTERNAL_ROSTER_STORE, { keyPath: "id" });
+      }
     };
 
     request.onsuccess = () => resolve(request.result);
@@ -143,4 +147,20 @@ export async function deleteInternalRecord(storeName, key, indexedDb = globalThi
   } finally {
     db.close();
   }
+}
+
+
+export function buildRosterRecord({
+  id,
+  teamName,
+  players = [],
+  updatedAt = new Date().toISOString()
+}) {
+  if (!id) throw new Error("Roster-ID fehlt.");
+  return {
+    id,
+    teamName: String(teamName || "").trim() || "Mannschaft",
+    updatedAt,
+    players: structuredClone(Array.isArray(players) ? players : [])
+  };
 }
