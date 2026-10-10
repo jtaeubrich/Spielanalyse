@@ -16,7 +16,7 @@ describe("clip audio and rendering", () => {
     expect(stream.addTrack).toHaveBeenCalledTimes(2);
   });
   test("falls back to silent video on audio failure", async () => {
-    const result=await connectClipAudio({video:{},stream:{},getState:()=>({}),setState:()=>{},AudioContextClass:class{throw Error("blocked")}});
+    const result=await connectClipAudio({video:{},stream:{},getState:()=>({}),setState:()=>{},AudioContextClass:class{constructor(){throw Error("blocked")}}});
     expect(result.withAudio).toBe(false);
   });
   test("renders original frames and injected annotations", () => {
