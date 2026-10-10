@@ -1,4 +1,4 @@
-const CACHE_NAME = "handball-spielanalyse-v119";
+const CACHE_NAME = "handball-spielanalyse-v120";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const APP_SHELL = [
   "./src/handball360.js",
   "./src/analysis-core.js",
   "./src/season-core.js",
+  "./src/special-teams.js",
   "./icons/logo-ball-flow.svg?v=34",
   "./icons/apple-touch-icon-v29.png?v=34",
   "./icons/icon-192.png?v=34",
