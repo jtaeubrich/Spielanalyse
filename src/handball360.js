@@ -86,6 +86,22 @@ export function hbRoster(events = [], isHome) {
   );
 }
 
+export function hbLineupSides(raw) {
+  const data = raw?.lineups?.data ?? raw?.lineups ?? null;
+  if (!data) return { local: null, visitor: null };
+  if (!Array.isArray(data)) return { local: data.local ?? data.home ?? null, visitor: data.visitor ?? data.away ?? null };
+  return {
+    local: data.find(side => side?.is_home === true || side?.side === "local" || side?.side === "home") ?? null,
+    visitor: data.find(side => side?.is_home === false || side?.side === "visitor" || side?.side === "away") ?? null
+  };
+}
+
+export function hbLineupNumber(entry) {
+  const value = entry?.number ?? entry?.jersey_number ?? entry?.jerseyNumber ??
+    entry?.shirt_number ?? entry?.shirtNumber ?? entry?.player?.number ?? null;
+  return value == null || String(value).trim() === "" ? "" : value;
+}
+
 export function hbRosterFromLineup(side) {
   const entries = Array.isArray(side?.players) ? side.players : [];
 
@@ -98,7 +114,7 @@ export function hbRosterFromLineup(side) {
 
       return {
         id: handballNetId || "hb-lineup-" + fallbackKey + "-" + index,
-        nr: entry.number ?? "",
+        nr: hbLineupNumber(entry),
         nachname: String(player.last_name || "").trim(),
         vorname: String(player.first_name || "").trim(),
         isTW: Boolean(entry.is_goalkeeper),
@@ -218,8 +234,7 @@ export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
   const matchId =
     String(raw?.match_id || matchMeta?.id || fallbackMatchId || "") || null;
 
-  const lineupLocal = raw?.lineups?.data?.local || null;
-  const lineupVisitor = raw?.lineups?.data?.visitor || null;
+  const { local: lineupLocal, visitor: lineupVisitor } = hbLineupSides(raw);
   const lineupHomePlayers = hbRosterFromLineup(lineupLocal);
   const lineupAwayPlayers = hbRosterFromLineup(lineupVisitor);
 
@@ -230,9 +245,14 @@ export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
     ? lineupAwayPlayers
     : hbRoster(events, false);
 
+  const byId = new Map([...homePlayers, ...awayPlayers].filter(p => p.handballNetId).map(p => [String(p.handballNetId), p]));
+  const normalized = hbNormalizeEvents(events, duration).map(e => {
+    const p = byId.get(String(e.pId ?? ""));
+    return p && p.nr !== "" && p.nr != null ? { ...e, pNr: p.nr } : e;
+  });
   return {
     events,
-    normalized: hbNormalizeEvents(events, duration),
+    normalized,
     duration,
     teams,
     matchId,
@@ -242,6 +262,7 @@ export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
     awayPlayers,
     rosterSource:
       lineupHomePlayers.length || lineupAwayPlayers.length ? "lineups" : "events",
+    lineupNumbers: [...lineupHomePlayers, ...lineupAwayPlayers].filter(p => p.nr !== "" && p.nr != null).length,
     matchMeta,
     additionalInfo:
       raw?.additional_info ?? raw?.["additional-info"] ?? raw?.additionalInfo ?? null,
