@@ -239,6 +239,7 @@ export function playerMetrics({
     playerId: player.id,
     isGoalkeeper: Boolean(player.isTW),
     attempts: player.isTW ? null : playerShots.length,
+    decidedAttempts: player.isTW ? null : decidedShots.length,
     value: player.isTW ? saves : goals,
     goals,
     assists,
