@@ -724,7 +724,7 @@
 import { scoreEvents } from "./src/game-model.js";
 import { handballNetMatchId, hbNameKey, hbPrepare } from "./src/handball360.js";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
-import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate } from "./src/season-core.js";
+import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate } from "./src/season-core.js";
 
 (async()=>{
   const shotSettingDefaults={attacker:true,location:true,target:true,phase:true,result:true,assist:false,tag:false,defense:true,trigger:true};
@@ -1061,17 +1061,8 @@ import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as core
     const shots=events.filter(e=>["shot","goal","save","miss","block"].includes(e.type)).length,goals=events.filter(e=>e.type==="goal").length,errors=events.filter(e=>e.type==="error").length,penalties=events.filter(e=>["2min","2plus2"].includes(e.type)).length;
     $("seasonStats").innerHTML=[seasonMetric("Spiele",games.length),seasonMetric("Gefilterte Events",events.length),seasonMetric("Würfe",shots),seasonMetric("Tore",goals,shots?`${Math.round(goals/shots*100)} %`:"0 %"),seasonMetric("Techn. Fehler",errors),seasonMetric("Zeitstrafen",penalties)].join("");
     $("seasonGameRows").innerHTML=games.map(game=>{const x=seasonGameSummary(game);return `<tr><td>${escapeHtml(game.state.gameName||game.fileName)}</td><td>${x.goals}</td><td>${x.against}</td><td>${x.ownShots}</td><td>${x.shotPct.toFixed(0)} %</td><td>${x.oppShots}</td><td>${x.saves}</td><td>${x.savePct.toFixed(0)} %</td><td>${x.errors}</td></tr>`}).join("")||'<tr><td colspan="9">Keine Spiele ausgewählt.</td></tr>';
-    const players=new Map();
-    for(const game of games){
-      const ownPlayers=game.state[game.ownTeam]?.players||[];
-      for(const player of ownPlayers){const key=seasonPlayerKey(player);if(!key)continue;if(!players.has(key))players.set(key,{label:seasonPlayerLabel(player),isTW:Boolean(player.isTW),games:new Set(),shots:0,goals:0,assists:0,saves:0,against:0,penalties:0,errors:0});const seasonPlayer=players.get(key);seasonPlayer.isTW=seasonPlayer.isTW||Boolean(player.isTW);seasonPlayer.games.add(game.id)}
-      for(const event of game.state.events||[]){
-        const key=seasonEventPlayerKey(event,game),p=key?players.get(key):null;if(p){if(["goal","save","miss","block","shot"].includes(event.type)&&event.team===game.ownTeam){p.shots++;if(event.type==="goal")p.goals++}if(event.type==="error"&&event.team===game.ownTeam)p.errors++;if(event.type==="save"&&event.team===game.opponentTeam)p.saves++;if(event.team===game.ownTeam){if(event.type==="2min"||event.type==="red")p.penalties+=1;else if(event.type==="2plus2")p.penalties+=2;}}
-        if(event.type==="goal"&&event.team===game.ownTeam&&event.assistPId!==null&&event.assistPId!==undefined){const assister=(game.state[game.ownTeam]?.players||[]).find(x=>String(x.id)===String(event.assistPId));const ap=assister?players.get(seasonPlayerKey(assister)):null;if(ap)ap.assists++}
-        if(event.type==="goal"&&event.team===game.opponentTeam){const keeper=(game.state[game.ownTeam]?.players||[]).find(x=>String(x.id)===String(event.againstTwId));const kp=keeper?players.get(seasonPlayerKey(keeper)):null;if(kp)kp.against++}
-      }
-    }
-    $("seasonPlayerRows").innerHTML=[...players.values()].sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const wp=p.shots?p.goals/p.shots*100:0,tp=(p.saves+p.against)?p.saves/(p.saves+p.against)*100:0,value=p.isTW?p.saves:p.goals,quote=p.isTW?(p.saves+p.against?tp.toFixed(0)+" %":"–"):(p.shots?wp.toFixed(0)+" %":"–");return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.isTW?"–":p.shots}</td><td>${value}</td><td>${p.assists}</td><td>${quote}</td><td>${p.penalties}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="8">Keine Spielerdaten vorhanden.</td></tr>';
+    const players=coreSeasonPlayerAggregate(games,{playerKey:seasonPlayerKey,playerLabel:seasonPlayerLabel});
+    $("seasonPlayerRows").innerHTML=players.sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const quote=p.isTW?(p.saves+p.against?p.rate+" %":"–"):(p.decidedShots?p.rate+" %":"–");return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.isTW?"–":p.shots}</td><td>${p.value}</td><td>${p.assists}</td><td>${quote}</td><td>${p.penalties}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="8">Keine Spielerdaten vorhanden.</td></tr>';
     renderSeasonGraphics();
   }
   function renderSeason(){const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
@@ -1757,7 +1748,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=117",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=118",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
