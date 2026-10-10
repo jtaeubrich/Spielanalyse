@@ -93,6 +93,13 @@ test("imports the Handball360 reference payload without using the live proxy", a
 
   await page.getByRole("button", { name: "Setup" }).click();
   await expect(page.locator("#rosterCollectionStatus")).toContainText("H360-ID");
+
+  await expect.poll(async () => page.locator("#knownRosterSelect option").count()).toBeGreaterThan(1);
+  const firstKnownValue = await page.locator("#knownRosterSelect option").nth(1).getAttribute("value");
+  const firstKnownLabel = await page.locator("#knownRosterSelect option").nth(1).textContent();
+  await page.locator("#knownRosterSelect").selectOption(firstKnownValue);
+  await page.locator("#applyKnownRoster").click();
+  await expect(page.locator("#setupAwayName")).toHaveValue((firstKnownLabel || "").split(" · ")[0]);
 });
 
 test("setup stays usable on a mobile viewport", async ({ page, isMobile }) => {
