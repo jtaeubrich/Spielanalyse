@@ -115,6 +115,63 @@ export function seasonTeamAggregate(games = [], role = "own") {
 }
 
 
+export function seasonPlayerFallbackKey(player) {
+  if (!player) return null;
+  const first = String(player.vorname || "").trim().toLocaleLowerCase("de");
+  const last = String(player.nachname || "").trim().toLocaleLowerCase("de");
+  const nr = String(player.nr ?? "").trim();
+  if (!first && !last) return null;
+  return [last, first, nr].join("|");
+}
+
+export function seasonPlayerNameKey(player) {
+  if (!player) return null;
+  const first = String(player.vorname || "").trim().toLocaleLowerCase("de");
+  const last = String(player.nachname || "").trim().toLocaleLowerCase("de");
+  if (!first && !last) return null;
+  return [last, first].join("|");
+}
+
+export function seasonPlayerIdentityKey(player) {
+  if (!player) return null;
+  const handballNetId = String(player.handballNetId || "").trim().toLowerCase();
+  if (handballNetId) return "h360:" + handballNetId;
+  const fallback = seasonPlayerFallbackKey(player);
+  return fallback ? "legacy:" + fallback : null;
+}
+
+export function createSeasonPlayerKeyResolver(games = []) {
+  const idsByName = new Map();
+
+  for (const game of games || []) {
+    for (const team of ["home", "away"]) {
+      for (const player of game?.state?.[team]?.players || []) {
+        const nameKey = seasonPlayerNameKey(player);
+        const handballNetId = String(player.handballNetId || "").trim().toLowerCase();
+        if (!nameKey || !handballNetId) continue;
+        if (!idsByName.has(nameKey)) idsByName.set(nameKey, new Set());
+        idsByName.get(nameKey).add(handballNetId);
+      }
+    }
+  }
+
+  return (player) => {
+    if (!player) return null;
+    const handballNetId = String(player.handballNetId || "").trim().toLowerCase();
+    if (handballNetId) return "h360:" + handballNetId;
+
+    const nameKey = seasonPlayerNameKey(player);
+    const linkedIds = nameKey ? idsByName.get(nameKey) : null;
+    if (linkedIds?.size === 1) {
+      return "h360:" + [...linkedIds][0];
+    }
+
+    const fallback = seasonPlayerFallbackKey(player);
+    return fallback ? "legacy:" + fallback : null;
+  };
+}
+
+
 export function seasonPlayerAggregate(
   games = [],
   {
