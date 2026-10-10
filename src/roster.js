@@ -41,16 +41,28 @@ export function normalizeRosterPlayer(raw = {}, index = 0, existingPlayers = [])
 
   const nameKey = `${vorname} ${nachname}`.trim().toLowerCase();
 
-  const match = (existingPlayers || []).find((player) => {
-    if (
-      handballNetId &&
-      normalizeHandballNetId(player.handballNetId) === handballNetId
-    ) {
-      return true;
+  let match = null;
+  if (handballNetId) {
+    match = (existingPlayers || []).find(
+      (player) =>
+        normalizeHandballNetId(player.handballNetId).toLowerCase() ===
+        handballNetId.toLowerCase()
+    );
+    if (!match && nameKey) {
+      const candidates = (existingPlayers || []).filter(
+        (player) =>
+          rosterPlayerNameKey(player) === nameKey &&
+          !normalizeHandballNetId(player.handballNetId)
+      );
+      if (candidates.length === 1) match = candidates[0];
     }
-    if (nr !== "" && String(player.nr) === String(nr)) return true;
-    return rosterPlayerNameKey(player) === nameKey && Boolean(nameKey);
-  });
+  } else {
+    match = (existingPlayers || []).find(
+      (player) =>
+        (nr !== "" && String(player.nr) === String(nr)) ||
+        (Boolean(nameKey) && rosterPlayerNameKey(player) === nameKey)
+    );
+  }
 
   return {
     id: raw.id ?? match?.id ?? Date.now() + index,
@@ -123,13 +135,28 @@ export function rowsToPlayers(rows, existingPlayers = []) {
       if (!first && !last) return null;
 
       const nameKey = `${first} ${last}`.trim().toLowerCase();
-      const match = existingPlayers.find(
-        (player) =>
-          (hbId &&
-            normalizeHandballNetId(player.handballNetId) === hbId) ||
-          (nr !== "" && String(player.nr) === String(nr)) ||
-          rosterPlayerNameKey(player) === nameKey
-      );
+      let match = null;
+      if (hbId) {
+        match = existingPlayers.find(
+          (player) =>
+            normalizeHandballNetId(player.handballNetId).toLowerCase() ===
+            hbId.toLowerCase()
+        );
+        if (!match && nameKey) {
+          const candidates = existingPlayers.filter(
+            (player) =>
+              rosterPlayerNameKey(player) === nameKey &&
+              !normalizeHandballNetId(player.handballNetId)
+          );
+          if (candidates.length === 1) match = candidates[0];
+        }
+      } else {
+        match = existingPlayers.find(
+          (player) =>
+            (nr !== "" && String(player.nr) === String(nr)) ||
+            rosterPlayerNameKey(player) === nameKey
+        );
+      }
 
       return {
         id: match?.id ?? Date.now() + index,
