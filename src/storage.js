@@ -169,13 +169,19 @@ export function buildRosterRecord({
   id,
   teamName,
   players = [],
+  aliases = [],
+  conflicts = [],
+  createdAt = null,
   updatedAt = new Date().toISOString()
 }) {
   if (!id) throw new Error("Roster-ID fehlt.");
   return {
     id,
     teamName: String(teamName || "").trim() || "Mannschaft",
+    aliases: [...new Set((Array.isArray(aliases) ? aliases : []).map((value) => String(value || "").trim()).filter(Boolean))],
+    createdAt: createdAt || updatedAt,
     updatedAt,
-    players: structuredClone(Array.isArray(players) ? players : [])
+    players: structuredClone(Array.isArray(players) ? players : []),
+    conflicts: structuredClone(Array.isArray(conflicts) ? conflicts : [])
   };
 }
