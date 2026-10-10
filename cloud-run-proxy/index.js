@@ -335,7 +335,7 @@ app.get(["/", "/match/:id"], async (req, res) => {
   }
 });
 
-app.all("*", (req, res) => {
+app.use((req, res) => {
   try {
     const headers = corsHeaders(req);
     return jsonResponse(
