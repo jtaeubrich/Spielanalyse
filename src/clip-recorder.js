@@ -47,3 +47,43 @@ export async function restoreClipPlayback({ video, time, rate, index, seek, setI
     refresh();
   }
 }
+
+export async function runClipScenes({ entries, video, isCancelled, seek, setActiveIndex, draw, onProgress, requestFrame }) {
+  const progress = createClipProgress(entries);
+  const checkCancelled = () => {
+    if (isCancelled()) throw Error("Clip-Export abgebrochen.");
+  };
+  for (const item of entries) {
+    checkCancelled();
+    setActiveIndex(item.index);
+    await seek(video, item.start);
+    checkCancelled();
+    await video.play();
+    await new Promise((resolve, reject) => {
+      const frame = () => {
+        try {
+          checkCancelled();
+          draw(item);
+          const elapsed = Math.max(0, video.currentTime - item.start);
+          onProgress(progress.percent(elapsed));
+          if (video.currentTime >= item.end || video.ended) {
+            video.pause();
+            resolve();
+          } else {
+            requestFrame(frame);
+          }
+        } catch (error) {
+          video.pause();
+          reject(error);
+        }
+      };
+      requestFrame(frame);
+    });
+    progress.complete(item);
+  }
+}
+
+export async function stopClipRecording(recorder, stopped) {
+  if (recorder.state !== "inactive") recorder.stop();
+  await stopped.catch(() => {});
+}
