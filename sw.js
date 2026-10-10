@@ -1,9 +1,10 @@
-const CACHE_NAME = "handball-spielanalyse-v120";
+const CACHE_NAME = "handball-spielanalyse-v121";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./src/game-model.js",
+  "./src/game-format.js",
   "./src/handball360.js",
   "./src/analysis-core.js",
   "./src/season-core.js",
