@@ -1,4 +1,4 @@
-import { percentage } from "./analysis-core.js";
+import { percentage, playerMetrics } from "./analysis-core.js";
 
 const SHOT_TYPES = ["shot", "goal", "save", "miss", "block"];
 
@@ -112,4 +112,88 @@ export function seasonTeamAggregate(games = [], role = "own") {
     errors,
     penalties
   };
+}
+
+
+export function seasonPlayerAggregate(
+  games = [],
+  {
+    playerKey,
+    playerLabel = (player) =>
+      [player?.vorname, player?.nachname].filter(Boolean).join(" ").trim() || "Unbekannt"
+  } = {}
+) {
+  if (typeof playerKey !== "function") {
+    throw new TypeError("seasonPlayerAggregate benötigt eine playerKey-Funktion.");
+  }
+
+  const aggregated = new Map();
+
+  for (const game of games) {
+    const ownTeam = game?.ownTeam;
+    const state = game?.state;
+    if (!state || !ownTeam) continue;
+
+    const allPlayers = [
+      ...(state.home?.players || []).map((player) => ({ ...player, team: "home" })),
+      ...(state.away?.players || []).map((player) => ({ ...player, team: "away" }))
+    ];
+    const getPlayer = (id) =>
+      allPlayers.find((player) => String(player.id) === String(id)) || null;
+
+    for (const player of state[ownTeam]?.players || []) {
+      const key = playerKey(player);
+      if (!key) continue;
+
+      const stats = playerMetrics({
+        player,
+        team: ownTeam,
+        ownTeam,
+        events: state.events || [],
+        gameState: state,
+        getPlayer
+      });
+
+      if (!aggregated.has(key)) {
+        aggregated.set(key, {
+          key,
+          label: playerLabel(player),
+          isTW: Boolean(player.isTW),
+          games: new Set(),
+          shots: 0,
+          decidedShots: 0,
+          goals: 0,
+          assists: 0,
+          saves: 0,
+          against: 0,
+          penalties: 0,
+          errors: 0
+        });
+      }
+
+      const target = aggregated.get(key);
+      target.isTW = target.isTW || Boolean(player.isTW);
+      target.games.add(game.id);
+
+      if (!player.isTW) {
+        target.shots += Number(stats.attempts) || 0;
+        target.decidedShots += Number(stats.decidedAttempts) || 0;
+        target.goals += Number(stats.goals) || 0;
+      }
+
+      target.assists += Number(stats.assists) || 0;
+      target.saves += Number(stats.saves) || 0;
+      target.against += Number(stats.conceded) || 0;
+      target.penalties += Number(stats.penalties) || 0;
+      target.errors += Number(stats.errors) || 0;
+    }
+  }
+
+  return [...aggregated.values()].map((player) => ({
+    ...player,
+    rate: player.isTW
+      ? percentage(player.saves, player.saves + player.against)
+      : percentage(player.goals, player.decidedShots),
+    value: player.isTW ? player.saves : player.goals
+  }));
 }
