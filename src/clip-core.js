@@ -1,7 +1,7 @@
 export function normalizeSceneWindow(preRoll = 4, postRoll = 2) {
   return {
-    preRoll: Math.max(0, Number(preRoll) || 0),
-    postRoll: Math.max(0, Number(postRoll) || 0)
+    preRoll: Number.isFinite(Number(preRoll)) ? Math.max(0, Number(preRoll)) : 0,
+    postRoll: Number.isFinite(Number(postRoll)) ? Math.max(0, Number(postRoll)) : 0
   };
 }
 
@@ -10,6 +10,7 @@ export function clipWindowAt(at, {
   postRoll = 2,
   duration = null
 } = {}) {
+  if (at === null || at === undefined || at === "") return null;
   const time = Number(at);
   if (!Number.isFinite(time) || time < 0) return null;
 
@@ -17,6 +18,7 @@ export function clipWindowAt(at, {
   const hasExplicitDuration = duration !== null && duration !== undefined && duration !== "";
   const maxDuration = Number(duration);
   const hasDuration = hasExplicitDuration && Number.isFinite(maxDuration) && maxDuration >= 0;
+  if (hasDuration && time > maxDuration) return null;
   const start = Math.max(0, time - window.preRoll);
   const end = hasDuration
     ? Math.min(maxDuration, time + window.postRoll)

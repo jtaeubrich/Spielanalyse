@@ -38,6 +38,10 @@ describe("clip core", () => {
   });
 
   test("rejects invalid clip positions", () => {
+    expect(clipWindowAt(null)).toBeNull();
+    expect(clipWindowAt("")).toBeNull();
+    expect(clipWindowAt(101, {duration: 100})).toBeNull();
+    expect(normalizeSceneWindow(Infinity, Infinity)).toEqual({preRoll: 0, postRoll: 0});
     expect(clipWindowAt(NaN)).toBeNull();
     expect(clipWindowAt(-1)).toBeNull();
     expect(buildClipEntry({ at: 0, preRoll: 0, postRoll: 0 })).toBeNull();
