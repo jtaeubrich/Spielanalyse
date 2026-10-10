@@ -4,7 +4,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   seasonGameSummary,
-  seasonTeamAggregate
+  seasonTeamAggregate,
+  seasonPlayerAggregate
 } from "../src/season-core.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -137,5 +138,65 @@ describe("season core", () => {
     expect(twice.shotRate).toBe(once.shotRate);
     expect(twice.attackEff).toBe(once.attackEff);
     expect(twice.saveRate).toBe(once.saveRate);
+  });
+});
+
+
+describe("season player aggregation", () => {
+  const playerKey = (player) => {
+    if (!player) return null;
+    const first = String(player.vorname || "").trim().toLocaleLowerCase("de");
+    const last = String(player.nachname || "").trim().toLocaleLowerCase("de");
+    const nr = String(player.nr ?? "").trim();
+    return [last, first, nr].join("|");
+  };
+
+  const playerLabel = (player) =>
+    [player?.vorname, player?.nachname].filter(Boolean).join(" ").trim() || "Unbekannt";
+
+  test("matches single-game playerMetrics semantics for the HKN reference", () => {
+    const players = seasonPlayerAggregate([game], { playerKey, playerLabel });
+
+    expect(players.length).toBe((state[state.ownTeam]?.players || []).length);
+
+    for (const row of players) {
+      expect(row.games.size).toBe(1);
+      expect(row.penalties).toBeGreaterThanOrEqual(0);
+      expect(row.errors).toBeGreaterThanOrEqual(0);
+
+      if (row.isTW) {
+        expect(row.shots).toBe(0);
+        expect(row.decidedShots).toBe(0);
+        expect(row.value).toBe(row.saves);
+      } else {
+        expect(row.value).toBe(row.goals);
+        expect(row.shots).toBeGreaterThanOrEqual(row.decidedShots);
+      }
+    }
+  });
+
+  test("doubles count metrics across identical games while keeping rates stable", () => {
+    const once = seasonPlayerAggregate([game], { playerKey, playerLabel });
+    const twice = seasonPlayerAggregate(
+      [game, { ...game, id: "hkn-reference-2" }],
+      { playerKey, playerLabel }
+    );
+
+    expect(twice).toHaveLength(once.length);
+
+    for (const one of once) {
+      const two = twice.find((row) => row.key === one.key);
+      expect(two).toBeTruthy();
+      expect(two.games.size).toBe(2);
+      expect(two.shots).toBe(one.shots * 2);
+      expect(two.decidedShots).toBe(one.decidedShots * 2);
+      expect(two.goals).toBe(one.goals * 2);
+      expect(two.assists).toBe(one.assists * 2);
+      expect(two.saves).toBe(one.saves * 2);
+      expect(two.against).toBe(one.against * 2);
+      expect(two.penalties).toBe(one.penalties * 2);
+      expect(two.errors).toBe(one.errors * 2);
+      expect(two.rate).toBe(one.rate);
+    }
   });
 });
