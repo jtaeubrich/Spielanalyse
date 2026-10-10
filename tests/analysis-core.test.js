@@ -8,7 +8,8 @@ import {
   defendingTeamOf,
   summarizeShots,
   teamMetrics,
-  goalkeeperForGoal
+  goalkeeperForGoal,
+  playerMetrics
 } from "../src/analysis-core.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -122,5 +123,75 @@ describe("analysis core", () => {
         () => null
       )
     ).toBe("k2");
+  });
+});
+
+
+describe("playerMetrics", () => {
+  test("calculates field player goals, assists, errors and penalties", () => {
+    const player = { id: "p1", isTW: false };
+    const state = {
+      home: { players: [player] },
+      away: { players: [] },
+      events: [],
+      activeTw: { home: null, away: null }
+    };
+    const events = [
+      { type: "goal", team: "home", pId: "p1", assistPId: "x", z: "9M" },
+      { type: "miss", team: "home", pId: "p1", z: "9M" },
+      { type: "shot", team: "home", pId: "p1", z: "9M" },
+      { type: "goal", team: "home", pId: "x", assistPId: "p1", z: "9M" },
+      { type: "error", team: "home", pId: "p1" },
+      { type: "2min", team: "home", pId: "p1" },
+      { type: "2plus2", team: "home", pId: "p1" },
+      { type: "goal", team: "home", pId: "p1", z: "6M" }
+    ];
+    state.events = events;
+
+    const stats = playerMetrics({
+      player,
+      team: "home",
+      ownTeam: "home",
+      events,
+      gameState: state,
+      getPlayer: () => null,
+      zone: "9M"
+    });
+
+    expect(stats.attempts).toBe(3);
+    expect(stats.goals).toBe(1);
+    expect(stats.assists).toBe(1);
+    expect(stats.errors).toBe(1);
+    expect(stats.penalties).toBe(3);
+    expect(stats.rate).toBe(50);
+  });
+
+  test("calculates goalkeeper save rate from assigned goals", () => {
+    const keeper = { id: "k1", isTW: true, team: "home" };
+    const state = {
+      home: { players: [keeper] },
+      away: { players: [] },
+      events: [
+        { type: "save", team: "home", pId: "k1", time: 20 },
+        { type: "save", team: "home", pId: "k1", time: 40 },
+        { type: "goal", team: "away", againstTwId: "k1", time: 50 }
+      ],
+      activeTw: { home: "k1", away: null }
+    };
+
+    const stats = playerMetrics({
+      player: keeper,
+      team: "home",
+      ownTeam: "away",
+      events: state.events,
+      gameState: state,
+      getPlayer: (id) => (String(id) === "k1" ? keeper : null)
+    });
+
+    expect(stats.attempts).toBeNull();
+    expect(stats.saves).toBe(2);
+    expect(stats.conceded).toBe(1);
+    expect(stats.value).toBe(2);
+    expect(stats.rate).toBe(67);
   });
 });
