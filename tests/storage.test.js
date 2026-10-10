@@ -6,6 +6,7 @@ import {
   INTERNAL_GAME_KEY,
   INTERNAL_SEASON_STORE,
   INTERNAL_SEASON_KEY,
+  INTERNAL_ROSTER_STORE,
   SESSION_STORAGE_KEY,
   SEASON_FORMAT,
   SEASON_VERSION,
@@ -13,17 +14,19 @@ import {
   buildSeasonRecord,
   buildSeasonExport,
   buildSessionRecord,
+  buildRosterRecord,
   openInternalDb
 } from "../src/storage.js";
 
 describe("storage core", () => {
   test("keeps persistence identifiers stable", () => {
     expect(INTERNAL_DB_NAME).toBe("handball-spielanalyse");
-    expect(INTERNAL_DB_VERSION).toBe(2);
+    expect(INTERNAL_DB_VERSION).toBe(3);
     expect(INTERNAL_GAME_STORE).toBe("games");
     expect(INTERNAL_GAME_KEY).toBe("current");
     expect(INTERNAL_SEASON_STORE).toBe("seasons");
     expect(INTERNAL_SEASON_KEY).toBe("current");
+    expect(INTERNAL_ROSTER_STORE).toBe("rosters");
     expect(SESSION_STORAGE_KEY).toBe("handballSpielanalyse.session");
   });
 
@@ -115,4 +118,25 @@ describe("storage core", () => {
   test("reports missing IndexedDB explicitly", async () => {
     await expect(openInternalDb(null)).rejects.toThrow("IndexedDB nicht verfügbar");
   });
+});
+
+
+test("builds persistent roster records with Handball360 IDs intact", () => {
+  const record = buildRosterRecord({
+    id: "team-test",
+    teamName: "TSV Beispiel",
+    updatedAt: "2026-10-10T12:00:00.000Z",
+    players: [{
+      id: "p1",
+      nr: 8,
+      vorname: "Anna",
+      nachname: "Beispiel",
+      handballNetId: "hb-1"
+    }]
+  });
+
+  expect(record.id).toBe("team-test");
+  expect(record.teamName).toBe("TSV Beispiel");
+  expect(record.players[0].handballNetId).toBe("hb-1");
+  expect(record.updatedAt).toBe("2026-10-10T12:00:00.000Z");
 });
