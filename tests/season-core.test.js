@@ -12,7 +12,9 @@ import {
   seasonMatchesType,
   seasonDimension,
   filterSeasonEntries,
-  filterSeasonShots
+  filterSeasonShots,
+  seasonPlayerIdentityKey,
+  createSeasonPlayerKeyResolver
 } from "../src/season-core.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -277,5 +279,153 @@ describe("season filters", () => {
         ? (event.team === "home" ? "away" : "home")
         : event.team)
     )).toBe(true);
+  });
+});
+
+
+describe("season Handball360 player identity", () => {
+  test("uses Handball360 ID before shirt number and name", () => {
+    const a = {
+      nr: 8,
+      vorname: "Anna",
+      nachname: "Beispiel",
+      handballNetId: "player-123"
+    };
+    const b = {
+      nr: 23,
+      vorname: "Anna",
+      nachname: "Beispiel",
+      handballNetId: "player-123"
+    };
+
+    expect(seasonPlayerIdentityKey(a)).toBe("h360:player-123");
+    expect(seasonPlayerIdentityKey(b)).toBe("h360:player-123");
+  });
+
+  test("keeps equal names with different Handball360 IDs separate", () => {
+    const a = {
+      nr: 8,
+      vorname: "Max",
+      nachname: "Muster",
+      handballNetId: "hb-a"
+    };
+    const b = {
+      nr: 8,
+      vorname: "Max",
+      nachname: "Muster",
+      handballNetId: "hb-b"
+    };
+
+    expect(seasonPlayerIdentityKey(a)).not.toBe(seasonPlayerIdentityKey(b));
+  });
+
+  test("falls back to name and shirt number when no Handball360 ID exists", () => {
+    const a = { nr: 8, vorname: "Max", nachname: "Muster" };
+    const b = { nr: 9, vorname: "Max", nachname: "Muster" };
+
+    expect(seasonPlayerIdentityKey(a)).toBe("legacy:muster|max|8");
+    expect(seasonPlayerIdentityKey(b)).toBe("legacy:muster|max|9");
+  });
+
+  test("links an older missing-ID roster entry to a unique later Handball360 ID", () => {
+    const oldPlayer = {
+      id: "old",
+      nr: 8,
+      vorname: "Anna",
+      nachname: "Beispiel",
+      isTW: false
+    };
+    const newPlayer = {
+      id: "new",
+      nr: 23,
+      vorname: "Anna",
+      nachname: "Beispiel",
+      handballNetId: "stable-hb-id",
+      isTW: false
+    };
+
+    const games = [
+      {
+        id: "g1",
+        state: {
+          home: { players: [] },
+          away: { players: [oldPlayer] },
+          events: []
+        },
+        ownTeam: "away",
+        opponentTeam: "home"
+      },
+      {
+        id: "g2",
+        state: {
+          home: { players: [] },
+          away: { players: [newPlayer] },
+          events: []
+        },
+        ownTeam: "away",
+        opponentTeam: "home"
+      }
+    ];
+
+    const resolve = createSeasonPlayerKeyResolver(games);
+
+    expect(resolve(oldPlayer)).toBe("h360:stable-hb-id");
+    expect(resolve(newPlayer)).toBe("h360:stable-hb-id");
+  });
+
+  test("does not guess when the same name is tied to multiple Handball360 IDs", () => {
+    const legacy = { nr: 8, vorname: "Max", nachname: "Muster" };
+    const first = {
+      nr: 9,
+      vorname: "Max",
+      nachname: "Muster",
+      handballNetId: "hb-one"
+    };
+    const second = {
+      nr: 10,
+      vorname: "Max",
+      nachname: "Muster",
+      handballNetId: "hb-two"
+    };
+
+    const games = [
+      {
+        state: {
+          home: { players: [legacy, first, second] },
+          away: { players: [] }
+        }
+      }
+    ];
+
+    const resolve = createSeasonPlayerKeyResolver(games);
+
+    expect(resolve(legacy)).toBe("legacy:muster|max|8");
+    expect(resolve(first)).toBe("h360:hb-one");
+    expect(resolve(second)).toBe("h360:hb-two");
+  });
+
+  test("aggregates changing shirt numbers into one season row via Handball360 ID", () => {
+    const gameOne = structuredClone(game);
+    const gameTwo = structuredClone(game);
+    gameOne.id = "one";
+    gameTwo.id = "two";
+
+    const playerOne = gameOne.state[gameOne.ownTeam].players[0];
+    const playerTwo = gameTwo.state[gameTwo.ownTeam].players[0];
+    playerOne.handballNetId = "same-hb-player";
+    playerTwo.handballNetId = "same-hb-player";
+    playerOne.nr = 4;
+    playerTwo.nr = 44;
+
+    const resolve = createSeasonPlayerKeyResolver([gameOne, gameTwo]);
+    const rows = seasonPlayerAggregate([gameOne, gameTwo], {
+      playerKey: resolve,
+      playerLabel: (player) =>
+        [player.vorname, player.nachname].filter(Boolean).join(" ")
+    });
+
+    const key = resolve(playerOne);
+    expect(rows.filter((row) => row.key === key)).toHaveLength(1);
+    expect(rows.find((row) => row.key === key).games.size).toBe(2);
   });
 });
