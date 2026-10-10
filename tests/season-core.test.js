@@ -219,11 +219,17 @@ describe("season filters", () => {
   };
 
   test("resolves event player keys and team membership", () => {
-    const ownPlayer = state[state.ownTeam].players[0];
+    const ownPlayers = state[state.ownTeam].players || [];
     const event = state.events.find((candidate) =>
-      String(candidate.pId) === String(ownPlayer.id)
+      candidate.team === state.ownTeam &&
+      ownPlayers.some((player) => String(player.id) === String(candidate.pId))
     );
     expect(event).toBeTruthy();
+
+    const ownPlayer = ownPlayers.find(
+      (player) => String(player.id) === String(event.pId)
+    );
+    expect(ownPlayer).toBeTruthy();
     expect(seasonEventPlayerKey(event, game, playerKey)).toBe(playerKey(ownPlayer));
     expect(seasonEventMatchesTeam(event, game, "own")).toBe(true);
     expect(seasonEventMatchesTeam(event, game, "opponent")).toBe(false);
