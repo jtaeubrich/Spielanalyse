@@ -725,6 +725,7 @@ import { scoreEvents } from "./src/game-model.js";
 import { handballNetMatchId, hbNameKey, hbPrepare } from "./src/handball360.js";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots } from "./src/season-core.js";
+import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
 
 (async()=>{
   const shotSettingDefaults={attacker:true,location:true,target:true,phase:true,result:true,assist:false,tag:false,defense:true,trigger:true};
@@ -1165,32 +1166,8 @@ import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as core
   const pct=(a,b)=>corePercentage(a,b);
   function renderTrend(){const svg=$("analysisTrend"),goals=state.events.filter(e=>e.type==="goal").sort((a,b)=>(a.time||0)-(b.time||0)),maxT=Math.max(1,...state.events.map(e=>Number(e.time)||0)),final={home:goals.filter(e=>e.team==="home").length,away:goals.filter(e=>e.team==="away").length},maxScore=Math.max(1,final.home,final.away),totals={home:0,away:0},points={home:[[55,245]],away:[[55,245]]};for(const e of goals){if(!["home","away"].includes(e.team))continue;totals[e.team]++;const x=55+(Number(e.time)||0)/maxT*910,y=245-totals[e.team]/maxScore*190;points[e.team].push([x,points[e.team].at(-1)[1]],[x,y])}const grid=[0,1,2,3,4].map(i=>`<line class="chart-grid" x1="55" y1="${245-i*47.5}" x2="965" y2="${245-i*47.5}"/>`).join("");const path=team=>points[team].map((p,i)=>(i?"L":"M")+p.join(" ")).join(" ");const dots=team=>points[team].filter((_,i)=>i>0&&i%2===0).map(p=>`<circle class="chart-dot-${team}" cx="${p[0]}" cy="${p[1]}" r="3.5"/>`).join("");svg.innerHTML=`${grid}<line class="chart-grid" x1="55" y1="245" x2="965" y2="245"/><path class="chart-home" d="${path("home")}"/><path class="chart-away" d="${path("away")}"/>${dots("home")}${dots("away")}<text class="chart-axis" x="55" y="268">00:00</text><text class="chart-axis" x="930" y="268">${fmt(maxT)}</text>`;$("trendLegend").innerHTML=`<span><i style="background:var(--cyan)"></i>${state.home.name}</span><span><i style="background:#f5a000"></i>${state.away.name}</span>`}
   function teamMetrics(team){return coreTeamMetrics(state.events,team,getPlayer)}
-  const suspensionDurations={"2min":120,"2plus2":240,red:120,blue:120};
-  function specialTeamsForState(gameState){
-    const matchEnd=Math.max(Number(gameState?.timer?.duration)||0,1)*120,rawEvents=Array.isArray(gameState?.events)?gameState.events:[],events=rawEvents.map((event,index)=>({event,index}));
-    const penalties=events.filter(({event})=>suspensionDurations[event.type]&&["home","away"].includes(event.team)).map(({event,index})=>{const start=Math.max(0,Number(event.time)||0);return{team:event.team,start,end:Math.min(matchEnd,start+suspensionDurations[event.type]),realTime:Number(event.realTime),index}}).filter(p=>p.end>p.start);
-    const blank=()=>({powerPlaySeconds:0,shortHandedSeconds:0,powerPlayGoals:0,powerPlayAgainstGoals:0,shortHandedGoals:0,shortHandedAgainstGoals:0,powerPlayAttacks:0,shortHandedAttacks:0,byStrength:{}});
-    const stats={home:blank(),away:blank()};
-    const activeAt=(time,eventReal=NaN,eventIndex=Infinity)=>{const active={home:0,away:0};for(const penalty of penalties){if(penalty.end<=time||penalty.start>time)continue;let started=penalty.start<time;if(penalty.start===time){const comparable=Number.isFinite(penalty.realTime)&&Number.isFinite(eventReal);started=comparable?penalty.realTime<=eventReal:penalty.index<=eventIndex}if(started)active[penalty.team]++}return active};
-    const strength=(team,active)=>{const other=team==="home"?"away":"home",own=Math.max(0,6-active[team]),opp=Math.max(0,6-active[other]);return{own,opp,key:own+":"+opp,mode:own>opp?"powerPlay":own<opp?"shortHanded":"even"}};
-    const strengthBucket=(team,key)=>stats[team].byStrength[key]||(stats[team].byStrength[key]={seconds:0,goalsFor:0,goalsAgainst:0,attacks:0});
-    const points=[...new Set([0,matchEnd,...penalties.flatMap(p=>[p.start,p.end])])].sort((a,b)=>a-b);
-    for(let i=0;i<points.length-1;i++){const start=points[i],end=points[i+1],seconds=end-start;if(seconds<=0)continue;const active=activeAt(start+.0001);for(const team of ["home","away"]){const st=strength(team,active);if(st.mode==="even")continue;if(st.mode==="powerPlay")stats[team].powerPlaySeconds+=seconds;else stats[team].shortHandedSeconds+=seconds;strengthBucket(team,st.key).seconds+=seconds}}
-    for(const {event,index} of events){
-      const time=Math.max(0,Number(event.time)||0),eventReal=Number(event.realTime),active=activeAt(time,eventReal,index);
-      const attackingTeam=["save","block"].includes(event.type)?(event.endedPossessionOf||(["home","away"].includes(event.team)?(event.team==="home"?"away":"home"):null)):event.team;
-      const countsAsAttackEnd=["goal","miss","save","block","error"].includes(event.type);
-      for(const team of ["home","away"]){
-        const st=strength(team,active);if(st.mode==="even")continue;const bucket=strengthBucket(team,st.key),other=team==="home"?"away":"home";
-        if(event.type==="goal"&&event.team===team){bucket.goalsFor++;if(st.mode==="powerPlay")stats[team].powerPlayGoals++;else stats[team].shortHandedGoals++}
-        if(event.type==="goal"&&event.team===other){bucket.goalsAgainst++;if(st.mode==="powerPlay")stats[team].powerPlayAgainstGoals++;else stats[team].shortHandedAgainstGoals++}
-        if(countsAsAttackEnd&&attackingTeam===team){bucket.attacks++;if(st.mode==="powerPlay")stats[team].powerPlayAttacks++;else stats[team].shortHandedAttacks++}
-      }
-    }
-    for(const team of ["home","away"]){const x=stats[team];x.powerPlayAttackEff=pct(x.powerPlayGoals,x.powerPlayAttacks);x.shortHandedAttackEff=pct(x.shortHandedGoals,x.shortHandedAttacks);x.powerPlayNet=x.powerPlayGoals-x.powerPlayAgainstGoals;x.shortHandedNet=x.shortHandedGoals-x.shortHandedAgainstGoals;x.powerPlayNetPer2=x.powerPlaySeconds?x.powerPlayNet*120/x.powerPlaySeconds:0;x.shortHandedNetPer2=x.shortHandedSeconds?x.shortHandedNet*120/x.shortHandedSeconds:0}
-    return stats;
-  }
-  function specialTeamsMetrics(){return specialTeamsForState(state)}
+  function specialTeamsForState(gameState){return coreSpecialTeamsForState(gameState)}
+    function specialTeamsMetrics(){return specialTeamsForState(state)}
   function specialTeamsNetBar(value){
     const max=2,clamped=Math.max(-max,Math.min(max,Number(value)||0)),width=Math.abs(clamped)/max*50,left=clamped>=0?50:50-width;
     return `<div class="special-net-track" aria-label="Netto ${clamped.toFixed(2)} Tore pro 2 Minuten"><span class="${clamped<0?"negative":""}" style="left:${left}%;width:${width}%"></span></div>`
@@ -1724,7 +1701,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=119",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=120",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
