@@ -87,3 +87,22 @@ export async function stopClipRecording(recorder, stopped) {
   if (recorder.state !== "inactive") recorder.stop();
   await stopped.catch(() => {});
 }
+
+// Own the full recording lifecycle. Never leave a canvas capture track running.
+export async function runClipCapture({ video, recorder, stopped, stream, restore, run }) {
+  const tracks = stream.getVideoTracks?.() || [];
+  let started = false;
+  try {
+    recorder.start(250);
+    started = true;
+    await run();
+  } finally {
+    video.pause();
+    try {
+      if (started) await stopClipRecording(recorder, stopped);
+    } finally {
+      for (const track of tracks) track.stop();
+      await restore();
+    }
+  }
+}
