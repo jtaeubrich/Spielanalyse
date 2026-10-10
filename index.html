@@ -724,6 +724,7 @@
 import { scoreEvents } from "./src/game-model.js";
 import { handballNetMatchId, hbNameKey, hbPrepare } from "./src/handball360.js";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
+import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate } from "./src/season-core.js";
 
 (async()=>{
   const shotSettingDefaults={attacker:true,location:true,target:true,phase:true,result:true,assist:false,tag:false,defense:true,trigger:true};
@@ -973,14 +974,7 @@ import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, d
     refill("seasonPhaseFilter",[...phases].sort((a,b)=>a.localeCompare(b,"de")).map(v=>[v,v]),"Alle Spielsituationen");
     refill("seasonTagFilter",[...tags].sort((a,b)=>a.localeCompare(b,"de")).map(v=>[v,v]),"Alle Tags");
   }
-  function seasonGameSummary(game){
-    const events=game.state.events||[],own=game.ownTeam,opp=game.opponentTeam;
-    const ownShots=events.filter(e=>e.team===own&&["goal","save","miss","block","shot"].includes(e.type)),oppShots=events.filter(e=>e.team===opp&&["goal","save","miss","block","shot"].includes(e.type));
-    const goals=events.filter(e=>e.team===own&&e.type==="goal").length,against=events.filter(e=>e.team===opp&&e.type==="goal").length;
-    const saves=events.filter(e=>e.team===opp&&e.type==="save").length;
-    const errors=events.filter(e=>e.team===own&&e.type==="error").length;
-    return{goals,against,ownShots:ownShots.length,oppShots:oppShots.length,saves,errors,shotPct:ownShots.length?goals/ownShots.length*100:0,savePct:(saves+against)?saves/(saves+against)*100:0};
-  }
+  function seasonGameSummary(game){return coreSeasonGameSummary(game)}
   function renderSeasonGames(){
     const host=$("seasonGameList");if(!host)return;host.replaceChildren();
     if(!seasonGames.length){host.innerHTML='<div class="empty">Noch keine Saisonspiele geladen.</div>';return}
@@ -1010,16 +1004,7 @@ import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, d
     }
     return out;
   }
-  function seasonTeamAggregate(role){
-    let shots=0,decided=0,goals=0,misses=0,saves=0,against=0,errors=0,blocks=0,steals=0,penalties=0;
-    for(const game of selectedSeasonGames()){
-      const team=role==="own"?game.ownTeam:game.opponentTeam,opp=team==="home"?"away":"home",events=game.state.events||[];
-      const teamShots=events.filter(e=>{const attack=e.type==="save"||e.type==="block"?(e.team==="home"?"away":"home"):e.team;return ["shot","goal","save","miss","block"].includes(e.type)&&attack===team});
-      shots+=teamShots.length;decided+=teamShots.filter(e=>e.type!=="shot").length;goals+=teamShots.filter(e=>e.type==="goal").length;misses+=teamShots.filter(e=>e.type==="miss").length;
-      saves+=events.filter(e=>e.type==="save"&&e.team===team).length;against+=events.filter(e=>e.type==="goal"&&e.team===opp).length;errors+=events.filter(e=>e.type==="error"&&e.team===team).length;blocks+=events.filter(e=>e.type==="block"&&e.team===team).length;steals+=events.filter(e=>e.type==="steal"&&e.team===team).length;for(const e of events){if(e.team!==team)continue;if(e.type==="2min"||e.type==="red")penalties+=1;else if(e.type==="2plus2")penalties+=2;}
-    }
-    return{goals,misses,shotRate:pct(goals,decided),attackEff:pct(goals,decided+errors),saves,saveRate:pct(saves,saves+against),steals,blocks,errors,penalties};
-  }
+  function seasonTeamAggregate(role){return coreSeasonTeamAggregate(selectedSeasonGames(),role)}
   function renderSeasonTrend(){
     const games=selectedSeasonGames(),svg=$("seasonTrend"),maxScore=Math.max(1,...games.flatMap(game=>{const x=seasonGameSummary(game);return[x.goals,x.against]})),count=Math.max(1,games.length-1),own=[],opp=[];
     games.forEach((game,index)=>{const x=55+(games.length===1?.5:index/count)*910,m=seasonGameSummary(game);own.push([x,245-m.goals/maxScore*190]);opp.push([x,245-m.against/maxScore*190])});
@@ -1772,7 +1757,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=116",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=117",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
