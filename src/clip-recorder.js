@@ -21,3 +21,29 @@ export function startClipRecording(stream, { mimeType = "", MediaRecorderClass, 
   });
   return { recorder, chunks, stopped };
 }
+
+export function createClipProgress(entries) {
+  const total = entries.reduce((sum, item) => sum + Math.max(0, item.end - item.start), 0);
+  let done = 0;
+  return {
+    percent(elapsed = 0) {
+      if (total <= 0) return 100;
+      return Math.min(100, Math.max(0, Math.round((done + Math.max(0, elapsed)) / total * 100)));
+    },
+    complete(item) {
+      done += Math.max(0, item.end - item.start);
+    }
+  };
+}
+
+export async function restoreClipPlayback({ video, time, rate, index, seek, setIndex, refresh }) {
+  video.playbackRate = rate;
+  try {
+    await seek(video, time);
+  } catch {
+    // Preserve the original best-effort restoration semantics.
+  } finally {
+    setIndex(index);
+    refresh();
+  }
+}
