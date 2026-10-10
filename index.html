@@ -731,6 +731,7 @@ import { handballNetMatchId, hbNameKey, hbPrepare } from "./src/handball360.js";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
+import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition } from "./src/video-sync.js";
 import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL_SEASON_KEY, INTERNAL_ROSTER_STORE, SESSION_STORAGE_KEY, buildInternalGameRecord, buildSeasonRecord, buildSeasonExport, buildSessionRecord, buildRosterRecord, readInternalRecord, listInternalRecords, writeInternalRecord, deleteInternalRecord } from "./src/storage.js";
 
 (async()=>{
@@ -858,23 +859,26 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
   function filteredEvents(team,player,type,zone="all",target="all",phase="all",tag="all"){return state.events.filter(e=>eventMatchesRole(e,team,type)&&eventMatchesPlayer(e,player,type)&&eventMatchesType(e,type)&&matchesDimension(e.z,zone)&&matchesDimension(e.gz,target)&&matchesDimension(e.attackPhase,phase)&&eventMatchesTag(e,tag)).sort((a,b)=>(a.time||0)-(b.time||0))}
   function populatePlayerFilter(select,role="all"){const value=select.value||"all",teams=role==="own"?[ownTeam]:role==="opponent"?[opponentTeam()]:[ownTeam,opponentTeam()];select.replaceChildren(new Option("Alle Spieler","all"));for(const team of teams){const group=document.createElement("optgroup");group.label=team===ownTeam?"Mein Team":"Gegner";for(const p of state[team].players||[])group.append(new Option(playerName(p),String(p.id)));select.append(group)}select.value=[...select.options].some(o=>o.value===value)?value:"all"}
   function eventDescription(e){const main=e.type==="save"?e.throwerName||e.pName:e.pName||e.attackerName||e.note||"Ohne Spieler";const defense=eventDefenseNames(e);return{title:eventLabels[e.type]||e.type||"Ereignis",main,defense}}
-  function syncPointSeconds(value){if(value===null||value===undefined||value==="")return NaN;return Number(value)/(state.video.syncUnit==="ms"?1000:1)}
-  function eventVideoSeconds(e){const hasReal=e.realTime!==null&&e.realTime!==undefined&&e.realTime!==""&&Number.isFinite(Number(e.realTime));if(state.isVideoscoutingFile&&hasReal)return Number(e.realTime)/1000;const half=e.half||((Number(e.time)||0)<=state.timer.duration*60?1:2),rawSync=half===1?(state.video.h1SyncRealTime??state.video.kickoff):state.video.h2SyncRealTime,sync=syncPointSeconds(rawSync);if(!Number.isFinite(sync))return NaN;const rawLiveStart=state.video[half===1?"h1LiveStartMs":"h2LiveStartMs"],hasLiveStart=rawLiveStart!==null&&rawLiveStart!==undefined&&rawLiveStart!==""&&Number.isFinite(Number(rawLiveStart)),liveStart=hasLiveStart?Number(rawLiveStart):0;const elapsedMs=hasReal?(hasLiveStart?Number(e.realTime)-liveStart:Number(e.realTime)):(half===1?Number(e.time||0)*1000:(Number(e.time||0)-state.timer.duration*60)*1000);return sync+elapsedMs/1000}
-  function matchReviewSyncForHalf(half){const raw=half===1?(state.video.h1SyncRealTime??state.video.kickoff):state.video.h2SyncRealTime;return syncPointSeconds(raw)}
-  function matchReviewEventHalf(e){if([1,2].includes(Number(e?.half)))return Number(e.half);const duration=Number(state.timer.duration||25)*60;return Number(e?.time||0)<duration?1:2}
-  function estimateMatchReviewGameTime(videoSeconds,half){
-    const duration=Number(state.timer.duration||25)*60,offset=(half-1)*duration;
-    const points=state.events.map(event=>({event,video:eventVideoSeconds(event)})).filter(item=>matchReviewEventHalf(item.event)===half&&Number.isFinite(item.video)&&Number.isFinite(Number(item.event.time))).map(item=>({video:item.video,time:Math.max(offset,Math.min(offset+duration,Number(item.event.time)))})).sort((a,b)=>a.video-b.video);
-    if(!points.length)return offset+Math.max(0,Math.min(duration,videoSeconds-matchReviewSyncForHalf(half)));
-    let before=null,after=null;
-    for(const point of points){if(point.video<=videoSeconds)before=point;if(point.video>=videoSeconds){after=point;break}}
-    if(before&&after&&after.video>before.video){const ratio=(videoSeconds-before.video)/(after.video-before.video);return Math.round(before.time+(after.time-before.time)*ratio)}
-    if(before)return Math.round(before.time);
-    if(after)return Math.round(after.time);
-    return offset;
+  function videoSyncOptions(){return{events:state.events,video:state.video,isVideoscoutingFile:Boolean(state.isVideoscoutingFile),durationMinutes:Number(state.timer.duration||25)}}
+  function syncPointSeconds(value){return coreSyncPointSeconds(value,state.video.syncUnit||"seconds")}
+  function eventVideoSeconds(e){return coreEventVideoSeconds(e,videoSyncOptions())}
+  function matchReviewSyncForHalf(half){return coreSyncForHalf(state.video,half)}
+  function matchReviewEventHalf(e){return coreVideoEventHalf(e,Number(state.timer.duration||25),{boundaryToSecondHalf:true})}
+  function estimateMatchReviewGameTime(videoSeconds,half){return coreEstimateReviewGameTime(videoSeconds,half,videoSyncOptions())}
+  function matchReviewPosition(videoSeconds=mediaSeconds()){return coreReviewPosition(videoSeconds,videoSyncOptions())}
+  function setEventVideoTimeFromCurrentPosition(e){
+    if(!e)return;
+    if(!mediaReady())return toast("Zuerst das passende Video laden.");
+    const current=mediaSeconds(),result=coreEventRealTimeFromVideoPosition(e,current,videoSyncOptions());
+    if(!result.ok){
+      if(result.reason==="invalid-video-position")return toast("Aktuelle Videozeit konnte nicht gelesen werden.");
+      if(result.reason==="missing-sync")return toast(`Bitte zuerst den Anpfiff H${result.half} als Syncpunkt setzen.`);
+      if(result.reason==="before-sync")return toast("Die aktuelle Videoposition liegt vor dem Syncpunkt dieser Halbzeit.");
+      return toast("Videozeit konnte nicht gesetzt werden.")
+    }
+    e.realTime=result.realTime;
+    videoEditorCommit("Video-/Realzeit aus aktueller Videoposition gesetzt");renderEvents();renderVideoEventEditor()
   }
-  function matchReviewPosition(videoSeconds=mediaSeconds()){if(!Number.isFinite(videoSeconds))return null;const duration=Number(state.timer.duration||25)*60,h1=matchReviewSyncForHalf(1),h2=matchReviewSyncForHalf(2);let half=1,sync=h1;if(Number.isFinite(h2)&&videoSeconds>=h2-.25){half=2;sync=h2}else if(!Number.isFinite(h1))return null;const elapsed=videoSeconds-sync;if(!Number.isFinite(elapsed)||elapsed<0)return null;const time=estimateMatchReviewGameTime(videoSeconds,half),liveStartRaw=state.video[half===1?"h1LiveStartMs":"h2LiveStartMs"],liveStart=Number.isFinite(Number(liveStartRaw))?Number(liveStartRaw):0;return{half,elapsed,time,realTime:Math.round(liveStart+elapsed*1000)}}
-  function setEventVideoTimeFromCurrentPosition(e){if(!e)return;if(!mediaReady())return toast("Zuerst das passende Video laden.");const current=mediaSeconds();if(!Number.isFinite(current)||current<0)return toast("Aktuelle Videozeit konnte nicht gelesen werden.");if(state.isVideoscoutingFile){e.realTime=Math.round(current*1000)}else{const half=e.half||((Number(e.time)||0)<=state.timer.duration*60?1:2),sync=matchReviewSyncForHalf(half);if(!Number.isFinite(sync))return toast(`Bitte zuerst den Anpfiff H${half} als Syncpunkt setzen.`);const delta=current-sync;if(delta<0)return toast("Die aktuelle Videoposition liegt vor dem Syncpunkt dieser Halbzeit.");const liveStartRaw=state.video[half===1?"h1LiveStartMs":"h2LiveStartMs"],liveStart=Number.isFinite(Number(liveStartRaw))?Number(liveStartRaw):0;e.realTime=Math.round(liveStart+delta*1000)}videoEditorCommit("Video-/Realzeit aus aktueller Videoposition gesetzt");renderEvents();renderVideoEventEditor()}
   function seekEvent(e){const exact=eventVideoSeconds(e),stayInMatch=activeTab==="match"&&matchReviewMode;if(!stayInMatch)showTab("video");activeVideoEventIndex=state.events.indexOf(e);renderVideoPlaylist();renderAnnotation();if(!Number.isFinite(exact)||exact<0)return toast(`Für dieses Ereignis fehlt der Syncpunkt der ${e.half||1}. Halbzeit.`);if(!mediaReady())return toast("Zuerst das passende YouTube- oder lokale Video laden.");stopGame();const pre=Math.max(0,Number(state.video.preRoll)||0),post=Math.max(0,Number(state.video.postRoll)||0),start=Math.max(0,exact-pre);clipStopAt=exact+post;mediaSeek(start);Promise.resolve(mediaPlay()).catch(()=>{});setTimeout(()=>{if(mediaReady()&&clipStopAt!==null)mediaSeek(start)},150);mediaLast=null;$("videoMessage").textContent=`Szene bei ${fmt(exact,true)} · ${pre} s davor / ${post} s danach.`}
 
   function syncVideoReviewHeight(){if(activeTab!=="video")return;const module=$("videoModule"),card=$("videoEventsCard");if(!module||!card)return;requestAnimationFrame(()=>{const moduleHeight=Math.round(module.getBoundingClientRect().height);if(moduleHeight>0)card.style.height=Math.max(360,moduleHeight)+"px"})}
@@ -1773,7 +1777,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=129",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=130",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
