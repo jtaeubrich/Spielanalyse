@@ -5,7 +5,14 @@ import { fileURLToPath } from "node:url";
 import {
   seasonGameSummary,
   seasonTeamAggregate,
-  seasonPlayerAggregate
+  seasonPlayerAggregate,
+  seasonEventPlayerKey,
+  seasonEventMatchesTeam,
+  seasonEventMatchesPlayer,
+  seasonMatchesType,
+  seasonDimension,
+  filterSeasonEntries,
+  filterSeasonShots
 } from "../src/season-core.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -198,5 +205,71 @@ describe("season player aggregation", () => {
       expect(two.errors).toBe(one.errors * 2);
       expect(two.rate).toBe(one.rate);
     }
+  });
+});
+
+
+describe("season filters", () => {
+  const playerKey = (player) => {
+    if (!player) return null;
+    const first = String(player.vorname || "").trim().toLocaleLowerCase("de");
+    const last = String(player.nachname || "").trim().toLocaleLowerCase("de");
+    const nr = String(player.nr ?? "").trim();
+    return [last, first, nr].join("|");
+  };
+
+  test("resolves event player keys and team membership", () => {
+    const ownPlayer = state[state.ownTeam].players[0];
+    const event = state.events.find((candidate) =>
+      String(candidate.pId) === String(ownPlayer.id)
+    );
+    expect(event).toBeTruthy();
+    expect(seasonEventPlayerKey(event, game, playerKey)).toBe(playerKey(ownPlayer));
+    expect(seasonEventMatchesTeam(event, game, "own")).toBe(true);
+    expect(seasonEventMatchesTeam(event, game, "opponent")).toBe(false);
+    expect(seasonEventMatchesPlayer(event, game, playerKey(ownPlayer), playerKey)).toBe(true);
+  });
+
+  test("matches grouped event types and OT dimensions", () => {
+    expect(seasonMatchesType({ type: "goal" }, "shot")).toBe(true);
+    expect(seasonMatchesType({ type: "2plus2" }, "2min")).toBe(true);
+    expect(seasonMatchesType({ type: "error" }, "shot")).toBe(false);
+    expect(seasonDimension("OTL", "OT")).toBe(true);
+    expect(seasonDimension("OM", "OT")).toBe(false);
+    expect(seasonDimension("9M", "9M")).toBe(true);
+  });
+
+  test("filters season entries by team, type and tag without changing source data", () => {
+    const before = JSON.stringify(game.state.events);
+    const tagged = structuredClone(game);
+    const ownGoal = tagged.state.events.find(
+      (event) => event.type === "goal" && event.team === tagged.ownTeam
+    );
+    ownGoal.tags = [...(ownGoal.tags || []), "RegressionTag"];
+
+    const entries = filterSeasonEntries([tagged], {
+      team: "own",
+      type: "shot",
+      tag: "RegressionTag",
+      playerKey
+    });
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].event.type).toBe("goal");
+    expect(entries[0].game.id).toBe(tagged.id);
+    expect(JSON.stringify(game.state.events)).toBe(before);
+  });
+
+  test("filters shot entries by role and dimensions", () => {
+    const ownShots = filterSeasonShots([game], "own", { playerKey });
+    const opponentShots = filterSeasonShots([game], "opponent", { playerKey });
+
+    expect(ownShots.length).toBeGreaterThan(0);
+    expect(opponentShots.length).toBeGreaterThan(0);
+    expect(ownShots.every(({ game: g, event }) =>
+      g.ownTeam === (event.type === "save" || event.type === "block"
+        ? (event.team === "home" ? "away" : "home")
+        : event.team)
+    )).toBe(true);
   });
 });
