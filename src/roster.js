@@ -183,3 +183,114 @@ export function mergeRosterByHandballId(existingPlayers = [], importedPlayers = 
       : player;
   });
 }
+
+
+export function rosterTeamKey(teamName) {
+  const normalized = String(teamName || "")
+    .trim()
+    .toLocaleLowerCase("de")
+    .replace(/\s+/g, " ");
+  if (!normalized) return null;
+  let hash = 2166136261;
+  for (let index = 0; index < normalized.length; index += 1) {
+    hash ^= normalized.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return "team-" + (hash >>> 0).toString(16);
+}
+
+export function mergeRosterCollection(existingPlayers = [], incomingPlayers = []) {
+  const players = structuredClone(Array.isArray(existingPlayers) ? existingPlayers : []);
+  const conflicts = [];
+  let added = 0;
+  let updated = 0;
+  let enrichedIds = 0;
+
+  const findByHbId = (hbId) =>
+    players.find(
+      (player) =>
+        hbId &&
+        normalizeHandballNetId(player.handballNetId).toLowerCase() === hbId.toLowerCase()
+    );
+
+  const findNameMatches = (incoming) => {
+    const key = rosterPlayerNameKey(incoming);
+    if (!key) return [];
+    return players.filter((player) => rosterPlayerNameKey(player) === key);
+  };
+
+  for (const raw of Array.isArray(incomingPlayers) ? incomingPlayers : []) {
+    const incoming = normalizeRosterPlayer(raw, 0, []);
+    const hbId = normalizeHandballNetId(incoming.handballNetId);
+    let existing = hbId ? findByHbId(hbId) : null;
+
+    if (!existing && hbId) {
+      const nameMatches = findNameMatches(incoming);
+      const emptyIdMatches = nameMatches.filter(
+        (player) => !normalizeHandballNetId(player.handballNetId)
+      );
+      const conflictingIds = nameMatches.filter(
+        (player) =>
+          normalizeHandballNetId(player.handballNetId) &&
+          normalizeHandballNetId(player.handballNetId).toLowerCase() !== hbId.toLowerCase()
+      );
+
+      if (conflictingIds.length) {
+        conflicts.push({
+          type: "same-name-different-h360-id",
+          incoming: structuredClone(incoming),
+          existing: conflictingIds.map((player) => structuredClone(player))
+        });
+      }
+
+      if (emptyIdMatches.length === 1 && !conflictingIds.length) {
+        existing = emptyIdMatches[0];
+        existing.handballNetId = hbId;
+        enrichedIds += 1;
+      }
+    }
+
+    if (!existing && !hbId) {
+      const nameMatches = findNameMatches(incoming);
+      if (nameMatches.length === 1) existing = nameMatches[0];
+      else if (nameMatches.length > 1) {
+        conflicts.push({
+          type: "ambiguous-name",
+          incoming: structuredClone(incoming),
+          existing: nameMatches.map((player) => structuredClone(player))
+        });
+      } else if (incoming.nr !== "" && incoming.nr !== null && incoming.nr !== undefined) {
+        const numberMatches = players.filter(
+          (player) => String(player.nr) === String(incoming.nr)
+        );
+        if (numberMatches.length === 1) existing = numberMatches[0];
+      }
+    }
+
+    if (existing) {
+      const before = JSON.stringify(existing);
+      if (!existing.vorname && incoming.vorname) existing.vorname = incoming.vorname;
+      if (!existing.nachname && incoming.nachname) existing.nachname = incoming.nachname;
+      if (
+        incoming.nr !== "" &&
+        incoming.nr !== null &&
+        incoming.nr !== undefined &&
+        String(existing.nr ?? "") !== String(incoming.nr)
+      ) {
+        existing.nr = incoming.nr;
+      }
+      if (!existing.isTW && incoming.isTW) existing.isTW = true;
+      if (!existing.handballNetId && hbId) {
+        existing.handballNetId = hbId;
+        enrichedIds += 1;
+      }
+      if (JSON.stringify(existing) !== before) updated += 1;
+      continue;
+    }
+
+    players.push(incoming);
+    added += 1;
+  }
+
+  return { players, added, updated, enrichedIds, conflicts };
+}
