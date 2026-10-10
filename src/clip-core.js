@@ -14,8 +14,9 @@ export function clipWindowAt(at, {
   if (!Number.isFinite(time) || time < 0) return null;
 
   const window = normalizeSceneWindow(preRoll, postRoll);
+  const hasExplicitDuration = duration !== null && duration !== undefined && duration !== "";
   const maxDuration = Number(duration);
-  const hasDuration = Number.isFinite(maxDuration) && maxDuration >= 0;
+  const hasDuration = hasExplicitDuration && Number.isFinite(maxDuration) && maxDuration >= 0;
   const start = Math.max(0, time - window.preRoll);
   const end = hasDuration
     ? Math.min(maxDuration, time + window.postRoll)
