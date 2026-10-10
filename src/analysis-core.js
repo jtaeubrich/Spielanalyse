@@ -142,3 +142,111 @@ export function goalkeeperForGoal(
     (keepers.length === 1 ? keepers[0].id : null)
   );
 }
+
+
+export function matchesAnalysisDimension(value, filter) {
+  return (
+    filter === "all" ||
+    (filter === "OT" && ["OTL", "OTM", "OTR"].includes(String(value ?? ""))) ||
+    String(value ?? "") === String(filter)
+  );
+}
+
+export function playerMetrics({
+  player,
+  team,
+  ownTeam,
+  events = [],
+  gameState,
+  getPlayer = () => null,
+  zone = "all",
+  target = "all",
+  phase = "all"
+}) {
+  if (!player) return null;
+
+  const list = Array.isArray(events) ? events : [];
+  const pid = String(player.id);
+  const inDimensions = (event) =>
+    matchesAnalysisDimension(event?.z, zone) &&
+    matchesAnalysisDimension(event?.gz, target) &&
+    matchesAnalysisDimension(event?.attackPhase, phase);
+
+  const playerShots = list.filter((event) => {
+    if (!SHOT_EVENT_TYPES.includes(event?.type) || !inDimensions(event)) return false;
+    if (["shot", "goal", "miss"].includes(event.type)) {
+      return String(event.pId) === pid;
+    }
+    if (["save", "block"].includes(event.type)) {
+      return String(event.throwerId) === pid;
+    }
+    return false;
+  });
+
+  const decidedShots = playerShots.filter((event) => event.type !== "shot");
+  const goals = playerShots.filter((event) => event.type === "goal").length;
+  const assists =
+    team === ownTeam
+      ? list.filter(
+          (event) =>
+            event?.type === "goal" &&
+            event.team === ownTeam &&
+            String(event.assistPId) === pid &&
+            inDimensions(event)
+        ).length
+      : 0;
+
+  const saves = list.filter(
+    (event) =>
+      event?.type === "save" &&
+      String(event.pId) === pid &&
+      inDimensions(event)
+  ).length;
+
+  const mentions = list.filter((event) =>
+    (event?.playerTags || []).some((tag) => String(tag.pId) === pid)
+  ).length;
+
+  const conceded = player.isTW
+    ? list.filter(
+        (event) =>
+          event?.type === "goal" &&
+          attackingTeamOf(event, getPlayer) !== team &&
+          inDimensions(event) &&
+          String(goalkeeperForGoal(event, team, gameState, getPlayer)) === pid
+      ).length
+    : 0;
+
+  const errors = list.filter(
+    (event) =>
+      event?.type === "error" &&
+      event.team === team &&
+      String(event.pId) === pid
+  ).length;
+
+  const penalties = list.reduce((sum, event) => {
+    if (event?.team !== team || String(event.pId) !== pid) return sum;
+    if (event.type === "2plus2") return sum + 2;
+    if (event.type === "2min" || event.type === "red") return sum + 1;
+    return sum;
+  }, 0);
+
+  const rate = player.isTW
+    ? percentage(saves, saves + conceded)
+    : percentage(goals, decidedShots.length);
+
+  return {
+    playerId: player.id,
+    isGoalkeeper: Boolean(player.isTW),
+    attempts: player.isTW ? null : playerShots.length,
+    value: player.isTW ? saves : goals,
+    goals,
+    assists,
+    saves,
+    conceded,
+    mentions,
+    errors,
+    penalties,
+    rate
+  };
+}
