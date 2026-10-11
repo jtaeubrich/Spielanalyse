@@ -595,9 +595,9 @@
           <div class="advanced-video-body">
             <p class="editor-help">Vorlauf und Nachlauf gelten sowohl für die Wiedergabe im Video-Tab als auch für die Video-Nachanalyse im Match-Tab.</p>
             <div class="production-settings"><label>Vorlauf (Sekunden)<input class="field" id="preRoll" type="number" min="0" value="4"></label><label>Nachlauf (Sekunden)<input class="field" id="postRoll" type="number" min="0" value="2"></label><label>Exportformat<select class="field" id="manualClipFormat"><option value="original">Original / YouTube (16:9)</option><option value="feed">Instagram Feed (4:5)</option><option value="vertical">Reel / Story / Short (9:16)</option></select></label><label class="social-check"><input id="manualClipLabels" type="checkbox" checked> Spiel- und Aktionsinfos einblenden</label></div>
-            <p class="editor-help">Mehrere ausgewählte Events werden zu einem gemeinsamen Clip zusammengeschnitten.</p>
+            <p class="editor-help">Mehrere ausgewählte Events werden zu einem gemeinsamen Clip zusammengeschnitten.</p><p class="editor-help">Einzelclip-Serie: Zuerst eine Endstand-Titelkarte, danach jedes Highlight als eigene Videodatei. Halbzeitstand wird nicht exportiert. Die Browser-Downloads müssen ggf. zugelassen werden.</p>
             <div class="export-status" id="exportStatus">Für den Clip-Export bitte ein lokales Video laden.</div>
-            <div class="export-actions"><button class="btn primary" id="exportSelectedEvents" type="button" disabled>Gewählte Events exportieren</button><button class="btn" id="exportCurrentPosition" type="button" disabled>Aktuelle Position exportieren</button><button class="btn" id="exportAllEvents" type="button" disabled>Alle Events exportieren</button><button class="btn danger" id="stopClipExport" type="button" disabled>Export stoppen</button></div>
+            <div class="export-actions"><button class="btn primary" id="exportSelectedEvents" type="button" disabled>Gewählte Events exportieren</button><button class="btn" id="exportCurrentPosition" type="button" disabled>Aktuelle Position exportieren</button><button class="btn" id="exportAllEvents" type="button" disabled>Alle Events exportieren</button><button class="btn primary" id="exportIndividualHighlights" type="button" disabled>Endstand + Highlights einzeln exportieren</button><button class="btn danger" id="stopClipExport" type="button" disabled>Export stoppen</button></div>
             <h3>Synchronisation</h3><div class="sync-row"><button class="btn" id="markH1" type="button">Anpfiff H1 setzen</button><button class="btn" id="markH2" type="button">Anpfiff H2 setzen</button></div><div class="sync-state" id="syncState">H1: nicht gesetzt · H2: nicht gesetzt</div>
             <datalist id="eventTagSuggestions"></datalist>
           </div>
@@ -1680,7 +1680,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   let savedVideoSize=60;try{savedVideoSize=localStorage.getItem('handballSpielanalyse.videoSize')||60}catch{}setVideoSize(savedVideoSize);
   function setAnnotationToolsOpen(open){const section=$("annotationSection"),toggle=$("annotationToolsToggle");section.classList.toggle("open",open);toggle.setAttribute("aria-expanded",String(open));toggle.lastElementChild.textContent=open?"▴":"▾";if(!open){drawingEnabled=false;drawingDraft=null;$("annotationCanvas").classList.remove("drawing");$("drawToggle").classList.remove("selected");$("drawToggle").textContent="Zeichnen";renderAnnotation()}}
   $("annotationToolsToggle").onclick=()=>setAnnotationToolsOpen(!$("annotationSection").classList.contains("open"));
-  function updateClipExportAvailability(){const localReady=Boolean(localVideo&&localVideo.readyState>=1&&!localVideo.error);if(localReady&&!localVideoReady)localVideoReady=true;const disabled=!localReady||exportBusy;for(const id of ["exportSelectedEvents","exportCurrentPosition","exportAllEvents"]){const button=$(id);if(button)button.disabled=disabled}const manifestButton=$("generatePresetClips");if(manifestButton)manifestButton.disabled=exportBusy||!selectedClipPreset();const stopButton=$("stopClipExport");if(stopButton)stopButton.disabled=!exportBusy;if(!localReady&&!exportBusy){$("exportStatus").textContent=ytReady?"YouTube-Video geladen. Lokaler Clip-Export benötigt eine lokale Videodatei; Manifeste können trotzdem erstellt werden.":"Für den lokalen Clip-Export bitte ein lokales Video laden."}}
+  function updateClipExportAvailability(){const localReady=Boolean(localVideo&&localVideo.readyState>=1&&!localVideo.error);if(localReady&&!localVideoReady)localVideoReady=true;const disabled=!localReady||exportBusy;for(const id of ["exportSelectedEvents","exportCurrentPosition","exportAllEvents","exportIndividualHighlights"]){const button=$(id);if(button)button.disabled=disabled}const manifestButton=$("generatePresetClips");if(manifestButton)manifestButton.disabled=exportBusy||!selectedClipPreset();const stopButton=$("stopClipExport");if(stopButton)stopButton.disabled=!exportBusy;if(!localReady&&!exportBusy){$("exportStatus").textContent=ytReady?"YouTube-Video geladen. Lokaler Clip-Export benötigt eine lokale Videodatei; Manifeste können trotzdem erstellt werden.":"Für den lokalen Clip-Export bitte ein lokales Video laden."}}
   function clearLocalVideo(){scenePlayback.cancel();if(localVideo)localVideo.pause();localVideo=null;localVideoReady=false;if(localVideoUrl)URL.revokeObjectURL(localVideoUrl);localVideoUrl=null;exportAudioSource=null;exportAudioDestination=null;if(exportAudioContext){exportAudioContext.close().catch(()=>{});exportAudioContext=null}updateClipExportAvailability()}
   function clearYoutube(){scenePlayback.cancel();if(yt)try{yt.destroy()}catch{}yt=null;ytReady=false;ytId=null}
   $("chooseLocalVideo").onclick=()=>$("localVideoInput").click();
@@ -1711,6 +1711,56 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function preferredRecorderType(){return selectRecorderMimeType(type=>MediaRecorder.isTypeSupported(type))}
   async function exportLocalClip(entries,{fileBase=safeFileBase()+"_highlights",download=true,statusPrefix="",socialProfile="original",socialLabels=false}={}){if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream)throw Error("Dieser Browser unterstützt den Videoexport nicht.");if(exportCancelRequested)throw Error("Clip-Export abgebrochen.");scenePlayback.cancel();const video=localVideo,canvas=document.createElement("canvas"),size=socialCanvasSize(socialProfile,video);canvas.width=size.width;canvas.height=size.height;const ctx=canvas.getContext("2d"),stream=canvas.captureStream(30);const audio=await connectClipAudio({video,stream,getState:()=>({context:exportAudioContext,source:exportAudioSource,destination:exportAudioDestination}),setState:value=>{exportAudioContext=value.context;exportAudioSource=value.source;exportAudioDestination=value.destination},AudioContextClass:AudioContext});const withAudio=audio.withAudio;const type=preferredRecorderType(),{recorder,chunks,stopped}=startClipRecording(stream,{mimeType:type,MediaRecorderClass:MediaRecorder}),restoreTime=video.currentTime,restoreRate=video.playbackRate,restoreIndex=activeVideoEventIndex;video.pause();video.playbackRate=1;await runClipCapture({video,recorder,stopped,stream,restore:()=>restoreClipPlayback({video,time:restoreTime,rate:restoreRate,index:restoreIndex,seek:waitForSeek,setIndex:value=>{activeVideoEventIndex=value},refresh:()=>{renderVideoPlaylist();renderAnnotation()}}),run:()=>runClipScenes({entries,video,isCancelled:()=>exportCancelRequested,seek:waitForSeek,setActiveIndex:value=>{activeVideoEventIndex=value},draw:item=>drawExportFrame(ctx,canvas,video,item.event,item.groupLabel||"",{profile:socialProfile,labels:socialLabels}),onProgress:value=>{$("exportStatus").textContent=statusPrefix+"Clip wird erstellt: "+value+" % · Export läuft in Echtzeit."},requestFrame:requestAnimationFrame})});if(exportCancelRequested)throw Error("Clip-Export abgebrochen.");const mime=recorder.mimeType||type||"video/webm",extension=mime.includes("mp4")?"mp4":"webm",blob=new Blob(chunks,{type:mime}),name=exportClipFilename(fileBase,mime);if(download)downloadBlob(blob,name);$("exportStatus").textContent="Videoclip erstellt"+(withAudio?" mit Ton":" ohne Ton")+". Zeichnungen und Kommentare sind eingebrannt.";return{blob,name,mime,withAudio}}    async function handleExport(selectedOnly){if(exportBusy)return;if(!localVideoReady)return toast("Für den Clip-Export bitte ein lokales Video laden.");const entries=exportEntries(selectedOnly);if(!entries.length)return toast(selectedOnly?"Keine ausgewählten Events mit gültiger Videozeit.":"Keine gefilterten Events mit gültiger Videozeit.");const profile=$("manualClipFormat")?.value||"original",labels=Boolean($("manualClipLabels")?.checked),suffix=profile==="vertical"?"9x16":profile==="feed"?"4x5":"16x9",scope=selectedOnly?"Auswahl":"Gefilterte_Events";exportCancelRequested=false;exportBusy=true;updateClipExportAvailability();try{await exportLocalClip(entries,{fileBase:[safeFileBase(),scope,suffix].join("_"),socialProfile:profile,socialLabels:labels})}catch(error){const cancelled=error?.message==="Clip-Export abgebrochen.";$("exportStatus").textContent=cancelled?"Clip-Export gestoppt.":error.message||"Videoexport fehlgeschlagen.";toast(cancelled?"Clip-Export gestoppt":error.message||"Videoexport fehlgeschlagen.")}finally{exportBusy=false;exportCancelRequested=false;updateClipExportAvailability()}}
   async function exportCurrentVideoPosition(){if(exportBusy)return;if(!localVideoReady)return toast("Für den Clip-Export bitte ein lokales Video laden.");const at=Number(localVideo?.currentTime);if(!Number.isFinite(at))return toast("Aktuelle Videoposition ist nicht verfügbar.");const event=state.events[activeVideoEventIndex]||{type:"keyMoment",displayTime:"",time:0},entry=coreClipWindowAt(at,{...coreNormalizeSceneWindow(state.video.preRoll,state.video.postRoll),duration:localVideo?.duration});if(!entry)return toast("Für die aktuelle Position konnte kein Clipfenster berechnet werden.");Object.assign(entry,{event,index:Number.isInteger(activeVideoEventIndex)?activeVideoEventIndex:-1});const profile=$("manualClipFormat")?.value||"original",labels=Boolean($("manualClipLabels")?.checked),suffix=profile==="vertical"?"9x16":profile==="feed"?"4x5":"16x9";exportCancelRequested=false;exportBusy=true;updateClipExportAvailability();try{await exportLocalClip([entry],{fileBase:[safeFileBase(),"Aktuelle_Position",fmt(at,true).replace(":","-"),suffix].join("_"),socialProfile:profile,socialLabels:labels,statusPrefix:"Aktuelle Position · "})}catch(error){const cancelled=error?.message==="Clip-Export abgebrochen.";$("exportStatus").textContent=cancelled?"Clip-Export gestoppt.":error.message||"Videoexport fehlgeschlagen.";toast(cancelled?"Clip-Export gestoppt":error.message||"Videoexport fehlgeschlagen.")}finally{exportBusy=false;exportCancelRequested=false;updateClipExportAvailability()}}
+
+  async function exportFinalScoreCard({fileBase, profile}) {
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) throw Error("Dieser Browser unterstützt den Videoexport nicht.");
+    const canvas=document.createElement("canvas"),size=socialCanvasSize(profile,localVideo);
+    canvas.width=size.width;canvas.height=size.height;
+    const ctx=canvas.getContext("2d"),w=size.width,h=size.height;
+    ctx.fillStyle="#102238";ctx.fillRect(0,0,w,h);
+    ctx.textAlign="center";ctx.fillStyle="#ffffff";
+    const write=(value,y,ratio)=>{ctx.font="bold "+Math.round(w*ratio)+"px sans-serif";ctx.fillText(value,w/2,y,w*.90)};
+    write("ENDSTAND",h*.22,.066);
+    const [home,away]=score();
+    write(state.home?.name||"Heim",h*.40,.055);
+    write(String(home)+" : "+String(away),h*.55,.12);
+    write(state.away?.name||"Gast",h*.69,.055);
+    const stream=canvas.captureStream(30),type=preferredRecorderType();
+    const recorder=new MediaRecorder(stream,type?{mimeType:type}:undefined),chunks=[];
+    const stopped=new Promise((resolve,reject)=>{recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.onerror=e=>reject(e.error||Error("Endstand-Export fehlgeschlagen."));recorder.onstop=resolve});
+    try {
+      if(exportCancelRequested)throw Error("Clip-Export abgebrochen.");
+      recorder.start();
+      await new Promise((resolve,reject)=>{const begun=Date.now();const timer=setInterval(()=>{if(exportCancelRequested){clearInterval(timer);reject(Error("Clip-Export abgebrochen."))}else if(Date.now()-begun>=2500){clearInterval(timer);resolve()}},80)});
+    } finally {
+      if(recorder.state!=="inactive")recorder.stop();
+      await stopped;
+      stream.getTracks().forEach(track=>track.stop());
+    }
+    const mime=recorder.mimeType||type||"video/webm";
+    downloadBlob(new Blob(chunks,{type:mime}),exportClipFilename(fileBase,mime));
+  }
+  async function exportIndividualHighlights() {
+    if(exportBusy)return;
+    if(!localVideoReady)return toast("Für den Clip-Export bitte ein lokales Video laden.");
+    const entries=exportEntries(false).filter(item=>item.event?.highlight||normalizedTags(item.event).some(tag=>String(tag).toLowerCase()==="highlight"));
+    if(!entries.length)return toast("Keine gefilterten Highlights mit gültiger Videozeit vorhanden.");
+    const profile=$("manualClipFormat")?.value||"original",labels=Boolean($("manualClipLabels")?.checked);
+    const suffix=profile==="vertical"?"9x16":profile==="feed"?"4x5":"16x9",base=safeFileBase()+"_"+suffix;
+    exportCancelRequested=false;exportBusy=true;updateClipExportAvailability();
+    try {
+      $("exportStatus").textContent="1/"+(entries.length+1)+" · Endstand wird erstellt.";
+      await exportFinalScoreCard({fileBase:base+"_01_Endstand",profile});
+      for(let i=0;i<entries.length;i++){
+        if(exportCancelRequested)throw Error("Clip-Export abgebrochen.");
+        const n=String(i+2).padStart(2,"0"),entry=entries[i];
+        await exportLocalClip([entry],{fileBase:base+"_"+n+"_Highlight_"+String(i+1).padStart(2,"0"),socialProfile:profile,socialLabels:labels,statusPrefix:(i+2)+"/"+(entries.length+1)+" · "});
+      }
+      $("exportStatus").textContent=(entries.length+1)+" Einzelclips exportiert: Endstand und "+entries.length+" Highlights.";
+    }catch(error){const cancelled=error?.message==="Clip-Export abgebrochen.";$("exportStatus").textContent=cancelled?"Clip-Export gestoppt.":error.message||"Einzelclip-Export fehlgeschlagen.";toast(cancelled?"Clip-Export gestoppt":error.message||"Einzelclip-Export fehlgeschlagen.");}
+    finally{exportBusy=false;exportCancelRequested=false;updateClipExportAvailability();}
+  }
+  $("exportIndividualHighlights").onclick=exportIndividualHighlights;
   $("exportSelectedEvents").onclick=()=>handleExport(true);$("exportCurrentPosition").onclick=exportCurrentVideoPosition;$("exportAllEvents").onclick=()=>handleExport(false);$("stopClipExport").onclick=()=>{if(!exportBusy)return;exportCancelRequested=true;if(localVideo)localVideo.pause();$("exportStatus").textContent="Clip-Export wird gestoppt …";};
   function presetFileBase(preset,group){return(preset.output?.fileName||"Clip_{Gruppe}").replaceAll("{Gruppe}",group.label).replaceAll("{Spieler}",group.label).replaceAll("{Vorlage}",preset.name)}
   function clearGeneratedClips(){for(const url of generatedClipUrls)URL.revokeObjectURL(url);generatedClipUrls=[];$("generatedClips").replaceChildren()}
