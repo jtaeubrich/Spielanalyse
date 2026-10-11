@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handball Highlight – Instagram 4:5</title>
+<style>
+  :root { color-scheme: dark; --paper:#101418; --red:#db202a; --text:#f5f4f2; --muted:#aeb5bd; }
+  * { box-sizing:border-box; }
+  html,body {margin:0;padding:0;width:1080px;height:1350px;overflow:hidden;}
+  body {font-family:Impact,"Arial Narrow","Franklin Gothic Heavy",Arial,sans-serif;color:var(--text);background:var(--paper);}
+  .poster {position:relative;width:1080px;height:1350px;overflow:hidden;isolation:isolate;background:
+    radial-gradient(ellipse 750px 350px at 105% 8%,#82202777,transparent 72%),
+    radial-gradient(ellipse 900px 350px at -15% 95%,#951d2770,transparent 72%),
+    linear-gradient(148deg,#21272c 0%,#101418 50%,#191c21 100%);}
+  .poster:before {content:"";position:absolute;inset:0;z-index:-1;opacity:.6;background:
+    repeating-linear-gradient(117deg,transparent 0px,transparent 80px,#ffffff07 81px,#ffffff07 83px),
+    linear-gradient(163deg,transparent 0 14%,#ba232a 14.2% 15%,transparent 15.2% 85%,#ba232a 85.1% 86.3%,transparent 86.5%);}
+  .top-tag {position:absolute;top:38px;left:48px;font:800 25px/1 Arial,sans-serif;letter-spacing:6px;color:#e8d6d6;}
+  .series {position:absolute;right:48px;top:38px;font:700 23px/1 Arial,sans-serif;letter-spacing:3px;color:var(--muted);}
+  .accent-bar {position:absolute;top:97px;left:48px;width:984px;height:6px;background:linear-gradient(90deg,var(--red) 0 67%,#ffffff 67% 78%,#6b747c 78%);}
+  .teams {position:absolute;top:123px;left:48px;right:48px;height:218px;display:grid;grid-template-columns:170px 1fr 170px;gap:18px;align-items:center;}
+  .logo-shell {height:168px;width:168px;background:#ffffffea;border:5px solid #f6f5f3;border-radius:14px;display:grid;place-items:center;box-shadow:0 8px 0 #bd1720;overflow:hidden;}
+  .logo-placeholder {display:grid;place-items:center;width:100%;height:100%;color:#252c30;font:900 22px/1.1 Arial,sans-serif;text-align:center;letter-spacing:2px;}
+  .team-center {display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;}
+  .team-line {font:900 38px/1 Impact,"Arial Narrow",Arial,sans-serif;max-width:600px;overflow-wrap:anywhere;text-transform:uppercase;letter-spacing:.5px;}
+  .versus {font:900 23px/1 Arial,sans-serif;letter-spacing:4px;color:#c7cbd0;}
+  .score-strip {position:absolute;top:354px;left:48px;right:48px;height:110px;display:flex;align-items:center;justify-content:center;background:#edeeeef2;color:#14191e;clip-path:polygon(0 0,100% 0,98% 100%,2% 100%);}
+  .score-label {font:900 24px/1 Arial,sans-serif;letter-spacing:4px;position:absolute;left:35px;top:43px;}
+  .score-value {font:900 85px/1 Impact,"Arial Narrow",Arial,sans-serif;letter-spacing:7px;}
+  .period {position:absolute;right:34px;top:43px;font:800 21px/1 Arial,sans-serif;letter-spacing:2px;}
+  [data-field="videoArea"] {position:absolute;top:482px;left:48px;width:984px;height:553.5px;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#29333c,#070b10);border:5px solid #f0eeee;box-shadow:0 18px 0 var(--red);}
+  .video-demo {display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;}
+  .play-icon {height:102px;width:102px;display:grid;place-items:center;border:5px solid #ffffffa8;border-radius:50%;font:900 42px Arial,sans-serif;}
+  .video-demo small {font:800 21px Arial,sans-serif;letter-spacing:5px;color:#aeb5bd;}
+  .bottom {position:absolute;left:48px;right:48px;top:1075px;}
+  .action-line {display:flex;align-items:flex-start;justify-content:space-between;gap:22px;}
+  .action {font:900 69px/.95 Impact,"Arial Narrow",Arial,sans-serif;text-transform:uppercase;letter-spacing:1px;max-width:650px;overflow-wrap:anywhere;}
+  .minute {padding:10px 13px;background:var(--red);color:white;min-width:198px;text-align:right;}
+  .minute-label {display:block;font:800 17px/1 Arial,sans-serif;letter-spacing:3px;margin-bottom:7px;}
+  .minute-value {font:900 42px/1 Impact,Arial,sans-serif;}
+  .player {font:800 35px/1.18 Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;margin-top:15px;}
+  .comment-panel {margin-top:17px;padding:15px 19px;background:#f3f1ed;color:#151b20;border-left:12px solid var(--red);min-height:86px;}
+  .comment-label {font:900 15px/1 Arial,sans-serif;letter-spacing:3px;color:#b01b25;margin-bottom:8px;}
+  .comment {font:700 25px/1.22 Arial,sans-serif;overflow-wrap:anywhere;}
+  .footer-rule {position:absolute;left:48px;right:48px;bottom:17px;height:6px;background:linear-gradient(90deg,#db202a 0 70%,#f5f4f2 70%);}
+</style>
+</head>
+<body>
+<main class="poster" aria-label="Handball Instagram Highlight">
+  <div class="top-tag">HANDBALL / HIGHLIGHT</div>
+  <div class="series">MATCH RECAP</div>
+  <div class="accent-bar"></div>
+  <header class="teams">
+    <div class="logo-shell" data-field="homeLogo"><div class="logo-placeholder">HEIM<br>LOGO</div></div>
+    <div class="team-center">
+      <div class="team-line" data-field="home">TSV Kronshagen</div>
+      <div class="versus">GEGEN</div>
+      <div class="team-line" data-field="away">BEISPIELGEGNER</div>
+    </div>
+    <div class="logo-shell" data-field="awayLogo"><div class="logo-placeholder">GAST<br>LOGO</div></div>
+  </header>
+  <section class="score-strip" aria-label="Spielstand">
+    <span class="score-label">SPIELSTAND</span>
+    <span class="score-value" data-field="score">18 : 16</span>
+    <span class="period">2. HZ</span>
+  </section>
+  <div data-field="videoArea" aria-label="16:9 Videobereich">
+    <div class="video-demo"><div class="play-icon">▶</div><small>VIDEO 16:9</small></div>
+  </div>
+  <section class="bottom">
+    <div class="action-line">
+      <div class="action" data-field="eventType">TOR</div>
+      <div class="minute"><span class="minute-label">SPIELZEIT</span><span class="minute-value" data-field="matchTime">42:13</span></div>
+    </div>
+    <div class="player" data-field="playerName">JESPE TÄUBRICH</div>
+    <div class="comment-panel">
+      <div class="comment-label">KOMMENTAR ZUR SZENE</div>
+      <div class="comment" data-field="comment">Starker Durchbruch nach guter Kreuzbewegung.</div>
+    </div>
+  </section>
+  <div class="footer-rule"></div>
+</main>
+</body>
+</html>
