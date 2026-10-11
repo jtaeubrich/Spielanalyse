@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { resolveYoutubeReference, storeYoutubeReference } from "../src/video-reference.js";
 
 const parseId = value => {
-  const match = String(value).match(/(?:watch\\?v=|youtu\\.be\\/)([A-Za-z0-9_-]{11})/);
+  const match = String(value).match(/(?:watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
   if (!match) throw Error("Invalid YouTube link");
   return match[1];
 };
