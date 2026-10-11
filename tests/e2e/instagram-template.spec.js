@@ -3,6 +3,8 @@ import { test, expect } from "@playwright/test";
 test("Instagram HTML template import validates required fields and previews", async ({page})=>{
  await page.goto("/");
  await page.locator('[data-tab="video"]').click();
+ await page.locator("details.video-production-card > summary").click();
+ await expect(page.locator("details.video-production-card")).toHaveAttribute("open", "");
  await page.locator("#instagramTemplateKind").selectOption("highlight");
  const file=page.locator("#instagramTemplateImportInput");
  await file.setInputFiles({name:"invalid.html",mimeType:"text/html",buffer:Buffer.from("<html><body><p>Invalid</p></body></html>")});
