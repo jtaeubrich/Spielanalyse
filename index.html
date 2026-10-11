@@ -1798,7 +1798,26 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     ctx.font="800 54px Inter,system-ui,sans-serif";ctx.fillText(state.away?.name||"Gast",w/2,870,940);
     return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error("PNG-Erzeugung fehlgeschlagen.")),"image/png"));
   }
-  $("instagramTemplatePreview").onclick=()=>{const host=$("instagramTemplatePreviewHost"),frame=$("instagramTemplateFrame");if(host.style.display!=="none"){host.style.display="none";return}const current=state.events[activeVideoEventIndex];frame.srcdoc=instagramTemplate({kind:current?"highlight":"endstand",home:state.home.name,away:state.away.name,homeLogo:teamLogoFor(knownRosterRecords,state.home),awayLogo:teamLogoFor(knownRosterRecords,state.away),score:current?instagramScoreAt(current):score().join(" : "),gameTime:current?.displayTime||"",player:current?eventDescription(current).main:"",eventType:current?eventDescription(current).title:"",comment:current?eventAnnotation(current)?.comment||"":"",background:$("instagramBgColor").value});host.style.display="block";frame.onload=()=>{try{frame.contentDocument.documentElement.style.zoom=String(frame.clientWidth/1080)}catch{}}};
+  const importedInstagramTemplates={};
+  $("instagramTemplateImportButton").onclick=()=>$("instagramTemplateImportInput").click();
+  $("instagramTemplateImportInput").onchange=async e=>{
+    const file=e.target.files?.[0];e.target.value="";if(!file)return;
+    const kind=$("instagramTemplateKind").value;
+    if(file.size>250000)return toast("HTML-Datei zu groß (max. 250 KB).");
+    const html=await file.text(),result=validateInstagramTemplate(html,kind);
+    if(!result.valid){$("instagramTemplateStatus").textContent=result.issues.join(" · ");return}
+    importedInstagramTemplates[kind]=html;
+    $("instagramTemplateStatus").textContent="Eigene Vorlage geladen (nur Vorschau, noch nicht im Export).";
+    $("instagramTemplatePreviewHost").style.display="none";
+    toast("HTML-Template importiert.");
+  };
+  $("instagramTemplateKind").onchange=()=>$("instagramTemplatePreviewHost").style.display="none";
+  $("instagramTemplateReset").onclick=()=>{delete importedInstagramTemplates[$("instagramTemplateKind").value];$("instagramTemplatePreviewHost").style.display="none";$("instagramTemplateStatus").textContent="Standardvorlage aktiv."};
+  $("instagramTemplatePromptButton").onclick=async()=>{
+    const prompt=templatePrompt($("instagramTemplateKind").value);
+    try{await navigator.clipboard.writeText(prompt);toast("KI-Prompt kopiert.")}catch{downloadBlob(new Blob([prompt],{type:"text/plain"}),"instagram-ki-prompt.txt")}
+  };
+  $("instagramTemplatePreview").onclick=()=>{const host=$("instagramTemplatePreviewHost"),frame=$("instagramTemplateFrame");if(host.style.display!=="none"){host.style.display="none";return}const current=state.events[activeVideoEventIndex];frame.srcdoc=importedInstagramTemplates[$("instagramTemplateKind").value]||instagramTemplate({kind:$("instagramTemplateKind").value,home:state.home.name,away:state.away.name,homeLogo:teamLogoFor(knownRosterRecords,state.home),awayLogo:teamLogoFor(knownRosterRecords,state.away),score:current?instagramScoreAt(current):score().join(" : "),gameTime:current?.displayTime||"",player:current?eventDescription(current).main:"",eventType:current?eventDescription(current).title:"",comment:current?eventAnnotation(current)?.comment||"":"",background:$("instagramBgColor").value});host.style.display="block";frame.onload=()=>{try{frame.contentDocument.documentElement.style.zoom=String(frame.clientWidth/1080)}catch{}}};
   let readyInstagramZip=null;
   function setInstagramZipReady(value){readyInstagramZip=value;for(const id of ["instagramZipShare","instagramZipDownload"])$(id).disabled=!value;}
   $("instagramZipShare").onclick=async()=>{if(!readyInstagramZip)return;const {blob,name}=readyInstagramZip;try{const file=new File([blob],name,{type:"application/zip"});if(!navigator.share||!navigator.canShare?.({files:[file]}))throw Error("Das Teilen von ZIP-Dateien wird auf diesem Gerät nicht unterstützt. Bitte „Herunterladen“ verwenden.");await navigator.share({files:[file],title:name});}catch(error){if(error?.name==="AbortError")return;toast(error.message||"Teilen fehlgeschlagen. Bitte „Herunterladen“ verwenden.");}};
