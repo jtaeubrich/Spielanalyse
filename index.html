@@ -1797,11 +1797,10 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   async function exportInstagramZip(){
     if(exportBusy)return;
     if(!localVideoReady)return toast("Für Instagram-Highlights bitte ein lokales Video laden.");
-    const entries=chronologicalHighlights(coreBuildClipEntries(
-      state.events.map((event,index)=>({event,index})),
-      {resolveVideoTime:event=>eventVideoSeconds(event),...coreNormalizeSceneWindow(state.video.preRoll,state.video.postRoll),duration:localVideo.duration}
-    ));
-    if(!entries.length)return toast("Keine markierten Highlights mit gültiger Videozeit vorhanden.");
+    const entries=exportEntries(true).sort((a,b)=>
+      Number(a.event?.time??0)-Number(b.event?.time??0)||a.index-b.index
+    );
+    if(!entries.length)return toast("Keine ausgewählten Events mit gültiger Videozeit vorhanden.");
     try{instagramMp4Type(mime=>Boolean(window.MediaRecorder?.isTypeSupported(mime)));}
     catch(error){$("exportStatus").textContent=error.message;return toast(error.message);}
     exportBusy=true;exportCancelRequested=false;updateClipExportAvailability();
