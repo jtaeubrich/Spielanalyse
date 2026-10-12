@@ -80,4 +80,28 @@ describe("Handball360 pure module", () => {
     expect(result.lineupNumbers).toBe(0);
   });
 
+  test("imports a future fixture with metadata and no events", () => {
+    const upcoming = {
+      match_id: "378112",
+      match: { data: [{
+        id: 378112,
+        local: { name: "TSV Kronshagen" },
+        visitor: { name: "Gastmannschaft" },
+        duration: { minutes_per_period: 25 },
+        date: "2026-10-24T15:00:00"
+      }] },
+      events: { data: [] }
+    };
+    const result = hbPrepare(upcoming);
+    expect(result.matchId).toBe("378112");
+    expect(result.teams).toEqual({ home: "TSV Kronshagen", away: "Gastmannschaft" });
+    expect(result.events).toEqual([]);
+    expect(result.normalized).toEqual([]);
+    expect(result.duration).toBe(25);
+  });
+
+  test("rejects a response without metadata or events", () => {
+    expect(() => hbPrepare({ events: { data: [] } })).toThrow(/Weder Spieldaten noch/);
+  });
+
 });
