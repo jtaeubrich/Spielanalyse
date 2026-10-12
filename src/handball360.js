@@ -212,20 +212,22 @@ export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
     Array.isArray(raw?.match_events?.data) ? raw.match_events.data :
     null;
 
-  if (!events?.length) {
+  if (!events && !matchMeta) {
     const keys = raw && typeof raw === "object" ? Object.keys(raw).join(", ") : typeof raw;
     throw Error(
-      "Keine handball.net-Ereignisse im JSON gefunden. Gefundene Top-Level-Felder: " + keys
+      "Weder Spieldaten noch handball.net-Ereignisse im JSON gefunden. Gefundene Top-Level-Felder: " + keys
     );
   }
+  // Future matches may include metadata and lineups but no events yet.
+  const matchEvents = events ?? [];
 
   const metadataDuration = Number(matchMeta?.duration?.minutes_per_period);
   const duration =
     Number.isFinite(metadataDuration) && metadataDuration > 0
       ? metadataDuration
-      : hbDuration(events);
+      : hbDuration(matchEvents);
 
-  const eventTeams = hbTeams(events);
+  const eventTeams = hbTeams(matchEvents);
   const teams = {
     home: String(matchMeta?.local?.name || eventTeams.home || "Heim"),
     away: String(matchMeta?.visitor?.name || matchMeta?.away?.name || eventTeams.away || "Gast")
@@ -240,18 +242,18 @@ export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
 
   const homePlayers = lineupHomePlayers.length
     ? lineupHomePlayers
-    : hbRoster(events, true);
+    : hbRoster(matchEvents, true);
   const awayPlayers = lineupAwayPlayers.length
     ? lineupAwayPlayers
-    : hbRoster(events, false);
+    : hbRoster(matchEvents, false);
 
   const byId = new Map([...homePlayers, ...awayPlayers].filter(p => p.handballNetId).map(p => [String(p.handballNetId), p]));
-  const normalized = hbNormalizeEvents(events, duration).map(e => {
+  const normalized = hbNormalizeEvents(matchEvents, duration).map(e => {
     const p = byId.get(String(e.pId ?? ""));
     return p && p.nr !== "" && p.nr != null ? { ...e, pNr: p.nr } : e;
   });
   return {
-    events,
+    events: matchEvents,
     normalized,
     duration,
     teams,
