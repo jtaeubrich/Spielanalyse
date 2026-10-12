@@ -196,6 +196,19 @@ export function hbNormalizeEvents(events = [], duration = 25) {
   );
 }
 
+export function hbClubLogos(matchMeta) {
+  const entry = side => {
+    const team = matchMeta?.[side];
+    const url = String(team?.club?.logo || "").trim();
+    return {
+      teamId: team?.id == null ? "" : String(team.id),
+      clubId: team?.club?.id == null ? "" : String(team.club.id),
+      logoUrl: /^https:\/\//i.test(url) ? url : ""
+    };
+  };
+  return { home: entry("local"), away: entry("visitor") };
+}
+
 export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
   const matchMeta = Array.isArray(raw?.match?.data)
     ? raw.match.data[0]
@@ -266,6 +279,7 @@ export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
       lineupHomePlayers.length || lineupAwayPlayers.length ? "lineups" : "events",
     lineupNumbers: [...lineupHomePlayers, ...lineupAwayPlayers].filter(p => p.nr !== "" && p.nr != null).length,
     matchMeta,
+    clubLogos: hbClubLogos(matchMeta),
     additionalInfo:
       raw?.additional_info ?? raw?.["additional-info"] ?? raw?.additionalInfo ?? null,
     raw: structuredClone(raw)
