@@ -1843,7 +1843,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       const cards=before?[["matchday","01_matchday.png","MATCHDAY",""]]:[["endstand","01_halbzeit.png","HALBZEIT",half.join(" : ")],["endstand","02_endstand.png","ENDSTAND",score().join(" : ")]];
       const files=[];
       for(const [kind,name,title,value] of cards){files.push({name,blob:await instagramCard(title,background,value)});if(importedInstagramTemplates[kind])files.push({name:name.replace(".png",".html"),blob:new Blob([importedInstagramTemplates[kind]],{type:"text/html"})});}
-      for(let i=0;i<entries.length;i++){
+      for(let i=0;i<(!before&&$("instagramIncludeHighlights").checked?entries.length:0);i++){
         if(exportCancelRequested)throw Error("Clip-Export abgebrochen.");
         const item=entries[i],number=String(i+3).padStart(2,"0"),info=socialFrameInfo(item.event);
         $("exportStatus").textContent=(i+1)+"/"+entries.length+" · Instagram MP4 wird erstellt.";
