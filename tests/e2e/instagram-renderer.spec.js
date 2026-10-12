@@ -31,3 +31,23 @@ test("HTML highlight exposes fixed 16:9 video rectangle and paints its backdrop"
  expect(geometry.rect.w).toBe(960);
  expect(geometry.rect.h).toBe(540);
 });
+
+test("long away name wraps and embedded team logos are inserted",async({page})=>{
+ await page.goto("/");
+ const result=await page.evaluate(async()=>{
+  const {fillInstagramHtml}=await import("./src/instagram-html-renderer.js");
+  const logo="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==";
+  const html='<html><head><style>.team{width:180px;font-size:50px}</style></head><body>'+
+  ['homeLogo','awayLogo','home','away'].map(x=>'<div class="team" data-field="'+x+'">PLACEHOLDER</div>').join('')+'</body></html>';
+  const filled=fillInstagramHtml(html,"matchday",{home:"TSV Kronshagen",away:"SG FLENSBURG-HANDEWITT II",homeLogo:logo,awayLogo:logo});
+  const doc=new DOMParser().parseFromString(filled,"text/html");
+  return {logos:doc.querySelectorAll('[data-field="homeLogo"] img,[data-field="awayLogo"] img').length,
+    away:doc.querySelector('[data-field="away"]').textContent,
+    size:doc.querySelector('[data-field="away"]').style.fontSize,
+    wrapping:filled.includes("overflow-wrap:anywhere")};
+ });
+ expect(result.logos).toBe(2);
+ expect(result.away).toBe("SG FLENSBURG-HANDEWITT II");
+ expect(result.size).toBe("25px");
+ expect(result.wrapping).toBe(true);
+});
