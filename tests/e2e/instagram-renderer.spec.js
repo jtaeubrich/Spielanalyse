@@ -10,6 +10,7 @@ test("imports Matchday HTML and exports a real 1080x1350 PNG before the match",a
  await page.locator("#instagramExportPhase").selectOption("before");
  await page.locator("#instagramZipExport").click();
  await expect(page.locator("#exportStatus")).toContainText(/Instagram-ZIP bereit|fehlgeschlagen|konnte nicht|Browser unterstützt|Keine Dateien|Fehler/i,{timeout:12000});
+ await expect(page.locator("#exportStatus")).toContainText(/Instagram-ZIP bereit|fehlgeschlagen|konnte nicht|Browser unterstützt|Keine Dateien|Fehler/i,{timeout:12000});
  await expect(page.locator("#instagramZipDownload"),"Exportstatus: "+await page.locator("#exportStatus").textContent()).toBeEnabled({timeout:12000});
  await expect(page.locator("#exportStatus")).toContainText("1 Grafiken");
 });
