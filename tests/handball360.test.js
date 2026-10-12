@@ -104,4 +104,23 @@ describe("Handball360 pure module", () => {
     expect(() => hbPrepare({ events: { data: [] } })).toThrow(/Weder Spieldaten noch/);
   });
 
+  test("extracts both club logos and stable IDs from a future match", () => {
+    const upcoming={
+      match_id:"378112",
+      match:{data:[{
+        id:378112,
+        local:{id:85814,name:"TSV KRONSHAGEN",club:{id:"04ea29f",logo:"https://handball360.isquad.de/tsv.jpg"}},
+        visitor:{id:85816,name:"SG FLENSBURG-HANDEWITT II",club:{id:"1jxzqma",logo:"https://handball360.isquad.de/sg.jpg"}},
+        duration:{minutes_per_period:25}
+      }]},
+      events:{data:[]},lineups:{data:[]}
+    };
+    const result=hbPrepare(upcoming);
+    expect(result.normalized).toEqual([]);
+    expect(result.clubLogos).toEqual({
+      home:{teamId:"85814",clubId:"04ea29f",logoUrl:"https://handball360.isquad.de/tsv.jpg"},
+      away:{teamId:"85816",clubId:"1jxzqma",logoUrl:"https://handball360.isquad.de/sg.jpg"}
+    });
+  });
+
 });
