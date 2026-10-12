@@ -413,13 +413,21 @@
         <div class="form-grid"><label>Spielname<input class="field" id="setupGameName" placeholder="Spielname"></label><label>Spielzeit pro Halbzeit<select class="field" id="setupDuration"><option value="20">20 Minuten</option><option value="25" selected>25 Minuten</option><option value="30">30 Minuten</option></select></label><label>Heim<input class="field" id="setupHomeName" placeholder="Heimmannschaft"></label><label>Gast<input class="field" id="setupAwayName" placeholder="Gastmannschaft"></label><label style="grid-column:1 / -1">Zuordnung „Mein Team“<select class="field" id="setupOwnTeamSide"><option value="home">Heim</option><option value="away" selected>Gast</option></select></label></div>
         <p class="number-help">Welche Mannschaft „Mein Team“ ist, kannst du jederzeit selbst auswählen. Die Zuordnung wird mit dem Spiel gespeichert.</p>
       </div>
-      <div class="panel setup-card">
-        <h2>Kader bearbeiten</h2>
+      <details class="panel setup-card wide" id="setupMatchdayPanel">
+        <summary>Instagram Matchday</summary>
+    <p class="editor-help">Vor dem Spiel: Mannschaften und Logos aus der Sammlung verwenden. Spielerlisten können später separat per JSON importiert werden.</p>
+    <label>Matchday-HTML <input id="setupMatchdayTemplateFile" type="file" accept=".html,text/html"></label>
+    <p class="editor-help" id="setupMatchdayTemplateStatus" role="status">○ Keine Vorlage gespeichert</p>
+    <div class="export-actions"><button class="btn primary" id="setupMatchdayPng" type="button">Matchday-PNG erstellen</button><button class="btn" id="setupMatchdayDownload" type="button" disabled>PNG herunterladen</button></div>
+    <p class="editor-help" id="setupMatchdayExportStatus" role="status"></p>
+      </details>
+      <details class="panel setup-card">
+        <summary>Kader bearbeiten</summary>
         <div class="roster-tools"><select class="btn" id="rosterTeam" aria-label="Mannschaft für Spielerliste"><option value="home">Gegner</option><option value="away" selected>Mein Team</option></select><label class="btn" for="rosterInput">Excel / JSON einlesen</label><input id="rosterInput" type="file" accept=".xlsx,.xls,.csv,.json" hidden><button class="btn" id="addPlayer" type="button">+ Spieler</button><button class="btn" id="editNumbers" type="button">Nur Nummern</button><button class="btn" id="updateRosterCollection" type="button">Sammlung aktualisieren</button><button class="btn" id="loadRosterCollection" type="button">Aus Sammlung laden</button></div><div class="roster-tools" style="margin-top:8px"><select class="field" id="knownRosterSelect" aria-label="Bekannte Mannschaft auswählen"><option value="">Bekannte Mannschaft auswählen …</option></select><button class="btn primary" id="applyKnownRoster" type="button">Mannschaft übernehmen</button><button class="btn" id="renameKnownRoster" type="button">Umbenennen</button><button class="btn danger" id="deleteKnownRoster" type="button">Löschen</button></div><label class="field">Mannschaftslogo (PNG/JPG/WebP) <input id="knownRosterLogoInput" type="file" accept="image/png,image/jpeg,image/webp"></label><p class="number-help" id="knownRosterDetails">Noch keine bekannte Mannschaft ausgewählt.</p><p class="number-help" id="rosterCollectionStatus">Die H360-ID wird beim Abgleich bevorzugt und bleibt als stabile Spieler-ID erhalten.</p>
         <div id="rosterEditor"></div>
-      </div>
-      <div class="panel setup-card wide">
-        <h2>Torwurf-Erfassung</h2>
+      </details>
+      <details class="panel setup-card wide">
+        <summary>Torwurf-Erfassung</summary>
         <p class="number-help">Lege fest, welche Angaben bei einem Torwurf abgefragt werden. Deaktivierte Angaben werden im Match-Ablauf übersprungen. Assist wird nur für Tore der eigenen Mannschaft mit dem HandballMetrics-Feld assistPId gespeichert.</p>
         <div class="capture-options" id="shotCaptureOptions">
           <label class="capture-option"><input type="checkbox" data-shot-setting="attacker">Schütze</label>
@@ -431,27 +439,19 @@
           <label class="capture-option"><input type="checkbox" data-shot-setting="tag">Tag</label>
           <label class="capture-option"><input type="checkbox" data-shot-setting="defense">Abwehrzuordnung bei gegnerischem Torwurf</label>
           <label class="capture-option"><input type="checkbox" data-shot-setting="trigger">Auslösehandlung anbieten</label>
-        </div>
+        </details>
       </div>
-      <div class="panel setup-card wide">
-        <h2>Globale Einstellungen</h2>
+      <details class="panel setup-card wide">
+        <summary>Globale Einstellungen</summary>
         <p class="number-help">Tags, Deckungsformationen und Auslösehandlungen gelten spielübergreifend. Alte Tag-Dateien bleiben weiterhin ladbar.</p>
         <div class="tag-library-tools"><select class="field" id="setupSettingType" aria-label="Art des neuen Eintrags"><option value="tag">Tag</option><option value="trigger">Auslösehandlung</option><option value="defense">Deckungsformation</option></select><input class="field" id="setupTagInput" placeholder="Neuen Tag eingeben"><button class="btn" id="addSetupTag" type="button">+ Eintrag</button><button class="btn" id="loadTagLibraryFile" type="button">Einstellungsdatei laden</button><input id="tagLibraryInput" type="file" accept=".json,application/json" hidden><button class="btn primary" id="saveTagLibraryFile" type="button">Einstellungen speichern</button><button class="btn" id="saveTagLibraryAs" type="button">Kopie exportieren</button><span class="number-help" id="tagFileStatus">Keine Einstellungsdatei ausgewählt</span></div>
         <div class="tag-chips tag-library-list" id="setupTagList"></div>
         <div class="form-grid" style="margin-top:14px"><div><strong>Deckungsformationen</strong><div class="tag-chips" id="setupDefenseFormationList"></div></div><div><strong>Auslösehandlungen</strong><div class="tag-chips" id="setupTriggerActionList"></div></div></div>
-      </div>
+      </details>
     </div>
   </section>
 
-  <div class="panel setup-card" id="setupMatchdayPanel" style="margin:14px 0">
-    <h2>Instagram Matchday</h2>
-    <p class="editor-help">Vor dem Spiel: Mannschaften und Logos aus der Sammlung verwenden. Spielerlisten können später separat per JSON importiert werden.</p>
-    <label>Matchday-HTML <input id="setupMatchdayTemplateFile" type="file" accept=".html,text/html"></label>
-    <p class="editor-help" id="setupMatchdayTemplateStatus" role="status">○ Keine Vorlage gespeichert</p>
-    <div class="export-actions"><button class="btn primary" id="setupMatchdayPng" type="button">Matchday-PNG erstellen</button><button class="btn" id="setupMatchdayDownload" type="button" disabled>PNG herunterladen</button></div>
-    <p class="editor-help" id="setupMatchdayExportStatus" role="status"></p>
-  </div>
-  <section class="tab-pane" id="matchTab">
+<section class="tab-pane" id="matchTab">
   <div class="match-review-top-host" id="matchReviewTopHost"></div>
   <main class="grid" id="matchGrid">
     <div id="matchVideoHost"><section class="video-pane" id="videoModule">
