@@ -17,3 +17,17 @@ test("Instagram HTML template import validates required fields and previews", as
  await expect(page.locator("#instagramTemplateFrame")).toBeVisible();
  await expect(page.frameLocator("#instagramTemplateFrame").locator('[data-field="videoArea"]')).toBeVisible();
 });
+
+test("Matchday accepts embedded CSS data images but blocks remote CSS URLs", async ({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="video"]').click();
+ await page.locator("details.video-production-card > summary").click();
+ await page.locator("#instagramTemplateKind").selectOption("matchday");
+ const fields=["homeLogo","awayLogo","home","away"];
+ const body=fields.map(name=>'<div data-field="'+name+'">'+name+"</div>").join("");
+ const upload=async css=>page.locator("#instagramTemplateImportInput").setInputFiles({name:"matchday.html",mimeType:"text/html",buffer:Buffer.from('<!doctype html><html><head><style>'+css+'</style></head><body>'+body+'</body></html>')});
+ await upload('body {background-image: url("data:image/png;base64,iVBORw0KGgo=")}');
+ await expect(page.locator("#instagramTemplateStatus")).toContainText("Eigene Vorlage geladen");
+ await upload('body {background-image: url("https://example.com/background.png")}');
+ await expect(page.locator("#instagramTemplateStatus")).toContainText("Externe CSS-Ressourcen");
+});
