@@ -31,3 +31,16 @@ test("Matchday accepts embedded CSS data images but blocks remote CSS URLs", asy
  await upload('body {background-image: url("https://example.com/background.png")}');
  await expect(page.locator("#instagramTemplateStatus")).toContainText("Externe CSS-Ressourcen");
 });
+
+test("reports the exact rejected CSS URL for Matchday templates", async ({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="video"]').click();
+ await page.locator("details.video-production-card > summary").click();
+ await page.locator("#instagramTemplateKind").selectOption("matchday");
+ const html='<html><head><style>body {background: url("https://example.org/remote.jpg")}</style></head><body>'+
+ ['homeLogo','awayLogo','home','away'].map(k=>'<div data-field="'+k+'"></div>').join('')+'</body></html>';
+ await page.locator("#instagramTemplateImportInput").setInputFiles({name:"diagnose.html",mimeType:"text/html",buffer:Buffer.from(html)});
+ await expect(page.locator("#instagramTemplateStatus")).toContainText("diagnose.html");
+ await expect(page.locator("#instagramTemplateStatus")).toContainText("CSS-Zeile 1");
+ await expect(page.locator("#instagramTemplateStatus")).toContainText("https://example.org/remote.jpg");
+});
