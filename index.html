@@ -420,6 +420,8 @@
     <p class="editor-help" id="setupMatchdayTemplateStatus" role="status">○ Keine Vorlage gespeichert</p>
     <div class="export-actions"><button class="btn primary" id="setupMatchdayPng" type="button">Matchday-PNG erstellen</button><button class="btn" id="setupMatchdayDownload" type="button" disabled>PNG herunterladen</button></div>
     <p class="editor-help" id="setupMatchdayExportStatus" role="status"></p>
+    <button class="btn" id="setupMatchdayLogoCheck" type="button">Logos prüfen</button>
+    <pre id="setupMatchdayLogoDiagnostics" role="status" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:320px;overflow:auto"></pre>
       </details>
       <details class="panel setup-card">
         <summary>Kader bearbeiten</summary>
@@ -1919,6 +1921,30 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     await refreshKnownRosterOptions();
     return warnings;
   }
+  async function diagnoseMatchdayLogos() {
+    const host=$("setupMatchdayLogoDiagnostics");
+    host.textContent="Prüfe Mannschaftssammlung und Bildabruf …";
+    const report=[];
+    const fetched=await ensureInstagramLogos();
+    for(const side of ["home","away"]){
+      const team=state[side];
+      const record=findKnownTeamRecord(knownRosterRecords,{teamName:team?.name||"",players:team?.players||[]})?.record;
+      const matching=knownRosterRecords.filter(x=>String(x.teamName||"").trim().toLowerCase()===String(team?.name||"").trim().toLowerCase());
+      const lines=[(side==="home"?"HEIM":"GAST")+": "+(team?.name||"Unbekannt")];
+      if(!record)lines.push("  Sammlung: KEIN passender Mannschaftseintrag gefunden");
+      else {
+        lines.push("  Sammlung: "+record.teamName+" (Zuordnung "+(matching.length?"Name":"Spieler-IDs")+")");
+        lines.push("  Team-ID: "+(record.handball360TeamId||"nicht gespeichert")+" / Club-ID: "+(record.handball360ClubId||"nicht gespeichert"));
+        lines.push("  Logo-URL: "+(record.logoUrl||"FEHLT"));
+        lines.push("  Lokales Base64-Bild: "+(record.logoDataUrl?"vorhanden ("+Math.round(record.logoDataUrl.length/1024)+" KB)":"FEHLT"));
+        lines.push("  Vom Renderer verwendbar: "+(teamLogoFor(knownRosterRecords,team)?"JA":"NEIN"));
+      }
+      lines.push(...fetched.filter(msg=>msg.startsWith((team?.name||side)+":")).map(msg=>"  Abruf: "+msg));
+      report.push(lines.join("\n"));
+    }
+    host.textContent=report.join("\n\n");
+  }
+  $("setupMatchdayLogoCheck").onclick=()=>diagnoseMatchdayLogos().catch(error=>{$("setupMatchdayLogoDiagnostics").textContent="Diagnosefehler: "+(error?.message||error)});
   let readyMatchdayPng=null;
   $("setupMatchdayDownload").onclick=()=>{if(readyMatchdayPng)downloadBlob(readyMatchdayPng,safeFileBase()+"_matchday.png");};
   $("setupMatchdayPng").onclick=async()=>{
