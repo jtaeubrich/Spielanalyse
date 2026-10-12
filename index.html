@@ -1860,7 +1860,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   $("instagramTemplateImportInput").onchange=async e=>{const file=e.target.files?.[0];e.target.value="";await importInstagramTemplate(file,$("instagramTemplateKind").value)};
   for(const [kind] of Object.entries(instagramTemplateKinds)){
     const el=$("instagramFile"+kind[0].toUpperCase()+kind.slice(1));
-    el.onchange=async e=>{const file=e.target.files?.[0];await importInstagramTemplate(file,kind);e.target.value=""};
+    if(el)el.onchange=async e=>{const file=e.target.files?.[0];await importInstagramTemplate(file,kind);e.target.value=""};
   }
   $("instagramTemplateKind").onchange=()=>{$("instagramTemplatePreviewHost").style.display="none";updateInstagramTemplateStatus()};updateInstagramTemplateStatus();
   $("instagramTemplateReset").onclick=()=>{const kind=$("instagramTemplateKind").value;const previous=importedInstagramTemplates[kind];delete importedInstagramTemplates[kind];try{saveInstagramTemplates(localStorage,importedInstagramTemplates)}catch{importedInstagramTemplates[kind]=previous;toast("Zurücksetzen konnte nicht gespeichert werden.");} $("instagramTemplatePreviewHost").style.display="none";updateInstagramTemplateStatus();};
