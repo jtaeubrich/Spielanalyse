@@ -743,6 +743,7 @@ import { drawClipFrame } from "./src/clip-renderer.js";
 import { makeInstagramZip, chronologicalHighlights, instagramMp4Type } from "./src/instagram-export.js";
 import { instagramTemplate, teamLogoFor } from "./src/instagram-template.js";
 import { validateInstagramTemplate, templatePrompt } from "./src/instagram-template-manager.js?v=146";
+import { fillInstagramHtml, rasterizeInstagramHtml } from "./src/instagram-html-renderer.js";
 import { readInstagramTemplates, saveInstagramTemplates, halftimeScore } from "./src/instagram-workflow.js";
 import { connectClipAudio } from "./src/clip-audio.js";
 import { normalizeSceneWindow as coreNormalizeSceneWindow, clipWindowAt as coreClipWindowAt, buildClipEntries as coreBuildClipEntries, totalClipDuration as coreTotalClipDuration, nearestActiveClip as coreNearestActiveClip } from "./src/clip-core.js";
@@ -1842,7 +1843,14 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       const half=halftimeScore(state.events,state.timer.duration,coreVideoEventHalf);
       const cards=before?[["matchday","01_matchday.png","MATCHDAY",""]]:[["endstand","01_halbzeit.png","HALBZEIT",half.join(" : ")],["endstand","02_endstand.png","ENDSTAND",score().join(" : ")]];
       const files=[];
-      for(const [kind,name,title,value] of cards){files.push({name,blob:await instagramCard(title,background,value)});if(importedInstagramTemplates[kind])files.push({name:name.replace(".png",".html"),blob:new Blob([importedInstagramTemplates[kind]],{type:"text/html"})});}
+      for(const [kind,name,title,value] of cards){
+        let blob;
+        if(importedInstagramTemplates[kind]){
+          const filled=fillInstagramHtml(importedInstagramTemplates[kind],kind,{home:state.home?.name||"Heim",away:state.away?.name||"Gast",homeLogo:teamLogoFor(knownRosterRecords,state.home),awayLogo:teamLogoFor(knownRosterRecords,state.away),score:value,matchStatus:title,eventType:title});
+          blob=await rasterizeInstagramHtml(filled);
+        }else blob=await instagramCard(title,background,value);
+        files.push({name,blob});
+      }
       for(let i=0;i<(!before&&$("instagramIncludeHighlights").checked?entries.length:0);i++){
         if(exportCancelRequested)throw Error("Clip-Export abgebrochen.");
         const item=entries[i],number=String(i+3).padStart(2,"0"),info=socialFrameInfo(item.event);
