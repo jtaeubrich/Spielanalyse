@@ -23,7 +23,7 @@ export function fillInstagramHtml(html,kind,fields={}){
 
 // Paint from a live layout tree. SVG foreignObject is intentionally avoided:
 // Chromium marks its canvas as tainted, even for self-contained documents.
-export async function rasterizeInstagramHtml(html,{width=INSTAGRAM_SIZE.width,height=INSTAGRAM_SIZE.height}={}){
+export async function rasterizeInstagramHtml(html,{width=INSTAGRAM_SIZE.width,height=INSTAGRAM_SIZE.height,withGeometry=false}={}){
  const doc=new DOMParser().parseFromString(html,"text/html");
  for(const img of doc.images)if(!IMAGE_DATA.test(img.getAttribute("src")||""))throw Error("Nur eingebettete Base64-Bilder sind im HTML-Export erlaubt.");
  const frame=document.createElement("iframe");
@@ -84,8 +84,11 @@ export async function rasterizeInstagramHtml(html,{width=INSTAGRAM_SIZE.width,he
      ctx.fillText(chars.slice(start,i).join(""),x,y);
    }
   }
+  const video=frame.contentDocument.querySelector('[data-field="videoArea"]');
+  const videoArea=video?point(video.getBoundingClientRect()):null;
   await paint(root);
-  return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error("PNG-Erzeugung fehlgeschlagen.")),"image/png"));
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error("PNG-Erzeugung fehlgeschlagen.")),"image/png"));
+  return withGeometry?{blob,videoArea}:blob;
  }finally{frame.remove();}
 }
 function loadImage(src){return new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(Error("Eingebettetes Bild konnte nicht geladen werden."));image.src=src;});}
