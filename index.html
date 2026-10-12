@@ -598,7 +598,11 @@
             <p class="editor-help">Mehrere ausgewählte Events werden zu einem gemeinsamen Clip zusammengeschnitten.</p><p class="editor-help">Einzelclip-Serie: Zuerst eine Endstand-Titelkarte, danach jedes Highlight als eigene Videodatei. Der Halbzeitstand wird als separate Datei exportiert und kann beim Zusammenstellen des Karussells weggelassen werden. Die Browser-Downloads müssen ggf. zugelassen werden.</p>
             <div class="export-status" id="exportStatus">Für den Clip-Export bitte ein lokales Video laden.</div>
             <div class="export-actions"><button class="btn primary" id="exportSelectedEvents" type="button" disabled>Gewählte Events exportieren</button><button class="btn" id="exportCurrentPosition" type="button" disabled>Aktuelle Position exportieren</button><button class="btn" id="exportAllEvents" type="button" disabled>Alle Events exportieren</button><button class="btn primary" id="exportIndividualHighlights" type="button" disabled>Endstand + Halbzeit + Highlights einzeln exportieren</button><button class="btn danger" id="stopClipExport" type="button" disabled>Export stoppen</button></div>
-            <h3>Instagram ZIP (1080 × 1350)</h3><label>Exportphase <select class="field" id="instagramExportPhase"><option value="before" selected>Vor dem Spiel: Matchday</option><option value="after">Nach dem Spiel: Halbzeit + Endstand + Highlights</option></select></label><label class="social-check"><input id="instagramIncludeHighlights" type="checkbox" checked> Highlight-Videos einbeziehen</label><div class="social-options"><label>Hintergrund <select class="field" id="instagramBgMode"><option value="color">Farbe</option><option value="image">Bilddatei</option></select></label><label id="instagramColorRow">Farbe <input id="instagramBgColor" type="color" value="#07131b"></label><label id="instagramImageRow" hidden>Bild <input id="instagramBgImage" type="file" accept="image/*"></label></div><p class="editor-help">Matchday, Endstand und ausschließlich markierte Highlights, chronologisch als MP4 mit Spielstand, Spieler, Spielminute und Eventtyp. MP4-Unterstützung des Browsers erforderlich.</p><label>Vorlagenart <select id="instagramTemplateKind" class="field"><option value="highlight">Highlight</option><option value="matchday">Matchday</option><option value="endstand">Endstand</option></select></label><input id="instagramTemplateImportInput" type="file" accept=".html,text/html" hidden><button class="btn" id="instagramTemplateImportButton" type="button">HTML importieren</button><button class="btn" id="instagramTemplatePromptButton" type="button">KI-Prompt kopieren</button><button class="btn" id="instagramTemplateReset" type="button">Zurücksetzen</button><p id="instagramTemplateStatus" class="editor-help">Standardvorlage aktiv.</p><button class="btn" id="instagramTemplatePreview" type="button">HTML-Template ansehen</button><div id="instagramTemplatePreviewHost" style="display:none;margin:12px 0"><iframe id="instagramTemplateFrame" title="Instagram Template Vorschau" sandbox="allow-same-origin" style="width:100%;max-width:432px;aspect-ratio:4/5;border:1px solid #597182;border-radius:8px;background:#07131b"></iframe></div><button class="btn primary" id="instagramZipExport" type="button">Instagram ZIP erstellen</button><div class="export-actions"><button class="btn primary" id="instagramZipShare" type="button" disabled>Teilen / In Dateien sichern</button><button class="btn" id="instagramZipDownload" type="button" disabled>Herunterladen</button></div><h3>Synchronisation</h3><div class="sync-row"><button class="btn" id="markH1" type="button">Anpfiff H1 setzen</button><button class="btn" id="markH2" type="button">Anpfiff H2 setzen</button></div><div class="sync-state" id="syncState">H1: nicht gesetzt · H2: nicht gesetzt</div>
+            <h3>Instagram ZIP (1080 × 1350)</h3><label>Exportphase <select class="field" id="instagramExportPhase"><option value="before" selected>Vor dem Spiel: Matchday</option><option value="after">Nach dem Spiel: Halbzeit + Endstand + Highlights</option></select></label><label class="social-check"><input id="instagramIncludeHighlights" type="checkbox" checked> Highlight-Videos einbeziehen</label><div class="social-options"><label>Hintergrund <select class="field" id="instagramBgMode"><option value="color">Farbe</option><option value="image">Bilddatei</option></select></label><label id="instagramColorRow">Farbe <input id="instagramBgColor" type="color" value="#07131b"></label><label id="instagramImageRow" hidden>Bild <input id="instagramBgImage" type="file" accept="image/*"></label></div><p class="editor-help">Matchday, Endstand und ausschließlich markierte Highlights, chronologisch als MP4 mit Spielstand, Spieler, Spielminute und Eventtyp. MP4-Unterstützung des Browsers erforderlich.</p><div class="social-template-list" style="display:grid;gap:10px;margin:14px 0" aria-label="Instagram HTML-Vorlagen">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><strong style="min-width:145px">Matchday</strong><input id="instagramFileMatchday" type="file" accept=".html,text/html" style="max-width:200px" aria-label="Matchday HTML importieren"><span id="instagramStateMatchday" role="status">○ Nicht konfiguriert</span></div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><strong style="min-width:145px">Halbzeit / Endstand</strong><input id="instagramFileEndstand" type="file" accept=".html,text/html" style="max-width:200px" aria-label="Halbzeit und Endstand HTML importieren"><span id="instagramStateEndstand" role="status">○ Nicht konfiguriert</span></div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><strong style="min-width:145px">Highlights</strong><input id="instagramFileHighlight" type="file" accept=".html,text/html" style="max-width:200px" aria-label="Highlights HTML importieren"><span id="instagramStateHighlight" role="status">○ Nicht konfiguriert</span></div>
+</div><p class="editor-help">Grünes Häkchen = Vorlage geprüft und gespeichert. Halbzeit und Endstand verwenden dieselbe HTML-Vorlage. Die Auswahl darunter dient Vorschau, KI-Prompt und Zurücksetzen.</p><label>Vorlagenart <select id="instagramTemplateKind" class="field"><option value="highlight">Highlight</option><option value="matchday">Matchday</option><option value="endstand">Endstand</option></select></label><input id="instagramTemplateImportInput" type="file" accept=".html,text/html" hidden><button class="btn" id="instagramTemplateImportButton" type="button">HTML importieren</button><button class="btn" id="instagramTemplatePromptButton" type="button">KI-Prompt kopieren</button><button class="btn" id="instagramTemplateReset" type="button">Zurücksetzen</button><p id="instagramTemplateStatus" class="editor-help">Standardvorlage aktiv.</p><button class="btn" id="instagramTemplatePreview" type="button">HTML-Template ansehen</button><div id="instagramTemplatePreviewHost" style="display:none;margin:12px 0"><iframe id="instagramTemplateFrame" title="Instagram Template Vorschau" sandbox="allow-same-origin" style="width:100%;max-width:432px;aspect-ratio:4/5;border:1px solid #597182;border-radius:8px;background:#07131b"></iframe></div><button class="btn primary" id="instagramZipExport" type="button">Instagram ZIP erstellen</button><div class="export-actions"><button class="btn primary" id="instagramZipShare" type="button" disabled>Teilen / In Dateien sichern</button><button class="btn" id="instagramZipDownload" type="button" disabled>Herunterladen</button></div><h3>Synchronisation</h3><div class="sync-row"><button class="btn" id="markH1" type="button">Anpfiff H1 setzen</button><button class="btn" id="markH2" type="button">Anpfiff H2 setzen</button></div><div class="sync-state" id="syncState">H1: nicht gesetzt · H2: nicht gesetzt</div>
             <datalist id="eventTagSuggestions"></datalist>
           </div>
         </details>
@@ -1802,24 +1806,51 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error("PNG-Erzeugung fehlgeschlagen.")),"image/png"));
   }
   const importedInstagramTemplates=readInstagramTemplates(localStorage);
-  function updateInstagramTemplateStatus(){const kind=$("instagramTemplateKind").value;$("instagramTemplateStatus").textContent=importedInstagramTemplates[kind]?"Eigene "+kind+"-Vorlage gespeichert.":"Standardvorlage aktiv ("+kind+").";}
-  $("instagramTemplateImportButton").onclick=()=>$("instagramTemplateImportInput").click();
-  $("instagramTemplateImportInput").onchange=async e=>{
-    const file=e.target.files?.[0];e.target.value="";if(!file)return;
+  const instagramTemplateKinds={matchday:"Matchday",endstand:"Halbzeit / Endstand",highlight:"Highlights"};
+  function updateInstagramTemplateStatus(){
     const kind=$("instagramTemplateKind").value;
-    if(file.size>4000000)return toast("HTML-Datei zu groß (max. 4 MB).");
+    $("instagramTemplateStatus").textContent=importedInstagramTemplates[kind]?"Eigene "+kind+"-Vorlage gespeichert.":"Standardvorlage aktiv ("+kind+").";
+    for(const [name] of Object.entries(instagramTemplateKinds)){
+      const element=$("instagramState"+name[0].toUpperCase()+name.slice(1));
+      const present=Boolean(importedInstagramTemplates[name])&&validateInstagramTemplate(importedInstagramTemplates[name],name).valid;
+      element.textContent=present?"✓ Akzeptiert und gespeichert":"○ Nicht konfiguriert";
+      element.style.color=present?"#3fda87":"";
+      element.style.fontWeight=present?"700":"400";
+    }
+  }
+  $("instagramTemplateImportButton").onclick=()=>$("instagramTemplateImportInput").click();
+  async function importInstagramTemplate(file,kind){
+    if(!file)return;
+    if(file.size>4000000){$("instagramTemplateStatus").textContent="HTML-Datei zu groß (max. 4 MB).";return;}
     const html=await file.text(),result=validateInstagramTemplate(html,kind);
-    if(!result.valid){$("instagramTemplateStatus").textContent="Import fehlgeschlagen ("+file.name+", "+kind+"): "+result.issues.join(" | ");$("instagramTemplateStatus").style.whiteSpace="pre-wrap";return}
+    if(!result.valid){
+      $("instagramTemplateStatus").textContent="Import fehlgeschlagen ("+file.name+", "+kind+"): "+result.issues.join(" | ");
+      $("instagramTemplateStatus").style.whiteSpace="pre-wrap";
+      return;
+    }
+    const previous=importedInstagramTemplates[kind];
     importedInstagramTemplates[kind]=html;
-    try{saveInstagramTemplates(localStorage,importedInstagramTemplates)}catch{toast("Vorlage konnte nicht dauerhaft gespeichert werden (Speicher voll).")}
+    try{saveInstagramTemplates(localStorage,importedInstagramTemplates)}
+    catch(error){
+      if(previous===undefined)delete importedInstagramTemplates[kind];else importedInstagramTemplates[kind]=previous;
+      updateInstagramTemplateStatus();
+      $("instagramTemplateStatus").textContent="Vorlage konnte nicht gespeichert werden (Speicher voll).";
+      return;
+    }
+    $("instagramTemplateKind").value=kind;
     updateInstagramTemplateStatus();
     if(kind==="matchday")$("instagramExportPhase").value="before";
     $("instagramTemplatePreviewHost").style.display="none";
-    $("exportStatus").textContent="Vorlage importiert. Für Matchday jetzt „Instagram-ZIP erstellen“ wählen."; 
+    $("exportStatus").textContent="HTML-Vorlage für "+instagramTemplateKinds[kind]+" importiert und gespeichert.";
     toast("HTML-Template importiert.");
-  };
+  }
+  $("instagramTemplateImportInput").onchange=async e=>{const file=e.target.files?.[0];e.target.value="";await importInstagramTemplate(file,$("instagramTemplateKind").value)};
+  for(const [kind] of Object.entries(instagramTemplateKinds)){
+    const el=$("instagramFile"+kind[0].toUpperCase()+kind.slice(1));
+    el.onchange=async e=>{const file=e.target.files?.[0];await importInstagramTemplate(file,kind);e.target.value=""};
+  }
   $("instagramTemplateKind").onchange=()=>{$("instagramTemplatePreviewHost").style.display="none";updateInstagramTemplateStatus()};updateInstagramTemplateStatus();
-  $("instagramTemplateReset").onclick=()=>{delete importedInstagramTemplates[$("instagramTemplateKind").value];$("instagramTemplatePreviewHost").style.display="none";$("instagramTemplateStatus").textContent="Standardvorlage aktiv."};
+  $("instagramTemplateReset").onclick=()=>{const kind=$("instagramTemplateKind").value;const previous=importedInstagramTemplates[kind];delete importedInstagramTemplates[kind];try{saveInstagramTemplates(localStorage,importedInstagramTemplates)}catch{importedInstagramTemplates[kind]=previous;toast("Zurücksetzen konnte nicht gespeichert werden.");} $("instagramTemplatePreviewHost").style.display="none";updateInstagramTemplateStatus();};
   $("instagramTemplatePromptButton").onclick=async()=>{
     const prompt=templatePrompt($("instagramTemplateKind").value);
     try{await navigator.clipboard.writeText(prompt);toast("KI-Prompt kopiert.")}catch{downloadBlob(new Blob([prompt],{type:"text/plain"}),"instagram-ki-prompt.txt")}
