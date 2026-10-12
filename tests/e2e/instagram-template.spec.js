@@ -12,7 +12,7 @@ test("Instagram HTML template import validates required fields and previews", as
  const fields=["homeLogo","awayLogo","home","away","score","matchTime","playerName","eventType","comment","videoArea"];
  const html="<html><body>"+fields.map(field=>'<div data-field="'+field+'">'+field+"</div>").join("")+"</body></html>";
  await file.setInputFiles({name:"valid.html",mimeType:"text/html",buffer:Buffer.from(html)});
- await expect(page.locator("#instagramTemplateStatus")).toContainText("Eigene Vorlage geladen");
+ await expect(page.locator("#instagramTemplateStatus")).toContainText(/Eigene (highlight|matchday)-Vorlage gespeichert/);
  await page.locator("#instagramTemplatePreview").click();
  await expect(page.locator("#instagramTemplateFrame")).toBeVisible();
  await expect(page.frameLocator("#instagramTemplateFrame").locator('[data-field="videoArea"]')).toBeVisible();
@@ -27,7 +27,7 @@ test("Matchday accepts embedded CSS data images but blocks remote CSS URLs", asy
  const body=fields.map(name=>'<div data-field="'+name+'">'+name+"</div>").join("");
  const upload=async css=>page.locator("#instagramTemplateImportInput").setInputFiles({name:"matchday.html",mimeType:"text/html",buffer:Buffer.from('<!doctype html><html><head><style>'+css+'</style></head><body>'+body+'</body></html>')});
  await upload('body {background-image: url("data:image/png;base64,iVBORw0KGgo=")}');
- await expect(page.locator("#instagramTemplateStatus")).toContainText("Eigene Vorlage geladen");
+ await expect(page.locator("#instagramTemplateStatus")).toContainText(/Eigene (highlight|matchday)-Vorlage gespeichert/);
  await upload('body {background-image: url("https://example.com/background.png")}');
  await expect(page.locator("#instagramTemplateStatus")).toContainText("Unzulässige URL: https://example.com/background.png");
 });
@@ -43,4 +43,27 @@ test("reports the exact rejected CSS URL for Matchday templates", async ({page})
  await expect(page.locator("#instagramTemplateStatus")).toContainText("diagnose.html");
  await expect(page.locator("#instagramTemplateStatus")).toContainText("CSS-Zeile 1");
  await expect(page.locator("#instagramTemplateStatus")).toContainText("https://example.org/remote.jpg");
+});
+
+test("stores Matchday, result, and highlight templates independently across reloads",async ({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="video"]').click();
+ await page.locator("details.video-production-card > summary").click();
+ const kinds={matchday:["homeLogo","awayLogo","home","away"],endstand:["homeLogo","awayLogo","home","away","score"],highlight:["homeLogo","awayLogo","home","away","score","matchTime","playerName","eventType","comment","videoArea"]};
+ for(const [kind,fields] of Object.entries(kinds)){
+   await page.locator("#instagramTemplateKind").selectOption(kind);
+   const html="<html><body>"+fields.map(field=>'<div data-field="'+field+'">'+kind+"-"+field+"</div>").join("")+"</body></html>";
+   await page.locator("#instagramTemplateImportInput").setInputFiles({name:kind+".html",mimeType:"text/html",buffer:Buffer.from(html)});
+   await expect(page.locator("#instagramTemplateStatus")).toContainText("Eigene "+kind+"-Vorlage gespeichert.");
+ }
+ await page.reload();
+ await page.locator('[data-tab="video"]').click();
+ await page.locator("details.video-production-card > summary").click();
+ for(const kind of Object.keys(kinds)){
+   await page.locator("#instagramTemplateKind").selectOption(kind);
+   await expect(page.locator("#instagramTemplateStatus")).toContainText("Eigene "+kind+"-Vorlage gespeichert.");
+   await page.locator("#instagramTemplatePreview").click();
+   await expect(page.frameLocator("#instagramTemplateFrame").locator('[data-field="home"]')).toContainText(kind+"-home");
+   await page.locator("#instagramTemplatePreview").click();
+ }
 });
