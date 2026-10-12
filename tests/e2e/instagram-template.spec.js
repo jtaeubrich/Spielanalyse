@@ -29,7 +29,7 @@ test("Matchday accepts embedded CSS data images but blocks remote CSS URLs", asy
  await upload('body {background-image: url("data:image/png;base64,iVBORw0KGgo=")}');
  await expect(page.locator("#instagramTemplateStatus")).toContainText("Eigene Vorlage geladen");
  await upload('body {background-image: url("https://example.com/background.png")}');
- await expect(page.locator("#instagramTemplateStatus")).toContainText("Externe CSS-Ressourcen");
+ await expect(page.locator("#instagramTemplateStatus")).toContainText("Unzulässige URL: https://example.com/background.png");
 });
 
 test("reports the exact rejected CSS URL for Matchday templates", async ({page})=>{
