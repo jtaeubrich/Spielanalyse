@@ -67,3 +67,23 @@ test("stores Matchday, result, and highlight templates independently across relo
    await page.locator("#instagramTemplatePreview").click();
  }
 });
+
+test("three independent controls show accepted templates after reload and reset",async ({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="video"]').click();
+ await page.locator("details.video-production-card > summary").click();
+ const cases=[["matchday","Matchday",["homeLogo","awayLogo","home","away"]],["endstand","Endstand",["homeLogo","awayLogo","home","away","score"]],["highlight","Highlight",["homeLogo","awayLogo","home","away","score","matchTime","playerName","eventType","comment","videoArea"]]];
+ for(const [kind,suffix,fields] of cases){
+   const html="<html><body>"+fields.map(name=>'<span data-field="'+name+'">'+name+"</span>").join("")+"</body></html>";
+   await page.locator("#instagramFile"+suffix).setInputFiles({name:kind+".html",mimeType:"text/html",buffer:Buffer.from(html)});
+   await expect(page.locator("#instagramState"+suffix)).toContainText("✓ Akzeptiert und gespeichert");
+ }
+ await page.reload();
+ await page.locator('[data-tab="video"]').click();
+ await page.locator("details.video-production-card > summary").click();
+ for(const [,suffix] of cases)await expect(page.locator("#instagramState"+suffix)).toContainText("✓ Akzeptiert und gespeichert");
+ await page.locator("#instagramTemplateKind").selectOption("endstand");
+ await page.locator("#instagramTemplateReset").click();
+ await expect(page.locator("#instagramStateEndstand")).toContainText("Nicht konfiguriert");
+ await expect(page.locator("#instagramStateMatchday")).toContainText("Akzeptiert");
+});
