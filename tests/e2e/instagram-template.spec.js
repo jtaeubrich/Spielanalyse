@@ -75,6 +75,7 @@ test("three independent controls show accepted templates after reload and reset"
  const cases=[["matchday","Matchday",["homeLogo","awayLogo","home","away"]],["endstand","Endstand",["homeLogo","awayLogo","home","away","score"]],["highlight","Highlight",["homeLogo","awayLogo","home","away","score","matchTime","playerName","eventType","comment","videoArea"]]];
  for(const [kind,suffix,fields] of cases){
    const html="<html><body>"+fields.map(name=>'<span data-field="'+name+'">'+name+"</span>").join("")+"</body></html>";
+   if(kind==="matchday")await page.locator('[data-tab="setup"]').click();else await page.locator('[data-tab="video"]').click();
    await page.locator(kind==="matchday"?"#setupMatchdayTemplateFile":"#instagramFile"+suffix).setInputFiles({name:kind+".html",mimeType:"text/html",buffer:Buffer.from(html)});
    await expect(page.locator(kind==="matchday"?"#setupMatchdayTemplateStatus":"#instagramState"+suffix)).toContainText("✓ Akzeptiert und gespeichert");
  }
