@@ -16,7 +16,7 @@ export function fillInstagramHtml(html,kind,fields={}){
        const img=doc.createElement("img");img.src=src;img.alt=name==="homeLogo"?"Heimlogo":"Gastlogo";
        img.style.cssText="width:100%;height:100%;object-fit:contain";node.append(img);
      }else node.textContent="LOGO";
-   }else if(name!=="videoArea") node.textContent=String(value??"");
+   }else if(name!=="videoArea") {node.textContent=String(value??"");if((name==="home"||name==="away")&&String(value??"").length>20){node.style.fontSize=String(value).length>30?"20px":"25px";node.style.overflowWrap="anywhere";node.style.whiteSpace="normal";}}
  }
  const extra=doc.createElement("style");
  extra.textContent=`
@@ -87,7 +87,15 @@ export async function rasterizeInstagramHtml(html,{width=INSTAGRAM_SIZE.width,he
      rect=range.getBoundingClientRect();if(!rect.width)continue;
      const fontSize=parseFloat(cs.fontSize)||16;
      const x=rect.left-origin.left,y=rect.bottom-origin.top-(parseFloat(cs.lineHeight)||fontSize*1.2-fontSize)*.15;
-     ctx.fillText(chars.slice(start,i).join(""),x,y);
+     // A word can span several visual lines because of overflow-wrap:anywhere.
+     // Render characters at their actual layout coordinates instead of painting the
+     // entire word on a single baseline.
+     for(let k=start;k<i;k++){
+       const glyph=win.document.createRange();
+       glyph.setStart(node,k);glyph.setEnd(node,k+1);
+       const g=glyph.getBoundingClientRect();
+       if(g.width)ctx.fillText(chars[k],g.left-origin.left,g.bottom-origin.top-(parseFloat(cs.lineHeight)||fontSize*1.2-fontSize)*.15);
+     }
    }
   }
   const video=frame.contentDocument.querySelector('[data-field="videoArea"]');
