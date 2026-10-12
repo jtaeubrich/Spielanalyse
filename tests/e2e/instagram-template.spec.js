@@ -80,3 +80,20 @@ test("Setup creates standalone Matchday PNG without a video",async ({page})=>{
  await expect(page.locator("#setupMatchdayDownload")).toBeEnabled({timeout:20000});
  await expect(page.locator("#setupMatchdayExportStatus")).toContainText("1080 × 1350");
 });
+
+test("Setup groups Matchday below game management and collapses subsequent settings",async({page})=>{
+ await page.goto("/");
+ const setup=page.locator("#setupTab");
+ const cards=setup.locator(".setup-grid > .setup-card");
+ await expect(cards.nth(0).locator("h2")).toHaveText("Spielverwaltung");
+ await expect(cards.nth(1)).toHaveAttribute("id","setupMatchdayPanel");
+ for(const [index,title] of [[1,"Instagram Matchday"],[2,"Kader bearbeiten"],[3,"Torwurf-Erfassung"],[4,"Globale Einstellungen"]]){
+  const card=cards.nth(index);
+  await expect(card).toHaveJSProperty("open",false);
+  await expect(card.locator("summary")).toHaveText(title);
+ }
+ await cards.nth(1).locator("summary").click();
+ await expect(page.locator("#setupMatchdayPng")).toBeVisible();
+ await cards.nth(2).locator("summary").click();
+ await expect(page.locator("#knownRosterLogoInput")).toBeVisible();
+});
