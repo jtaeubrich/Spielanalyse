@@ -133,3 +133,19 @@ Accept: application/json
 ```
 
 Die verwendeten handball.net-Endpunkte sind nicht Teil einer von uns kontrollierten API. Aenderungen auf Seiten von handball.net koennen deshalb Anpassungen am Proxy erforderlich machen.
+
+## Vereinslogos
+
+`GET /logo?url=<URL-ENCODED-LOGO-URL>` ruft ausschliesslich HTTPS-Vereinslogos vom Host `handball360.isquad.de` und dem Pfad `/images/afiliacion_clubs/<NUMMER>/square_<NAME>.(jpg|jpeg|png|webp)` ab. Der Endpunkt nutzt den bestehenden Bearer-Token und dieselbe CORS-Origin-Liste; maximale Bildgroesse: 1 MB. Es gibt keine frei waehlbaren Upstream-Hosts.
+
+## Smartphone-Deployment ueber GitHub Actions
+
+Workflow: `.github/workflows/deploy-proxy.yml` (manuell, `workflow_dispatch`). Repository-Variablen in GitHub unter Settings > Secrets and variables > Actions > Variables anlegen:
+
+- `GCP_PROJECT_ID`: Google-Cloud-Projekt-ID.
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`: vollstaendiger Workload-Identity-Provider-Ressourcenname.
+- `GCP_DEPLOY_SERVICE_ACCOUNT`: E-Mail-Adresse des Deploy-Service-Accounts.
+
+In Google Cloud muss der GitHub-OIDC-Provider auf dieses Repository beschraenkt werden. Der Service Account benoetigt u.a. `roles/run.admin`, `roles/cloudbuild.builds.editor`, `roles/artifactregistry.writer` und `roles/iam.serviceAccountUser` auf dem Cloud-Run-Runtime-Service-Account (ggf. Build-spezifische Rollen je nach Projektkonfiguration). Beim Deploy die bisherigen Service-Environment-Variablen `ALLOWED_ORIGINS` und `API_TOKEN` beibehalten; der Workflow setzt sie nicht neu.
+
+Auf dem Smartphone: GitHub > Spielanalyse > Actions > Deploy Handball360 Proxy > Run workflow > main. Erst nach erfolgreichem Deployment funktioniert die neue Logo-Route der PWA.
