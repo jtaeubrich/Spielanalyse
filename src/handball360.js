@@ -225,7 +225,7 @@ export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
     Array.isArray(raw?.match_events?.data) ? raw.match_events.data :
     null;
 
-  if (!events && !matchMeta) {
+  if ((!events || events.length === 0) && !matchMeta) {
     const keys = raw && typeof raw === "object" ? Object.keys(raw).join(", ") : typeof raw;
     throw Error(
       "Weder Spieldaten noch handball.net-Ereignisse im JSON gefunden. Gefundene Top-Level-Felder: " + keys
