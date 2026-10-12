@@ -1901,6 +1901,24 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     try{await navigator.clipboard.writeText(prompt);toast("KI-Prompt kopiert.")}catch{downloadBlob(new Blob([prompt],{type:"text/plain"}),"instagram-ki-prompt.txt")}
   };
   $("instagramTemplatePreview").onclick=()=>{const host=$("instagramTemplatePreviewHost"),frame=$("instagramTemplateFrame");if(host.style.display!=="none"){host.style.display="none";return}const current=state.events[activeVideoEventIndex];frame.srcdoc=importedInstagramTemplates[$("instagramTemplateKind").value]||instagramTemplate({kind:$("instagramTemplateKind").value,home:state.home.name,away:state.away.name,homeLogo:teamLogoFor(knownRosterRecords,state.home),awayLogo:teamLogoFor(knownRosterRecords,state.away),score:current?instagramScoreAt(current):score().join(" : "),gameTime:current?.displayTime||"",player:current?eventDescription(current).main:"",eventType:current?eventDescription(current).title:"",comment:current?eventAnnotation(current)?.comment||"":"",background:$("instagramBgColor").value});host.style.display="block";frame.onload=()=>{try{frame.contentDocument.documentElement.style.zoom=String(frame.clientWidth/1080)}catch{}}};
+  async function ensureInstagramLogos() {
+    const warnings=[];
+    for(const side of ["home","away"]){
+      const team=state[side];
+      const record=findKnownTeamRecord(knownRosterRecords,{teamName:team?.name||"",players:team?.players||[]})?.record;
+      if(!record||record.logoDataUrl||!record.logoUrl)continue;
+      try{
+        const response=await fetch(record.logoUrl,{mode:"cors"});
+        if(!response.ok)throw Error("HTTP "+response.status);
+        const blob=await response.blob();
+        if(!["image/png","image/jpeg","image/webp"].includes(blob.type)||blob.size>1024*1024)throw Error("Logoformat oder Dateigröße nicht unterstützt");
+        const logoDataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error("Logo konnte nicht gelesen werden"));reader.readAsDataURL(blob)});
+        await writeInternalRecord(INTERNAL_ROSTER_STORE,{...record,logoDataUrl});
+      }catch(error){warnings.push((team?.name||side)+": Logo konnte nicht geladen werden (möglicherweise CORS).");}
+    }
+    await refreshKnownRosterOptions();
+    return warnings;
+  }
   let readyMatchdayPng=null;
   $("setupMatchdayDownload").onclick=()=>{if(readyMatchdayPng)downloadBlob(readyMatchdayPng,safeFileBase()+"_matchday.png");};
   $("setupMatchdayPng").onclick=async()=>{
@@ -1909,6 +1927,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     const button=$("setupMatchdayPng");button.disabled=true;readyMatchdayPng=null;$("setupMatchdayDownload").disabled=true;
     status.textContent="Matchday-PNG wird erzeugt …";
     try{
+      const logoWarnings=await ensureInstagramLogos();
       let blob;
       if(importedInstagramTemplates.matchday){
         const html=fillInstagramHtml(importedInstagramTemplates.matchday,"matchday",{home:state.home?.name||"Heim",away:state.away?.name||"Gast",homeLogo:teamLogoFor(knownRosterRecords,state.home),awayLogo:teamLogoFor(knownRosterRecords,state.away)});
@@ -1917,7 +1936,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
         blob=await instagramCard("MATCHDAY",{color:"#07131b"});
       }
       readyMatchdayPng=blob;$("setupMatchdayDownload").disabled=false;
-      status.textContent="✓ Matchday-PNG bereit (1080 × 1350). Jetzt „PNG herunterladen“ wählen.";
+      status.textContent="✓ Matchday-PNG bereit (1080 × 1350). Jetzt „PNG herunterladen“ wählen."+(logoWarnings.length?" Hinweis: "+logoWarnings.join(" "):"");
     }catch(error){status.textContent="Export fehlgeschlagen: "+(error?.message||"Unbekannter Fehler");}
     finally{button.disabled=false;}
   };
