@@ -14,10 +14,34 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
+      - name: Check Cloud Run and build permissions
+        shell: bash
+        env:
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          set +e
+          echo "::group::Active identity"
+          gcloud auth list --filter=status:ACTIVE --format="value(account)"
+          echo "::endgroup::"
+          echo "::group::Cloud Run service access"
+          gcloud run services describe handball360-proxy --project="$PROJECT_ID" --region=europe-west1 --format="yaml(metadata.name,spec.template.spec.serviceAccountName)"
+          echo "Cloud Run describe exit code: $?"
+          echo "::endgroup::"
+          echo "::group::Artifact Registry repositories"
+          gcloud artifacts repositories list --project="$PROJECT_ID" --location=europe-west1 --format="table(name,format)"
+          echo "Artifact Registry list exit code: $?"
+          echo "::endgroup::"
+          echo "::group::Cloud Build API access"
+          gcloud builds list --project="$PROJECT_ID" --limit=1 --format="value(id)"
+          echo "Cloud Build list exit code: $?"
+          echo "::endgroup::"
       - name: Deploy source to Cloud Run
+        env:
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         run: |
           gcloud run deploy handball360-proxy \
             --source cloud-run-proxy \
-            --project "${{ vars.GCP_PROJECT_ID }}" \
+            --project "$PROJECT_ID" \
             --region europe-west1 \
-            --quiet
+            --quiet \
+            --verbosity=debug
