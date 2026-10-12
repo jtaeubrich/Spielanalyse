@@ -5,21 +5,32 @@ export const TEMPLATE_FIELDS = {
 };
 export function validateInstagramTemplate(html, kind) {
   const required = TEMPLATE_FIELDS[kind];
-  if (!required) return {valid:false,issues:["Unbekannter Vorlagentyp"]};
-  const doc = new DOMParser().parseFromString(String(html), "text/html");
-  const issues = [];
-  if (!/<html/i.test(html) || !/<body/i.test(html)) issues.push("Vollständiges HTML-Dokument erforderlich");
-  for (const key of required) if (!doc.querySelector('[data-field="'+key+'"]')) issues.push("Fehlender Platzhalter: "+key);
-  if (doc.querySelector("script,iframe,object,embed,base,link")) issues.push("Skripte, externe Einbettungen und Links sind nicht erlaubt");
-  if (Array.from(doc.querySelectorAll("*")).some(el => Array.from(el.attributes).some(a => a.name.startsWith("on")))) issues.push("Inline-Eventhandler sind nicht erlaubt");
-  const styles = [...doc.querySelectorAll("style")].map(el => el.textContent || "").concat([...doc.querySelectorAll("[style]")].map(el => el.getAttribute("style") || ""));
-  for (const css of styles) {
-    if (/@import\b/i.test(css)) { issues.push("CSS-Importe sind nicht erlaubt"); break; }
-    const urls = [...css.matchAll(/url\s*\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi)];
-    if (urls.some(match => !/^data:image\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/=\s]+$/i.test((match[1] ?? match[2] ?? match[3] ?? "").trim()))) {
-      issues.push("Externe CSS-Ressourcen sind nicht erlaubt"); break;
-    }
+  if (!required) return {valid:false,issues:["Unbekannter Vorlagentyp: "+kind]};
+  const source=String(html||"");
+  const doc=new DOMParser().parseFromString(source,"text/html");
+  const issues=[];
+  if (!/<html/i.test(source)||!/<body/i.test(source)) issues.push("Vollständiges HTML-Dokument erforderlich");
+  for(const key of required) if(!doc.querySelector('[data-field="'+key+'"]')) issues.push('Fehlender Platzhalter: data-field="'+key+'"');
+  for(const el of doc.querySelectorAll("script,iframe,object,embed,base,link")) issues.push("Verbotenes HTML-Element: <"+el.tagName.toLowerCase()+">");
+  for(const el of doc.querySelectorAll("*")) for(const attribute of el.attributes) {
+    if(/^on/i.test(attribute.name)) issues.push("Verbotener Eventhandler: <"+el.tagName.toLowerCase()+"> "+attribute.name);
   }
+  const styleBlocks=[...doc.querySelectorAll("style")].map(el=>el.textContent||"");
+  const inlineStyles=[...doc.querySelectorAll("[style]")].map(el=>el.getAttribute("style")||"");
+  const explain=(css,where)=>{
+    if(/@import\b/i.test(css)) issues.push(where+": CSS @import ist nicht erlaubt");
+    // Quoted CSS URLs must be parsed without truncating at punctuation within a base64 payload.
+    const urlPattern=/url\s*\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi;
+    for(const match of css.matchAll(urlPattern)){
+      const value=(match[1]??match[2]??match[3]??"").trim();
+      if(/^data:image\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/=\s]+$/i.test(value))continue;
+      const line=css.slice(0,match.index).split("\n").length;
+      const shown=value.length>100?value.slice(0,100)+"…":value;
+      issues.push(where+", CSS-Zeile "+line+": Unzulässige URL: "+shown);
+    }
+  };
+  styleBlocks.forEach((css,i)=>explain(css,"<style> #"+(i+1)));
+  inlineStyles.forEach((css,i)=>explain(css,'style-Attribut #'+(i+1)));
   return {valid:issues.length===0,issues};
 }
 export function templatePrompt(kind="highlight") {
