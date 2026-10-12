@@ -20,6 +20,7 @@ test("Instagram HTML template import validates required fields and previews", as
 
 test("Setup Matchday accepts embedded CSS images but rejects remote URLs",async ({page})=>{
  await page.goto("/");
+ await page.locator("#setupMatchdayPanel > summary").click();
  const slots=["homeLogo","awayLogo","home","away"].map(name=>'<div data-field="'+name+'"></div>').join("");
  const upload=async css=>page.locator("#setupMatchdayTemplateFile").setInputFiles({name:"matchday.html",mimeType:"text/html",buffer:Buffer.from('<html><head><style>'+css+'</style></head><body>'+slots+'</body></html>')});
  await upload('body {background-image:url("data:image/png;base64,iVBORw0KGgo=")}');
@@ -57,7 +58,7 @@ test("three independent controls show accepted templates after reload and reset"
  const cases=[["matchday","Matchday",["homeLogo","awayLogo","home","away"]],["endstand","Endstand",["homeLogo","awayLogo","home","away","score"]],["highlight","Highlight",["homeLogo","awayLogo","home","away","score","matchTime","playerName","eventType","comment","videoArea"]]];
  for(const [kind,suffix,fields] of cases){
    const html="<html><body>"+fields.map(name=>'<span data-field="'+name+'">'+name+"</span>").join("")+"</body></html>";
-   if(kind==="matchday")await page.locator('[data-tab="setup"]').click();else await page.locator('[data-tab="video"]').click();
+   if(kind==="matchday"){await page.locator('[data-tab="setup"]').click();await page.locator("#setupMatchdayPanel > summary").click();}else await page.locator('[data-tab="video"]').click();
    await page.locator(kind==="matchday"?"#setupMatchdayTemplateFile":"#instagramFile"+suffix).setInputFiles({name:kind+".html",mimeType:"text/html",buffer:Buffer.from(html)});
    await expect(page.locator(kind==="matchday"?"#setupMatchdayTemplateStatus":"#instagramState"+suffix)).toContainText("✓ Akzeptiert und gespeichert");
  }
@@ -73,6 +74,7 @@ test("three independent controls show accepted templates after reload and reset"
 
 test("Setup creates standalone Matchday PNG without a video",async ({page})=>{
  await page.goto("/");
+ await page.locator("#setupMatchdayPanel > summary").click();
  const html='<!doctype html><html><head><style>body{margin:0;background:#ad172e}</style></head><body><div data-field="homeLogo"></div><div data-field="awayLogo"></div><div data-field="home"></div><div data-field="away"></div></body></html>';
  await page.locator("#setupMatchdayTemplateFile").setInputFiles({name:"matchday.html",mimeType:"text/html",buffer:Buffer.from(html)});
  await expect(page.locator("#setupMatchdayTemplateStatus")).toContainText("Akzeptiert");
@@ -89,7 +91,7 @@ test("Setup groups Matchday below game management and collapses subsequent setti
  await expect(cards.nth(1)).toHaveAttribute("id","setupMatchdayPanel");
  for(const [index,title] of [[1,"Instagram Matchday"],[2,"Kader bearbeiten"],[3,"Torwurf-Erfassung"],[4,"Globale Einstellungen"]]){
   const card=cards.nth(index);
-  await expect(card).toHaveJSProperty("open",false);
+  await expect(card).not.toHaveAttribute("open","");
   await expect(card.locator("summary")).toHaveText(title);
  }
  await cards.nth(1).locator("summary").click();
