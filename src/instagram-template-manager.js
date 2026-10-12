@@ -12,7 +12,14 @@ export function validateInstagramTemplate(html, kind) {
   for (const key of required) if (!doc.querySelector('[data-field="'+key+'"]')) issues.push("Fehlender Platzhalter: "+key);
   if (doc.querySelector("script,iframe,object,embed,base,link")) issues.push("Skripte, externe Einbettungen und Links sind nicht erlaubt");
   if (Array.from(doc.querySelectorAll("*")).some(el => Array.from(el.attributes).some(a => a.name.startsWith("on")))) issues.push("Inline-Eventhandler sind nicht erlaubt");
-  if (/@import|url\s*\(/i.test(html)) issues.push("Externe CSS-Ressourcen sind nicht erlaubt");
+  const styles = [...doc.querySelectorAll("style")].map(el => el.textContent || "").concat([...doc.querySelectorAll("[style]")].map(el => el.getAttribute("style") || ""));
+  for (const css of styles) {
+    if (/@import\\b/i.test(css)) { issues.push("CSS-Importe sind nicht erlaubt"); break; }
+    const urls = [...css.matchAll(/url\\s*\\(\\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\\s*\\)/gi)];
+    if (urls.some(match => !/^data:image\\/(?:png|jpeg|webp|gif);base64,[a-z0-9+/=\\s]+$/i.test((match[1] ?? match[2] ?? match[3] ?? "").trim()))) {
+      issues.push("Externe CSS-Ressourcen sind nicht erlaubt"); break;
+    }
+  }
   return {valid:issues.length===0,issues};
 }
 export function templatePrompt(kind="highlight") {
