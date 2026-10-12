@@ -755,7 +755,7 @@ import { drawClipFrame } from "./src/clip-renderer.js";
 import { makeInstagramZip, chronologicalHighlights, instagramMp4Type } from "./src/instagram-export.js";
 import { instagramTemplate, teamLogoFor } from "./src/instagram-template.js";
 import { validateInstagramTemplate, templatePrompt } from "./src/instagram-template-manager.js?v=146";
-import { fillInstagramHtml, rasterizeInstagramHtml } from "./src/instagram-html-renderer.js";
+import { fillInstagramHtml, rasterizeInstagramHtml } from "./src/instagram-html-renderer.js?v=148";
 import { readInstagramTemplates, saveInstagramTemplates, halftimeScore } from "./src/instagram-workflow.js";
 import { connectClipAudio } from "./src/clip-audio.js";
 import { normalizeSceneWindow as coreNormalizeSceneWindow, clipWindowAt as coreClipWindowAt, buildClipEntries as coreBuildClipEntries, totalClipDuration as coreTotalClipDuration, nearestActiveClip as coreNearestActiveClip } from "./src/clip-core.js";
@@ -1957,6 +1957,8 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     setInstagramZipReady(null);
     exportBusy=true;exportCancelRequested=false;updateClipExportAvailability();
     try{
+      const logoWarnings=await ensureInstagramLogos();
+      if(logoWarnings.length)toast(logoWarnings.join(" "));
       const before=$("instagramExportPhase").value==="before";
       const needsBackground=(!importedInstagramTemplates[before?"matchday":"endstand"])||(!before&&$("instagramIncludeHighlights").checked&&!importedInstagramTemplates.highlight);
       const background=needsBackground?await instagramBackground():{color:$("instagramBgColor").value};
@@ -2065,7 +2067,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=147",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=148",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
