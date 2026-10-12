@@ -13,9 +13,9 @@ export function instagramTemplate({kind="highlight",home="Heim",away="Gast",home
  :root{font-family:Impact,"Arial Narrow",system-ui,sans-serif;color:#fff;background:${safe(background)}}
  *{box-sizing:border-box}body{margin:0}.poster{width:1080px;height:1350px;position:relative;overflow:hidden;padding:70px 66px;background:linear-gradient(150deg,rgba(0,0,0,.05),rgba(0,0,0,.65))}
  .eyebrow{font:700 33px system-ui;letter-spacing:.2em;text-transform:uppercase;color:#e7e7e7;text-align:center}
- .header{display:grid;grid-template-columns:175px 1fr 175px;align-items:center;gap:20px;margin-top:35px}
+ .header{display:grid;grid-template-columns:175px minmax(0,1fr) 175px;align-items:center;gap:20px;margin-top:35px}
  .logo{width:170px;height:170px;object-fit:contain}.logo.empty{border:2px dashed #ffffff70;border-radius:14px;display:grid;place-items:center;font:700 26px system-ui;color:#ffffff88}
- .teams{text-align:center;font-size:43px;font-weight:900;line-height:1.12;text-transform:uppercase;overflow-wrap:anywhere}
+ .teams{text-align:center;font-size:34px;font-weight:900;line-height:1.12;text-transform:uppercase;overflow-wrap:anywhere;min-width:0;white-space:normal}
  .score{text-align:center;font-size:125px;font-weight:900;line-height:1.1;margin-top:28px}
  .caption{text-align:center;font:700 27px system-ui;letter-spacing:.16em;text-transform:uppercase}
  .video-area{position:absolute;left:44px;top:475px;width:992px;height:558px;border:2px dashed #ffffff88;display:grid;place-items:center;font:700 34px system-ui;background:#0005}
