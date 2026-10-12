@@ -18,6 +18,12 @@ export function fillInstagramHtml(html,kind,fields={}){
      }else node.textContent="LOGO";
    }else if(name!=="videoArea") node.textContent=String(value??"");
  }
+ const extra=doc.createElement("style");
+ extra.textContent=`
+ [data-field="home"],[data-field="away"]{box-sizing:border-box!important;max-width:100%!important;min-width:0!important;overflow-wrap:anywhere!important;word-break:normal!important;white-space:normal!important;text-align:center!important;line-height:1.08!important}
+ [data-field="homeLogo"] img,[data-field="awayLogo"] img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important}
+ `;
+ doc.head.append(extra);
  return "<!doctype html>"+doc.documentElement.outerHTML;
 }
 
