@@ -121,6 +121,37 @@ function getMatchId(req) {
   return normalizeMatchId(reference);
 }
 
+function normalizeLogoUrl(value) {
+  let url;
+  try { url = new URL(String(value ?? "")); } catch { throw new ApiError(400, "INVALID_LOGO_URL", "Ungueltige Logo-URL."); }
+  if(url.protocol !== "https:" || url.hostname !== "handball360.isquad.de" || url.port || url.username || url.password || url.search || url.hash ||
+     !/^\/images\/afiliacion_clubs\/[0-9]+\/square_[a-z0-9_-]+\.(jpg|jpeg|png|webp)$/i.test(url.pathname)) {
+    throw new ApiError(400, "INVALID_LOGO_URL", "Nur offizielle Handball360-Vereinslogos sind erlaubt.");
+  }
+  return url.href;
+}
+async function sendLogo(req,res) {
+  requireAuthorization(req);
+  const url=normalizeLogoUrl(req.query.url);
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),TIMEOUT_MS);
+  try {
+    const upstream=await fetch(url,{signal:controller.signal,redirect:"error",headers:{Accept:"image/jpeg,image/png,image/webp"}});
+    if(!upstream.ok)throw new ApiError(502,"LOGO_UPSTREAM_ERROR","Logo-Server: HTTP "+upstream.status);
+    const type=(upstream.headers.get("content-type")||"").split(";")[0].trim().toLowerCase();
+    if(!["image/jpeg","image/png","image/webp"].includes(type))throw new ApiError(502,"INVALID_LOGO_RESPONSE","Kein unterstuetztes Bildformat.");
+    const length=Number(upstream.headers.get("content-length")||0);
+    if(length>1048576)throw new ApiError(413,"LOGO_TOO_LARGE","Logo groesser als 1 MB.");
+    const chunks=[];let size=0;
+    for await(const chunk of upstream.body){size+=chunk.length;if(size>1048576)throw new ApiError(413,"LOGO_TOO_LARGE","Logo groesser als 1 MB.");chunks.push(chunk);}
+    res.set({"Content-Type":type,"Cache-Control":"public, max-age=3600","X-Content-Type-Options":"nosniff"});
+    return res.send(Buffer.concat(chunks));
+  }catch(error){
+    if(error instanceof ApiError)throw error;
+    throw new ApiError(controller.signal.aborted?504:502,"LOGO_FETCH_FAILED","Logo konnte nicht abgerufen werden.");
+  }finally{clearTimeout(timeout);controller.abort();}
+}
+
 function tokensMatch(provided, expected) {
   const left = createHash("sha256").update(provided).digest();
   const right = createHash("sha256").update(expected).digest();
@@ -305,7 +336,8 @@ app.use((req, res, next) => {
       );
     }
 
-    getMatchId(req);
+    if(req.path==="/logo") normalizeLogoUrl(req.query.url);
+    else getMatchId(req);
 
     return res
       .status(204)
@@ -321,6 +353,8 @@ app.use((req, res, next) => {
     return handleError(req, res, error);
   }
 });
+
+app.get("/logo",async(req,res)=>{try{return await sendLogo(req,res);}catch(error){return handleError(req,res,error);}});
 
 app.get(["/", "/match/:id"], async (req, res) => {
   try {
