@@ -1805,7 +1805,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     const kind=$("instagramTemplateKind").value;
     if(file.size>250000)return toast("HTML-Datei zu groß (max. 250 KB).");
     const html=await file.text(),result=validateInstagramTemplate(html,kind);
-    if(!result.valid){$("instagramTemplateStatus").textContent=result.issues.join(" · ");return}
+    if(!result.valid){$("instagramTemplateStatus").textContent="Import fehlgeschlagen ("+file.name+", "+kind+"): "+result.issues.join(" | ");$("instagramTemplateStatus").style.whiteSpace="pre-wrap";return}
     importedInstagramTemplates[kind]=html;
     $("instagramTemplateStatus").textContent="Eigene Vorlage geladen (nur Vorschau, noch nicht im Export).";
     $("instagramTemplatePreviewHost").style.display="none";
