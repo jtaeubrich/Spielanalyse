@@ -4,6 +4,7 @@ import {
   eventHalf,
   syncForHalf,
   eventVideoSeconds,
+  eventVideoPosition,
   estimateReviewGameTime,
   reviewPosition,
   eventRealTimeFromVideoPosition
@@ -41,6 +42,32 @@ describe("video synchronization core", () => {
   test("preserves null game time for a pure video event", () => {
     const event={type:"goal",time:null,displayTime:null,half:null,realTime:754000};
     expect(eventVideoSeconds(event,{isVideoscoutingFile:true,video:{},durationMinutes:25})).toBe(754);
+  });
+
+  test("estimates official first-half video positions from H1 sync", () => {
+    const e={officialSource:"handball.net",time:120,half:1,realTime:null};
+    expect(eventVideoPosition(e,{isVideoscoutingFile:true,video:{h1SyncRealTime:8},durationMinutes:25}).seconds).toBe(128);
+    expect(eventVideoPosition(e,{isVideoscoutingFile:true,video:{h1SyncRealTime:8}}).status).toBe("estimated");
+    expect(e.realTime).toBeNull();
+  });
+
+  test("uses H2 sync separately and does not invent missing synchronization", () => {
+    const e={officialSource:"handball.net",time:1515,half:2,realTime:null};
+    expect(eventVideoPosition(e,{isVideoscoutingFile:true,video:{h1SyncRealTime:5,h2SyncRealTime:1800},durationMinutes:25}).seconds).toBe(1815);
+    expect(eventVideoPosition(e,{isVideoscoutingFile:true,video:{h1SyncRealTime:5},durationMinutes:25}).status).toBe("unassigned");
+  });
+
+  test("manual timestamp takes priority and acts as a post-cut anchor", () => {
+    const anchor={officialSource:"handball.net",time:200,half:1,realTime:96000,officialTimestamp:"2026-10-03T16:03:20Z"};
+    const next={officialSource:"handball.net",time:230,half:1,realTime:null,officialTimestamp:"2026-10-03T16:03:50Z"};
+    const options={isVideoscoutingFile:true,video:{h1SyncRealTime:8},events:[anchor,next],durationMinutes:25};
+    expect(eventVideoPosition(anchor,options)).toEqual({seconds:96,status:"confirmed"});
+    expect(eventVideoPosition(next,options)).toEqual({seconds:126,status:"estimated"});
+  });
+
+  test("an event without official time stays unassigned", () => {
+    const e={time:null,half:null,realTime:null};
+    expect(eventVideoPosition(e,{isVideoscoutingFile:true,video:{h1SyncRealTime:8}}).status).toBe("unassigned");
   });
 
   test("maps video-scouting realTime directly to video seconds", () => {
