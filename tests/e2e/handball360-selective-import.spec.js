@@ -35,7 +35,8 @@ test("import options have independent defaults and cancel preserves the current 
  await expect(dialog.getByLabel("Wettbewerb im aktuellen Spiel")).toBeChecked();
  await expect(dialog.getByLabel("Spieler und Handball360-IDs in der Mannschaftssammlung ergänzen")).toBeChecked();
  await expect(dialog.getByLabel("Kader auch in das aktuelle Spiel ergänzen")).not.toBeChecked();
- await expect(dialog).toContainText("2");
+ await expect(dialog).toContainText("Gegner: 1 Spieler verfügbar, 1 mit Handball360-ID, 1 mit Trikotnummer.");
+ await expect(dialog).toContainText("Mein Team: 1 Spieler verfügbar, 1 mit Handball360-ID, 1 mit Trikotnummer.");
  await dialog.getByRole("button",{name:"Abbrechen"}).click();
  await expect(dialog).not.toBeVisible();
  await expect(page.locator("#setupCompetition")).toHaveValue(before);
