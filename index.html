@@ -443,10 +443,38 @@
     <button class="btn" id="setupMatchdayLogoCheck" type="button">Logos prüfen</button>
     <pre id="setupMatchdayLogoDiagnostics" role="status" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:320px;overflow:auto"></pre>
       </details>
-      <details class="panel setup-card">
-        <summary>Kader bearbeiten</summary>
-        <div class="roster-tools"><select class="btn" id="rosterTeam" aria-label="Mannschaft für Spielerliste"><option value="home">Gegner</option><option value="away" selected>Mein Team</option></select><label class="btn" for="rosterInput">Excel / JSON einlesen</label><input id="rosterInput" type="file" accept=".xlsx,.xls,.csv,.json" hidden><button class="btn" id="addPlayer" type="button">+ Spieler</button><button class="btn" id="editNumbers" type="button">Nur Nummern</button><button class="btn" id="updateRosterCollection" type="button">Sammlung aktualisieren</button><button class="btn" id="loadRosterCollection" type="button">Aus Sammlung laden</button></div><div class="roster-tools" style="margin-top:8px"><select class="field" id="knownRosterSelect" aria-label="Bekannte Mannschaft auswählen"><option value="">Bekannte Mannschaft auswählen …</option></select><button class="btn primary" id="applyKnownRoster" type="button">Mannschaft übernehmen</button><button class="btn" id="renameKnownRoster" type="button">Umbenennen</button><button class="btn danger" id="deleteKnownRoster" type="button">Löschen</button></div><label class="field">Mannschaftslogo (PNG/JPG/WebP) <input id="knownRosterLogoInput" type="file" accept="image/png,image/jpeg,image/webp"></label><p class="number-help" id="knownRosterDetails">Noch keine bekannte Mannschaft ausgewählt.</p><p class="number-help" id="rosterCollectionStatus">Die H360-ID wird beim Abgleich bevorzugt und bleibt als stabile Spieler-ID erhalten.</p><div class="roster-tools"><button class="btn" id="exportKnownTeams" type="button">Mannschaftssammlung exportieren</button><label class="btn" for="importKnownTeams">Mannschaftssammlung importieren</label><input id="importKnownTeams" type="file" accept=".json,application/json" hidden></div><p class="number-help" id="teamCollectionTransferStatus" role="status">Sammlung als JSON zwischen Safari und installierter App übertragen; vorhandene Einträge bleiben erhalten.</p>
+      <details class="panel setup-card" id="setupRosterPanel">
+        <summary>Spielkader bearbeiten</summary>
+        <p class="number-help">Hier bearbeitest du nur die Spieler des aktuellen Spiels. Zum dauerhaften Speichern nutze unten „Spielkader in Sammlung speichern“.</p>
+        <label>Spielmannschaft auswählen <select class="field" id="rosterTeam" aria-label="Mannschaft für Spielerliste"><option value="home">Gegner</option><option value="away" selected>Mein Team</option></select></label>
+        <div class="roster-tools" style="margin-top:10px">
+          <button class="btn" id="addPlayer" type="button">+ Spieler hinzufügen</button>
+          <label class="btn" for="rosterInput">Kader importieren (Excel / JSON)</label><input id="rosterInput" type="file" accept=".xlsx,.xls,.csv,.json" hidden>
+          <button class="btn" id="editNumbers" type="button">Nur Nummern</button>
+        </div>
         <div id="rosterEditor"></div>
+      </details>
+      <details class="panel setup-card" id="setupTeamCollectionPanel">
+        <summary>Mannschaftssammlung</summary>
+        <p class="number-help">Gespeicherte Mannschaften und Spieler für zukünftige Spiele verwalten. Auswahl und Änderungen an der Sammlung sind unabhängig vom aktuellen Spielkader.</p>
+        <label>Gespeicherte Mannschaft auswählen <select class="field" id="knownRosterSelect" aria-label="Bekannte Mannschaft auswählen"><option value="">Bekannte Mannschaft auswählen …</option></select></label>
+        <p class="number-help" id="knownRosterDetails">Noch keine bekannte Mannschaft ausgewählt.</p>
+        <div class="roster-tools">
+          <button class="btn primary" id="applyKnownRoster" type="button">Für aktuelles Spiel verwenden</button>
+          <button class="btn" id="loadRosterCollection" type="button">Spieler für aktuelle Mannschaft ergänzen</button>
+          <button class="btn" id="updateRosterCollection" type="button">Spielkader in Sammlung speichern</button>
+        </div>
+        <p class="number-help">„Für aktuelles Spiel verwenden“ übernimmt auch den Mannschaftsnamen. „Spieler ergänzen“ behält den aktuellen Mannschaftsnamen bei.</p>
+        <div class="roster-tools">
+          <button class="btn" id="renameKnownRoster" type="button">Gespeicherte Mannschaft umbenennen</button>
+          <button class="btn danger" id="deleteKnownRoster" type="button">Aus Sammlung löschen</button>
+        </div>
+        <label class="field">Mannschaftslogo (PNG/JPG/WebP) <input id="knownRosterLogoInput" type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <p class="number-help" id="rosterCollectionStatus">Die H360-ID wird beim Abgleich bevorzugt und bleibt als stabile Spieler-ID erhalten.</p>
+        <details><summary>Sammlung als JSON übertragen</summary>
+          <div class="roster-tools"><button class="btn" id="exportKnownTeams" type="button">Mannschaftssammlung exportieren</button><label class="btn" for="importKnownTeams">Mannschaftssammlung importieren</label><input id="importKnownTeams" type="file" accept=".json,application/json" hidden></div>
+          <p class="number-help" id="teamCollectionTransferStatus" role="status">Sammlung zwischen Safari und installierter App übertragen; vorhandene Einträge bleiben erhalten.</p>
+        </details>
       </details>
       <details class="panel setup-card wide">
         <summary>Torwurf-Erfassung</summary>
