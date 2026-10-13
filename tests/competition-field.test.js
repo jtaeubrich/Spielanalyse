@@ -26,12 +26,12 @@ describe("Wettbewerb im Setup und Instagram-Export",()=>{
  });
 });
 
-describe("Ballbesitz nach Torwurf",()=>{
- it("bietet eigene Abschlüsse mit erhaltenem Ballbesitz an",()=>{
-  expect(html).toContain('data-result="save" data-retain="true"');
-  expect(html).toContain('data-result="block" data-retain="true"');
-  expect(html).toContain('data-result="miss" data-retain="true"');
-  expect(html).toContain('e.possessionContinues=true;delete e.endedPossessionOf;');
-  expect(html).toContain('state.possession=e.possessionContinues?draft.team:');
+describe("Freiwurf als Torwurfabschluss",()=>{
+ it("speichert Freiwurf und behält Ballbesitz",()=>{
+  expect(html).toContain('data-result="freethrow">Freiwurf');
+  expect(html).toContain('draft.result==="freethrow")delete e.endedPossessionOf');
+  expect(html).toContain('draft.result==="freethrow"?draft.team:');
+  expect(html).not.toContain('shotKeepsPossession');
+  expect(html).not.toContain('data-retain="true"');
  });
 });
