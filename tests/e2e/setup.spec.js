@@ -125,3 +125,23 @@ test("setup stays usable on a mobile viewport", async ({ page, isMobile }) => {
   await expect(page.locator("#newGame")).toBeVisible();
   await expect(page.locator("#setupOwnTeamSide")).toBeVisible();
 });
+
+test("Video Scouting places selectors before video and capture below without game clock buttons",async({page})=>{
+ await page.goto("/");
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("body")).toHaveClass(/video-scouting-layout/);
+ await expect(page.locator("#matchReviewTopHost #modeSelect")).toBeVisible();
+ await expect(page.locator("#matchReviewTopHost #activeOwnKeeper")).toBeVisible();
+ await expect(page.locator("#matchReviewTopHost #activeOpponentKeeper")).toBeVisible();
+ await expect(page.locator("#matchReviewTopHost #activeOwnDefense")).toBeVisible();
+ await expect(page.locator("#matchReviewTopHost #activeOpponentDefense")).toBeVisible();
+ await expect(page.locator("#runBtn")).toBeHidden();
+ await expect(page.locator("#gameClock")).toBeHidden();
+ await expect(page.locator("#idleStep")).toBeVisible();
+ const positions=await page.evaluate(()=>{
+  const rect=id=>document.querySelector(id).getBoundingClientRect();
+  return {selectors:rect("#matchReviewTopHost").bottom,video:rect("#matchVideoHost").top,capture:rect("#idleStep").top};
+ });
+ expect(positions.selectors).toBeLessThanOrEqual(positions.video+3);
+ expect(positions.video).toBeLessThan(positions.capture);
+});
