@@ -57,7 +57,5 @@ test("selective import updates competition and active roster while leaving event
  await dialog.getByRole("button",{name:"Auswahl übernehmen"}).click();
  await expect(page.locator("#setupCompetition")).toHaveValue("Regionalliga Test");
  await expect(page.locator("#existingH360Status")).toContainText("2 Spieler ins Spiel ergänzt");
- const data=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.session")||"null"));
- // The status counters and unchanged scoreboard are the public contract; storage keys may evolve.
  await expect(page.locator("#score")).toHaveText("0 : 0");
 });
