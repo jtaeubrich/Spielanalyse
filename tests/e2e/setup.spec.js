@@ -147,7 +147,7 @@ test("nearby events use a horizontal strip in Match video scouting",async({page}
  await expect(page.locator("#matchNearbyEvents")).toBeVisible();
  await expect(page.locator("#matchNearbyList")).toBeVisible();
  await expect(page.locator("#matchGrid > #matchNearbyEvents")).toHaveCount(1);
- await expect(page.locator("#matchNearbyList")).toContainText("Video laden");
+ await expect(page.locator("#matchNearbyList")).toContainText("Noch keine Ereignisse erfasst.");
  await expect(page.locator("#idleStep")).toBeVisible();
  await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
  await expect(page.locator("#matchNearbyEditorHost")).toHaveCount(1);
