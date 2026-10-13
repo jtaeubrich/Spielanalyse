@@ -211,7 +211,7 @@ export function hbClubLogos(matchMeta) {
 
 export function hbVenue(matchMeta, additionalInfo = null) {
   const info = additionalInfo?.data?.[0] ?? additionalInfo?.data ?? additionalInfo;
-  const candidates = [matchMeta?.venue, matchMeta?.hall, matchMeta?.sports_hall, matchMeta?.sportsHall, matchMeta?.location, matchMeta?.arena, matchMeta?.playing_hall, matchMeta?.playingHall, info?.venue, info?.hall, info?.sports_hall, info?.sportsHall, info?.location, info?.arena];
+  const candidates = [matchMeta?.field, matchMeta?.venue, matchMeta?.hall, matchMeta?.sports_hall, matchMeta?.sportsHall, matchMeta?.location, matchMeta?.arena, matchMeta?.playing_hall, matchMeta?.playingHall, info?.venue, info?.hall, info?.sports_hall, info?.sportsHall, info?.location, info?.arena];
   for (const candidate of candidates) {
     const value = typeof candidate === "string" ? candidate : candidate?.name ?? candidate?.title ?? candidate?.designation;
     if (typeof value === "string" && value.trim()) return value.trim();
