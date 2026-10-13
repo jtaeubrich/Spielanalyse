@@ -394,6 +394,26 @@
 
     .match-review-pin-state{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 0 9px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:#091822;color:var(--muted);font-size:12px}
     .match-review-pin-state:has(#veeUnpin){color:var(--cyan);border-color:#2d6777}
+
+    /* Mobile roster editor: prevent controls and the player table from widening the setup page. */
+    .setup-grid>.setup-card{min-width:0}
+    .setup-card .roster-tools{min-width:0}
+    .setup-card .roster-tools>*{max-width:100%;min-width:0}
+    .setup-card #knownRosterSelect{flex:1 1 100%;width:100%;min-width:0}
+    .setup-card #knownRosterLogoInput{display:block;max-width:100%;width:100%;margin-top:8px}
+    .setup-card #rosterEditor{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .setup-card #rosterEditor .roster-table{min-width:650px}
+    @media(max-width:700px){
+      .setup-card .roster-tools{align-items:stretch;gap:8px;margin-bottom:12px}
+      .setup-card .roster-tools>.btn,
+      .setup-card .roster-tools>label.btn,
+      .setup-card .roster-tools>select{box-sizing:border-box;flex:1 1 180px;white-space:normal;overflow-wrap:anywhere;text-align:center}
+      .setup-card .roster-tools>#knownRosterSelect{flex:1 1 100%;text-align:left}
+      .setup-card .roster-tools>#exportKnownTeams,
+      .setup-card .roster-tools>label[for="importKnownTeams"]{flex:1 1 100%;width:100%}
+      .setup-card label:has(> #knownRosterLogoInput){display:block;min-width:0;margin:12px 0}
+      .setup-card details>summary{overflow-wrap:anywhere;white-space:normal}
+    }
 </style>
 </head>
 <body>
