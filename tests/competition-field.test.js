@@ -39,7 +39,21 @@ describe("Freiwurf als Torwurfabschluss",()=>{
 describe("Matchday Metadaten",()=>{
  it("ersetzt auch Spielort, Datum und Anwurf statt Template-Beispielwerte zu behalten",()=>{
   expect(html).toContain("...matchdayMetadata(),competition:");
-  expect(html).toContain("const venue=[source.venue");
+  expect(html).toContain("source.venue||hbVenue(meta,additional)");
   expect(html).toContain("return{matchDate,matchTime,venue}");
+ });
+});
+
+describe("Matchday Importregression 378110",()=>{
+ it("liest die Halle aus dem Handball360-Feldobjekt",()=>{
+  const imported=hbPrepare({match_id:"378110",match:{data:[{id:378110,date:"2026-10-03T16:00:00+00:00",field:{name:"TEGELSBARG",installation:{address:"TEGELSBARG 2, 22399 HAMBURG"}},local:{name:"SG HAMBURG-NORD"},visitor:{name:"THW KIEL II"}}]}});
+  expect(imported.venue).toBe("TEGELSBARG");
+  expect(imported.matchDate).toBe("2026-10-03T16:00:00+00:00");
+  expect(new Intl.DateTimeFormat("de-DE",{hour:"2-digit",minute:"2-digit",timeZone:"Europe/Berlin"}).format(new Date(imported.matchDate))).toBe("18:00");
+ });
+ it("verwendet denselben Hallenparser beim Matchday-Export und erkennt ISO-Uhrzeiten",()=>{
+  expect(html).toContain("source.venue||hbVenue(meta,additional)");
+  expect(html).toContain("if(/[T ]\\d{2}:\\d{2}/.test(String(rawDate)))");
+  expect(html).not.toContain("if(/[T ]\\\\d{2}:\\\\d{2}/.test(String(rawDate)))");
  });
 });
