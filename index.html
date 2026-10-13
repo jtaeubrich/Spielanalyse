@@ -1598,7 +1598,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     nearbySignature=key;
     $("matchNearbyTime").textContent=entries.length+" Events · "+entries.filter(item=>!Number.isFinite(item.at)).length+" ohne Videozeit";
     host.replaceChildren();
-    if(!entries.length){const empty=document.createElement("div");empty.className="match-nearby-empty";empty.textContent=Number.isFinite(now)?"Keine Ereignisse in der Nähe – unten neues Ereignis erfassen.":"Video laden und Synchronisierung prüfen.";host.append(empty);return}
+    if(!entries.length){const empty=document.createElement("div");empty.className="match-nearby-empty";empty.textContent="Noch keine Ereignisse erfasst.";host.append(empty);return}
     for(const {event,index,at} of entries){
       const btn=document.createElement("button");btn.type="button";btn.className="match-nearby-item"+(index===activeVideoEventIndex?" selected":"");
       const time=document.createElement("small");time.textContent=(event.displayTime||(event.time!=null?fmt(event.time):"Spielzeit offen"))+(Number.isFinite(at)?" · "+fmt(at,true):" · Videozeit fehlt");
