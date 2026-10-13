@@ -33,6 +33,11 @@ describe("video synchronization core", () => {
     expect(eventVideoSeconds(event,{video:{h1SyncRealTime:5,h2SyncRealTime:1600},isVideoscoutingFile:true,durationMinutes:25})).toBe(1620);
   });
 
+  test("never derives video offset from game time for unassigned video events", () => {
+    const event={type:"goal",time:740,half:1,realTime:null};
+    expect(Number.isNaN(eventVideoSeconds(event,{isVideoscoutingFile:true,video:{h1SyncRealTime:5},durationMinutes:25}))).toBe(true);
+  });
+
   test("preserves null game time for a pure video event", () => {
     const event={type:"goal",time:null,displayTime:null,half:null,realTime:754000};
     expect(eventVideoSeconds(event,{isVideoscoutingFile:true,video:{},durationMinutes:25})).toBe(754);
