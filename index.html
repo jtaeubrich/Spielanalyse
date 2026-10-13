@@ -1601,6 +1601,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const label=document.createElement("strong");label.textContent=(eventLabels[event.type]||event.type)+" · "+(event.pName||event.throwerName||"ohne Spieler");
       btn.append(time,label);btn.onclick=()=>{
         mediaPause();activeVideoEventIndex=index;renderVideoEventEditor();
+        if(Number.isFinite(at))seekActiveEventExact(event);
         const editorHost=$("matchNearbyEditorHost");editorHost.classList.remove("hidden");renderMatchNearbyEvents(true);panel.scrollTop=0;
       };host.append(btn);
     }
