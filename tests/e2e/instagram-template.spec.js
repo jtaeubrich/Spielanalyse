@@ -98,13 +98,13 @@ test("Setup groups Matchday below game management and collapses subsequent setti
  const cards=setup.locator(".setup-grid > .setup-card");
  await expect(cards.nth(0).locator("h2")).toHaveText("Spielverwaltung");
  await expect(cards.nth(1)).toHaveAttribute("id","setupMatchdayPanel");
- for(const [index,title] of [[1,"Instagram Matchday"],[2,"Kader bearbeiten"],[3,"Torwurf-Erfassung"],[4,"Globale Einstellungen"]]){
+ for(const [index,title] of [[1,"Instagram Matchday"],[2,"Spielkader bearbeiten"],[3,"Mannschaftssammlung"],[4,"Torwurf-Erfassung"],[5,"Globale Einstellungen"]]){
   const card=cards.nth(index);
   await expect(card).not.toHaveAttribute("open","");
   await expect(card.locator("summary")).toHaveText(title);
  }
  await cards.nth(1).locator("summary").click();
  await expect(page.locator("#setupMatchdayPng")).toBeVisible();
- await cards.nth(2).locator("summary").click();
+ await cards.nth(3).locator("summary").click();
  await expect(page.locator("#knownRosterLogoInput")).toBeVisible();
 });
