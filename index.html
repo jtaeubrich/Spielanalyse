@@ -431,7 +431,7 @@
         <h2>Spielverwaltung</h2>
         <div class="setup-actions"><button class="btn primary" id="newGame" type="button">Neues Spiel</button><button class="btn" id="continueGame" type="button">Spiel fortsetzen</button><input id="continueGameInput" type="file" accept=".json,application/json" hidden><button class="btn" id="loadGame" type="button">Spiel laden</button><input id="fileInput" type="file" accept=".json,application/json" hidden></div>
         <div class="form-grid"><label>Spielname<input class="field" id="setupGameName" placeholder="Spielname"></label><label>Wettbewerb / Spielklasse<input class="field" id="setupCompetition" placeholder="Freundschaftsspiel"></label><label>Spielzeit pro Halbzeit<select class="field" id="setupDuration"><option value="20">20 Minuten</option><option value="25" selected>25 Minuten</option><option value="30">30 Minuten</option></select></label><label>Heim<input class="field" id="setupHomeName" placeholder="Heimmannschaft"></label><label>Gast<input class="field" id="setupAwayName" placeholder="Gastmannschaft"></label><label style="grid-column:1 / -1">Zuordnung „Mein Team“<select class="field" id="setupOwnTeamSide"><option value="home">Heim</option><option value="away" selected>Gast</option></select></label></div>
-        <p class="number-help">Welche Mannschaft „Mein Team“ ist, kannst du jederzeit selbst auswählen. Die Zuordnung wird mit dem Spiel gespeichert.</p><details><summary>Spieldaten übernehmen</summary><p class="number-help">Nur Vereinslogos und Team-/Club-IDs in die Mannschaftssammlung übernehmen. Keine Spielereignisse, Spieler, Spielzeiten oder Videozuordnungen verändern. Mannschaftsnamen müssen zugeordnet werden können.</p><label>Handball360-Spiel-Link<input class="field" id="existingH360Url" inputmode="url" placeholder="https://www.handball.net/match/378110"></label><button class="btn primary" type="button" id="existingH360Enrich">Vereinsdaten übernehmen</button><p class="number-help" id="existingH360Status" role="status"></p></details>
+        <p class="number-help">Welche Mannschaft „Mein Team“ ist, kannst du jederzeit selbst auswählen. Die Zuordnung wird mit dem Spiel gespeichert.</p><details><summary>Spieldaten übernehmen</summary><p class="number-help">Wähle beim Import, ob Vereinsdaten, Wettbewerb, Spieler-IDs und Kader in die Mannschaftssammlung und/oder ins aktuelle Spiel übernommen werden sollen. Spielereignisse, Spielzeit und Videos bleiben unverändert.</p><label>Handball360-Spiel-Link<input class="field" id="existingH360Url" inputmode="url" placeholder="https://www.handball.net/match/378110"></label><button class="btn primary" type="button" id="existingH360Enrich">Vereinsdaten übernehmen</button><p class="number-help" id="existingH360Status" role="status"></p></details>
       </div>
       <details class="panel setup-card wide" id="setupMatchdayPanel">
         <summary>Instagram Matchday</summary>
@@ -1297,38 +1297,87 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
   }
   function hbCreateGame(){if(!handballNetImport)return;const x=handballNetImport,youtube=String($("handballNetYoutube")?.value||"").trim(),yt=youtubeVideoId(youtube);setMatchReviewMode(false,{announce:false});stopGame();mediaPause();state=structuredClone(baseState);state.competition=x.competition||"Freundschaftsspiel";ownTeam="away";state.ownTeam=ownTeam;state.gameName=((x.matchDate?new Date(x.matchDate).toLocaleDateString("de-DE")+" | ":"")+x.teams.home+" - "+x.teams.away).trim();state.home={name:x.teams.home,players:structuredClone(x.homePlayers)};state.away={name:x.teams.away,players:structuredClone(x.awayPlayers)};state.events=structuredClone(x.normalized);state.timer={...baseState.timer,duration:x.duration,half:1,secondsElapsed:0,active:false};state.gameTime=x.duration*120;state.isHistorical=false;state.isVideoscoutingFile=true;state.officialSource={provider:"handball.net",matchId:x.matchId,matchDate:x.matchDate||null,competition:x.competition||null,additionalInfoAvailable:Boolean(x.additionalInfo),importedAt:new Date().toISOString()};state.officialData=hbOfficialData(x);state.video={...baseState.video,youtubeUrl:youtube||null,youtubeId:yt};currentGameFileHandle=null;currentGameFileName=null;gameBase=videoBase=liveClockBase=0;gameRunning=videoRunning=liveClockRunning=false;normalize();setAnalysisMode("video");restoreSavedVideoReference();update();showTab("match");syncCurrentGameRosterCollections({silent:true}).then(async results=>{const logos=await importOfficialClubLogos(x);const conflicts=results.flatMap(result=>result?.conflicts||[]).length;if(logos.length)toast(logos.join(" · "));if(conflicts)toast("Spiel aus handball.net-Daten erzeugt · Spielerlisten aktualisiert · "+conflicts+" Konflikt(e) prüfen");else toast("Spiel aus handball.net-Daten erzeugt · Spielerlisten aktualisiert")}).catch(()=>toast("Spiel aus handball.net-Daten erzeugt"))}
   function hbMergeGame(){if(!handballNetImport)return;const x=handballNetImport;if(x.competition)state.competition=x.competition;hbAddPlayers(state.home,x.homePlayers);hbAddPlayers(state.away,x.awayPlayers);if(!state.home.name||state.home.name==="Gegner")state.home.name=x.teams.home;if(!state.away.name||state.away.name==="Mein Team")state.away.name=x.teams.away;let added=0;for(const e of x.normalized){if(state.events.some(current=>hbEventMatches(current,e)))continue;state.events.push(structuredClone(e));added++}state.events.sort((a,b)=>Number(a.time||0)-Number(b.time||0));state.officialSource={provider:"handball.net",matchId:x.matchId,matchDate:x.matchDate||null,competition:x.competition||null,additionalInfoAvailable:Boolean(x.additionalInfo),importedAt:new Date().toISOString()};state.officialData=hbOfficialData(x);const youtube=String($("handballNetYoutube")?.value||"").trim();if(youtube){state.video.youtubeUrl=youtube;state.video.youtubeId=youtubeVideoId(youtube)}normalize();update();toast(added?(added+" fehlende offizielle Ereignisse ergänzt"):"Keine fehlenden offiziellen Ereignisse gefunden")}
+  function chooseH360Import(imported,sides){
+    return new Promise(resolve=>{
+      const dialog=document.createElement("dialog");dialog.style.cssText="width:min(94vw,620px);max-height:90vh;overflow:auto;background:#102431;color:#edf6fc;border:1px solid #537083;border-radius:14px;padding:20px";
+      const title=document.createElement("h3");title.textContent="Spieldaten übernehmen – Auswahl";dialog.append(title);
+      const info=document.createElement("p");info.textContent="Quelle: "+imported.teams.home+" – "+imported.teams.away+" · "+(imported.competition||"Wettbewerb unbekannt")+". Wähle die Daten, die du übernehmen möchtest.";dialog.append(info);
+      const config=[
+        ["club","Vereinslogos und Team-/Club-IDs",true],
+        ["competition","Wettbewerb im aktuellen Spiel",Boolean(imported.competition)],
+        ["ids","Spieler und Handball360-IDs in der Mannschaftssammlung ergänzen",true],
+        ["squad","Kader auch in das aktuelle Spiel ergänzen",false]
+      ];
+      const controls={};const form=document.createElement("div");form.style.cssText="display:grid;gap:12px;margin:16px 0";
+      for(const [key,label,checked] of config){const row=document.createElement("label");row.style.cssText="display:flex;gap:10px;align-items:flex-start";const input=document.createElement("input");input.type="checkbox";input.checked=checked;input.disabled=key==="competition"&&!imported.competition;controls[key]=input;row.append(input,document.createTextNode(label));form.append(row);}
+      dialog.append(form);
+      const summary=document.createElement("div");summary.style.cssText="font-size:13px;line-height:1.6;background:#071822;padding:12px;border-radius:8px";
+      for(const [current,official] of Object.entries(sides)){
+        const roster=official==="home"?imported.homePlayers:imported.awayPlayers;
+        const line=document.createElement("p");line.textContent=state[current].name+": "+roster.length+" Spieler verfügbar, "+roster.filter(p=>p.handballNetId).length+" mit Handball360-ID, "+roster.filter(p=>p.nr!==""&&p.nr!=null).length+" mit Trikotnummer.";summary.append(line);
+      }
+      if(imported.rosterSource!=="lineups"){const warn=document.createElement("p");warn.textContent="Hinweis: Keine vollständige Aufstellung geliefert; die Spieler stammen nur aus den erfassten Ereignissen. Der verfügbare Kader kann unvollständig sein.";warn.style.color="#ffcb66";summary.append(warn);}
+      dialog.append(summary);
+      const actions=document.createElement("div");actions.style.cssText="display:flex;gap:10px;justify-content:flex-end;margin-top:18px";
+      const cancel=document.createElement("button");cancel.className="btn";cancel.textContent="Abbrechen";
+      const ok=document.createElement("button");ok.className="btn primary";ok.textContent="Auswahl übernehmen";
+      actions.append(cancel,ok);dialog.append(actions);
+      let settled=false;const finish=value=>{if(settled)return;settled=true;dialog.close();dialog.remove();resolve(value)};
+      cancel.onclick=()=>finish(null);ok.onclick=()=>finish(Object.fromEntries(Object.entries(controls).map(([k,v])=>[k,v.checked])));
+      dialog.addEventListener("cancel",e=>{e.preventDefault();finish(null)});
+      document.body.append(dialog);dialog.showModal();
+    });
+  }
   $("existingH360Enrich").onclick=async()=>{
     const button=$("existingH360Enrich"),status=$("existingH360Status"),id=handballNetMatchId($("existingH360Url").value);
     if(!id){status.textContent="Bitte gültigen Handball360-Spiel-Link eingeben.";return}
-    button.disabled=true;status.textContent="Vereinsdaten werden geladen …";
+    button.disabled=true;status.textContent="Spieldaten werden geladen …";
     try{
       const response=await fetch(HANDBALL_NET_WORKER+"/match/"+encodeURIComponent(id),{headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"}});
       if(!response.ok)throw Error("Handball360 HTTP "+response.status);
       const imported=hbPrepare(await response.json(),{fallbackMatchId:id});
       const sides=mapOfficialSides(state,imported);
-      const mapped=Object.entries(sides).map(([current,official])=>({current,official,logo:imported.clubLogos?.[official]}));
-      if(!mapped.some(entry=>entry.logo?.logoUrl))throw Error("Keine Vereinslogos in den offiziellen Spieldaten gefunden.");
-      if(!confirm("Vereinsdaten und verfügbare Wettbewerbsbezeichnung aus Handball360 übernehmen? Ereignisse, Spielzeit und Video bleiben unverändert.")) {status.textContent="Abgebrochen.";return}
-      let count=0;
-      for(const {current,logo} of mapped){
-        if(!logo?.logoUrl)continue;
-        const team=state[current],saved=await readRosterCollection(team.name,team.players);
+      const chosen=await chooseH360Import(imported,sides);
+      if(!chosen){status.textContent="Abgebrochen.";return}
+      let count=0,added=0,enriched=0,conflicts=0,gamePlayers=0;
+      for(const [current,official] of Object.entries(sides)){
+        const team=state[current],logo=imported.clubLogos?.[official];
+        const incoming=official==="home"?imported.homePlayers:imported.awayPlayers;
+        const saved=await readRosterCollection(team.name,team.players);
         const record=saved||buildRosterRecord({id:rosterTeamKey(team.name),teamName:team.name,players:[]});
-        const updated={...record,handball360TeamId:logo.teamId,handball360ClubId:logo.clubId,logoUrl:logo.logoUrl};
-        if(!record.logoDataUrl||record.logoUrl!==logo.logoUrl){
-          try{
-            const logoResponse=await fetch(HANDBALL_NET_WORKER+"/logo?url="+encodeURIComponent(logo.logoUrl),{headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN}});
-            if(!logoResponse.ok)throw Error("Logo HTTP "+logoResponse.status);
-            const blob=await logoResponse.blob();
-            if(!["image/jpeg","image/png","image/webp"].includes(blob.type)||blob.size>1024*1024)throw Error("Ungültiger Logo-Typ");
-            updated.logoDataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error("Bild kann nicht gelesen werden"));reader.readAsDataURL(blob)});
-          }catch{updated.logoDataUrl=record.logoUrl===logo.logoUrl?record.logoDataUrl||"":"";}
+        const updated={...record};
+        if(chosen.ids){
+          const merged=mergeRosterCollection(record.players||[],incoming);
+          updated.players=merged.players;updated.conflicts=[...(record.conflicts||[]),...merged.conflicts];
+          added+=merged.added;enriched+=merged.enrichedIds;conflicts+=merged.conflicts.length;
         }
-        await writeInternalRecord(INTERNAL_ROSTER_STORE,updated);count++;
+        if(chosen.club&&logo){
+          if(logo.teamId)updated.handball360TeamId=logo.teamId;
+          if(logo.clubId)updated.handball360ClubId=logo.clubId;
+          if(logo.logoUrl){
+            updated.logoUrl=logo.logoUrl;
+            if(!record.logoDataUrl||record.logoUrl!==logo.logoUrl){
+              try{
+                const logoResponse=await fetch(HANDBALL_NET_WORKER+"/logo?url="+encodeURIComponent(logo.logoUrl),{headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN}});
+                if(!logoResponse.ok)throw Error("Logo HTTP "+logoResponse.status);
+                const blob=await logoResponse.blob();
+                if(!["image/jpeg","image/png","image/webp"].includes(blob.type)||blob.size>1024*1024)throw Error("Ungültiger Logo-Typ");
+                updated.logoDataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error("Bild kann nicht gelesen werden"));reader.readAsDataURL(blob)});
+              }catch{updated.logoDataUrl=record.logoUrl===logo.logoUrl?record.logoDataUrl||"":""}
+            }
+          }
+        }
+        if(chosen.ids||chosen.club){await writeInternalRecord(INTERNAL_ROSTER_STORE,updated);count++}
+        if(chosen.squad){
+          const merged=mergeRosterCollection(team.players||[],incoming);
+          team.players=merged.players;gamePlayers+=merged.added;
+          conflicts+=merged.conflicts.length;
+        }
       }
-      await refreshKnownRosterOptions();
-      if(imported.competition){state.competition=imported.competition;update()}
-      status.textContent=count+" Mannschaften aktualisiert"+(imported.competition?"; Wettbewerb: "+imported.competition:"; keine Wettbewerbsbezeichnung geliefert")+". Ereignisse und Video unverändert. Über „Logos prüfen“ kontrollieren.";
+      if(chosen.ids||chosen.club)await refreshKnownRosterOptions();
+      if(chosen.competition&&imported.competition)state.competition=imported.competition;
+      if(chosen.competition||chosen.squad)update();
+      status.textContent=count+" Mannschaftssammlungen aktualisiert · "+added+" Spieler ergänzt · "+enriched+" IDs zugeordnet · "+gamePlayers+" Spieler ins Spiel ergänzt · "+conflicts+" Konflikte"+(conflicts?" (in Mannschaftssammlung prüfen)":"")+". Ereignisse, Spielzeit und Video unverändert.";
     }catch(error){status.textContent="Übernahme fehlgeschlagen: "+error.message}
     finally{button.disabled=false}
   };
