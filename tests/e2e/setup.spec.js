@@ -161,3 +161,14 @@ test("symmetric capture and season-only preferred team selector",async({page})=>
  await page.locator('[data-tab="season"]').click();
  await expect(page.locator("#seasonPreferredTeam")).toBeVisible();
 });
+
+test("season preferred team maps imported home and away matches",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="season"]').click();
+ await page.locator("#seasonGameInput").setInputFiles(hknFixture);
+ const team=page.locator("#seasonPreferredTeam");
+ await expect(team.locator("option")).toContainText(["Keine Mannschaft ausgewählt","HSG Herzhorn/Kollmar/Neuendorf","Mein Team"]);
+ await team.selectOption({label:"HSG Herzhorn/Kollmar/Neuendorf"});
+ await expect(team).toHaveValue("HSG Herzhorn/Kollmar/Neuendorf");
+ await expect(page.locator("#seasonGameList")).toContainText("HSG Herzhorn/Kollmar/Neuendorf");
+});
