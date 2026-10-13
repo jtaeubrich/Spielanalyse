@@ -25,3 +25,13 @@ describe("Wettbewerb im Setup und Instagram-Export",()=>{
   expect(imported.competition).toBeNull();
  });
 });
+
+describe("Ballbesitz nach Torwurf",()=>{
+ it("bietet eigene Abschlüsse mit erhaltenem Ballbesitz an",()=>{
+  expect(html).toContain('data-result="save" data-retain="true"');
+  expect(html).toContain('data-result="block" data-retain="true"');
+  expect(html).toContain('data-result="miss" data-retain="true"');
+  expect(html).toContain('e.possessionContinues=true;delete e.endedPossessionOf;');
+  expect(html).toContain('state.possession=e.possessionContinues?draft.team:');
+ });
+});
