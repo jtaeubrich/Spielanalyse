@@ -1923,14 +1923,16 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function updateInstagramTemplateStatus(){
     const kind=$("instagramTemplateKind").value;
     $("instagramTemplateStatus").textContent=importedInstagramTemplates[kind]?"Eigene "+kind+"-Vorlage gespeichert.":"Standardvorlage aktiv ("+kind+").";
-    $("setupMatchdayTemplateStatus").textContent=importedInstagramTemplates.matchday&&validateInstagramTemplate(importedInstagramTemplates.matchday,"matchday").valid?"✓ Akzeptiert und gespeichert":"○ Keine Vorlage gespeichert";
-    $("setupMatchdayTemplateStatus").style.color=importedInstagramTemplates.matchday?"#3fda87":"";
+    const matchdayCheck=importedInstagramTemplates.matchday?validateInstagramTemplate(importedInstagramTemplates.matchday,"matchday"):null;
+    $("setupMatchdayTemplateStatus").textContent=matchdayCheck?.valid?(matchdayCheck.missing.length?"⚠ Akzeptiert, "+matchdayCheck.missing.length+" Datenfelder fehlen":"✓ Akzeptiert und gespeichert"):"○ Keine Vorlage gespeichert";
+    $("setupMatchdayTemplateStatus").style.color=matchdayCheck?.valid?(matchdayCheck.missing.length?"#ffcb66":"#3fda87"):"";
     for(const [name] of Object.entries(instagramTemplateKinds)){
       const element=$("instagramState"+name[0].toUpperCase()+name.slice(1));
-      const present=Boolean(importedInstagramTemplates[name])&&validateInstagramTemplate(importedInstagramTemplates[name],name).valid;
+      const check=importedInstagramTemplates[name]?validateInstagramTemplate(importedInstagramTemplates[name],name):null;
+      const present=Boolean(check?.valid);
       if(!element)continue;
-      element.textContent=present?"✓ Akzeptiert und gespeichert":"○ Nicht konfiguriert";
-      element.style.color=present?"#3fda87":"";
+      element.textContent=present?(check.missing.length?"⚠ Akzeptiert, "+check.missing.length+" Datenfelder fehlen":"✓ Akzeptiert und gespeichert"):"○ Nicht konfiguriert";
+      element.style.color=present?(check.missing.length?"#ffcb66":"#3fda87"):"";
       element.style.fontWeight=present?"700":"400";
     }
   }
