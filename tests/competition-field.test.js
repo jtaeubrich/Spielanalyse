@@ -10,7 +10,7 @@ describe("Wettbewerb im Setup und Instagram-Export",()=>{
   expect(html).toContain('$("setupCompetition").onchange');
  });
  it("überträgt den Wettbewerb an Matchday, Halbzeit/Endstand und Highlights",()=>{
-  expect(html).toContain('fillInstagramHtml(importedInstagramTemplates.matchday,"matchday",{competition:');
+  expect(html).toContain('fillInstagramHtml(importedInstagramTemplates.matchday,"matchday",{...matchdayMetadata(),competition:');
   expect(html).toContain('fillInstagramHtml(importedInstagramTemplates[kind],kind,{competition:');
   expect(html).toContain('fillInstagramHtml(importedInstagramTemplates.highlight,"highlight",{competition:');
  });
