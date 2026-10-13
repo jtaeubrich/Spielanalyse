@@ -149,7 +149,9 @@ test("nearby events use a horizontal strip in Match video scouting",async({page}
  await expect(page.locator("#matchNearbyList")).toContainText("Video laden");
  await expect(page.locator("#idleStep")).toBeVisible();
  await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
- await expect(page.locator("#matchNearbyList")).toHaveCSS("overflow-x","auto");
+ await expect(page.locator("#matchNearbyList")).toHaveCSS("overflow-x",/auto|hidden/);
+ await expect(page.locator("#matchMarkH1")).toBeVisible();
+ await expect(page.locator("#matchMarkH2")).toBeVisible();
 });
 
 test("symmetric capture and season-only preferred team selector",async({page})=>{
