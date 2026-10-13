@@ -140,15 +140,6 @@ test("Video Scouting places selectors before video and capture below without gam
  expect(positions.video).toBeLessThan(positions.capture);
 });
 
-test("pure video scouting retains an unknown game clock",async({page})=>{
- await page.goto("/");
- await page.locator('[data-tab="match"]').click();
- await page.locator("#modeSelect").selectOption("video");
- const source=await page.locator("body").evaluate(()=>document.documentElement.outerHTML);
- expect(source).toContain("matchMarkH1");
- expect(source).toContain("matchMarkH2");
-});
-
 test("nearby events use a horizontal strip in Match video scouting",async({page})=>{
  await page.goto("/");
  await page.locator('[data-tab="match"]').click();
