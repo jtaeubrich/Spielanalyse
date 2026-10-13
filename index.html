@@ -815,7 +815,7 @@ import { GAME_FILE_TYPES, parseGameText, defaultGameFileName as coreDefaultGameF
 import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeSeasonGame, normalizeSeasonArchive, parseSeasonText, mergeSeasonGames, readSeasonGameFiles } from "./src/season-files.js";
 import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection } from "./src/roster.js";
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
-import { handballNetMatchId, hbNameKey, hbPrepare } from "./src/handball360.js?v=147";
+import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
