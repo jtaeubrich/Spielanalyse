@@ -40,6 +40,7 @@ describe("Matchday Metadaten",()=>{
  it("ersetzt auch Spielort, Datum und Anwurf statt Template-Beispielwerte zu behalten",()=>{
   expect(html).toContain("...matchdayMetadata(),competition:");
   expect(html).toContain("source.venue||hbVenue(meta,additional)");
+  expect(html).toMatch(/import\s*\{[^}]*\bhbVenue\b[^}]*\}\s*from\s*["\x27]\.\/src\/handball360\.js/);
   expect(html).toContain("return{matchDate,matchTime,venue}");
  });
 });
