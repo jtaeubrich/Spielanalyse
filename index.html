@@ -1907,6 +1907,19 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   }
   const importedInstagramTemplates=readInstagramTemplates(localStorage);
   const instagramTemplateKinds={matchday:"Matchday",endstand:"Halbzeit / Endstand",highlight:"Highlights"};
+  function showInstagramTemplateCheck(kind,result){
+    const old=document.getElementById("instagramTemplateCheckDialog");if(old)old.remove();
+    const dialog=document.createElement("dialog");dialog.id="instagramTemplateCheckDialog";
+    dialog.style.cssText="max-width:min(92vw,520px);width:100%;background:#10222c;color:#eaf5fb;border:1px solid #567080;border-radius:14px;padding:22px;box-shadow:0 20px 70px #0009";
+    const heading=document.createElement("h3");heading.textContent="Template-Prüfung: "+instagramTemplateKinds[kind];dialog.append(heading);
+    const info=document.createElement("p");info.textContent=result.valid?(result.missing.length?"Import akzeptiert – folgende Datenfelder fehlen:":"Alle vorgesehenen Datenfelder vorhanden."):"Import nicht möglich – technische oder Sicherheitsfehler:";dialog.append(info);
+    const list=document.createElement("ul");list.style.cssText="list-style:none;padding:0;display:grid;gap:9px";
+    for(const field of result.fields||[]){const li=document.createElement("li");li.style.cssText="display:flex;gap:12px;align-items:center";const mark=document.createElement("span");mark.textContent=field.present?"✓":"✕";mark.style.cssText="font-size:22px;font-weight:bold;color:"+(field.present?"#4ce39a":"#ff7474");li.append(mark,document.createTextNode(field.name));list.append(li);}
+    dialog.append(list);
+    if(result.issues.length){const errors=document.createElement("p");errors.style.color="#ff9090";errors.textContent=result.issues.join(" | ");dialog.append(errors);}
+    const close=document.createElement("button");close.type="button";close.className="btn primary";close.textContent="Schließen";close.onclick=()=>dialog.close();dialog.append(close);
+    dialog.addEventListener("close",()=>dialog.remove());document.body.append(dialog);dialog.showModal();
+  }
   function updateInstagramTemplateStatus(){
     const kind=$("instagramTemplateKind").value;
     $("instagramTemplateStatus").textContent=importedInstagramTemplates[kind]?"Eigene "+kind+"-Vorlage gespeichert.":"Standardvorlage aktiv ("+kind+").";
@@ -1926,6 +1939,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     if(!file)return;
     if(file.size>4000000){$("instagramTemplateStatus").textContent="HTML-Datei zu groß (max. 4 MB).";return;}
     const html=await file.text(),result=validateInstagramTemplate(html,kind);
+    showInstagramTemplateCheck(kind,result);
     if(!result.valid){
       $("instagramTemplateStatus").textContent="Import fehlgeschlagen ("+file.name+", "+kind+"): "+result.issues.join(" | ");
       $("instagramTemplateStatus").style.whiteSpace="pre-wrap";
@@ -1945,8 +1959,8 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     
     $("instagramTemplatePreviewHost").style.display="none";
     $("exportStatus").textContent="HTML-Vorlage für "+instagramTemplateKinds[kind]+" importiert und gespeichert.";
-    if(kind==="matchday")$("setupMatchdayTemplateStatus").textContent="✓ Akzeptiert und gespeichert";
-    toast("HTML-Template importiert.");
+    if(kind==="matchday")$("setupMatchdayTemplateStatus").textContent=result.missing.length?"⚠ Akzeptiert, "+result.missing.length+" Datenfelder fehlen":"✓ Akzeptiert und gespeichert";
+    toast(result.missing.length?"HTML-Template mit Warnungen importiert.":"HTML-Template importiert.");
   }
   $("setupMatchdayTemplateFile").onchange=async e=>{const file=e.target.files?.[0];await importInstagramTemplate(file,"matchday");e.target.value="";};
   $("instagramTemplateImportInput").onchange=async e=>{const file=e.target.files?.[0];e.target.value="";await importInstagramTemplate(file,$("instagramTemplateKind").value)};
