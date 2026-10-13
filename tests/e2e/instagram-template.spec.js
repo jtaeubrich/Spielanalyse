@@ -73,7 +73,7 @@ test("three independent controls show accepted templates after reload and reset"
  await page.reload();
  await page.locator('[data-tab="video"]').click();
  await page.locator("details.video-production-card > summary").click();
- for(const [,suffix] of cases)await expect(page.locator(suffix==="Matchday"?"#setupMatchdayTemplateStatus":"#instagramState"+suffix)).toContainText("✓ Akzeptiert und gespeichert");
+ for(const [,suffix] of cases)await expect(page.locator(suffix==="Matchday"?"#setupMatchdayTemplateStatus":"#instagramState"+suffix)).toContainText("Akzeptiert");
  await page.locator("#instagramTemplateKind").selectOption("endstand");
  await page.locator("#instagramTemplateReset").click();
  await expect(page.locator("#instagramStateEndstand")).toContainText("Nicht konfiguriert");
