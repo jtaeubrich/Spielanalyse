@@ -440,8 +440,7 @@
     <p class="editor-help" id="setupMatchdayTemplateStatus" role="status">○ Keine Vorlage gespeichert</p>
     <div class="export-actions"><button class="btn primary" id="setupMatchdayPng" type="button">Matchday-PNG erstellen</button><button class="btn" id="setupMatchdayDownload" type="button" disabled>PNG herunterladen</button></div>
     <p class="editor-help" id="setupMatchdayExportStatus" role="status"></p>
-    <button class="btn" id="setupMatchdayLogoCheck" type="button">Logos prüfen</button>
-    <pre id="setupMatchdayLogoDiagnostics" role="status" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:320px;overflow:auto"></pre>
+    <button class="btn" id="setupMatchdayPreview" type="button" disabled>Vorschau anzeigen</button>
       </details>
       <details class="panel setup-card" id="setupRosterPanel">
         <summary>Spielkader bearbeiten</summary>
@@ -2072,36 +2071,25 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     await refreshKnownRosterOptions();
     return warnings;
   }
-  async function diagnoseMatchdayLogos() {
-    const host=$("setupMatchdayLogoDiagnostics");
-    host.textContent="Prüfe Mannschaftssammlung und Bildabruf …";
-    const report=[];
-    const fetched=await ensureInstagramLogos();
-    for(const side of ["home","away"]){
-      const team=state[side];
-      const record=findKnownTeamRecord(knownRosterRecords,{teamName:team?.name||"",players:team?.players||[]})?.record;
-      const matching=knownRosterRecords.filter(x=>String(x.teamName||"").trim().toLowerCase()===String(team?.name||"").trim().toLowerCase());
-      const lines=[(side==="home"?"HEIM":"GAST")+": "+(team?.name||"Unbekannt")];
-      if(!record)lines.push("  Sammlung: KEIN passender Mannschaftseintrag gefunden");
-      else {
-        lines.push("  Sammlung: "+record.teamName+" (Zuordnung "+(matching.length?"Name":"Spieler-IDs")+")");
-        lines.push("  Team-ID: "+(record.handball360TeamId||"nicht gespeichert")+" / Club-ID: "+(record.handball360ClubId||"nicht gespeichert"));
-        lines.push("  Logo-URL: "+(record.logoUrl||"FEHLT"));
-        lines.push("  Lokales Base64-Bild: "+(record.logoDataUrl?"vorhanden ("+Math.round(record.logoDataUrl.length/1024)+" KB)":"FEHLT"));
-        lines.push("  Vom Renderer verwendbar: "+(teamLogoFor(knownRosterRecords,team)?"JA":"NEIN"));
-      }
-      lines.push(...fetched.filter(msg=>msg.startsWith((team?.name||side)+":")).map(msg=>"  Abruf: "+msg));
-      report.push(lines.join("\n"));
-    }
-    host.textContent=report.join("\n\n");
-  }
-  $("setupMatchdayLogoCheck").onclick=()=>diagnoseMatchdayLogos().catch(error=>{$("setupMatchdayLogoDiagnostics").textContent="Diagnosefehler: "+(error?.message||error)});
   let readyMatchdayPng=null;
   $("setupMatchdayDownload").onclick=()=>{if(readyMatchdayPng)downloadBlob(readyMatchdayPng,safeFileBase()+"_matchday.png");};
+  $("setupMatchdayPreview").onclick=()=>{
+    if(!readyMatchdayPng)return;
+    const url=URL.createObjectURL(readyMatchdayPng);
+    const dialog=document.createElement("dialog");
+    dialog.setAttribute("aria-label","Matchday-Vorschau");
+    dialog.style.cssText="width:min(94vw,610px);max-height:94vh;overflow:auto;background:#0e1b26;color:#eef6fb;border:1px solid #37556a;border-radius:14px;padding:14px";
+    const heading=document.createElement("h3");heading.textContent="Matchday-Vorschau";dialog.append(heading);
+    const img=document.createElement("img");img.alt="Vorschau des erzeugten Matchday-PNG";img.src=url;img.style.cssText="display:block;width:100%;max-width:540px;height:auto;aspect-ratio:4/5;object-fit:contain;margin:auto";dialog.append(img);
+    const close=document.createElement("button");close.type="button";close.className="btn primary";close.textContent="Schließen";close.style.marginTop="12px";close.onclick=()=>dialog.close();dialog.append(close);
+    dialog.addEventListener("close",()=>{URL.revokeObjectURL(url);dialog.remove()});
+    document.body.append(dialog);dialog.showModal();
+  };
+
   $("setupMatchdayPng").onclick=async()=>{
     const status=$("setupMatchdayExportStatus");
     if(exportBusy){status.textContent="Ein Export läuft bereits.";return;}
-    const button=$("setupMatchdayPng");button.disabled=true;readyMatchdayPng=null;$("setupMatchdayDownload").disabled=true;
+    const button=$("setupMatchdayPng");button.disabled=true;readyMatchdayPng=null;$("setupMatchdayDownload").disabled=true;$("setupMatchdayPreview").disabled=true;
     status.textContent="Matchday-PNG wird erzeugt …";
     try{
       const logoWarnings=await ensureInstagramLogos();
@@ -2112,7 +2100,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       }else{
         blob=await instagramCard("MATCHDAY",{color:"#07131b"});
       }
-      readyMatchdayPng=blob;$("setupMatchdayDownload").disabled=false;
+      readyMatchdayPng=blob;$("setupMatchdayDownload").disabled=false;$("setupMatchdayPreview").disabled=false;
       status.textContent="✓ Matchday-PNG bereit (1080 × 1350). Jetzt „PNG herunterladen“ wählen."+(logoWarnings.length?" Hinweis: "+logoWarnings.join(" "):"");
     }catch(error){status.textContent="Export fehlgeschlagen: "+(error?.message||"Unbekannter Fehler");}
     finally{button.disabled=false;}
