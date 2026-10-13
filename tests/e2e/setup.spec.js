@@ -67,7 +67,9 @@ test("imports the Handball360 reference payload without using the live proxy", a
 
   await page.locator("#handballNetCreateDirect").click();
 
-  await expect(page.locator("#score")).toHaveText("35 : 26");
+  await expect(page.locator("#score")).toHaveText("26 : 35");
+  await expect(page.locator("#homeName")).toContainText("Heim ·");
+  await expect(page.locator("#awayName")).toContainText("Gast ·");
   await expect(page.locator("#homeName")).toContainText("Heim ·");
 
   await expect.poll(async () => page.evaluate(async () => {
