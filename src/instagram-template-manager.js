@@ -1,7 +1,7 @@
 export const TEMPLATE_FIELDS = {
-  highlight: ["homeLogo","awayLogo","home","away","score","matchTime","playerName","eventType","comment","videoArea"],
-  matchday: ["homeLogo","awayLogo","home","away"],
-  endstand: ["homeLogo","awayLogo","home","away","score"]
+  highlight: ["homeLogo","awayLogo","home","away","score","matchTime","playerName","eventType","comment","videoArea","competition"],
+  matchday: ["homeLogo","awayLogo","home","away","competition","playerName","eventType"],
+  endstand: ["homeLogo","awayLogo","home","away","score","competition","eventType"]
 };
 export function validateInstagramTemplate(html, kind) {
   const required = TEMPLATE_FIELDS[kind];
@@ -10,7 +10,7 @@ export function validateInstagramTemplate(html, kind) {
   const doc=new DOMParser().parseFromString(source,"text/html");
   const issues=[];
   if (!/<html/i.test(source)||!/<body/i.test(source)) issues.push("Vollständiges HTML-Dokument erforderlich");
-  for(const key of required) if(!doc.querySelector('[data-field="'+key+'"]')) issues.push('Fehlender Platzhalter: data-field="'+key+'"');
+  const missing=required.filter(key=>!doc.querySelector('[data-field="'+key+'"]'));
   for(const el of doc.querySelectorAll("script,iframe,object,embed,base,link")) issues.push("Verbotenes HTML-Element: <"+el.tagName.toLowerCase()+">");
   for(const el of doc.querySelectorAll("*")) for(const attribute of el.attributes) {
     if(/^on/i.test(attribute.name)) issues.push("Verbotener Eventhandler: <"+el.tagName.toLowerCase()+"> "+attribute.name);
@@ -31,7 +31,7 @@ export function validateInstagramTemplate(html, kind) {
   };
   styleBlocks.forEach((css,i)=>explain(css,"<style> #"+(i+1)));
   inlineStyles.forEach((css,i)=>explain(css,'style-Attribut #'+(i+1)));
-  return {valid:issues.length===0,issues};
+  return {valid:issues.length===0,issues,missing,fields:required.map(name=>({name,present:!missing.includes(name)}))};
 }
 export function templatePrompt(kind="highlight") {
   const fields = TEMPLATE_FIELDS[kind] || TEMPLATE_FIELDS.highlight;
@@ -39,7 +39,8 @@ export function templatePrompt(kind="highlight") {
     "Entwickle eine vollständige eigenständige HTML5-Datei als Instagram-Template für Handball.",
     "Canvas exakt 1080 x 1350 Pixel (4:5). Integriertes CSS, keine JavaScript-Dateien, keine externen Ressourcen.",
     "Modernes sportliches Design, starke Typografie, gut lesbare Metadaten. Verwende gegebenenfalls einen bereitgestellten Referenz-Screenshot.",
-    "Erhalte folgende data-field-Attribute unverändert: "+fields.join(", ")+".",
+    "Verwende folgende data-field-Attribute unverändert: "+fields.join(", ")+". Die Vorlage darf weitere gestalterische Elemente enthalten.",
+    "Zeige den Wettbewerb gut lesbar oberhalb der Mannschaften mit data-field=\"competition\". Der Wert wird automatisch aus den Spieldaten übernommen; keine Wettbewerbsbezeichnung fest eintragen.",
     "Gestalte Heim- und Gastlogos als Platzhalter innerhalb der jeweiligen data-field-Elemente.",
     "Spielstand und Spielzeit ausdrücklich beschriften; lange Namen berücksichtigen.",
     kind==="highlight" ? "videoArea ist ein fest positionierter rechteckiger Bereich im Verhältnis 16:9. Kommentar unter dem Video." : "",
