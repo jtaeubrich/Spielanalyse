@@ -172,3 +172,11 @@ test("season preferred team maps imported home and away matches",async({page})=>
  await expect(team).toHaveValue("HSG Herzhorn/Kollmar/Neuendorf");
  await expect(page.locator("#seasonGameList")).toContainText("HSG Herzhorn/Kollmar/Neuendorf");
 });
+
+test("key moment opens defender choices for neutral home and away possession",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator('[data-flow="key"]').click();
+ await expect(page.locator("#keyTagList")).toBeVisible();
+ await expect(page.locator("#keyTagList .unknown-option")).toHaveCount(1);
+});
