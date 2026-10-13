@@ -90,6 +90,13 @@ test("Setup creates standalone Matchday PNG without a video",async ({page})=>{
  await page.locator("#setupMatchdayPng").click();
  await expect(page.locator("#setupMatchdayDownload")).toBeEnabled({timeout:20000});
  await expect(page.locator("#setupMatchdayExportStatus")).toContainText("1080 × 1350");
+ await expect(page.locator("#setupMatchdayPreview")).toBeEnabled();
+ await page.locator("#setupMatchdayPreview").click();
+ const preview=page.getByRole("dialog",{name:"Matchday-Vorschau"});
+ await expect(preview).toBeVisible();
+ await expect(preview.locator("img")).toHaveAttribute("src",/^blob:/);
+ await preview.getByRole("button",{name:"Schließen"}).click();
+ await expect(preview).not.toBeVisible();
 });
 
 test("Setup groups Matchday below game management and collapses subsequent settings",async({page})=>{
