@@ -27,6 +27,59 @@ export function syncForHalf(video = {}, half = 1) {
   return syncPointSeconds(raw, video?.syncUnit || "seconds");
 }
 
+// Estimate imported official events without writing the estimate into realTime.
+// Explicit video offsets always take precedence. A manually matched event can
+// serve as a new anchor after a cut; no interpolation across cuts is attempted.
+export function eventVideoPosition(event, options = {}) {
+  if (!event) return { seconds: NaN, status: "unassigned" };
+  if (options.isVideoscoutingFile && finiteValue(event.realTime)) {
+    return { seconds: Number(event.realTime) / 1000, status: "confirmed" };
+  }
+  if (!options.isVideoscoutingFile) {
+    return { seconds: eventVideoSeconds(event, options), status: "derived" };
+  }
+  if (event.officialSource !== "handball.net" || !finiteValue(event.time)) {
+    return { seconds: NaN, status: "unassigned" };
+  }
+  const duration = Number(options.durationMinutes || 25) * 60;
+  const half = eventHalf(event, options.durationMinutes);
+  const halfStart = (half - 1) * duration;
+  let baseTime = halfStart;
+  let baseVideo = syncForHalf(options.video, half);
+  if (!Number.isFinite(baseVideo)) return { seconds: NaN, status: "unassigned" };
+  const originalTime = Number(event.time);
+  const timestamp = value => {
+    if (value === null || value === undefined || value === "") return NaN;
+    if (typeof value === "number" || /^\\d{10,13}$/.test(String(value))) {
+      const n = Number(value);
+      return Number.isFinite(n) ? (n > 1e11 ? n / 1000 : n) : NaN;
+    }
+    const ms = Date.parse(String(value));
+    return Number.isFinite(ms) ? ms / 1000 : NaN;
+  };
+  let baseEvent = null;
+  for (const point of options.events || []) {
+    if (point === event || !finiteValue(point.realTime) ||
+        eventHalf(point, options.durationMinutes) !== half || !finiteValue(point.time) ||
+        Number(point.time) > originalTime || Number(point.time) < halfStart) continue;
+    if (!baseEvent || Number(point.time) > Number(baseEvent.time)) baseEvent = point;
+  }
+  if (baseEvent) {
+    baseTime = Number(baseEvent.time);
+    baseVideo = Number(baseEvent.realTime) / 1000;
+  }
+  let elapsed = originalTime - baseTime;
+  if (baseEvent) {
+    const from = timestamp(baseEvent.officialTimestamp);
+    const to = timestamp(event.officialTimestamp);
+    if (Number.isFinite(from) && Number.isFinite(to) && to >= from && to - from < 3600) {
+      elapsed = to - from;
+    }
+  }
+  const seconds = baseVideo + elapsed;
+  return { seconds: seconds >= 0 ? seconds : NaN, status: "estimated" };
+}
+
 export function eventVideoSeconds(
   event,
   {
