@@ -2167,16 +2167,15 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     const payload=state.officialData?.payload||{};
     const meta=Array.isArray(payload?.match?.data)?payload.match.data[0]:null;
     const source=state.officialSource||{};
-    const info=payload.additional_info?.data?.[0]??payload.additional_info?.data??payload.additional_info??{};
-    const named=value=>typeof value==="string"?value.trim():String(value?.name??value?.title??value?.designation??"").trim();
-    const venue=[source.venue,meta?.venue,meta?.hall,meta?.sports_hall,meta?.sportsHall,meta?.location,meta?.arena,info?.venue,info?.hall,info?.sports_hall,info?.location].map(named).find(Boolean)||"";
+    const additional=payload.additional_info??payload["additional-info"]??payload.additionalInfo??null;
+    const venue=source.venue||hbVenue(meta,additional)||"";
     const rawDate=source.matchDate||meta?.date||"";
     let matchDate="",matchTime="";
     if(rawDate){
       const d=new Date(rawDate);
       if(!Number.isNaN(d.getTime())){
         matchDate=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric",timeZone:"Europe/Berlin"}).format(d);
-        if(/[T ]\\d{2}:\\d{2}/.test(String(rawDate)))matchTime=new Intl.DateTimeFormat("de-DE",{hour:"2-digit",minute:"2-digit",timeZone:"Europe/Berlin"}).format(d)+" Uhr";
+        if(/[T ]\d{2}:\d{2}/.test(String(rawDate)))matchTime=new Intl.DateTimeFormat("de-DE",{hour:"2-digit",minute:"2-digit",timeZone:"Europe/Berlin"}).format(d)+" Uhr";
       }
     }
     return{matchDate,matchTime,venue};
