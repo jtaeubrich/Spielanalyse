@@ -1003,6 +1003,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(seasonPreferredTeam){
       const candidate=["home","away"].find(side=>String(game.state?.[side]?.name||"").trim().toLocaleLowerCase("de")===seasonPreferredTeam.toLocaleLowerCase("de"));
       if(candidate)return candidate;
+      return null;
     }
 
     if(["home","away"].includes(game.state?.ownTeam))return game.state.ownTeam;
@@ -1021,7 +1022,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   async function loadSeasonFiles(files){
     const {loaded,errors}=await readSeasonGameFiles(files,seasonCurrentOwnName());
     const merged=mergeSeasonGames(seasonGames,loaded);
-    seasonGames=merged.games;for(const game of seasonGames){game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":"home"}renderSeason();persistSeasonSoon();
+    seasonGames=merged.games;for(const game of seasonGames){game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":game.ownTeam==="away"?"home":null}renderSeason();persistSeasonSoon();
     const parts=[];if(merged.added)parts.push(`${merged.added} neu`);if(merged.updated)parts.push(`${merged.updated} aktualisiert`);if(errors.length)parts.push(`${errors.length} übersprungen`);
     toast(parts.length?parts.join(" · "):"Keine Änderungen");
   }
@@ -1030,7 +1031,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const target=seasonGames.find(game=>game.id===targetId);if(!target)throw Error("Saisonspiel nicht gefunden.");
     const data=parseGameText(await file.text()),replacement=seasonNormalizeGame(data,file.name);
     if(replacement.id!==target.id&&!confirm("Die ausgewählte Datei scheint ein anderes Spiel zu sein. Dieses Saisonspiel trotzdem damit ersetzen?"))return false;
-    replacement.id=target.id;replacement.selected=target.selected!==false;replacement.ownTeam=seasonOwnTeam(replacement);replacement.opponentTeam=replacement.ownTeam==="home"?"away":"home";
+    replacement.id=target.id;replacement.selected=target.selected!==false;replacement.ownTeam=seasonOwnTeam(replacement);replacement.opponentTeam=replacement.ownTeam==="home"?"away":replacement.ownTeam==="away"?"home":null;
     const index=seasonGames.findIndex(game=>game.id===target.id);seasonGames[index]=replacement;
     renderSeason();persistSeasonSoon();toast("Saisonspiel aktualisiert");return true;
   }
@@ -1040,13 +1041,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(!confirm(`„${name}“ aus der Saison entfernen?`))return;
     seasonGames=seasonGames.filter(item=>item.id!==id);renderSeason();persistSeasonSoon();toast("Saisonspiel entfernt");
   }
-  function selectedSeasonGames(){return seasonGames.filter(game=>game.selected)}
+  function selectedSeasonGames(){return seasonGames.filter(game=>game.selected&&(!seasonPreferredTeam||game.ownTeam=== "home"||game.ownTeam==="away"))}
   function seasonEventPlayerKey(event,game){return coreSeasonEventPlayerKey(event,game,seasonPlayerResolver())}
   function seasonEventMatchesTeam(event,game,filter){return coreSeasonEventMatchesTeam(event,game,filter)}
   function seasonEventMatchesPlayer(event,game,key){return coreSeasonEventMatchesPlayer(event,game,key,seasonPlayerResolver())}
   function seasonMatchesType(event,type){return coreSeasonMatchesType(event,type)}
   function seasonDimension(value,filter){return coreSeasonDimension(value,filter)}
-  function seasonFilterValues(games=selectedSeasonGames().length?selectedSeasonGames():seasonGames){
+  function seasonFilterValues(games=seasonPreferredTeam?selectedSeasonGames():(selectedSeasonGames().length?selectedSeasonGames():seasonGames)){
     return{
       team:$("seasonTeamFilter")?.value||"all",
       player:$("seasonPlayerFilter")?.value||"all",
@@ -1061,7 +1062,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function seasonFilteredEntries(){return coreFilterSeasonEntries(selectedSeasonGames(),seasonFilterValues())}
   function seasonMetric(label,value,sub=""){return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${sub?`<small>${escapeHtml(sub)}</small>`:""}</div>`}
   function seasonPopulateFilters(){
-    const games=selectedSeasonGames().length?selectedSeasonGames():seasonGames;
+    const games=seasonPreferredTeam?selectedSeasonGames():(selectedSeasonGames().length?selectedSeasonGames():seasonGames);
     const playerMap=new Map(),zones=new Set(),targets=new Set(),phases=new Set(),tags=new Set(),playerKey=seasonPlayerResolver(games);
     for(const game of games){
       const players=game.state[game.ownTeam]?.players||[];
