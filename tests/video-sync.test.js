@@ -28,6 +28,11 @@ describe("video synchronization core", () => {
     expect(syncForHalf({ h2SyncRealTime: 1800 }, 2)).toBe(1800);
   });
 
+  test("video-scouting event video offset stays absolute across halves", () => {
+    const event = {half:2,time:1520,realTime:1620000};
+    expect(eventVideoSeconds(event,{video:{h1SyncRealTime:5,h2SyncRealTime:1600},isVideoscoutingFile:true,durationMinutes:25})).toBe(1620);
+  });
+
   test("maps video-scouting realTime directly to video seconds", () => {
     expect(eventVideoSeconds(
       { time: 30, realTime: 12345, half: 1 },
