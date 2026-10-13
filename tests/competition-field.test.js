@@ -18,7 +18,7 @@ describe("Wettbewerb im Setup und Instagram-Export",()=>{
   const imported=hbPrepare({match_id:"378110",match:{data:[{id:378110,local:{name:"TSV Kronshagen"},visitor:{name:"HSG HKN"},phase:{competition:{name:"Regionalliga Nord männliche B-Jugend"}}}]}});
   expect(imported.competition).toBe("Regionalliga Nord männliche B-Jugend");
   expect(html).toContain('state.competition=x.competition||"Freundschaftsspiel"');
-  expect(html).toContain('if(imported.competition){state.competition=imported.competition;update()}');
+  expect(html).toContain('if(chosen.competition&&imported.competition)state.competition=imported.competition;');
  });
  it("nimmt bei fehlenden Metadaten keine erfundene Spielklasse an",()=>{
   const imported=hbPrepare({match:{data:[{id:378110,local:{name:"A"},visitor:{name:"B"}}]}});
