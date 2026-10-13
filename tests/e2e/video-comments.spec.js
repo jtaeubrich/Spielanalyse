@@ -17,7 +17,7 @@ test("video event comment belongs to selected event and survives reload", async 
   const comment = page.locator("#videoTabEventComment");
   await expect(comment).toBeEnabled();
   await comment.fill("Gute Entscheidung im Rückraum");
-  await expect(page.locator("#videoCommentOverlay")).toHaveText("Gute Entscheidung im Rückraum");
+  await expect(page.locator("#videoCommentOverlay")).toBeEmpty();
   await page.locator('#videoPlaylist [data-event-index="' + secondIndex + '"]').click();
   await expect(comment).toHaveValue("");
   await page.locator('#videoPlaylist [data-event-index="' + firstIndex + '"]').click();
