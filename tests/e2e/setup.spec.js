@@ -128,6 +128,7 @@ test("setup stays usable on a mobile viewport", async ({ page, isMobile }) => {
 
 test("Video Scouting places selectors before video and capture below without game clock buttons",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("body")).toHaveClass(/video-scouting-layout/);
  await expect(page.locator("#matchReviewTopHost #modeSelect")).toBeVisible();
@@ -148,6 +149,7 @@ test("Video Scouting places selectors before video and capture below without gam
 
 test("nearby events use a horizontal strip in Match video scouting",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#matchNearbyEvents")).toBeVisible();
  await expect(page.locator("#matchNearbyList")).toBeVisible();
