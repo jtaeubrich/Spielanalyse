@@ -38,7 +38,7 @@ export function eventVideoSeconds(
   if (!event) return NaN;
 
   const hasReal = finiteValue(event.realTime);
-  if (isVideoscoutingFile && hasReal) return Number(event.realTime) / 1000;
+  if (isVideoscoutingFile) return hasReal ? Number(event.realTime) / 1000 : NaN;
 
   const half = eventHalf(event, durationMinutes);
   const sync = syncForHalf(video, half);
