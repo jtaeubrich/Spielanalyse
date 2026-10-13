@@ -93,6 +93,7 @@ test("imports the Handball360 reference payload without using the live proxy", a
 
   await page.getByRole("button", { name: "Setup" }).click();
   await page.locator("#setupTab details").filter({has:page.locator("summary", {hasText:"Spielkader bearbeiten"})}).locator("summary").click();
+  await page.locator("#setupTeamCollectionPanel > summary").click();
   await expect(page.locator("#rosterCollectionStatus")).toContainText("H360-ID");
 
   await expect.poll(async () => page.locator("#knownRosterSelect option").count()).toBeGreaterThan(1);
