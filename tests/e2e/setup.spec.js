@@ -158,3 +158,18 @@ test("nearby events use a horizontal strip in Match video scouting",async({page}
  await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
  await expect(page.locator("#matchNearbyList")).toHaveCSS("overflow-x","auto");
 });
+
+test("neutral perspective shows real teams and symmetric shot capture",async({page})=>{
+ await page.goto("/");
+ await page.locator("#setupOwnTeamSide").selectOption("neutral");
+ await expect(page.locator("#setupOwnTeamSide")).toHaveValue("neutral");
+ await page.locator('[data-tab="match"]').click();
+ await expect(page.locator("#homePoss")).toContainText("Ballbesitz");
+ await expect(page.locator("#awayPoss")).toContainText("Ballbesitz");
+ await expect(page.locator("#homePoss")).not.toContainText("Mein Team");
+ await expect(page.locator("#awayPoss")).not.toContainText("Gegner");
+ await expect(page.locator("#activeOwnKeeper").locator("..")).toContainText("Heim");
+ await expect(page.locator("#activeOpponentKeeper").locator("..")).toContainText("Gast");
+ await page.locator('[data-tab="setup"]').click();
+ await expect(page.locator("#setupOwnTeamSide")).toHaveValue("neutral");
+});
