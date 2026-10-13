@@ -63,7 +63,7 @@ describe("clip export stability regression", () => {
     expect(stream.addTrack).not.toHaveBeenCalled();
   });
 
-  test("annotation rendering includes shapes and comments", () => {
+  test("annotation rendering keeps shapes but does not burn comments into video", () => {
     const ctx = {
       fillRect: vi.fn(), drawImage: vi.fn(), save: vi.fn(),
       translate: vi.fn(), restore: vi.fn(), fillText: vi.fn(),
@@ -78,7 +78,7 @@ describe("clip export stability regression", () => {
       socialFrameInfo: () => ({})
     });
     expect(drawAnnotationShape).toHaveBeenCalledOnce();
-    expect(ctx.fillText).toHaveBeenCalledWith("Starker Wurf", 640, expect.any(Number), expect.any(Number));
+    expect(ctx.fillText).not.toHaveBeenCalledWith("Starker Wurf", 640, expect.any(Number), expect.any(Number));
   });
 
   test("scene playback aborts after seek before video starts", async () => {
