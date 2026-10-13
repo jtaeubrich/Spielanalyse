@@ -17,9 +17,10 @@ async function rosterRecords(page){
  }));
 }
 async function openImport(page){
+ await page.locator("#setupTab details").filter({has:page.locator("summary",{hasText:"Spieldaten übernehmen"})}).locator("summary").click();
  await page.locator("#existingH360Url").fill("https://www.handball.net/match/378110");
  await page.locator("#existingH360Enrich").click();
- const dialog=page.getByRole("dialog",{name:"Spieldaten übernehmen – Auswahl"});
+ const dialog=page.locator("dialog").filter({has:page.getByRole("heading",{name:"Spieldaten übernehmen – Auswahl"})});
  await expect(dialog).toBeVisible();
  return dialog;
 }
