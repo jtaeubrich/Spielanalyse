@@ -211,3 +211,11 @@ test("selected Match video event editor is before scrollable list",async({page})
  expect(structure.parent).toBe("matchNearbyEvents");
  expect(structure.before).toBeTruthy();
 });
+
+test("video tab exposes set current video or real time for selected event",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="video"]').click();
+ await expect(page.locator("#videoTabSetCurrentTime")).toBeVisible();
+ await expect(page.locator("#videoTabSetCurrentTime")).toBeDisabled();
+ await expect(page.locator("#videoTabSetCurrentTimeStatus")).toContainText("Ereignis auswählen");
+});
