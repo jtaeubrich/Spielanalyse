@@ -830,7 +830,7 @@ import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handbal
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
-import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition } from "./src/video-sync.js";
+import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition } from "./src/video-sync.js";
 import { createScenePlayback, localVideoAdapter, youtubeAdapter } from "./src/video-playback.js";
 import { resolveYoutubeReference, storeYoutubeReference } from "./src/video-reference.js";
 import { selectRecorderMimeType, exportClipFilename } from "./src/clip-export.js";
@@ -988,7 +988,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function eventDescription(e){const main=e.type==="save"?e.throwerName||e.pName:e.pName||e.attackerName||e.note||"Ohne Spieler";const defense=eventDefenseNames(e);return{title:eventLabels[e.type]||e.type||"Ereignis",main,defense}}
   function videoSyncOptions(){return{events:state.events,video:state.video,isVideoscoutingFile:Boolean(state.isVideoscoutingFile),durationMinutes:Number(state.timer.duration||25)}}
   function syncPointSeconds(value){return coreSyncPointSeconds(value,state.video.syncUnit||"seconds")}
-  function eventVideoSeconds(e){if(analysisMode==="video"&&state.isVideoscoutingFile){return e?.realTime!==null&&e?.realTime!==undefined&&e?.realTime!==""&&Number.isFinite(Number(e.realTime))?Number(e.realTime)/1000:NaN}return coreEventVideoSeconds(e,videoSyncOptions())}
+  function eventVideoPosition(e){return coreEventVideoPosition(e,videoSyncOptions())}
+  function eventVideoSeconds(e){return eventVideoPosition(e).seconds}
   function matchReviewSyncForHalf(half){return coreSyncForHalf(state.video,half)}
   function matchReviewEventHalf(e){return coreVideoEventHalf(e,Number(state.timer.duration||25),{boundaryToSecondHalf:true})}
   function estimateMatchReviewGameTime(videoSeconds,half){return coreEstimateReviewGameTime(videoSeconds,half,videoSyncOptions())}
@@ -1591,17 +1592,17 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const shown=activeTab==="match"&&analysisMode==="video"&&!matchReviewMode;
     panel.classList.toggle("hidden",!shown);
     if(!shown)return;
-    const entries=state.events.map((event,index)=>({event,index,at:eventVideoSeconds(event)}))
+    const entries=state.events.map((event,index)=>({event,index,position:eventVideoPosition(event)})).map(item=>({...item,at:item.position.seconds}))
       .sort((a,b)=>Number.isFinite(a.at)?Number.isFinite(b.at)?a.at-b.at:-1:Number.isFinite(b.at)?1:(a.event.time??Infinity)-(b.event.time??Infinity));
-    const key=entries.map(item=>item.index+":"+item.event.type+":"+item.event.time+":"+item.event.realTime).join("|")+";"+activeVideoEventIndex;
+    const key=entries.map(item=>item.index+":"+item.event.type+":"+item.event.time+":"+item.event.realTime+":"+item.at).join("|")+";"+activeVideoEventIndex;
     if(!force&&key===nearbySignature)return;
     nearbySignature=key;
     $("matchNearbyTime").textContent=entries.length+" Events · "+entries.filter(item=>!Number.isFinite(item.at)).length+" ohne Videozeit";
     host.replaceChildren();
     if(!entries.length){const empty=document.createElement("div");empty.className="match-nearby-empty";empty.textContent="Noch keine Ereignisse erfasst.";host.append(empty);return}
-    for(const {event,index,at} of entries){
+    for(const {event,index,at,position} of entries){
       const btn=document.createElement("button");btn.type="button";btn.className="match-nearby-item"+(index===activeVideoEventIndex?" selected":"");
-      const time=document.createElement("small");time.textContent=(event.displayTime||(event.time!=null?fmt(event.time):"Spielzeit offen"))+(Number.isFinite(at)?" · "+fmt(at,true):" · Videozeit fehlt");
+      const time=document.createElement("small");time.textContent=(event.displayTime||(event.time!=null?fmt(event.time):"Spielzeit offen"))+(Number.isFinite(at)?" · Video "+fmt(at,true)+(position.status==="estimated"?" (geschätzt)":" (gesetzt)"):" · Videozeit fehlt");
       const label=document.createElement("strong");label.textContent=(eventLabels[event.type]||event.type)+" · "+(event.pName||event.throwerName||"ohne Spieler");
       btn.append(time,label);btn.onclick=()=>{
         if(activeVideoEventIndex===index){
