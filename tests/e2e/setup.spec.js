@@ -20,21 +20,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const hknFixture = path.resolve(here, "../fixtures/hkn_reference.json");
 const h360Fixture = path.resolve(here, "../fixtures/handball360_378107.json");
 
-test("loads the HKN reference game and lets the user change Mein Team", async ({ page }) => {
-  await page.goto("/");
-
-  await page.locator("#continueGameInput").setInputFiles(hknFixture);
-
-  await expect(page.locator("#homeName")).toContainText("Mein Team");
-  await expect(page.locator("#setupOwnTeamSide")).toHaveValue("away");
-  await expect(page.locator("#setupHomeName")).toHaveValue("HSG Herzhorn/Kollmar/Neuendorf");
-  await expect(page.locator("#setupAwayName")).toHaveValue("Mein Team");
-
-  await page.getByRole("button", { name: "Setup" }).click();
-  await page.locator("#setupOwnTeamSide").selectOption("home");
-
-  await expect(page.locator("#setupOwnTeamSide")).toHaveValue("home");
-  await expect(page.locator("#homeName")).toContainText("Mein Team · HSG Herzhorn/Kollmar/Neuendorf");
+test("loads legacy game with symmetric home and away labels",async({page})=>{
+ await page.goto("/");
+ await page.locator("#continueGameInput").setInputFiles(hknFixture);
+ await expect(page.locator("#homeName")).toContainText("Heim ·");
+ await expect(page.locator("#setupHomeName")).toHaveValue("HSG Herzhorn/Kollmar/Neuendorf");
+ await expect(page.locator("#setupOwnTeamSide")).toHaveCount(0);
 });
 
 test("imports the Handball360 reference payload without using the live proxy", async ({ page }) => {
@@ -77,7 +68,7 @@ test("imports the Handball360 reference payload without using the live proxy", a
   await page.locator("#handballNetCreateDirect").click();
 
   await expect(page.locator("#score")).toHaveText("35 : 26");
-  await expect(page.locator("#homeName")).toContainText("Mein Team · MEIN TEAM");
+  await expect(page.locator("#homeName")).toContainText("Heim ·");
 
   await expect.poll(async () => page.evaluate(async () => {
     return await new Promise((resolve, reject) => {
@@ -123,7 +114,7 @@ test("setup stays usable on a mobile viewport", async ({ page, isMobile }) => {
   await page.goto("/");
   await expect(page.locator("#setupTab")).toBeVisible();
   await expect(page.locator("#newGame")).toBeVisible();
-  await expect(page.locator("#setupOwnTeamSide")).toBeVisible();
+  await expect(page.locator("#setupHomeName")).toBeVisible();
 });
 
 test("Video Scouting places selectors before video and capture below without game clock buttons",async({page})=>{
@@ -159,17 +150,14 @@ test("nearby events use a horizontal strip in Match video scouting",async({page}
  await expect(page.locator("#matchNearbyList")).toHaveCSS("overflow-x","auto");
 });
 
-test("neutral perspective shows real teams and symmetric shot capture",async({page})=>{
+test("symmetric capture and season-only preferred team selector",async({page})=>{
  await page.goto("/");
- await page.locator("#setupOwnTeamSide").selectOption("neutral");
- await expect(page.locator("#setupOwnTeamSide")).toHaveValue("neutral");
+ await expect(page.locator("#setupOwnTeamSide")).toHaveCount(0);
  await page.locator('[data-tab="match"]').click();
  await expect(page.locator("#homePoss")).toContainText("Ballbesitz");
  await expect(page.locator("#awayPoss")).toContainText("Ballbesitz");
- await expect(page.locator("#homePoss")).not.toContainText("Mein Team");
- await expect(page.locator("#awayPoss")).not.toContainText("Gegner");
  await expect(page.locator("#activeOwnKeeper").locator("..")).toContainText("Heim");
  await expect(page.locator("#activeOpponentKeeper").locator("..")).toContainText("Gast");
- await page.locator('[data-tab="setup"]').click();
- await expect(page.locator("#setupOwnTeamSide")).toHaveValue("neutral");
+ await page.locator('[data-tab="season"]').click();
+ await expect(page.locator("#seasonPreferredTeam")).toBeVisible();
 });
