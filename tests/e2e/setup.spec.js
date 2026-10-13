@@ -203,13 +203,22 @@ test("tablet landscape displays video and nearby events side by side",async({pag
  expect(Math.abs(rects.eventsTop-rects.videoTop)).toBeLessThan(5);
 });
 
-test("selected Match video event editor is before scrollable list",async({page})=>{
+test("tablet Match video events list and editor share video height",async({page})=>{
+ await page.setViewportSize({width:1024,height:768});
  await page.goto("/");
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
- const structure=await page.evaluate(()=>{const editor=document.querySelector("#matchNearbyEditorHost");const list=document.querySelector("#matchNearbyList");return {parent:editor.parentElement.id,before:editor.compareDocumentPosition(list)&Node.DOCUMENT_POSITION_FOLLOWING};});
- expect(structure.parent).toBe("matchNearbyEvents");
- expect(structure.before).toBeTruthy();
+ await expect.poll(async()=>page.evaluate(()=>{
+   const list=document.querySelector("#matchNearbyList"),editor=document.querySelector("#matchNearbyEditorHost");
+   return Boolean(list.compareDocumentPosition(editor)&Node.DOCUMENT_POSITION_FOLLOWING);
+ })).toBe(true);
+ const layout=await page.evaluate(()=>{
+   const v=document.querySelector("#matchVideoHost").getBoundingClientRect();
+   const e=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
+   return {difference:Math.abs(v.height-e.height),left:e.left,right:v.right};
+ });
+ expect(layout.difference).toBeLessThan(5);
+ expect(layout.left).toBeGreaterThanOrEqual(layout.right-3);
 });
 
 test("video tab exposes set current video or real time for selected event",async({page})=>{
