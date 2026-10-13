@@ -35,3 +35,11 @@ describe("Freiwurf als Torwurfabschluss",()=>{
   expect(html).not.toContain('data-retain="true"');
  });
 });
+
+describe("Matchday Metadaten",()=>{
+ it("ersetzt auch Spielort, Datum und Anwurf statt Template-Beispielwerte zu behalten",()=>{
+  expect(html).toContain("...matchdayMetadata(),competition:");
+  expect(html).toContain("const venue=[source.venue");
+  expect(html).toContain("return{matchDate,matchTime,venue}");
+ });
+});
