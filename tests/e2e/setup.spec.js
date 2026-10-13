@@ -228,3 +228,16 @@ test("video tab exposes set current video or real time for selected event",async
  await expect(page.locator("#videoTabSetCurrentTime")).toBeDisabled();
  await expect(page.locator("#videoTabSetCurrentTimeStatus")).toContainText("Ereignis auswählen");
 });
+
+
+test("video Match keeps list visible when editor is toggled",async({page})=>{
+ await page.setViewportSize({width:1024,height:768});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ const list=page.locator("#matchNearbyList");
+ const editor=page.locator("#matchNearbyEditorHost");
+ await expect(list).toBeVisible();
+ await expect(editor).toBeHidden();
+ await expect(page.locator("#matchNearbyEvents")).toBeVisible();
+});
