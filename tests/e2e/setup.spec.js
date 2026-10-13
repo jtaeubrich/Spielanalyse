@@ -1,3 +1,17 @@
+test("separates game roster editing from persistent team collection in Setup",async({page})=>{
+ await page.goto("/");
+ await page.locator("#setupRosterPanel > summary").click();
+ await expect(page.locator("#rosterTeam")).toBeVisible();
+ await expect(page.locator("#addPlayer")).toHaveText(/Spieler hinzufügen/);
+ await expect(page.locator("#rosterEditor")).toBeVisible();
+ await page.locator("#setupTeamCollectionPanel > summary").click();
+ await expect(page.locator("#knownRosterSelect")).toBeVisible();
+ await expect(page.locator("#applyKnownRoster")).toHaveText("Für aktuelles Spiel verwenden");
+ await expect(page.locator("#loadRosterCollection")).toHaveText("Spieler für aktuelle Mannschaft ergänzen");
+ await expect(page.locator("#updateRosterCollection")).toHaveText("Spielkader in Sammlung speichern");
+ await expect(page.locator("#deleteKnownRoster")).toHaveText("Aus Sammlung löschen");
+});
+
 import { test, expect } from "@playwright/test";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
