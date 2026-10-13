@@ -5,6 +5,7 @@ test("imports Matchday HTML in Setup and exports standalone PNG",async ({page})=
  const html='<!doctype html><html><head><style>body{margin:0}.poster{width:1080px;height:1350px;background:#d50b27;color:white;font:90px Arial}</style></head><body><main class="poster"><div data-field="homeLogo">LOGO</div><div data-field="awayLogo">LOGO</div><div data-field="home">HOME</div><div data-field="away">AWAY</div></main></body></html>';
  await page.locator("#setupMatchdayTemplateFile").setInputFiles({name:"matchday.html",mimeType:"text/html",buffer:Buffer.from(html)});
  await expect(page.locator("#setupMatchdayTemplateStatus")).toContainText("Akzeptiert");
+ await page.locator("#instagramTemplateCheckDialog button").click();
  await page.locator("#setupMatchdayPng").click();
  await expect(page.locator("#setupMatchdayExportStatus")).toContainText("Matchday-PNG bereit",{timeout:20000});
  await expect(page.locator("#setupMatchdayDownload")).toBeEnabled();
