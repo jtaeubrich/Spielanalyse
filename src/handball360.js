@@ -209,6 +209,16 @@ export function hbClubLogos(matchMeta) {
   return { home: entry("local"), away: entry("visitor") };
 }
 
+export function hbVenue(matchMeta, additionalInfo = null) {
+  const info = additionalInfo?.data?.[0] ?? additionalInfo?.data ?? additionalInfo;
+  const candidates = [matchMeta?.venue, matchMeta?.hall, matchMeta?.sports_hall, matchMeta?.sportsHall, matchMeta?.location, matchMeta?.arena, matchMeta?.playing_hall, matchMeta?.playingHall, info?.venue, info?.hall, info?.sports_hall, info?.sportsHall, info?.location, info?.arena];
+  for (const candidate of candidates) {
+    const value = typeof candidate === "string" ? candidate : candidate?.name ?? candidate?.title ?? candidate?.designation;
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
 export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
   const matchMeta = Array.isArray(raw?.match?.data)
     ? raw.match.data[0]
@@ -272,6 +282,7 @@ export function hbPrepare(raw, { fallbackMatchId = null } = {}) {
     teams,
     matchId,
     matchDate: matchMeta?.date || null,
+    venue: hbVenue(matchMeta, raw?.additional_info ?? raw?.["additional-info"] ?? raw?.additionalInfo),
     competition: matchMeta?.phase?.competition?.name || null,
     homePlayers,
     awayPlayers,
