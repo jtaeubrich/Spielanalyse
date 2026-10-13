@@ -145,3 +145,14 @@ test("Video Scouting places selectors before video and capture below without gam
  expect(positions.selectors).toBeLessThanOrEqual(positions.video+3);
  expect(positions.video).toBeLessThan(positions.capture);
 });
+
+test("nearby events use a horizontal strip in Match video scouting",async({page})=>{
+ await page.goto("/");
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#matchNearbyEvents")).toBeVisible();
+ await expect(page.locator("#matchNearbyList")).toBeVisible();
+ await expect(page.locator("#matchNearbyList")).toContainText("Video laden");
+ await expect(page.locator("#idleStep")).toBeVisible();
+ await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
+ await expect(page.locator("#matchNearbyList")).toHaveCSS("overflow-x","auto");
+});
