@@ -150,6 +150,8 @@ test("nearby events use a horizontal strip in Match video scouting",async({page}
  await expect(page.locator("#matchNearbyList")).toContainText("Video laden");
  await expect(page.locator("#idleStep")).toBeVisible();
  await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
+ await expect(page.locator("#matchNearbyEditorHost")).toHaveCount(1);
+ await expect(page.locator("#matchNearbyList")).toHaveCount(1);
  await expect(page.locator("#matchNearbyList")).toHaveCSS("overflow-x",/auto|hidden/);
  await expect(page.locator("#matchMarkH1")).toBeVisible();
  await expect(page.locator("#matchMarkH2")).toBeVisible();
@@ -199,4 +201,13 @@ test("tablet landscape displays video and nearby events side by side",async({pag
  });
  expect(rects.eventsLeft).toBeGreaterThanOrEqual(rects.videoRight-3);
  expect(Math.abs(rects.eventsTop-rects.videoTop)).toBeLessThan(5);
+});
+
+test("selected Match video event editor is before scrollable list",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ const structure=await page.evaluate(()=>{const editor=document.querySelector("#matchNearbyEditorHost");const list=document.querySelector("#matchNearbyList");return {parent:editor.parentElement.id,before:editor.compareDocumentPosition(list)&Node.DOCUMENT_POSITION_FOLLOWING};});
+ expect(structure.parent).toBe("matchNearbyEvents");
+ expect(structure.before).toBeTruthy();
 });
