@@ -146,6 +146,7 @@ test("nearby events use a horizontal strip in Match video scouting",async({page}
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#matchNearbyEvents")).toBeVisible();
  await expect(page.locator("#matchNearbyList")).toBeVisible();
+ await expect(page.locator("#matchGrid > #matchNearbyEvents")).toHaveCount(1);
  await expect(page.locator("#matchNearbyList")).toContainText("Video laden");
  await expect(page.locator("#idleStep")).toBeVisible();
  await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
@@ -183,4 +184,19 @@ test("key moment opens defender choices for neutral home and away possession",as
  await page.locator('[data-flow="key"]').click();
  await expect(page.locator("#keyTagList")).toBeVisible();
  await expect(page.locator("#keyTagList .unknown-option")).toHaveCount(1);
+});
+
+test("tablet landscape displays video and nearby events side by side",async({page})=>{
+ await page.setViewportSize({width:1024,height:768});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await page.locator("#videoSize").fill("64");
+ const rects=await page.evaluate(()=>{
+  const video=document.querySelector("#matchVideoHost").getBoundingClientRect();
+  const events=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
+  return {videoLeft:video.left,videoRight:video.right,videoTop:video.top,eventsLeft:events.left,eventsTop:events.top};
+ });
+ expect(rects.eventsLeft).toBeGreaterThanOrEqual(rects.videoRight-3);
+ expect(Math.abs(rects.eventsTop-rects.videoTop)).toBeLessThan(5);
 });
