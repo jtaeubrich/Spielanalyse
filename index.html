@@ -443,7 +443,7 @@
     @media(min-width:760px){
       body.video-scouting-layout #matchNearbyEvents{display:flex!important;flex-direction:column;height:var(--match-video-height,560px);min-height:0}
       body.video-scouting-layout #matchNearbyEvents .match-nearby-header{flex:0 0 auto}
-      body.video-scouting-layout #matchNearbyEvents .match-nearby-list{flex:1 1 45%;min-height:72px;max-height:none;overflow-y:auto}
+      body.video-scouting-layout #matchNearbyEvents .match-nearby-list{flex:1 1 auto;min-height:72px;max-height:none;overflow-y:auto}
       body.video-scouting-layout #matchNearbyEditorHost{flex:1 1 55%;min-height:0;overflow-y:auto}
       body.video-scouting-layout #matchNearbyEditorHost.hidden{display:none!important}
       body.video-scouting-layout #matchNearbyEditorHost:not(.hidden){margin:8px 0 0}
@@ -1591,15 +1591,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const shown=activeTab==="match"&&analysisMode==="video"&&!matchReviewMode;
     panel.classList.toggle("hidden",!shown);
     if(!shown)return;
-    const now=mediaReady()?mediaSeconds():NaN;
-    const mapped=state.events.map((event,index)=>({event,index,at:eventVideoSeconds(event)}));
-    const nearby=Number.isFinite(now)?mapped.filter(item=>Number.isFinite(item.at)&&Math.abs(item.at-now)<=10).sort((a,b)=>a.at-b.at):[];
-    const entries=nearby.length?nearby:mapped.sort((a,b)=>Number.isFinite(a.at)?Number.isFinite(b.at)?a.at-b.at:-1:Number.isFinite(b.at)?1:(a.event.time??Infinity)-(b.event.time??Infinity));
-    const fallback=!nearby.length;
-    const key=entries.map(item=>item.index+":"+item.event.type+":"+item.event.time).join("|")+";"+activeVideoEventIndex+";"+fallback;
+    const entries=state.events.map((event,index)=>({event,index,at:eventVideoSeconds(event)}))
+      .sort((a,b)=>Number.isFinite(a.at)?Number.isFinite(b.at)?a.at-b.at:-1:Number.isFinite(b.at)?1:(a.event.time??Infinity)-(b.event.time??Infinity));
+    const key=entries.map(item=>item.index+":"+item.event.type+":"+item.event.time+":"+item.event.realTime).join("|")+";"+activeVideoEventIndex;
     if(!force&&key===nearbySignature)return;
     nearbySignature=key;
-    $("matchNearbyTime").textContent=fallback?"Alle Events · Ohne Videoposition nicht zugeordnet":"± 10 Sekunden · "+fmt(now,true);
+    $("matchNearbyTime").textContent=entries.length+" Events · "+entries.filter(item=>!Number.isFinite(item.at)).length+" ohne Videozeit";
     host.replaceChildren();
     if(!entries.length){const empty=document.createElement("div");empty.className="match-nearby-empty";empty.textContent=Number.isFinite(now)?"Keine Ereignisse in der Nähe – unten neues Ereignis erfassen.":"Video laden und Synchronisierung prüfen.";host.append(empty);return}
     for(const {event,index,at} of entries){
@@ -1607,9 +1604,17 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const time=document.createElement("small");time.textContent=(event.displayTime||(event.time!=null?fmt(event.time):"Spielzeit offen"))+(Number.isFinite(at)?" · "+fmt(at,true):" · Videozeit fehlt");
       const label=document.createElement("strong");label.textContent=(eventLabels[event.type]||event.type)+" · "+(event.pName||event.throwerName||"ohne Spieler");
       btn.append(time,label);btn.onclick=()=>{
+        if(activeVideoEventIndex===index){
+          activeVideoEventIndex=null;
+          $("matchNearbyEditorHost").classList.add("hidden");
+          renderVideoEventEditor();
+          renderMatchNearbyEvents(true);
+          return;
+        }
         mediaPause();activeVideoEventIndex=index;renderVideoEventEditor();
+        $("matchNearbyEditorHost").classList.remove("hidden");
         if(Number.isFinite(at))seekActiveEventExact(event);
-        const editorHost=$("matchNearbyEditorHost");editorHost.classList.remove("hidden");renderMatchNearbyEvents(true);panel.scrollTop=0;
+        renderMatchNearbyEvents(true);
       };host.append(btn);
     }
   }
