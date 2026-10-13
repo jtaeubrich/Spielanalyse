@@ -33,6 +33,11 @@ describe("video synchronization core", () => {
     expect(eventVideoSeconds(event,{video:{h1SyncRealTime:5,h2SyncRealTime:1600},isVideoscoutingFile:true,durationMinutes:25})).toBe(1620);
   });
 
+  test("preserves null game time for a pure video event", () => {
+    const event={type:"goal",time:null,displayTime:null,half:null,realTime:754000};
+    expect(eventVideoSeconds(event,{isVideoscoutingFile:true,video:{},durationMinutes:25})).toBe(754);
+  });
+
   test("maps video-scouting realTime directly to video seconds", () => {
     expect(eventVideoSeconds(
       { time: 30, realTime: 12345, half: 1 },
