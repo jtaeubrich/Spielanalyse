@@ -1712,6 +1712,25 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const hostRect=host.getBoundingClientRect(),targetRect=target.getBoundingClientRect();
     const offset=horizontal?host.scrollLeft+targetRect.left-hostRect.left:host.scrollTop+targetRect.top-hostRect.top;
     if(horizontal)host.scrollLeft=offset;else host.scrollTop=offset;
+    // Only an automatic jump may dismiss the editor. Manual list scrolling
+    // retains the selection, so the user can inspect older events.
+    if(!force&&activeVideoEventIndex!==null){
+      const selected=host.querySelector('.match-nearby-item.selected');
+      if(selected){
+        const selectedRect=selected.getBoundingClientRect();
+        const visibleRect=host.getBoundingClientRect();
+        const disappeared=horizontal
+          ?selectedRect.right<=visibleRect.left+2
+          :selectedRect.bottom<=visibleRect.top+2;
+        if(disappeared){
+          activeVideoEventIndex=null;
+          $("matchNearbyEditorHost").classList.add("hidden");
+          selected.classList.remove("selected");
+          renderVideoEventEditor();
+          nearbySignature="";
+        }
+      }
+    }
   }
   $("matchJumpToCurrentEvent").onclick=()=>{nearbyManualUntil=0;nearbyAutoEventIndex=null;scrollMatchEventsToVideo(true)};
   for(const type of ["touchstart","pointerdown","wheel"]){
