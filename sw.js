@@ -1,4 +1,4 @@
-const CACHE_NAME = "handball-spielanalyse-competition-v3";
+const CACHE_NAME = "handball-spielanalyse-network-first-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -64,6 +64,21 @@ self.addEventListener("fetch", event => {
           return response;
         })
         .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
+  // JavaScript modules must not be served from an older app version.
+  // Prefer network on reload, but preserve offline support.
+  if (requestUrl.pathname.endsWith(".js") || requestUrl.pathname.endsWith(".css")) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))
     );
     return;
   }
