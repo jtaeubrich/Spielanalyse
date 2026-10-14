@@ -251,3 +251,24 @@ test("new game action still opens dialog after video-sync module load",async({pa
  await expect(page.locator("#newGameDialog")).toBeVisible();
  expect(pageErrors).toEqual([]);
 });
+
+test("landscape smartphone shows adjustable video width and compact control groups",async({page})=>{
+ await page.setViewportSize({width:844,height:390});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#videoSize")).toBeVisible();
+ await expect(page.locator("#videoSize")).toHaveAttribute("max","90");
+ await page.locator("#videoSize").fill("72");
+ await expect(page.locator("#videoSizeValue")).toHaveText("72 %");
+ const layout=await page.evaluate(()=>{
+   const host=document.querySelector("#matchVideoHost");
+   const tempo=host.querySelector(".video-control-group:first-child").getBoundingClientRect();
+   const seek=host.querySelector(".video-control-group:nth-child(2)").getBoundingClientRect();
+   const list=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
+   const video=host.getBoundingClientRect();
+   return {tempoY:tempo.top,seekY:seek.top,sideBySide:list.left>=video.right-3};
+ });
+ expect(Math.abs(layout.tempoY-layout.seekY)).toBeLessThan(5);
+ expect(layout.sideBySide).toBe(true);
+});
