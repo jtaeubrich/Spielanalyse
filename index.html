@@ -1059,7 +1059,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("reviewClockCancel").onclick=()=>$("reviewClockDialog").close();
   $("reviewClockForm").onsubmit=event=>{
     event.preventDefault();
-    const match=/^(\\d{1,2}):([0-5]\\d)$/.exec($("reviewClockInput").value.trim());
+    const match=/^(\d{1,2}):([0-5]\d)$/.exec($("reviewClockInput").value.trim());
     if(!match)return $("reviewClockInput").reportValidity();
     const half=Number($("reviewClockDialog").dataset.half),length=Number(state.timer.duration||25)*60;
     const relative=Number(match[1])*60+Number(match[2]);
