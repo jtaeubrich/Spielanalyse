@@ -314,3 +314,16 @@ test("landscape phone attack capture actions fit in one compact row",async({page
  expect(layout.rows).toBe(1);
  expect(layout.largestHeight).toBeLessThan(70);
 });
+
+test("video review clock controls are available with compact half markers",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#reviewClock")).toBeVisible();
+ await expect(page.locator("#reviewVideoTime")).toBeVisible();
+ await expect(page.locator("#reviewGameTime")).toHaveText("--:--");
+ await expect(page.locator("#reviewClockStart")).toBeDisabled();
+ await expect(page.locator("#reviewClockPause")).toBeDisabled();
+ await expect(page.locator("#matchMarkH1")).toHaveText("H1");
+ await expect(page.locator("#matchMarkH2")).toHaveText("H2");
+});
