@@ -300,3 +300,17 @@ test("Match video editor provides a close button",async({page})=>{
  await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
  await expect(page.locator("#matchNearbyList")).toBeVisible();
 });
+
+test("landscape phone attack capture actions fit in one compact row",async({page})=>{
+ await page.setViewportSize({width:844,height:390});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ const layout=await page.locator("#idleStep .actions").evaluate(el=>{
+   const buttons=[...el.querySelectorAll(".choice")].filter(btn=>getComputedStyle(btn).display!=="none");
+   const rects=buttons.map(btn=>btn.getBoundingClientRect());
+   return {rows:new Set(rects.map(rect=>Math.round(rect.top))).size,largestHeight:Math.max(...rects.map(rect=>rect.height))};
+ });
+ expect(layout.rows).toBe(1);
+ expect(layout.largestHeight).toBeLessThan(70);
+});
