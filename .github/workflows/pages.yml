@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Kurze Sammelwartezeit für Folge-Commits
-        run: sleep 30
+        run: sleep 10
       - name: Repository laden
         uses: actions/checkout@v4
       - name: Node.js einrichten
