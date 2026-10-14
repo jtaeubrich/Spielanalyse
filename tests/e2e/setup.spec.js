@@ -357,3 +357,12 @@ test("tablet video scouting shows four capture outcomes in one row and hides rec
  expect(new Set(result.tops).size).toBe(1);
  expect(result.recentVisible).toBe(false);
 });
+
+test("review match clock includes editable synchronization dialog",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#reviewGameTime")).toBeVisible();
+ await expect(page.locator("#reviewClockDialog")).toBeHidden();
+ await expect(page.locator("#reviewClockInput")).toHaveAttribute("placeholder","12:34");
+});
