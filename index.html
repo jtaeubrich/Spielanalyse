@@ -448,6 +448,24 @@
       body.video-scouting-layout #matchNearbyEditorHost.hidden{display:none!important}
       body.video-scouting-layout #matchNearbyEditorHost:not(.hidden){margin:8px 0 0}
     }
+
+    /* Compact match video controls on phones held in landscape orientation. */
+    @media (orientation:landscape) and (max-height:600px) and (min-width:760px) and (max-width:1100px) {
+      body.video-scouting-layout #matchTab #matchVideoHost .video-size{display:flex!important;margin:5px 0 2px;gap:6px;font-size:11px}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-size input{min-width:0}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-control-groups{display:flex;flex-wrap:nowrap;align-items:center;gap:10px;margin:3px 0 6px}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-control-group{flex:0 1 auto;min-width:0;gap:2px}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-control-label{font-size:10px;letter-spacing:0}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-controls{flex-wrap:nowrap;gap:3px}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-controls .btn{padding:5px 7px;font-size:11px;white-space:nowrap;min-width:0}
+      body.video-scouting-layout #matchTab #matchVideoHost .match-review-sync{gap:4px;margin:2px 0 4px;align-items:center}
+      body.video-scouting-layout #matchTab #matchVideoHost .match-review-sync .btn{padding:5px 8px;font-size:11px;white-space:nowrap}
+      body.video-scouting-layout #matchTab #matchVideoHost .match-review-sync .sync-state{font-size:10px;flex-basis:100%;line-height:1.25}
+      body.video-scouting-layout #matchTab #matchVideoHost .workspace{padding:8px}
+      body.video-scouting-layout #matchTab #matchNearbyEvents{padding:7px}
+      body.video-scouting-layout #matchTab #matchNearbyEvents .match-nearby-header{font-size:11px;gap:4px}
+      body.video-scouting-layout #matchTab #matchNearbyEvents .match-nearby-item{padding:6px 8px}
+    }
 </style>
 </head>
 <body>
