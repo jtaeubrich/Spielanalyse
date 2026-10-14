@@ -241,3 +241,13 @@ test("video Match keeps list visible when editor is toggled",async({page})=>{
  await expect(editor).toBeHidden();
  await expect(page.locator("#matchNearbyEvents")).toBeVisible();
 });
+
+
+test("new game action still opens dialog after video-sync module load",async({page})=>{
+ const pageErrors=[];
+ page.on("pageerror",error=>pageErrors.push(error.message));
+ await page.goto("/");
+ await page.locator("#newGame").click();
+ await expect(page.locator("#newGameDialog")).toBeVisible();
+ expect(pageErrors).toEqual([]);
+});
