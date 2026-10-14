@@ -440,6 +440,8 @@
     .match-nearby-item small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}
     .match-nearby-empty{font-size:12px;color:var(--muted);padding:8px 0}
     #matchNearbyEditorHost:not(.hidden){margin:8px 0 12px;padding:10px;border:1px solid var(--cyan);border-radius:10px;background:var(--panel2)}
+    #matchNearbyEditorHost{position:relative}
+    #matchNearbyEditorHost .match-editor-close{position:sticky;top:0;float:right;z-index:3;padding:2px 9px;font-size:21px;line-height:1.1;min-width:32px}
     body.video-scouting-layout #matchNearbyEvents .match-nearby-list{overflow-y:auto;align-content:start}
     @media(min-width:760px){
       body.video-scouting-layout #matchNearbyEvents{display:flex!important;flex-direction:column;height:var(--match-video-height,560px);min-height:0}
@@ -575,7 +577,7 @@
         </div>
         <div class="match-review-capture" id="matchReviewCaptureHost"></div><div class="match-review-event-editor hidden" id="matchReviewEventEditorHost"></div>
       </div>
-    </section><section class="match-nearby-events hidden" id="matchNearbyEvents"><div class="match-nearby-header"><strong>Alle Events · Videoanalyse</strong><button class="btn" id="matchJumpToCurrentEvent" type="button">Zur Videozeit</button><span id="matchNearbyTime">± 10 Sekunden</span></div><div class="match-nearby-list" id="matchNearbyList" aria-label="Events in der Nähe"></div><div id="matchNearbyEditorHost" class="hidden"></div></section></div>
+    </section><section class="match-nearby-events hidden" id="matchNearbyEvents"><div class="match-nearby-header"><strong>Alle Events · Videoanalyse</strong><button class="btn" id="matchJumpToCurrentEvent" type="button">Zur Videozeit</button><span id="matchNearbyTime">± 10 Sekunden</span></div><div class="match-nearby-list" id="matchNearbyList" aria-label="Events in der Nähe"></div><div id="matchNearbyEditorHost" class="hidden"><button class="btn match-editor-close" id="matchEditorClose" type="button" aria-label="Event-Bearbeitung schließen" title="Event-Bearbeitung schließen">×</button></div></section></div>
     <aside class="panel side">
       <div class="time-management">
         <div class="form-grid"><label class="match-mode">Scouting-Modus<select class="field" id="modeSelect"><option value="live">Live Scouting</option><option value="video">Video Scouting</option></select></label><label>Aktiver Torwart · Mein Team<select class="field" id="activeOwnKeeper"></select></label><label>Aktiver Torwart · Gegner<select class="field" id="activeOpponentKeeper"></select></label><label>Deckung · Mein Team<select class="field" id="activeOwnDefense"></select></label><label>Deckung · Gegner<select class="field" id="activeOpponentDefense"></select></label></div>
@@ -1627,6 +1629,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   for(const type of ["touchstart","pointerdown","wheel"]){
     $("matchNearbyList").addEventListener(type,()=>{nearbyManualUntil=performance.now()+8000},{passive:true});
   }
+  $("matchEditorClose").onclick=()=>{
+    activeVideoEventIndex=null;
+    $("matchNearbyEditorHost").classList.add("hidden");
+    renderVideoEventEditor();
+    renderMatchNearbyEvents(true);
+  };
   function renderMatchNearbyEvents(force=false){
     const panel=$("matchNearbyEvents"),host=$("matchNearbyList");
     if(!panel||!host)return;
