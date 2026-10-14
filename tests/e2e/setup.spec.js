@@ -327,3 +327,12 @@ test("video review clock controls are available with compact half markers",async
  await expect(page.locator("#matchMarkH1")).toHaveText("H1");
  await expect(page.locator("#matchMarkH2")).toHaveText("H2");
 });
+
+test("automatic event scrolling dismisses details once selected event leaves view",async({page})=>{
+ await page.setViewportSize({width:844,height:390});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
+ await expect(page.locator("#matchEditorClose")).toHaveCount(1);
+});
