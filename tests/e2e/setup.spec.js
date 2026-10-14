@@ -287,3 +287,16 @@ test("landscape Match video has 16:9 geometry and event position shortcut",async
  expect(geometry.frameRatio).toBeCloseTo(16/9,1);
  expect(geometry.stageRatio).toBeCloseTo(16/9,1);
 });
+
+test("Match video editor provides a close button",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#matchEditorClose")).toHaveCount(1);
+ await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
+ await page.evaluate(()=>document.querySelector("#matchNearbyEditorHost").classList.remove("hidden"));
+ await expect(page.locator("#matchEditorClose")).toBeVisible();
+ await page.locator("#matchEditorClose").click();
+ await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
+ await expect(page.locator("#matchNearbyList")).toBeVisible();
+});
