@@ -344,3 +344,16 @@ test("long press event menu can open details without video seek",async({page})=>
  await expect(page.locator("#matchEventHoldMenu")).toBeHidden();
  await expect(page.locator("#matchEventHoldDetails")).toHaveText("Details ohne Videosprung");
 });
+
+test("tablet video scouting shows four capture outcomes in one row and hides recent events",async({page})=>{
+ await page.setViewportSize({width:1024,height:768});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ const result=await page.evaluate(()=>{
+   const nodes=["shot","error","penalty","key"].map(key=>document.querySelector('#idleStep [data-flow="'+key+'"]'));
+   return {tops:nodes.map(node=>Math.round(node.getBoundingClientRect().top)),recentVisible:getComputedStyle(document.querySelector("#matchGrid>.side>.events")).display!=="none"};
+ });
+ expect(new Set(result.tops).size).toBe(1);
+ expect(result.recentVisible).toBe(false);
+});
