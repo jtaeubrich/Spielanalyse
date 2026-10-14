@@ -513,6 +513,18 @@
     .match-review-sync #matchMarkH1,.match-review-sync #matchMarkH2{font-size:11px;padding:4px 9px;min-height:29px}
     @media (orientation:landscape) and (max-height:600px){.review-clock{gap:5px;padding:3px 6px;font-size:11px}.review-clock strong{font-size:12px}}
     .match-event-hold-menu{position:fixed;z-index:10000;padding:5px;border:1px solid var(--cyan);border-radius:9px;background:var(--panel2);box-shadow:0 5px 20px #0009}.match-event-hold-menu .btn{font-size:12px;padding:9px;white-space:nowrap}
+
+    /* Tablet Match video scouting: one compact row of four capture outcomes. */
+    @media (min-width:760px) and (max-width:1366px) and (min-height:601px){
+      body.video-scouting-layout #matchTab #idleStep .actions{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px}
+      body.video-scouting-layout #matchTab #idleStep .actions>[data-flow="shot"]{grid-column:1!important;grid-row:1!important}
+      body.video-scouting-layout #matchTab #idleStep .actions>[data-flow="error"]{grid-column:2!important;grid-row:1!important}
+      body.video-scouting-layout #matchTab #idleStep .actions>[data-flow="penalty"]{grid-column:3!important;grid-row:1!important}
+      body.video-scouting-layout #matchTab #idleStep .actions>[data-flow="key"]{grid-column:4!important;grid-row:1!important}
+      body.video-scouting-layout #matchTab #idleStep .actions>#triggerActionBtn{grid-column:1/-1!important;grid-row:2!important;min-height:35px}
+      body.video-scouting-layout #matchTab #idleStep .actions>.choice{min-width:0;min-height:48px;padding:7px 4px;font-size:12px;border-radius:9px}
+      body.video-scouting-layout #matchGrid>.side>.events{display:none!important}
+    }
 </style>
 </head>
 <body>
