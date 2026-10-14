@@ -512,7 +512,8 @@
     .review-clock .btn{font-size:12px;padding:3px 8px;min-height:28px}
     .match-review-sync #matchMarkH1,.match-review-sync #matchMarkH2{font-size:11px;padding:4px 9px;min-height:29px}
     @media (orientation:landscape) and (max-height:600px){.review-clock{gap:5px;padding:3px 6px;font-size:11px}.review-clock strong{font-size:12px}}
-  </style>
+    .match-event-hold-menu{position:fixed;z-index:10000;padding:5px;border:1px solid var(--cyan);border-radius:9px;background:var(--panel2);box-shadow:0 5px 20px #0009}.match-event-hold-menu .btn{font-size:12px;padding:9px;white-space:nowrap}
+</style>
 </head>
 <body>
 <div class="app">
@@ -619,7 +620,7 @@
         </div>
         <div class="match-review-capture" id="matchReviewCaptureHost"></div><div class="match-review-event-editor hidden" id="matchReviewEventEditorHost"></div>
       </div>
-    </section><section class="match-nearby-events hidden" id="matchNearbyEvents"><div class="match-nearby-header"><strong>Alle Events · Videoanalyse</strong><button class="btn" id="matchJumpToCurrentEvent" type="button">Zur Videozeit</button><span id="matchNearbyTime">± 10 Sekunden</span></div><div class="match-nearby-list" id="matchNearbyList" aria-label="Events in der Nähe"></div><div id="matchNearbyEditorHost" class="hidden"><button class="btn match-editor-close" id="matchEditorClose" type="button" aria-label="Event-Bearbeitung schließen" title="Event-Bearbeitung schließen">×</button></div></section></div>
+    </section><section class="match-nearby-events hidden" id="matchNearbyEvents"><div class="match-nearby-header"><strong>Alle Events · Videoanalyse</strong><button class="btn" id="matchJumpToCurrentEvent" type="button">Zur Videozeit</button><span id="matchNearbyTime">± 10 Sekunden</span></div><div class="match-nearby-list" id="matchNearbyList" aria-label="Events in der Nähe"></div><div id="matchEventHoldMenu" class="match-event-hold-menu hidden" role="menu"><button class="btn" type="button" id="matchEventHoldDetails">Details ohne Videosprung</button></div><div id="matchNearbyEditorHost" class="hidden"><button class="btn match-editor-close" id="matchEditorClose" type="button" aria-label="Event-Bearbeitung schließen" title="Event-Bearbeitung schließen">×</button></div></section></div>
     <aside class="panel side">
       <div class="time-management">
         <div class="form-grid"><label class="match-mode">Scouting-Modus<select class="field" id="modeSelect"><option value="live">Live Scouting</option><option value="video">Video Scouting</option></select></label><label>Aktiver Torwart · Mein Team<select class="field" id="activeOwnKeeper"></select></label><label>Aktiver Torwart · Gegner<select class="field" id="activeOpponentKeeper"></select></label><label>Deckung · Mein Team<select class="field" id="activeOwnDefense"></select></label><label>Deckung · Gegner<select class="field" id="activeOpponentDefense"></select></label></div>
@@ -1742,6 +1743,20 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     renderVideoEventEditor();
     renderMatchNearbyEvents(true);
   };
+  let holdEventIndex=null;
+  function hideMatchHoldMenu(){$("matchEventHoldMenu").classList.add("hidden");holdEventIndex=null}
+  $("matchEventHoldDetails").onclick=()=>{
+    const index=holdEventIndex;
+    hideMatchHoldMenu();
+    if(index===null)return;
+    activeVideoEventIndex=index;
+    renderVideoEventEditor();
+    $("matchNearbyEditorHost").classList.remove("hidden");
+    renderMatchNearbyEvents(true);
+  };
+  document.addEventListener("pointerdown",event=>{
+    if(!$("matchEventHoldMenu").contains(event.target))hideMatchHoldMenu();
+  });
   function renderMatchNearbyEvents(force=false){
     const panel=$("matchNearbyEvents"),host=$("matchNearbyList");
     if(!panel||!host)return;
@@ -1762,7 +1777,29 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(Number.isFinite(at))btn.dataset.videoSeconds=String(at);btn.type="button";btn.className="match-nearby-item"+(index===activeVideoEventIndex?" selected":"");
       const time=document.createElement("small");time.textContent=(event.displayTime||(event.time!=null?fmt(event.time):"Spielzeit offen"))+(Number.isFinite(at)?" · Video "+fmt(at,true)+(position.status==="estimated"?" (geschätzt)":" (gesetzt)"):" · Videozeit fehlt");
       const label=document.createElement("strong");label.textContent=(eventLabels[event.type]||event.type)+" · "+(event.pName||event.throwerName||"ohne Spieler");
-      btn.append(time,label);btn.onclick=()=>{
+      btn.append(time,label);
+      let holdTimer=null,holdPoint=null,suppressClick=false;
+      const stopHold=()=>{if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null}};
+      btn.addEventListener("pointerdown",e=>{
+        if(e.button!==0)return;
+        stopHold();
+        holdPoint={x:e.clientX,y:e.clientY};
+        holdTimer=setTimeout(()=>{
+          holdTimer=null;
+          suppressClick=true;
+          holdEventIndex=index;
+          const menu=$("matchEventHoldMenu"),rect=btn.getBoundingClientRect();
+          menu.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-260))+"px";
+          menu.style.top=Math.max(8,Math.min(rect.bottom+4,window.innerHeight-54))+"px";
+          menu.classList.remove("hidden");
+        },550);
+      });
+      btn.addEventListener("pointermove",e=>{if(holdPoint&&Math.hypot(e.clientX-holdPoint.x,e.clientY-holdPoint.y)>12)stopHold()});
+      for(const type of ["pointerup","pointercancel","pointerleave"])btn.addEventListener(type,stopHold);
+      btn.addEventListener("contextmenu",e=>{if(suppressClick){e.preventDefault()}});
+      btn.onclick=()=>{
+        if(suppressClick){suppressClick=false;return}
+        hideMatchHoldMenu();
         if(activeVideoEventIndex===index){
           activeVideoEventIndex=null;
           $("matchNearbyEditorHost").classList.add("hidden");
