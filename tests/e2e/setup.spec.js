@@ -336,3 +336,11 @@ test("automatic event scrolling dismisses details once selected event leaves vie
  await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
  await expect(page.locator("#matchEditorClose")).toHaveCount(1);
 });
+
+test("long press event menu can open details without video seek",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#matchEventHoldMenu")).toBeHidden();
+ await expect(page.locator("#matchEventHoldDetails")).toHaveText("Details ohne Videosprung");
+});
