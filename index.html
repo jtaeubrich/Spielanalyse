@@ -1617,7 +1617,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(!Number.isFinite(now))return;
     const buttons=[...host.querySelectorAll(".match-nearby-item[data-video-seconds]")];
     if(!buttons.length)return;
-    const target=buttons.find(button=>Number(button.dataset.videoSeconds)>=now)||buttons[buttons.length-1];
+    // Keep the current event available for five seconds after its timestamp.\n    const target=buttons.find(button=>Number(button.dataset.videoSeconds)>=now-5)||buttons[buttons.length-1];
     if(!target||(!force&&nearbyAutoEventIndex===target.dataset.eventIndex))return;
     nearbyAutoEventIndex=target.dataset.eventIndex;
     const horizontal=host.scrollWidth>host.clientWidth+2&&host.scrollHeight<=host.clientHeight+4;
