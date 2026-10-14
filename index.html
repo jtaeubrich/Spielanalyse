@@ -505,7 +505,14 @@
       body.video-scouting-layout #matchTab #idleStep .actions.no-trigger>[data-flow="penalty"]{grid-column:3!important}
       body.video-scouting-layout #matchTab #idleStep .actions.no-trigger>[data-flow="key"]{grid-column:4!important}
     }
-</style>
+
+    .review-clock{display:flex;align-items:center;flex-wrap:wrap;gap:7px;background:var(--panel2);border-radius:9px;padding:5px 8px;margin:-6px 0 7px;font-size:12px}
+    .review-clock strong{font-variant-numeric:tabular-nums;font-size:15px}
+    .review-clock small{color:var(--muted)}
+    .review-clock .btn{font-size:12px;padding:3px 8px;min-height:28px}
+    .match-review-sync #matchMarkH1,.match-review-sync #matchMarkH2{font-size:11px;padding:4px 9px;min-height:29px}
+    @media (orientation:landscape) and (max-height:600px){.review-clock{gap:5px;padding:3px 6px;font-size:11px}.review-clock strong{font-size:12px}}
+  </style>
 </head>
 <body>
 <div class="app">
@@ -598,10 +605,11 @@
       <div class="panel workspace">
         <form class="video-form" id="youtubeForm"><input class="field" id="youtubeUrl" aria-label="YouTube-Link" placeholder="YouTube-Link einfügen" type="text" required><button class="btn primary">YouTube laden</button><button class="btn" id="chooseLocalVideo" type="button">Lokales Video</button><input class="hidden" id="localVideoInput" type="file" accept="video/*"></form>
         <div class="video-frame"><div class="video-stage" id="videoStage"><div class="video-surface" id="videoSurface"><div id="youtubePlayer">YouTube- oder lokales Video laden</div></div><canvas class="annotation-canvas" id="annotationCanvas"></canvas><div class="video-comment-overlay" id="videoCommentOverlay"></div></div></div>
+        <div class="review-clock" id="reviewClock"><span>Video <strong id="reviewVideoTime">--:--</strong></span><span>Spiel <strong id="reviewGameTime">--:--</strong> <small id="reviewClockBasis">geschätzt</small></span><button class="btn" id="reviewClockPause" type="button" aria-label="Rekonstruierte Spieluhr pausieren" title="Spieluhr pausieren">Ⅱ</button><button class="btn" id="reviewClockStart" type="button" aria-label="Rekonstruierte Spieluhr fortsetzen" title="Spieluhr fortsetzen">▶</button></div>
         <div id="videoMessage" role="status">Video und Spielzeit lassen sich getrennt starten und stoppen.</div>
         <div class="annotation-section" id="annotationSection"><button class="btn annotation-tools-toggle" id="annotationToolsToggle" type="button" aria-expanded="false"><span>Zeichenwerkzeuge</span><span aria-hidden="true">▾</span></button><div class="annotation-toolbar" aria-label="Videoannotation"><button class="btn" id="drawToggle" type="button">Zeichnen</button><select class="field" id="drawTool" aria-label="Zeichenwerkzeug"><option value="pen">Freihand</option><option value="arrow">Pfeil</option><option value="circle">Kreis</option></select><input class="field" id="drawColor" type="color" value="#ffca55" aria-label="Zeichenfarbe"><button class="btn" id="undoDrawing" type="button">Zeichnung zurück</button><button class="btn danger" id="clearDrawing" type="button">Zeichnung löschen</button></div></div>
         <div class="video-control-groups" aria-label="Videosteuerung"><div class="video-control-group"><span class="video-control-label">Tempo</span><div class="video-controls"><button class="btn" data-rate="0.5">0,5×</button><button class="btn selected" data-rate="1">1×</button><button class="btn" data-rate="1.25">1,25×</button><button class="btn" data-rate="1.5">1,5×</button></div></div><div class="video-control-group"><span class="video-control-label">Abspielposition</span><div class="video-controls"><button class="btn" type="button" data-video-seek="-5" aria-label="5 Sekunden zurück">−5 s</button><button class="btn" type="button" data-video-seek="-1" aria-label="1 Sekunde zurück">−1 s</button><button class="btn" type="button" data-video-seek="1" aria-label="1 Sekunde vor">+1 s</button><button class="btn" type="button" data-video-seek="5" aria-label="5 Sekunden vor">+5 s</button></div></div></div>
-        <div class="match-review-sync" aria-label="Video mit Live-Ereignissen synchronisieren"><button class="btn" id="matchMarkH1" type="button">Anpfiff H1 setzen</button><button class="btn" id="matchMarkH2" type="button">Anpfiff H2 setzen</button><span class="sync-state" id="matchSyncState">H1: nicht gesetzt · H2: nicht gesetzt</span></div>
+        <div class="match-review-sync" aria-label="Video mit Live-Ereignissen synchronisieren"><button class="btn" id="matchMarkH1" type="button" aria-label="Anpfiff H1 setzen" title="Anpfiff H1 bei aktueller Videoposition">H1</button><button class="btn" id="matchMarkH2" type="button" aria-label="Anpfiff H2 setzen" title="Anpfiff H2 bei aktueller Videoposition">H2</button><span class="sync-state" id="matchSyncState">H1: nicht gesetzt · H2: nicht gesetzt</span></div>
         <label class="video-size" for="videoSize"><span>Videobreite</span><input id="videoSize" type="range" min="45" max="90" value="60"><output id="videoSizeValue">56 %</output></label>
         <div class="match-review-window" id="matchReviewWindow">
           <strong>Szenenwiedergabe</strong>
@@ -963,7 +971,52 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(opp)opp.textContent=(otherSide==="home"?"Heim · ":"Gast · ")+(state[otherSide]?.name||otherSide);
     }
     const [h,a]=score(),scores={home:h,away:a},other=opponentTeam(),left="home",right="away",role=t=>t==="home"?"Heim":"Gast",teamName=t=>state[t]?.name||role(t);$("homeName").textContent=`${role(left)} · ${teamName(left)}`;$("awayName").textContent=`${role(right)} · ${teamName(right)}`;$("score").textContent=`${scores[left]} : ${scores[right]}`;$("half").textContent=`${state.timer.half}. Halbzeit`;for(const team of ["home","away"]){const b=$(team+"Poss");b.textContent=`${(state[team]?.name||role(team)).slice(0,21)}${(state[team]?.name||"").length>21?"…":""} · Ballbesitz`;b.style.order=String((team==="home"?1:3))}document.querySelector(".possession .arrow").style.order="2";document.querySelectorAll(".poss").forEach(b=>b.classList.toggle("active",b.dataset.team===state.possession));for(const team of ["home","away"]){const option=$("rosterTeam").querySelector(`option[value="${team}"]`);option.textContent=(team==="home"?"Heim · ":"Gast · ")+(state[team]?.name||team)}$("matchTabButton").classList.toggle("hidden",state.isHistorical);if(state.isHistorical&&activeTab==="match")showTab("analysis");$("eventCount").textContent=`${state.events.length} Ereignisse`;$("triggerActionBtn").classList.toggle("hidden",!state.shotCapture.trigger);$("idleStep").querySelector(".actions")?.classList.toggle("no-trigger",!state.shotCapture.trigger);renderActiveKeepers();renderEvents();renderSetup();renderAnalysis();renderVideoPlaylist();if(activeTab==="data")renderDataEditor();updateSyncState();updateMatchReviewControls();persistSession();}
-  function tick(){const gs=currentGameSeconds(),secondaryMs=matchReviewMode&&mediaReady()?Math.round(mediaSeconds()*1000):currentVideoMs(),halfDue=gs>=Number(state.timer.duration||0)*60;$("gameClock").textContent=fmt((state.timer.half-1)*state.timer.duration*60+gs);$("videoClock").textContent=fmt(secondaryMs/1000,true);$("halfBtn").classList.toggle("half-due",halfDue);$("halfBtn").setAttribute("aria-label",halfDue?"Halbzeit wechseln – Spielzeit abgelaufen":"Halbzeit wechseln");$("halfBtn").title=halfDue?"Spielzeit der aktuellen Halbzeit ist abgelaufen":"";scenePlayback.tick();if(activeTab==="match"&&analysisMode==="video"&&performance.now()-nearbyLastRefresh>350){nearbyLastRefresh=performance.now();renderMatchNearbyEvents()}if(activeTab==="match"&&matchReviewMode&&mediaReady())updateMatchReviewActiveEvent();requestAnimationFrame(tick)}requestAnimationFrame(tick);
+  // Reconstructed clock belongs to the video, not the official event timestamps.
+  // Each manual pause/resume creates a video-position anchor, which remains editable by seeking.
+  function reconstructedReviewClock(videoAt){
+    if(!Number.isFinite(videoAt))return null;
+    const halfLength=Number(state.timer.duration||25)*60;
+    const first=syncPointSeconds(state.video.h1SyncRealTime??state.video.kickoff);
+    const second=syncPointSeconds(state.video.h2SyncRealTime);
+    const half=Number.isFinite(second)&&videoAt>=second?2:1;
+    const start=half===2?second:first;
+    if(!Number.isFinite(start)||videoAt<start)return null;
+    const manual=(state.video.reviewClockAnchors||[]).filter(a=>a.half===half&&Number.isFinite(a.videoAt)&&a.videoAt<=videoAt).sort((a,b)=>a.videoAt-b.videoAt);
+    const latest=manual[manual.length-1];
+    if(latest){
+      const value=latest.gameAt+(latest.running?videoAt-latest.videoAt:0);
+      return {seconds:Math.max((half-1)*halfLength,Math.min(half*halfLength,value)),half,running:latest.running,manual:true};
+    }
+    const points=state.events.map(e=>({video:eventVideoSeconds(e),game:Number(e.time)})).filter(p=>Number.isFinite(p.video)&&eSafeTime(p.game,half,halfLength)&&p.video>=start).sort((a,b)=>a.video-b.video);
+    const anchors=[{video:start,game:(half-1)*halfLength},...points];
+    let before=anchors[0],after=null;
+    for(const p of anchors.slice(1)){if(p.video>videoAt){after=p;break;}before=p;}
+    const value=after&&after.video>before.video?before.game+(after.game-before.game)*(videoAt-before.video):before.game+videoAt-before.video;
+    return {seconds:Math.max((half-1)*halfLength,Math.min(half*halfLength,value)),half,running:true,manual:false};
+  }
+  function eSafeTime(time,half,length){return time>=(half-1)*length&&time<=half*length}
+  function setReviewClockRunning(running){
+    if(!mediaReady())return toast("Zuerst Video laden.");
+    const videoAt=mediaSeconds(),clock=reconstructedReviewClock(videoAt);
+    if(!clock)return toast("Bitte zuerst Anpfiff H1 oder H2 im Video markieren.");
+    const anchors=Array.isArray(state.video.reviewClockAnchors)?state.video.reviewClockAnchors:[];
+    state.video.reviewClockAnchors=[...anchors.filter(a=>a.half!==clock.half||a.videoAt<videoAt),{half:clock.half,videoAt,gameAt:clock.seconds,running}];
+    updateReviewClock(videoAt);persistSession();
+  }
+  $("reviewClockPause").onclick=()=>setReviewClockRunning(false);
+  $("reviewClockStart").onclick=()=>setReviewClockRunning(true);
+  function updateReviewClock(videoAt=mediaSeconds()){
+    const shown=(activeTab==="match"&&analysisMode==="video")||activeTab==="video";
+    $("reviewClock").classList.toggle("hidden",!shown);
+    if(!shown)return;
+    $("reviewVideoTime").textContent=Number.isFinite(videoAt)?fmt(videoAt,true):"--:--";
+    const clock=reconstructedReviewClock(videoAt);
+    $("reviewGameTime").textContent=clock?fmt(clock.seconds):"--:--";
+    $("reviewClockBasis").textContent=!clock?"Anpfiff fehlt":clock.manual?(clock.running?"manuell":"pausiert"):"geschätzt";
+    $("reviewClockPause").disabled=!clock||!clock.running;
+    $("reviewClockStart").disabled=!clock||clock.running;
+  }
+  function tick(){updateReviewClock();const gs=currentGameSeconds(),secondaryMs=matchReviewMode&&mediaReady()?Math.round(mediaSeconds()*1000):currentVideoMs(),halfDue=gs>=Number(state.timer.duration||0)*60;$("gameClock").textContent=fmt((state.timer.half-1)*state.timer.duration*60+gs);$("videoClock").textContent=fmt(secondaryMs/1000,true);$("halfBtn").classList.toggle("half-due",halfDue);$("halfBtn").setAttribute("aria-label",halfDue?"Halbzeit wechseln – Spielzeit abgelaufen":"Halbzeit wechseln");$("halfBtn").title=halfDue?"Spielzeit der aktuellen Halbzeit ist abgelaufen":"";scenePlayback.tick();if(activeTab==="match"&&analysisMode==="video"&&performance.now()-nearbyLastRefresh>350){nearbyLastRefresh=performance.now();renderMatchNearbyEvents()}if(activeTab==="match"&&matchReviewMode&&mediaReady())updateMatchReviewActiveEvent();requestAnimationFrame(tick)}requestAnimationFrame(tick);
   const shotFieldOrder=["location","target","phase","result"],shotStepOrder=["location","phase"],shotFieldLabels={location:"Abwurfort",target:"Wurfziel",phase:"Spielsituation",result:"Torerfolg / Parade",assist:"Assist"};
   const shotFieldElements={location:$("shotFieldLocation"),target:$("shotFieldTarget"),phase:$("shotFieldPhase"),result:$("shotFieldResult"),assist:$("shotFieldAssist")},shotControlElements={phaseList:$("phaseList"),resultList:$("shotResultList"),missButton:$("missResultButton"),missHint:$("missResultHint")};
   function enabledShotFields(){return shotFieldOrder.filter(key=>state.shotCapture[key])}
@@ -1624,7 +1677,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   window.addEventListener("afterprint",cleanupAnalysisPrint);
 
   function updateSyncState(){const label=half=>{const video=syncPointSeconds(state.video[half===1?"h1SyncRealTime":"h2SyncRealTime"]),rawLive=state.video[half===1?"h1LiveStartMs":"h2LiveStartMs"],hasLive=rawLive!==null&&rawLive!==undefined&&rawLive!==""&&Number.isFinite(Number(rawLive));if(!Number.isFinite(video))return`H${half}: nicht gesetzt`;return`H${half}: ${fmt(video,true)}${hasLive?` ↔ Real ${fmt(Number(rawLive)/1000,true)}`:" · Realzeit-Anker fehlt"}`},text=`${label(1)} · ${label(2)}`;$("syncState").textContent=text;$("matchSyncState").textContent=text}
-  function markHalf(half){if(!mediaReady())return toast("Zuerst das passende YouTube- oder lokale Video laden.");const key=half===1?"h1SyncRealTime":"h2SyncRealTime",liveKey=half===1?"h1LiveStartMs":"h2LiveStartMs";state.video[key]=mediaSeconds();state.video.syncUnit="seconds";state.video.kickoff=half===1?state.video[key]:state.video.kickoff;const rawLive=state.video[liveKey],hasLive=rawLive!==null&&rawLive!==undefined&&rawLive!==""&&Number.isFinite(Number(rawLive));update();toast(analysisMode==="video"?`Anpfiff H${half} bei Videozeit ${fmt(state.video[key],true)} gesetzt`:hasLive?`Anpfiff H${half} synchronisiert`:`Anpfiff H${half} gesetzt – Realzeit-Anker fehlt`)}
+  function markHalf(half){if(!mediaReady())return toast("Zuerst das passende YouTube- oder lokale Video laden.");const key=half===1?"h1SyncRealTime":"h2SyncRealTime",liveKey=half===1?"h1LiveStartMs":"h2LiveStartMs";state.video[key]=mediaSeconds();state.video.reviewClockAnchors=(state.video.reviewClockAnchors||[]).filter(a=>a.half!==half);state.video.syncUnit="seconds";state.video.kickoff=half===1?state.video[key]:state.video.kickoff;const rawLive=state.video[liveKey],hasLive=rawLive!==null&&rawLive!==undefined&&rawLive!==""&&Number.isFinite(Number(rawLive));update();toast(analysisMode==="video"?`Anpfiff H${half} bei Videozeit ${fmt(state.video[key],true)} gesetzt`:hasLive?`Anpfiff H${half} synchronisiert`:`Anpfiff H${half} gesetzt – Realzeit-Anker fehlt`)}
   $("markH1").onclick=()=>markHalf(1);$("markH2").onclick=()=>markHalf(2);
   $("matchMarkH1").onclick=()=>markHalf(1);$("matchMarkH2").onclick=()=>markHalf(2);
   function populateVideoTags(){const select=$("videoTagFilter"),value=select.value||"all",used=usedEventTags(),suggestions=cleanTagList([...tagLibrary,...used]);select.replaceChildren(new Option("Alle Tags","all"),new Option("Nur Highlights","__highlight__"));for(const tag of used)select.add(new Option(tag,tag));select.value=[...select.options].some(option=>option.value===value)?value:"all";$("eventTagSuggestions").replaceChildren(...suggestions.map(tag=>{const option=document.createElement("option");option.value=tag;return option}))}
