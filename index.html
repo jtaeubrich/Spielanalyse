@@ -525,6 +525,10 @@
       body.video-scouting-layout #matchTab #idleStep .actions>.choice{min-width:0;min-height:48px;padding:7px 4px;font-size:12px;border-radius:9px}
       body.video-scouting-layout #matchGrid>.side>.events{display:none!important}
     }
+  .review-game-time{background:transparent;border:1px dashed var(--cyan);color:var(--text);border-radius:5px;padding:2px 5px;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;cursor:pointer}
+  .review-clock-dialog{max-width:min(360px,calc(100vw - 24px));padding:16px;background:var(--panel2);color:var(--text);border:1px solid var(--cyan);border-radius:12px}
+  .review-clock-dialog form{display:grid;gap:10px}.review-clock-dialog h3,.review-clock-dialog p{margin:0}
+  .review-clock-dialog::backdrop{background:#000a}.review-clock-dialog-actions{display:flex;justify-content:flex-end;gap:8px}
 </style>
 </head>
 <body>
@@ -618,8 +622,8 @@
       <div class="panel workspace">
         <form class="video-form" id="youtubeForm"><input class="field" id="youtubeUrl" aria-label="YouTube-Link" placeholder="YouTube-Link einfügen" type="text" required><button class="btn primary">YouTube laden</button><button class="btn" id="chooseLocalVideo" type="button">Lokales Video</button><input class="hidden" id="localVideoInput" type="file" accept="video/*"></form>
         <div class="video-frame"><div class="video-stage" id="videoStage"><div class="video-surface" id="videoSurface"><div id="youtubePlayer">YouTube- oder lokales Video laden</div></div><canvas class="annotation-canvas" id="annotationCanvas"></canvas><div class="video-comment-overlay" id="videoCommentOverlay"></div></div></div>
-        <div class="review-clock" id="reviewClock"><span>Video <strong id="reviewVideoTime">--:--</strong></span><span>Spiel <strong id="reviewGameTime">--:--</strong> <small id="reviewClockBasis">geschätzt</small></span><button class="btn" id="reviewClockPause" type="button" aria-label="Rekonstruierte Spieluhr pausieren" title="Spieluhr pausieren">Ⅱ</button><button class="btn" id="reviewClockStart" type="button" aria-label="Rekonstruierte Spieluhr fortsetzen" title="Spieluhr fortsetzen">▶</button></div>
-        <div id="videoMessage" role="status">Video und Spielzeit lassen sich getrennt starten und stoppen.</div>
+        <div class="review-clock" id="reviewClock"><span>Video <strong id="reviewVideoTime">--:--</strong></span><span>Spiel <button class="review-game-time" id="reviewGameTime" type="button" title="Spieluhr im Video ablesen und Synchronisationspunkt setzen" aria-label="Geschätzte Spielzeit bearbeiten">--:--</button> <small id="reviewClockBasis">geschätzt</small></span><button class="btn" id="reviewClockPause" type="button" aria-label="Rekonstruierte Spieluhr pausieren" title="Spieluhr pausieren">Ⅱ</button><button class="btn" id="reviewClockStart" type="button" aria-label="Rekonstruierte Spieluhr fortsetzen" title="Spieluhr fortsetzen">▶</button></div>
+        <dialog id="reviewClockDialog" class="review-clock-dialog"><form id="reviewClockForm" method="dialog"><h3>Spielzeit synchronisieren</h3><p id="reviewClockDialogInfo"></p><label>Spielzeit (MM:SS)<input id="reviewClockInput" class="field" type="text" inputmode="numeric" placeholder="12:34" pattern="[0-9]{1,2}:[0-5][0-9]" required></label><p class="number-help">Synchronisationspunkt an der aktuellen Videoposition speichern. Spätere bekannte Punkte bleiben unverändert.</p><div class="review-clock-dialog-actions"><button class="btn" type="button" id="reviewClockCancel">Abbrechen</button><button class="btn primary" type="submit">Synchronisieren</button></div></form></dialog><div id="videoMessage" role="status">Video und Spielzeit lassen sich getrennt starten und stoppen.</div>
         <div class="annotation-section" id="annotationSection"><button class="btn annotation-tools-toggle" id="annotationToolsToggle" type="button" aria-expanded="false"><span>Zeichenwerkzeuge</span><span aria-hidden="true">▾</span></button><div class="annotation-toolbar" aria-label="Videoannotation"><button class="btn" id="drawToggle" type="button">Zeichnen</button><select class="field" id="drawTool" aria-label="Zeichenwerkzeug"><option value="pen">Freihand</option><option value="arrow">Pfeil</option><option value="circle">Kreis</option></select><input class="field" id="drawColor" type="color" value="#ffca55" aria-label="Zeichenfarbe"><button class="btn" id="undoDrawing" type="button">Zeichnung zurück</button><button class="btn danger" id="clearDrawing" type="button">Zeichnung löschen</button></div></div>
         <div class="video-control-groups" aria-label="Videosteuerung"><div class="video-control-group"><span class="video-control-label">Tempo</span><div class="video-controls"><button class="btn" data-rate="0.5">0,5×</button><button class="btn selected" data-rate="1">1×</button><button class="btn" data-rate="1.25">1,25×</button><button class="btn" data-rate="1.5">1,5×</button></div></div><div class="video-control-group"><span class="video-control-label">Abspielposition</span><div class="video-controls"><button class="btn" type="button" data-video-seek="-5" aria-label="5 Sekunden zurück">−5 s</button><button class="btn" type="button" data-video-seek="-1" aria-label="1 Sekunde zurück">−1 s</button><button class="btn" type="button" data-video-seek="1" aria-label="1 Sekunde vor">+1 s</button><button class="btn" type="button" data-video-seek="5" aria-label="5 Sekunden vor">+5 s</button></div></div></div>
         <div class="match-review-sync" aria-label="Video mit Live-Ereignissen synchronisieren"><button class="btn" id="matchMarkH1" type="button" aria-label="Anpfiff H1 setzen" title="Anpfiff H1 bei aktueller Videoposition">H1</button><button class="btn" id="matchMarkH2" type="button" aria-label="Anpfiff H2 setzen" title="Anpfiff H2 bei aktueller Videoposition">H2</button><span class="sync-state" id="matchSyncState">H1: nicht gesetzt · H2: nicht gesetzt</span></div>
@@ -986,6 +990,26 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const [h,a]=score(),scores={home:h,away:a},other=opponentTeam(),left="home",right="away",role=t=>t==="home"?"Heim":"Gast",teamName=t=>state[t]?.name||role(t);$("homeName").textContent=`${role(left)} · ${teamName(left)}`;$("awayName").textContent=`${role(right)} · ${teamName(right)}`;$("score").textContent=`${scores[left]} : ${scores[right]}`;$("half").textContent=`${state.timer.half}. Halbzeit`;for(const team of ["home","away"]){const b=$(team+"Poss");b.textContent=`${(state[team]?.name||role(team)).slice(0,21)}${(state[team]?.name||"").length>21?"…":""} · Ballbesitz`;b.style.order=String((team==="home"?1:3))}document.querySelector(".possession .arrow").style.order="2";document.querySelectorAll(".poss").forEach(b=>b.classList.toggle("active",b.dataset.team===state.possession));for(const team of ["home","away"]){const option=$("rosterTeam").querySelector(`option[value="${team}"]`);option.textContent=(team==="home"?"Heim · ":"Gast · ")+(state[team]?.name||team)}$("matchTabButton").classList.toggle("hidden",state.isHistorical);if(state.isHistorical&&activeTab==="match")showTab("analysis");$("eventCount").textContent=`${state.events.length} Ereignisse`;$("triggerActionBtn").classList.toggle("hidden",!state.shotCapture.trigger);$("idleStep").querySelector(".actions")?.classList.toggle("no-trigger",!state.shotCapture.trigger);renderActiveKeepers();renderEvents();renderSetup();renderAnalysis();renderVideoPlaylist();if(activeTab==="data")renderDataEditor();updateSyncState();updateMatchReviewControls();persistSession();}
   // Reconstructed clock belongs to the video, not the official event timestamps.
   // Each manual pause/resume creates a video-position anchor, which remains editable by seeking.
+  function reviewClockPoints(half,start,length){
+    const points=[{video:start,game:(half-1)*length,running:true,source:"start"}];
+    for(const e of state.events){
+      const v=eventVideoSeconds(e),g=e.time===null||e.time===undefined?NaN:Number(e.time);
+      if(Number.isFinite(v)&&v>=start&&Number.isFinite(g)&&g>=(half-1)*length&&g<=half*length)
+        points.push({video:v,game:g,running:true,source:"event"});
+    }
+    for(const a of state.video.reviewClockAnchors||[]){
+      if(a.half===half&&Number.isFinite(Number(a.videoAt))&&Number(a.videoAt)>=start&&Number.isFinite(Number(a.gameAt)))
+        points.push({video:Number(a.videoAt),game:Number(a.gameAt),running:a.running!==false,source:"manual"});
+    }
+    const priority={start:0,event:1,manual:2};
+    points.sort((a,b)=>a.video-b.video||priority[a.source]-priority[b.source]);
+    const merged=[];
+    for(const p of points){
+      if(merged.length&&Math.abs(merged[merged.length-1].video-p.video)<0.01)merged[merged.length-1]=p;
+      else merged.push(p);
+    }
+    return merged;
+  }
   function reconstructedReviewClock(videoAt){
     if(!Number.isFinite(videoAt))return null;
     const halfLength=Number(state.timer.duration||25)*60;
@@ -994,30 +1018,58 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const half=Number.isFinite(second)&&videoAt>=second?2:1;
     const start=half===2?second:first;
     if(!Number.isFinite(start)||videoAt<start)return null;
-    const manual=(state.video.reviewClockAnchors||[]).filter(a=>a.half===half&&Number.isFinite(a.videoAt)&&a.videoAt<=videoAt).sort((a,b)=>a.videoAt-b.videoAt);
-    const latest=manual[manual.length-1];
-    if(latest){
-      const value=latest.gameAt+(latest.running?videoAt-latest.videoAt:0);
-      return {seconds:Math.max((half-1)*halfLength,Math.min(half*halfLength,value)),half,running:latest.running,manual:true};
-    }
-    const points=state.events.map(e=>({video:eventVideoSeconds(e),game:Number(e.time)})).filter(p=>Number.isFinite(p.video)&&eSafeTime(p.game,half,halfLength)&&p.video>=start).sort((a,b)=>a.video-b.video);
-    const anchors=[{video:start,game:(half-1)*halfLength},...points];
-    let before=anchors[0],after=null;
-    for(const p of anchors.slice(1)){if(p.video>videoAt){after=p;break;}before=p;}
-    const value=after&&after.video>before.video?before.game+(after.game-before.game)*(videoAt-before.video):before.game+videoAt-before.video;
-    return {seconds:Math.max((half-1)*halfLength,Math.min(half*halfLength,value)),half,running:true,manual:false};
+    const points=reviewClockPoints(half,start,halfLength);
+    let previous=points[0],next=null;
+    for(const p of points.slice(1)){if(p.video>videoAt){next=p;break;}previous=p;}
+    // When the observed match clock is stopped, it stays fixed until another
+    // manual start marker. Otherwise interpolate only up to the next anchor.
+    const elapsed=videoAt-previous.video;
+    const seconds=previous.running===false?previous.game:
+      next&&next.video>previous.video
+        ?previous.game+(next.game-previous.game)*elapsed/(next.video-previous.video)
+        :previous.game+elapsed;
+    return {seconds:Math.max((half-1)*halfLength,Math.min(half*halfLength,seconds)),half,running:previous.running!==false,manual:previous.source==="manual"};
   }
-  function eSafeTime(time,half,length){return time>=(half-1)*length&&time<=half*length}
+  function storeReviewClockAnchor(videoAt,gameAt,half,running=true){
+    const anchors=Array.isArray(state.video.reviewClockAnchors)?state.video.reviewClockAnchors:[];
+    state.video.reviewClockAnchors=[...anchors.filter(a=>a.half!==half||Math.abs(Number(a.videoAt)-videoAt)>0.05),{half,videoAt,gameAt,running}].sort((a,b)=>a.videoAt-b.videoAt);
+    updateReviewClock(videoAt);
+    persistSession();
+  }
   function setReviewClockRunning(running){
     if(!mediaReady())return toast("Zuerst Video laden.");
     const videoAt=mediaSeconds(),clock=reconstructedReviewClock(videoAt);
     if(!clock)return toast("Bitte zuerst Anpfiff H1 oder H2 im Video markieren.");
-    const anchors=Array.isArray(state.video.reviewClockAnchors)?state.video.reviewClockAnchors:[];
-    state.video.reviewClockAnchors=[...anchors.filter(a=>a.half!==clock.half||a.videoAt<videoAt),{half:clock.half,videoAt,gameAt:clock.seconds,running}];
-    updateReviewClock(videoAt);persistSession();
+    storeReviewClockAnchor(videoAt,clock.seconds,clock.half,running);
   }
   $("reviewClockPause").onclick=()=>setReviewClockRunning(false);
   $("reviewClockStart").onclick=()=>setReviewClockRunning(true);
+  $("reviewGameTime").onclick=()=>{
+    if(!mediaReady())return toast("Zuerst Video laden.");
+    const videoAt=mediaSeconds(),clock=reconstructedReviewClock(videoAt);
+    if(!clock)return toast("Zuerst den Anpfiff H1 oder H2 markieren.");
+    $("reviewClockDialogInfo").textContent="Video "+fmt(videoAt,true)+" · H"+clock.half;
+    const withinHalf=Math.max(0,Math.round(clock.seconds-(clock.half-1)*Number(state.timer.duration||25)*60));
+    $("reviewClockInput").value=String(Math.floor(withinHalf/60)).padStart(2,"0")+":"+String(withinHalf%60).padStart(2,"0");
+    $("reviewClockDialog").dataset.videoAt=String(videoAt);
+    $("reviewClockDialog").dataset.half=String(clock.half);
+    $("reviewClockDialog").showModal();
+    $("reviewClockInput").select();
+  };
+  $("reviewClockCancel").onclick=()=>$("reviewClockDialog").close();
+  $("reviewClockForm").onsubmit=event=>{
+    event.preventDefault();
+    const match=/^(\\d{1,2}):([0-5]\\d)$/.exec($("reviewClockInput").value.trim());
+    if(!match)return $("reviewClockInput").reportValidity();
+    const half=Number($("reviewClockDialog").dataset.half),length=Number(state.timer.duration||25)*60;
+    const relative=Number(match[1])*60+Number(match[2]);
+    if(relative>length)return toast("Spielzeit überschreitet die Halbzeitdauer.");
+    const videoAt=Number($("reviewClockDialog").dataset.videoAt);
+    const clock=reconstructedReviewClock(videoAt);
+    storeReviewClockAnchor(videoAt,(half-1)*length+relative,half,clock?.running!==false);
+    $("reviewClockDialog").close();
+    toast("Synchronisationspunkt gespeichert.");
+  };
   function updateReviewClock(videoAt=mediaSeconds()){
     const shown=(activeTab==="match"&&analysisMode==="video")||activeTab==="video";
     $("reviewClock").classList.toggle("hidden",!shown);
