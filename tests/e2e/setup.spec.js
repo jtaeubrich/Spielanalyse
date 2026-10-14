@@ -272,3 +272,18 @@ test("landscape smartphone shows adjustable video width and compact control grou
  expect(Math.abs(layout.tempoY-layout.seekY)).toBeLessThan(5);
  expect(layout.sideBySide).toBe(true);
 });
+
+test("landscape Match video has 16:9 geometry and event position shortcut",async({page})=>{
+ await page.setViewportSize({width:844,height:390});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#matchJumpToCurrentEvent")).toBeVisible();
+ const geometry=await page.evaluate(()=>{
+  const frame=document.querySelector("#matchVideoHost .video-frame").getBoundingClientRect();
+  const stage=document.querySelector("#videoStage").getBoundingClientRect();
+  return {frameRatio:frame.width/frame.height,stageRatio:stage.width/stage.height};
+ });
+ expect(geometry.frameRatio).toBeCloseTo(16/9,1);
+ expect(geometry.stageRatio).toBeCloseTo(16/9,1);
+});
