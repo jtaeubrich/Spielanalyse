@@ -293,3 +293,16 @@ describe("score displayed beside reconstructed video clock",()=>{
   expect(scoreAtVideoPosition(100,{events,video:{h1SyncRealTime:0,h2SyncRealTime:1500},isVideoscoutingFile:true})).toEqual([0,0]);
  });
 });
+
+describe("penalty moved earlier than official game clock",()=>{
+ test("penalty video anchor cannot pull subsequent estimated goal ahead of the score",()=>{
+  const previous={type:"goal",team:"home",half:2,time:2384,realTime:2890912,officialSource:"handball.net"};
+  const penalty={type:"2min",team:"away",half:2,time:2495,realTime:2859597,officialSource:"handball.net"};
+  const awayGoal={type:"goal",team:"away",half:2,time:2406,realTime:null,officialSource:"handball.net"};
+  const nextHome={type:"goal",team:"home",half:2,time:2438,realTime:null,officialSource:"handball.net"};
+  const options={isVideoscoutingFile:true,durationMinutes:25,events:[previous,penalty,awayGoal,nextHome],video:{h2SyncRealTime:1700}};
+  expect(eventVideoPosition(nextHome,options).seconds).toBe(2944.912);
+  expect(scoreAtVideoPosition(2900,options)).toEqual([1,0]);
+  expect(eventVideoPosition(penalty,options).seconds).toBeCloseTo(2859.597);
+ });
+});
