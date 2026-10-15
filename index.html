@@ -950,7 +950,7 @@ import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handbal
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
-import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition } from "./src/video-sync.js?v=151";
+import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition, videoScoutingEventStamp as coreVideoScoutingEventStamp } from "./src/video-sync.js?v=151";
 import { createScenePlayback, localVideoAdapter, youtubeAdapter } from "./src/video-playback.js";
 import { resolveYoutubeReference, storeYoutubeReference } from "./src/video-reference.js";
 import { selectRecorderMimeType, exportClipFilename } from "./src/clip-export.js";
@@ -2243,7 +2243,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")persistSession()});window.addEventListener("pagehide",persistSession);
   function captureStamp(){
     if(analysisMode==="video"&&!matchReviewMode){
-      return{time:null,displayTime:null,half:null,realTime:mediaReady()?Math.round(mediaSeconds()*1000):null};
+      return mediaReady()?coreVideoScoutingEventStamp(mediaSeconds(),videoSyncOptions()):{time:null,displayTime:null,half:null,realTime:null};
     }
     if(matchReviewMode&&mediaReady()){
       const position=matchReviewPosition(mediaSeconds());
