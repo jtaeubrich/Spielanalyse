@@ -58,6 +58,9 @@ export function eventVideoPosition(event, options = {}) {
   };
   let baseEvent = null;
   for (const point of options.events || []) {
+    // Goal chronology must not be shifted by a penalty/timeout manually placed
+    // earlier in the edited video than its official game time suggests.
+    if (event.type === "goal" && point.type !== "goal") continue;
     if (point === event || !finiteValue(point.realTime) ||
         eventHalf(point, options.durationMinutes) !== half || !finiteValue(point.time) ||
         Number(point.time) > originalTime || Number(point.time) < halfStart) continue;
