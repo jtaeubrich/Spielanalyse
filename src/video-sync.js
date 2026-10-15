@@ -326,3 +326,23 @@ export function reconstructedGameClock(videoAt, half, start, halfLength, events 
   return {seconds:Math.max(lower,Math.min(upper,seconds)),half,
     running:previous.running!==false,manual:previous.source==="manual"};
 }
+
+/** Score at a video position, using confirmed or estimated event offsets.
+ * If an event has no video position, its game time can be used as a fallback. */
+export function scoreAtVideoPosition(videoSeconds, options = {}, gameSeconds = null) {
+  const goals = [0, 0];
+  if (!Number.isFinite(videoSeconds)) return goals;
+  for (const event of options.events || []) {
+    if (event?.type !== "goal") continue;
+    const position = eventVideoPosition(event, options).seconds;
+    const before = Number.isFinite(position)
+      ? position <= videoSeconds + 0.001
+      : gameSeconds !== null && Number.isFinite(gameSeconds) &&
+        event.time !== null && event.time !== undefined &&
+        Number.isFinite(Number(event.time)) && Number(event.time) <= gameSeconds;
+    if (!before) continue;
+    if (event.team === "home") goals[0]++;
+    else if (event.team === "away") goals[1]++;
+  }
+  return goals;
+}
