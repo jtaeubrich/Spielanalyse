@@ -263,3 +263,25 @@ export function eventRealTimeFromVideoPosition(
     realTime: Math.round(liveStart + delta * 1000)
   };
 }
+
+/** New video-scouting events retain their exact video position and, when a
+ * valid sync anchor exists, the estimated game clock at capture time. */
+export function videoScoutingEventStamp(videoSeconds, options = {}) {
+  if (!Number.isFinite(videoSeconds) || videoSeconds < 0) {
+    return { time: null, displayTime: null, half: null, realTime: null };
+  }
+  const realTime = Math.round(videoSeconds * 1000);
+  const position = reviewPosition(videoSeconds, options);
+  if (!position || !Number.isFinite(position.time)) {
+    return { time: null, displayTime: null, half: null, realTime };
+  }
+  const time = Math.round(position.time);
+  const minute = Math.floor(time / 60);
+  const second = time % 60;
+  return {
+    time,
+    displayTime: minute + ":" + String(second).padStart(2, "0"),
+    half: position.half,
+    realTime
+  };
+}
