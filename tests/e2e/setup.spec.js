@@ -428,3 +428,26 @@ test("neutral event editor uses defense label and defending team for defender ch
  }
  expect(found).toBe(true);
 });
+
+test("video scouting aligns Sync H1 H2 with playback controls and hides jump status",async({page})=>{
+ await page.setViewportSize({width:1180,height:820});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ const controls=page.locator("#matchTab .video-control-groups");
+ const sync=controls.locator(".match-review-sync");
+ await expect(sync).toBeVisible();
+ await expect(sync.getByText("Sync")).toBeVisible();
+ await expect(sync.locator("#matchMarkH1")).toBeVisible();
+ await expect(sync.locator("#matchMarkH2")).toBeVisible();
+ await expect(page.locator("#videoMessage")).toBeHidden();
+ const positions=await page.evaluate(()=>{
+  const rect=s=>document.querySelector(s).getBoundingClientRect();
+  return {tempo:rect("#matchTab .video-control-groups > .video-control-group").top,
+   sync:rect("#matchTab .video-control-groups > .match-review-sync").top,
+   tempoLeft:rect("#matchTab .video-control-groups > .video-control-group").left,
+   syncLeft:rect("#matchTab .video-control-groups > .match-review-sync").left};
+ });
+ expect(Math.abs(positions.tempo-positions.sync)).toBeLessThan(6);
+ expect(positions.syncLeft).toBeGreaterThan(positions.tempoLeft);
+});
