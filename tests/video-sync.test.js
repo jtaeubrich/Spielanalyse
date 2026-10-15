@@ -7,7 +7,8 @@ import {
   eventVideoPosition,
   estimateReviewGameTime,
   reviewPosition,
-  eventRealTimeFromVideoPosition
+  eventRealTimeFromVideoPosition,
+  videoScoutingEventStamp
 } from "../src/video-sync.js";
 
 describe("video synchronization core", () => {
@@ -190,5 +191,36 @@ describe("video synchronization core", () => {
       reason: "missing-sync",
       half: 2
     });
+  });
+});
+
+
+describe("new video scouting event timestamps", () => {
+  test("stores estimated first-half game clock and absolute video time", () => {
+    expect(videoScoutingEventStamp(145, {
+      video: { h1SyncRealTime: 20, syncUnit: "seconds" },
+      isVideoscoutingFile: true, durationMinutes: 25
+    })).toEqual({ time: 125, displayTime: "2:05", half: 1, realTime: 145000 });
+  });
+  test("stores second-half game clock based on H2 sync", () => {
+    expect(videoScoutingEventStamp(1650, {
+      video: { h1SyncRealTime: 10, h2SyncRealTime: 1600 },
+      isVideoscoutingFile: true, durationMinutes: 25
+    })).toEqual({ time: 1550, displayTime: "25:50", half: 2, realTime: 1650000 });
+  });
+  test("uses interpolated existing event time where available", () => {
+    expect(videoScoutingEventStamp(180, {
+      video: { h1SyncRealTime: 20 },
+      events: [
+        { half: 1, time: 100, realTime: 120000 },
+        { half: 1, time: 160, realTime: 240000 }
+      ],
+      isVideoscoutingFile: true, durationMinutes: 25
+    })).toEqual({ time: 130, displayTime: "2:10", half: 1, realTime: 180000 });
+  });
+  test("preserves video time but no estimated game time without sync", () => {
+    expect(videoScoutingEventStamp(145, {
+      video: {}, isVideoscoutingFile: true, durationMinutes: 25
+    })).toEqual({ time: null, displayTime: null, half: null, realTime: 145000 });
   });
 });
