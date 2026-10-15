@@ -366,3 +366,42 @@ test("review match clock includes editable synchronization dialog",async({page})
  await expect(page.locator("#reviewClockDialog")).toBeHidden();
  await expect(page.locator("#reviewClockInput")).toHaveAttribute("placeholder","12:34");
 });
+
+
+test("iPad video scouting displays editable event details below video and before capture, closable with X",async({page})=>{
+ await page.setViewportSize({width:1024,height:768});
+ await page.goto("/");
+ await page.locator("#continueGameInput").setInputFiles(hknFixture);
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#matchNearbyList .match-nearby-item").first()).toBeVisible();
+ await page.locator("#matchNearbyList .match-nearby-item").first().click();
+ const details=page.locator("#matchNearbyEditorHost");
+ await expect(details).toBeVisible();
+ await expect(page.locator("#matchEditorClose")).toBeVisible();
+ await expect(page.locator("#videoEventEditor")).toBeVisible();
+ await expect.poll(()=>page.evaluate(()=>{
+  const details=document.querySelector("#matchNearbyEditorHost");
+  const video=document.querySelector("#matchVideoHost");
+  const capture=document.querySelector("#matchReviewCaptureHost");
+  const list=document.querySelector("#matchNearbyList");
+  const detailRect=details.getBoundingClientRect();
+  const captureRect=capture.getBoundingClientRect();
+  return {
+   parent:details.parentElement?.id,
+   beforeCapture:details.nextElementSibling?.id==="matchReviewCaptureHost",
+   afterVideo:detailRect.top>=video.querySelector(".video-frame").getBoundingClientRect().bottom,
+   beforeCaptureVisually:detailRect.top<captureRect.top,
+   listParent:list.closest("#matchNearbyEvents")?.id
+  };
+ })).toEqual({
+  parent:"matchVideoHost",
+  beforeCapture:true,
+  afterVideo:true,
+  beforeCaptureVisually:true,
+  listParent:"matchNearbyEvents"
+ });
+ await page.locator("#matchEditorClose").click();
+ await expect(details).toBeHidden();
+ await expect(page.locator("#matchNearbyList .match-nearby-item").first()).toBeVisible();
+});
