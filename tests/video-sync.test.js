@@ -224,3 +224,35 @@ describe("new video scouting event timestamps", () => {
     })).toEqual({ time: null, displayTime: null, half: null, realTime: 145000 });
   });
 });
+
+describe("video cuts and confirmed positioning anchors", () => {
+  test("shifts only subsequent estimated events after setting a corrected video position", () => {
+    const previous={officialSource:"handball.net",half:1,time:80,realTime:null};
+    const anchor={officialSource:"handball.net",half:1,time:100,realTime:null};
+    const next={officialSource:"handball.net",half:1,time:115,realTime:null};
+    const later={officialSource:"handball.net",half:1,time:130,realTime:90000};
+    const after={officialSource:"handball.net",half:1,time:140,realTime:null};
+    const options={isVideoscoutingFile:true,video:{h1SyncRealTime:10},events:[previous,anchor,next,later,after],durationMinutes:25};
+    expect(eventVideoPosition(previous,options).seconds).toBe(90);
+    expect(eventVideoPosition(next,options).seconds).toBe(125);
+    anchor.realTime=70000;
+    expect(eventVideoPosition(previous,options).seconds).toBe(90);
+    expect(eventVideoPosition(anchor,options)).toEqual({seconds:70,status:"confirmed"});
+    expect(eventVideoPosition(next,options)).toEqual({seconds:85,status:"estimated"});
+    expect(eventVideoPosition(later,options)).toEqual({seconds:90,status:"confirmed"});
+    expect(eventVideoPosition(after,options)).toEqual({seconds:100,status:"estimated"});
+    expect(next.realTime).toBeNull();
+  });
+  test("manual anchor works without an initial half sync", () => {
+    const anchor={officialSource:"handball.net",half:2,time:1600,realTime:600000};
+    const next={officialSource:"handball.net",half:2,time:1620,realTime:null};
+    const options={isVideoscoutingFile:true,video:{},events:[anchor,next],durationMinutes:25};
+    expect(eventVideoPosition(next,options)).toEqual({seconds:620,status:"estimated"});
+  });
+  test("confirmed anchor in H1 never shifts H2 estimates", () => {
+    const h1={officialSource:"handball.net",half:1,time:200,realTime:80000};
+    const h2={officialSource:"handball.net",half:2,time:1510,realTime:null};
+    const options={isVideoscoutingFile:true,video:{h2SyncRealTime:400},events:[h1,h2],durationMinutes:25};
+    expect(eventVideoPosition(h2,options)).toEqual({seconds:410,status:"estimated"});
+  });
+});
