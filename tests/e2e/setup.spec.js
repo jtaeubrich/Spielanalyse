@@ -451,3 +451,24 @@ test("video scouting aligns Sync H1 H2 with playback controls and hides jump sta
  expect(Math.abs(positions.tempo-positions.sync)).toBeLessThan(6);
  expect(positions.syncLeft).toBeGreaterThan(positions.tempoLeft);
 });
+
+test("key moment defender roster refreshes on possession switch and keeps defender team",async({page})=>{
+ await page.goto("/");
+ await page.locator("#continueGameInput").setInputFiles(hknFixture);
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#homePoss").click();
+ await page.locator('[data-flow="key"]').click();
+ const roster=()=>page.locator("#keyTagList [data-player-id]").evaluateAll(nodes=>nodes.map(n=>n.dataset.playerId));
+ const awayDefenders=await roster();
+ expect(awayDefenders.length).toBeGreaterThan(0);
+ await page.locator("#awayPoss").click();
+ const homeDefenders=await roster();
+ expect(homeDefenders.length).toBeGreaterThan(0);
+ expect(homeDefenders).not.toEqual(awayDefenders);
+ await page.locator("#keyTagList [data-player-id]").first().click();
+ await page.locator("#commitKey").click();
+ await expect.poll(()=>page.evaluate(()=>{
+   const raw=localStorage.getItem("handballSpielanalyse.session");
+   return raw?JSON.parse(raw).state.events.at(-1)?.playerTags?.[0]?.team:null;
+ })).toBe("home");
+});
