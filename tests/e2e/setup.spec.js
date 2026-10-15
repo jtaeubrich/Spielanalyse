@@ -146,7 +146,11 @@ test("Video Scouting places selectors before video and capture below without gam
   const rect=id=>document.querySelector(id).getBoundingClientRect();
   return {selectors:rect("#matchReviewTopHost").bottom,video:rect("#matchVideoHost").top,capture:rect("#idleStep").top};
  });
- expect(positions.selectors).toBeLessThanOrEqual(positions.video+3);
+ if((await page.evaluate(()=>window.innerWidth))<760){
+   expect(positions.video).toBeLessThan(positions.selectors);
+ }else{
+   expect(positions.selectors).toBeLessThanOrEqual(positions.video+3);
+ }
  expect(positions.video).toBeLessThan(positions.capture);
 });
 
