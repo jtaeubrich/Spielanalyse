@@ -1097,7 +1097,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   };
   $("reviewClockTimeMode").onchange=()=>{
     const half=Number($("reviewClockDialog").dataset.half),length=Number(state.timer.duration||25)*60;
-    const value=$("reviewClockInput").value.trim(),match=/^(\\d{1,2}):([0-5]\\d)$/.exec(value);
+    const value=$("reviewClockInput").value.trim(),match=/^(\d{1,2}):([0-5]\d)$/.exec(value);
     if(!match)return;
     const seconds=Number(match[1])*60+Number(match[2]);
     const adjusted=$("reviewClockTimeMode").value==="total"?seconds+(half-1)*length:seconds-(half-1)*length;
