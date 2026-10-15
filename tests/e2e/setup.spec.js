@@ -499,3 +499,19 @@ test("sync dialog switches between half-relative and continuous match time",asyn
  await page.locator("#reviewClockCancel").click();
  await expect(dialog).toBeHidden();
 });
+
+test("video clock row orders video game controls and right aligned score",async({page})=>{
+ await page.setViewportSize({width:1280,height:800});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#reviewClock")).toBeVisible();
+ const layout=await page.evaluate(()=>{
+  const row=document.querySelector("#reviewClock");
+  const parts=["reviewVideoTime","reviewGameTime","reviewClockPause","reviewClockStart","reviewScore"].map(id=>document.getElementById(id).getBoundingClientRect());
+  return {order:parts.every((r,i)=>i===0||r.left>=parts[i-1].left),rightGap:row.getBoundingClientRect().right-parts.at(-1).right,
+    scoreContainerMargin:getComputedStyle(document.querySelector(".review-clock-score")).marginLeft};
+ });
+ expect(layout.order).toBe(true);
+ expect(layout.rightGap).toBeLessThan(25);
+});
