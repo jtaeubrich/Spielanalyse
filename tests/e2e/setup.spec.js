@@ -481,6 +481,8 @@ test("key moment defender roster refreshes on possession switch and keeps defend
 
 test("sync dialog switches between half-relative and continuous match time",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
  const dialog=page.locator("#reviewClockDialog");
  await page.evaluate(()=>{
   const d=document.querySelector("#reviewClockDialog");
