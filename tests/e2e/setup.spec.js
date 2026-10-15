@@ -559,3 +559,27 @@ test("video timestamp editor accepts colon and dot on mobile keyboards",async({p
  await videoTime.fill("47:39.6");
  await expect(videoTime).toHaveValue("47:39.6");
 });
+
+test("official event time changes require confirmation and preserve original",async({page})=>{
+ await page.goto("/");
+ await loadVideoScoutingFixture(page);
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#matchNearbyList .match-nearby-item").first().click();
+ const time=page.locator("#veeTime");
+ await expect(time).toBeVisible();
+ await expect(page.locator(".official-time-warning")).toBeVisible();
+ const original=await time.inputValue();
+ page.once("dialog",d=>d.dismiss());
+ await time.fill("39:50");
+ await time.press("Tab");
+ await expect(time).toHaveValue(original);
+ page.once("dialog",d=>d.accept());
+ await time.fill("39:50");
+ await time.press("Tab");
+ await expect(page.locator(".official-time-warning")).toContainText("Original:");
+ const stored=await page.evaluate(()=>{
+  const source=localStorage.getItem("handballSpielanalyse.session");
+  return source?JSON.parse(source):null;
+ });
+ expect(stored).toBeTruthy();
+});
