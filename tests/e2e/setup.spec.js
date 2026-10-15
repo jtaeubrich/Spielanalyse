@@ -605,3 +605,20 @@ test("event details can delete a video event after confirmation",async({page})=>
  await expect(page.locator("#veeDeleteEvent")).toHaveCount(0);
  await expect(page.locator("#matchNearbyList .match-nearby-item")).toHaveCount(before-1);
 });
+
+test("video scouting places possession below controls at phone tablet and desktop widths",async({page})=>{
+ for(const width of [390,820,1280]){
+  await page.setViewportSize({width,height:900});
+  await page.goto("/");
+  await page.locator('[data-tab="match"]').click();
+  await page.locator("#modeSelect").selectOption("video");
+  const order=await page.evaluate(()=>{
+   const video=document.querySelector("#matchVideoHost");
+   const controls=video.querySelector(".video-control-groups");
+   const possession=document.querySelector("#homePoss").closest(".possession");
+   const header=document.querySelector("#matchReviewTopHost");
+   return {withinVideo:video.contains(possession),afterControls:controls.nextElementSibling===possession,headerBeforeVideo:header.getBoundingClientRect().bottom<=video.getBoundingClientRect().top+3};
+  });
+  expect(order).toEqual({withinVideo:true,afterControls:true,headerBeforeVideo:true});
+ }
+});
