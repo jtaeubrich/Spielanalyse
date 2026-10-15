@@ -46,7 +46,6 @@ export function eventVideoPosition(event, options = {}) {
   const halfStart = (half - 1) * duration;
   let baseTime = halfStart;
   let baseVideo = syncForHalf(options.video, half);
-  if (!Number.isFinite(baseVideo)) return { seconds: NaN, status: "unassigned" };
   const originalTime = Number(event.time);
   const timestamp = value => {
     if (value === null || value === undefined || value === "") return NaN;
@@ -62,12 +61,17 @@ export function eventVideoPosition(event, options = {}) {
     if (point === event || !finiteValue(point.realTime) ||
         eventHalf(point, options.durationMinutes) !== half || !finiteValue(point.time) ||
         Number(point.time) > originalTime || Number(point.time) < halfStart) continue;
-    if (!baseEvent || Number(point.time) > Number(baseEvent.time)) baseEvent = point;
+    if (!baseEvent || Number(point.time) > Number(baseEvent.time) ||
+        (Number(point.time) === Number(baseEvent.time) &&
+          Number(point.realTime) > Number(baseEvent.realTime))) baseEvent = point;
   }
   if (baseEvent) {
     baseTime = Number(baseEvent.time);
     baseVideo = Number(baseEvent.realTime) / 1000;
   }
+  // A confirmed event is a local anchor even when the initial H1/H2 sync is unavailable.
+  // Never extrapolate a later confirmed position; it remains an independent anchor.
+  if (!Number.isFinite(baseVideo)) return { seconds: NaN, status: "unassigned" };
   let elapsed = originalTime - baseTime;
   if (baseEvent) {
     const from = timestamp(baseEvent.officialTimestamp);
