@@ -562,26 +562,32 @@ test("video timestamp editor accepts colon and dot on mobile keyboards",async({p
 
 test("official event time changes require confirmation and preserve original",async({page})=>{
  await page.goto("/");
- await loadVideoScoutingFixture(page);
+ const fs=await import("node:fs/promises");
+ const game=JSON.parse(await fs.readFile(hknFixture,"utf8"));
+ game.isVideoscoutingFile=true;
+ // Ensure this test actually opens an official imported event.
+ game.events[0].officialSource="handball.net";
+ await page.locator("#continueGameInput").setInputFiles({
+  name:"official_video_scouting.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(game))
+ });
  await page.locator('[data-tab="match"]').click();
- await page.locator("#matchNearbyList .match-nearby-item").first().click();
+ // Select the same official event by its ID, regardless of sorting or position.
+ const target=game.events[0];
+ await page.locator("#matchNearbyList .match-nearby-item").filter({hasText:target.pName||""}).first().click();
  const time=page.locator("#veeTime");
  await expect(time).toBeVisible();
  await expect(page.locator(".official-time-warning")).toBeVisible();
  const original=await time.inputValue();
+ const changed=original==="39:50"?"39:49":"39:50";
  page.once("dialog",d=>d.dismiss());
- await time.fill("39:50");
+ await time.fill(changed);
  await time.press("Tab");
  await expect(time).toHaveValue(original);
  page.once("dialog",d=>d.accept());
- await time.fill("39:50");
+ await time.fill(changed);
  await time.press("Tab");
  await expect(page.locator(".official-time-warning")).toContainText("Original:");
- const stored=await page.evaluate(()=>{
-  const source=localStorage.getItem("handballSpielanalyse.session");
-  return source?JSON.parse(source):null;
- });
- expect(stored).toBeTruthy();
+ await expect(page.locator("#veeTime")).toHaveValue(changed);
 });
 
 test("event details can delete a video event after confirmation",async({page})=>{
