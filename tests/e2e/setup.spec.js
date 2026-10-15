@@ -478,3 +478,22 @@ test("key moment defender roster refreshes on possession switch and keeps defend
    return raw?JSON.parse(raw).state.events.at(-1)?.playerTags?.[0]?.team:null;
  })).toBe("home");
 });
+
+test("sync dialog switches between half-relative and continuous match time",async({page})=>{
+ await page.goto("/");
+ const dialog=page.locator("#reviewClockDialog");
+ await page.evaluate(()=>{
+  const d=document.querySelector("#reviewClockDialog");
+  d.dataset.half="2";d.dataset.videoAt="1600";d.showModal();
+  document.querySelector("#reviewClockTimeMode").value="half";
+  document.querySelector("#reviewClockInput").value="02:10";
+ });
+ const mode=page.locator("#reviewClockTimeMode");
+ await expect(mode).toHaveValue("half");
+ await mode.selectOption("total");
+ await expect(page.locator("#reviewClockInput")).toHaveValue("27:10");
+ await mode.selectOption("half");
+ await expect(page.locator("#reviewClockInput")).toHaveValue("02:10");
+ await page.locator("#reviewClockCancel").click();
+ await expect(dialog).toBeHidden();
+});
