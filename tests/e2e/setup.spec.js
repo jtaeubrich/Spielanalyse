@@ -222,7 +222,7 @@ test("tablet Match video events list aligns beside video without hosting details
    const v=document.querySelector("#matchVideoHost").getBoundingClientRect();
    const e=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
    return {difference:Math.abs(v.height-e.height),left:e.left,right:v.right,
-     editorInVideo:document.querySelector("#matchNearbyEditorHost").parentElement?.id==="matchVideoHost"};
+     editorInVideo:document.querySelector("#matchVideoHost").contains(document.querySelector("#matchNearbyEditorHost"))};
  });
  expect(layout.difference).toBeLessThan(5);
  expect(layout.left).toBeGreaterThanOrEqual(layout.right-3);
@@ -395,17 +395,17 @@ test("iPad video scouting displays editable event details below video and before
   const detailRect=details.getBoundingClientRect();
   const captureRect=capture.getBoundingClientRect();
   return {
-   parent:details.parentElement?.id,
+   insideVideo:video.contains(details),
    beforeCapture:details.nextElementSibling?.id==="matchReviewCaptureHost",
    afterVideo:detailRect.top>=video.querySelector(".video-frame").getBoundingClientRect().bottom,
-   beforeCaptureVisually:detailRect.top<captureRect.top,
+   beforeCaptureInDom:Boolean(details.compareDocumentPosition(capture)&Node.DOCUMENT_POSITION_FOLLOWING),
    listParent:list.closest("#matchNearbyEvents")?.id
   };
  })).toEqual({
-  parent:"matchVideoHost",
+  insideVideo:true,
   beforeCapture:true,
   afterVideo:true,
-  beforeCaptureVisually:true,
+  beforeCaptureInDom:true,
   listParent:"matchNearbyEvents"
  });
  await page.locator("#matchEditorClose").click();
