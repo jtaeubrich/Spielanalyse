@@ -622,3 +622,26 @@ test("video scouting places possession below controls at phone tablet and deskto
   expect(order).toEqual({withinVideo:true,afterControls:true,headerBeforeVideo:true});
  }
 });
+
+test("unified Match workspace keeps controls and capture ordered across modes",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ for(const mode of ["live","video"]){
+  await page.locator("#modeSelect").selectOption(mode);
+  for(const width of [390,820,1280]){
+   await page.setViewportSize({width,height:900});
+   const result=await page.evaluate(()=>{
+    const bounds=id=>document.querySelector(id).getBoundingClientRect();
+    const video=document.querySelector("#matchVideoHost");
+    const possession=document.querySelector("#homePoss").closest(".possession");
+    return {
+     topFirst:bounds("#matchReviewTopHost").bottom<=bounds("#matchVideoHost").top+3,
+     possessionInVideo:video.contains(possession),
+     controlsBeforePossession:!!(video.querySelector(".video-control-groups").compareDocumentPosition(possession)&Node.DOCUMENT_POSITION_FOLLOWING),
+     captureBelowVideo:bounds("#idleStep").top>=bounds("#matchVideoHost").top
+    };
+   });
+   expect(result).toEqual({topFirst:true,possessionInVideo:true,controlsBeforePossession:true,captureBelowVideo:true});
+  }
+ }
+});
