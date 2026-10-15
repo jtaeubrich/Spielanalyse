@@ -289,3 +289,40 @@ export function videoScoutingEventStamp(videoSeconds, options = {}) {
     realTime
   };
 }
+
+/** Reconstruct a match clock from events and explicit pause/resume anchors.
+ * Automatic event anchors may adjust running clock estimates, but must never
+ * restart a clock that a user explicitly paused. */
+export function reconstructedGameClock(videoAt, half, start, halfLength, events = [], anchors = []) {
+  if (!Number.isFinite(videoAt) || !Number.isFinite(start) || videoAt < start) return null;
+  const lower=(half-1)*halfLength,upper=half*halfLength;
+  const points=[{video:start,game:lower,running:true,source:"start"}];
+  for(const e of events){
+    if(Number.isFinite(e.video)&&e.video>=start&&Number.isFinite(e.game)&&e.game>=lower&&e.game<=upper)
+      points.push({video:e.video,game:e.game,running:true,source:"event"});
+  }
+  for(const a of anchors){
+    if(Number(a.half)===half&&Number.isFinite(Number(a.videoAt))&&Number(a.videoAt)>=start&&Number.isFinite(Number(a.gameAt)))
+      points.push({video:Number(a.videoAt),game:Number(a.gameAt),running:a.running!==false,source:"manual"});
+  }
+  const priority={start:0,event:1,manual:2};
+  points.sort((a,b)=>a.video-b.video||priority[a.source]-priority[b.source]);
+  const merged=[];
+  for(const p of points){
+    if(merged.length&&Math.abs(merged[merged.length-1].video-p.video)<0.01)merged[merged.length-1]=p;
+    else merged.push(p);
+  }
+  let previous=merged[0],next=null;
+  for(const p of merged.slice(1)){
+    if(p.video>videoAt){next=p;break;}
+    // Events after a manual pause are only estimates; they cannot resume it.
+    if(previous.running===false&&p.source!=="manual")continue;
+    previous=p;
+  }
+  // The next automatic event must not create a fast-forward across a cut.
+  // Use video elapsed time at normal speed; manual pauses remain frozen.
+  const seconds=previous.running===false?previous.game:
+    previous.game+Math.max(0,videoAt-previous.video);
+  return {seconds:Math.max(lower,Math.min(upper,seconds)),half,
+    running:previous.running!==false,manual:previous.source==="manual"};
+}
