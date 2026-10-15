@@ -529,7 +529,29 @@
   .review-clock-dialog{max-width:min(360px,calc(100vw - 24px));padding:16px;background:var(--panel2);color:var(--text);border:1px solid var(--cyan);border-radius:12px}
   .review-clock-dialog form{display:grid;gap:10px}.review-clock-dialog h3,.review-clock-dialog p{margin:0}
   .review-clock-dialog::backdrop{background:#000a}.review-clock-dialog-actions{display:flex;justify-content:flex-end;gap:8px}
-</style>
+
+    /* Tablet video scouting: a stable 50/50 events/editor split when details are open. */
+    @media (min-width:760px) {
+      body.video-scouting-layout #matchTab #matchNearbyEvents:has(#matchNearbyEditorHost:not(.hidden)) {
+        display:grid!important;
+        grid-template-rows:auto minmax(0,1fr) minmax(0,1fr);
+        align-content:stretch;
+      }
+      body.video-scouting-layout #matchTab #matchNearbyEvents:has(#matchNearbyEditorHost:not(.hidden)) .match-nearby-list {
+        min-height:0;
+        max-height:none;
+        overflow-y:auto;
+        overflow-x:hidden;
+      }
+      body.video-scouting-layout #matchTab #matchNearbyEvents:has(#matchNearbyEditorHost:not(.hidden)) #matchNearbyEditorHost {
+        min-height:0;
+        height:100%;
+        overflow-y:auto;
+        margin:8px 0 0;
+        box-sizing:border-box;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="app">
