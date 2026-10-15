@@ -8,7 +8,8 @@ import {
   estimateReviewGameTime,
   reviewPosition,
   eventRealTimeFromVideoPosition,
-  videoScoutingEventStamp
+  videoScoutingEventStamp,
+  reconstructedGameClock
 } from "../src/video-sync.js";
 
 describe("video synchronization core", () => {
@@ -255,4 +256,21 @@ describe("video cuts and confirmed positioning anchors", () => {
     const options={isVideoscoutingFile:true,video:{h2SyncRealTime:400},events:[h1,h2],durationMinutes:25};
     expect(eventVideoPosition(h2,options)).toEqual({seconds:410,status:"estimated"});
   });
+});
+
+describe("reconstructed clock manual controls",()=>{
+ test("manual pause survives later estimated events",()=>{
+   const events=[{video:20,game:20},{video:60,game:500},{video:90,game:550}];
+   const anchors=[{half:1,videoAt:40,gameAt:40,running:false}];
+   expect(reconstructedGameClock(100,1,0,1500,events,anchors)).toMatchObject({seconds:40,running:false});
+ });
+ test("manual resume runs at normal speed despite later event timing",()=>{
+   const events=[{video:60,game:500},{video:90,game:550}];
+   const anchors=[{half:1,videoAt:40,gameAt:40,running:false},{half:1,videoAt:70,gameAt:40,running:true}];
+   expect(reconstructedGameClock(80,1,0,1500,events,anchors)).toMatchObject({seconds:50,running:true});
+ });
+ test("estimated events never accelerate clock beyond video elapsed time",()=>{
+   const events=[{video:20,game:800},{video:40,game:900}];
+   expect(reconstructedGameClock(30,1,0,1500,events,[]).seconds).toBe(810);
+ });
 });
