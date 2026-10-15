@@ -534,14 +534,14 @@ test("mobile video scouting keeps clocks and playback controls in one row and po
   const children=[...group.children].filter(el=>getComputedStyle(el).display!=="none");
   const clocks=[...document.querySelector("#reviewClock").children].filter(el=>getComputedStyle(el).display!=="none");
   return {
-   possessionInVideo:video.contains(possession),
-   possessionAfterControls:!!(group.compareDocumentPosition(possession)&Node.DOCUMENT_POSITION_FOLLOWING),
+   possessionInHost:document.querySelector("#matchPossessionHost").contains(possession),
+   possessionAfterVideo:rect("#matchPossessionHost").top>=rect("#matchVideoHost").bottom,
    playbackOneRow:children.every(el=>Math.abs(el.getBoundingClientRect().top-children[0].getBoundingClientRect().top)<10),
    clockOneRow:clocks.every(el=>Math.abs(el.getBoundingClientRect().top-clocks[0].getBoundingClientRect().top)<10),
    possessionBelowVideo:rect(".possession").top>=rect(".video-frame").bottom
   };
  });
- expect(layout).toEqual({possessionInVideo:true,possessionAfterControls:true,playbackOneRow:true,clockOneRow:true,possessionBelowVideo:true});
+ expect(layout).toEqual({possessionInHost:true,possessionAfterVideo:true,playbackOneRow:true,clockOneRow:true,possessionBelowVideo:true});
 });
 
 test("video timestamp editor accepts colon and dot on mobile keyboards",async({page})=>{
@@ -617,9 +617,9 @@ test("video scouting places possession below controls at phone tablet and deskto
    const controls=video.querySelector(".video-control-groups");
    const possession=document.querySelector("#homePoss").closest(".possession");
    const header=document.querySelector("#matchReviewTopHost");
-   return {withinVideo:video.contains(possession),afterControls:controls.nextElementSibling===possession,headerBeforeVideo:header.getBoundingClientRect().bottom<=video.getBoundingClientRect().top+3};
+   return {inHost:document.querySelector("#matchPossessionHost").contains(possession),afterVideo:document.querySelector("#matchPossessionHost").getBoundingClientRect().top>=video.getBoundingClientRect().bottom,headerBeforeVideo:header.getBoundingClientRect().bottom<=video.getBoundingClientRect().top+3};
   });
-  expect(order).toEqual({withinVideo:true,afterControls:true,headerBeforeVideo:true});
+  expect(order).toEqual({inHost:true,afterVideo:true,headerBeforeVideo:true});
  }
 });
 
@@ -636,12 +636,12 @@ test("unified Match workspace keeps controls and capture ordered across modes",a
     const possession=document.querySelector("#homePoss").closest(".possession");
     return {
      topFirst:bounds("#matchReviewTopHost").bottom<=bounds("#matchVideoHost").top+3,
-     possessionInVideo:video.contains(possession),
-     controlsBeforePossession:!!(video.querySelector(".video-control-groups").compareDocumentPosition(possession)&Node.DOCUMENT_POSITION_FOLLOWING),
+     possessionInHost:document.querySelector("#matchPossessionHost").contains(possession),
+     possessionAboveCapture:bounds("#matchPossessionHost").bottom<=bounds("#idleStep").top+3,
      captureBelowVideo:bounds("#idleStep").top>=bounds("#matchVideoHost").top
     };
    });
-   expect(result).toEqual({topFirst:true,possessionInVideo:true,controlsBeforePossession:true,captureBelowVideo:true});
+   expect(result).toEqual({topFirst:true,possessionInHost:true,possessionAboveCapture:true,captureBelowVideo:true});
   }
  }
 });
