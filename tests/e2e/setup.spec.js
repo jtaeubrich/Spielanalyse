@@ -509,7 +509,7 @@ test("video clock row orders video game controls and right aligned score",async(
  const layout=await page.evaluate(()=>{
   const row=document.querySelector("#reviewClock");
   const parts=["reviewVideoTime","reviewGameTime","reviewClockPause","reviewClockStart","reviewScore"].map(id=>document.getElementById(id).getBoundingClientRect());
-  return {order:parts.every((r,i)=>i===0||r.left>=parts[i-1].left),rightGap:row.getBoundingClientRect().right-parts.at(-1).right,
+  return {order:parts.every((r,i)=>i===0||r.left>=parts[i-1].left),rightGap:row.getBoundingClientRect().right-document.querySelector(".review-clock-score").getBoundingClientRect().right,
     scoreContainerMargin:getComputedStyle(document.querySelector(".review-clock-score")).marginLeft};
  });
  expect(layout.order).toBe(true);
