@@ -950,7 +950,7 @@ import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handbal
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
-import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition, videoScoutingEventStamp as coreVideoScoutingEventStamp } from "./src/video-sync.js?v=151";
+import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition, videoScoutingEventStamp as coreVideoScoutingEventStamp, reconstructedGameClock as coreReconstructedGameClock } from "./src/video-sync.js?v=151";
 import { createScenePlayback, localVideoAdapter, youtubeAdapter } from "./src/video-playback.js";
 import { resolveYoutubeReference, storeYoutubeReference } from "./src/video-reference.js";
 import { selectRecorderMimeType, exportClipFilename } from "./src/clip-export.js";
@@ -1056,17 +1056,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const half=Number.isFinite(second)&&videoAt>=second?2:1;
     const start=half===2?second:first;
     if(!Number.isFinite(start)||videoAt<start)return null;
-    const points=reviewClockPoints(half,start,halfLength);
-    let previous=points[0],next=null;
-    for(const p of points.slice(1)){if(p.video>videoAt){next=p;break;}previous=p;}
-    // When the observed match clock is stopped, it stays fixed until another
-    // manual start marker. Otherwise interpolate only up to the next anchor.
-    const elapsed=videoAt-previous.video;
-    const seconds=previous.running===false?previous.game:
-      next&&next.video>previous.video
-        ?previous.game+(next.game-previous.game)*elapsed/(next.video-previous.video)
-        :previous.game+elapsed;
-    return {seconds:Math.max((half-1)*halfLength,Math.min(half*halfLength,seconds)),half,running:previous.running!==false,manual:previous.source==="manual"};
+    const eventPoints=state.events.map(e=>({video:eventVideoSeconds(e),game:e.time==null?NaN:Number(e.time)}));
+    return coreReconstructedGameClock(videoAt,half,start,halfLength,eventPoints,state.video.reviewClockAnchors||[]);
   }
   function storeReviewClockAnchor(videoAt,gameAt,half,running=true){
     const anchors=Array.isArray(state.video.reviewClockAnchors)?state.video.reviewClockAnchors:[];
