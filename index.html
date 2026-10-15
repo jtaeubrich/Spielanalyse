@@ -602,6 +602,29 @@
       body.video-scouting-layout #matchTab #matchVideoHost .video-control-groups>.match-review-sync{width:100%;align-items:stretch;justify-content:flex-end;margin:0}
     }
     body.video-scouting-layout #matchTab #matchGrid>.side>.events{display:none!important}
+
+  /* One Match workspace hierarchy for live, direct video and review.
+     The 760px threshold deliberately also applies to landscape phones. */
+  body.match-unified-layout #matchTab #matchGrid{display:flex!important;flex-direction:column!important;gap:8px!important}
+  body.match-unified-layout #matchTab #matchVideoHost{order:0;min-width:0;width:100%!important}
+  body.match-unified-layout #matchTab #matchNearbyEvents,
+  body.match-unified-layout #matchTab #matchGrid>.events{order:1;min-width:0}
+  body.match-unified-layout #matchTab #matchGrid>.side{order:2;grid-column:1/-1;width:100%!important;max-width:none!important;min-width:0!important}
+  body.match-unified-layout #matchTab #matchGrid>.side>.events{display:none!important}
+  body.match-unified-layout #matchTab #matchVideoHost .possession{display:flex;gap:5px;margin:8px 0 10px}
+  body.match-unified-layout #matchTab #matchVideoHost .possession .poss{flex:1;min-width:0}
+  body.match-unified-layout #matchTab #matchReviewCaptureHost{display:none!important}
+  body.match-unified-layout #matchTab #matchGrid>.side>.step{display:none}
+  body.match-unified-layout #matchTab #matchGrid>.side>.step.active{display:block}
+  body.match-unified-layout #matchTab #matchGrid>.events{display:block}
+  @media(min-width:760px){
+    body.match-unified-layout #matchTab #matchGrid{display:grid!important;grid-template-columns:minmax(0,var(--video-share,60%)) minmax(0,1fr)!important;align-items:start}
+    body.match-unified-layout #matchTab #matchVideoHost{grid-column:1;grid-row:1}
+    body.match-unified-layout #matchTab #matchNearbyEvents,
+    body.match-unified-layout #matchTab #matchGrid>.events{grid-column:2;grid-row:1;min-width:0;margin-top:0!important}
+    body.match-unified-layout #matchTab #matchGrid>.side{grid-column:1/-1;grid-row:2}
+  }
+  body.match-unified-layout.match-review-mode #matchTab #matchGrid>.events .eventlist{max-height:40vh}
 </style>
 </head>
 <body>
@@ -2295,14 +2318,51 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function stopGame(){if(gameRunning){gameBase=currentGameSeconds();gameRunning=false;}state.timer.active=false;$("runBtn").textContent="▶ SPIELZEIT STARTEN";$("runBtn").classList.remove("stop");}
   const matchSide=document.querySelector("#matchGrid>.side"),matchEventsPanel=matchSide?.querySelector(".events"),matchTimeManagement=matchSide?.querySelector(".time-management"),videoEventEditorHome=$("videoEventEditor")?.parentElement,matchCaptureNodes=[$("stepSummary"),...document.querySelectorAll("#matchGrid>.side>.step"),$("backbar")].filter(Boolean);
   function placeMatchReviewEditor(enabled){const editor=$("videoEventEditor"),fallback=$("matchReviewEventEditorHost");if(!editor)return;if(!enabled){if(videoEventEditorHome&&editor.parentElement!==videoEventEditorHome)videoEventEditorHome.append(editor);return}const wide=window.innerWidth>=1100;if(wide&&matchEventsPanel){if(editor.parentElement!==matchEventsPanel)matchEventsPanel.append(editor)}else if(fallback&&editor.parentElement!==fallback)fallback.append(editor)}
-  function updateMatchReviewLayout(){const nearbyPanel=$("matchNearbyEvents"),grid=$("matchGrid"),side=grid?.querySelector(":scope > .side");if(nearbyPanel&&grid&&side&&nearbyPanel.parentElement!==grid)grid.insertBefore(nearbyPanel,side);const enabled=activeTab==="match"&&matchReviewMode,videoScouting=activeTab==="match"&&analysisMode==="video"&&!enabled,topHost=$("matchReviewTopHost"),host=$("matchReviewCaptureHost");document.body.classList.toggle("match-review-mode",enabled);document.body.classList.toggle("video-scouting-layout",videoScouting);syncSceneWindowInputs();const mobileScouting=videoScouting&&window.innerWidth<760,possControl=$("homePoss")?.closest(".possession"),videoControls=$("matchVideoHost")?.querySelector(".video-control-groups"),timeControls=matchTimeManagement;
+  function updateMatchReviewLayout(){
+    const nearbyPanel=$("matchNearbyEvents"),grid=$("matchGrid"),side=grid?.querySelector(":scope > .side");
+    const enabled=activeTab==="match"&&matchReviewMode;
+    const videoScouting=activeTab==="match"&&analysisMode==="video"&&!enabled;
+    const topHost=$("matchReviewTopHost"),videoHost=$("matchVideoHost"),videoControls=videoHost?.querySelector(".video-control-groups");
+    const host=$("matchReviewCaptureHost"),possession=$("homePoss")?.closest(".possession");
+    document.body.classList.toggle("match-review-mode",enabled);
+    document.body.classList.toggle("video-scouting-layout",videoScouting);
+    document.body.classList.toggle("match-unified-layout",activeTab==="match");
+    syncSceneWindowInputs();
     if(topHost&&grid&&topHost.nextElementSibling!==grid)grid.before(topHost);
-    if(videoScouting&&possControl&&videoControls){
-      if(possControl.previousElementSibling!==videoControls)videoControls.after(possControl);
-    }else if(possControl&&timeControls&&possControl.parentElement!==timeControls){
-      timeControls.querySelector(".status")?.before(possControl);
+    if(matchTimeManagement&&topHost&&matchTimeManagement.parentElement!==topHost)topHost.append(matchTimeManagement);
+    if(videoControls&&possession&&videoControls.nextElementSibling!==possession)videoControls.after(possession);
+    // Capture stays below the video/events row in all modes.
+    if(side)for(const node of matchCaptureNodes)side.append(node);
+    if(nearbyPanel&&grid&&nearbyPanel.parentElement!==grid)grid.insertBefore(nearbyPanel,side);
+    if(matchEventsPanel&&grid&&side){
+      if(videoScouting){
+        if(matchEventsPanel.parentElement!==side)side.append(matchEventsPanel);
+      }else if(matchEventsPanel.parentElement!==grid){
+        grid.insertBefore(matchEventsPanel,side);
+      }
+      const label=matchEventsPanel.querySelector(".label");
+      if(label)label.textContent=enabled?"Ereignisse im Video":"Letzte Ereignisse";
     }
-    if(enabled||videoScouting){if(matchTimeManagement&&topHost&&matchTimeManagement.parentElement!==topHost)topHost.append(matchTimeManagement);if(enabled){for(const node of matchCaptureNodes)host.append(node);placeMatchReviewEditor(true)}}else{if(matchSide&&matchEventsPanel){if(matchTimeManagement&&matchTimeManagement.parentElement!==matchSide)matchSide.insertBefore(matchTimeManagement,matchEventsPanel);for(const node of matchCaptureNodes)matchSide.insertBefore(node,matchEventsPanel)}placeMatchReviewEditor(false)}if(matchEventsPanel){const label=matchEventsPanel.querySelector(".label");if(label)label.textContent=enabled?"Ereignisse im Video":"Letzte Ereignisse"}if(enabled){renderEvents();renderVideoEventEditor()}if(videoScouting){placeMatchReviewEditor(false);const editor=$("videoEventEditor"),nearbyHost=$("matchNearbyEditorHost");if(editor&&nearbyHost&&editor.parentElement!==nearbyHost)nearbyHost.append(editor);const capture=$("matchReviewCaptureHost");if(capture&&nearbyHost&&nearbyHost.nextElementSibling!==capture)capture.parentElement.insertBefore(nearbyHost,capture);nearbyHost.classList.toggle("hidden",activeVideoEventIndex===null);renderMatchNearbyEvents(true);requestAnimationFrame(syncMatchVideoColumnHeight)}else{const nearbyHost=$("matchNearbyEditorHost"),list=$("matchNearbyList");if(list&&nearbyHost&&nearbyHost.parentElement!==list.parentElement)list.parentElement.insertBefore(nearbyHost,list.nextSibling);$("matchNearbyEvents").classList.add("hidden");nearbyHost.classList.add("hidden")}}
+    if(enabled){
+      placeMatchReviewEditor(true);renderEvents();renderVideoEventEditor();
+    }else{
+      placeMatchReviewEditor(false);
+    }
+    if(videoScouting){
+      const editor=$("videoEventEditor"),nearbyHost=$("matchNearbyEditorHost");
+      if(editor&&nearbyHost&&editor.parentElement!==nearbyHost)nearbyHost.append(editor);
+      const capture=$("matchReviewCaptureHost");
+      if(capture&&nearbyHost&&nearbyHost.nextElementSibling!==capture)capture.parentElement.insertBefore(nearbyHost,capture);
+      nearbyHost?.classList.toggle("hidden",activeVideoEventIndex===null);
+      renderMatchNearbyEvents(true);
+      requestAnimationFrame(syncMatchVideoColumnHeight);
+    }else{
+      const nearbyHost=$("matchNearbyEditorHost"),list=$("matchNearbyList");
+      if(list&&nearbyHost&&nearbyHost.parentElement!==list.parentElement)list.parentElement.insertBefore(nearbyHost,list.nextSibling);
+      nearbyPanel?.classList.add("hidden");
+      nearbyHost?.classList.add("hidden");
+    }
+  }
   function syncMatchVideoColumnHeight(){
     const video=$("matchVideoHost"),events=$("matchNearbyEvents");
     if(!video||!events)return;
