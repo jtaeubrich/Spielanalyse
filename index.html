@@ -625,6 +625,17 @@
     body.match-unified-layout #matchTab #matchGrid>.side{grid-column:1/-1;grid-row:2}
   }
   body.match-unified-layout.match-review-mode #matchTab #matchGrid>.events .eventlist{max-height:40vh}
+
+  /* Permanent independent possession area, shared by all Match modes. */
+  #matchTab #matchPossessionHost{padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;min-width:0}
+  #matchTab #matchPossessionHost .possession{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px;margin:7px 0 0}
+  #matchTab #matchPossessionHost .poss{min-height:46px;min-width:0;font-size:clamp(11px,2.5vw,15px)}
+  body.match-unified-layout #matchTab #matchPossessionHost{order:2;width:100%;min-width:0}
+  body.match-unified-layout #matchTab #matchGrid>.side{order:3}
+  @media(min-width:760px){
+    body.match-unified-layout #matchTab #matchPossessionHost{grid-column:1/-1;grid-row:2}
+    body.match-unified-layout #matchTab #matchGrid>.side{grid-row:3}
+  }
 </style>
 </head>
 <body>
@@ -732,6 +743,7 @@
         <div class="match-review-capture" id="matchReviewCaptureHost"></div><div class="match-review-event-editor hidden" id="matchReviewEventEditorHost"></div>
       </div>
     </section><section class="match-nearby-events hidden" id="matchNearbyEvents"><div class="match-nearby-header"><strong>Alle Events · Videoanalyse</strong><button class="btn" id="matchJumpToCurrentEvent" type="button">Zur Videozeit</button><span id="matchNearbyTime">± 10 Sekunden</span></div><div class="match-nearby-list" id="matchNearbyList" aria-label="Events in der Nähe"></div><div id="matchEventHoldMenu" class="match-event-hold-menu hidden" role="menu"><button class="btn" type="button" id="matchEventHoldDetails">Details ohne Videosprung</button></div><div id="matchNearbyEditorHost" class="hidden"><button class="btn match-editor-close" id="matchEditorClose" type="button" aria-label="Event-Bearbeitung schließen" title="Event-Bearbeitung schließen">×</button></div></section></div>
+    <section id="matchPossessionHost" class="match-possession-host" aria-label="Ballbesitz"><div class="label">Ballbesitz</div></section>
     <aside class="panel side">
       <div class="time-management">
         <div class="form-grid"><label class="match-mode">Scouting-Modus<select class="field" id="modeSelect"><option value="live">Live Scouting</option><option value="video">Video Scouting</option></select></label><label>Aktiver Torwart · Mein Team<select class="field" id="activeOwnKeeper"></select></label><label>Aktiver Torwart · Gegner<select class="field" id="activeOpponentKeeper"></select></label><label>Deckung · Mein Team<select class="field" id="activeOwnDefense"></select></label><label>Deckung · Gegner<select class="field" id="activeOpponentDefense"></select></label></div>
@@ -2330,7 +2342,8 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     syncSceneWindowInputs();
     if(topHost&&grid&&topHost.nextElementSibling!==grid)grid.before(topHost);
     if(matchTimeManagement&&topHost&&matchTimeManagement.parentElement!==topHost)topHost.append(matchTimeManagement);
-    if(videoControls&&possession&&videoControls.nextElementSibling!==possession)videoControls.after(possession);
+    const possessionHost=$("matchPossessionHost");
+    if(possessionHost&&possession&&possession.parentElement!==possessionHost)possessionHost.append(possession);
     // Capture stays below the video/events row in all modes.
     if(side)for(const node of matchCaptureNodes)side.append(node);
     if(nearbyPanel&&grid&&nearbyPanel.parentElement!==grid)grid.insertBefore(nearbyPanel,side);
