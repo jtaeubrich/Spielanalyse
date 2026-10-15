@@ -583,3 +583,19 @@ test("official event time changes require confirmation and preserve original",as
  });
  expect(stored).toBeTruthy();
 });
+
+test("event details can delete a video event after confirmation",async({page})=>{
+ await page.goto("/");
+ await loadVideoScoutingFixture(page);
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#matchNearbyList .match-nearby-item").first().click();
+ await expect(page.locator("#veeDeleteEvent")).toBeVisible();
+ const before=await page.locator("#matchNearbyList .match-nearby-item").count();
+ page.once("dialog",d=>d.dismiss());
+ await page.locator("#veeDeleteEvent").click();
+ await expect(page.locator("#veeDeleteEvent")).toBeVisible();
+ page.once("dialog",d=>d.accept());
+ await page.locator("#veeDeleteEvent").click();
+ await expect(page.locator("#veeDeleteEvent")).toHaveCount(0);
+ await expect(page.locator("#matchNearbyList .match-nearby-item")).toHaveCount(before-1);
+});
