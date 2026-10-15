@@ -515,3 +515,27 @@ test("video clock row orders video game controls and right aligned score",async(
  expect(layout.order).toBe(true);
  expect(layout.rightGap).toBeLessThan(25);
 });
+
+test("mobile video scouting keeps clocks and playback controls in one row and possession below video",async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#reviewClock")).toBeVisible();
+ const layout=await page.evaluate(()=>{
+  const rect=selector=>document.querySelector(selector).getBoundingClientRect();
+  const video=document.querySelector("#matchVideoHost");
+  const possession=document.querySelector(".possession");
+  const group=video.querySelector(".video-control-groups");
+  const children=[...group.children].filter(el=>getComputedStyle(el).display!=="none");
+  const clocks=[...document.querySelector("#reviewClock").children].filter(el=>getComputedStyle(el).display!=="none");
+  return {
+   possessionInVideo:video.contains(possession),
+   possessionAfterControls:!!(group.compareDocumentPosition(possession)&Node.DOCUMENT_POSITION_FOLLOWING),
+   playbackOneRow:children.every(el=>Math.abs(el.getBoundingClientRect().top-children[0].getBoundingClientRect().top)<10),
+   clockOneRow:clocks.every(el=>Math.abs(el.getBoundingClientRect().top-clocks[0].getBoundingClientRect().top)<10),
+   possessionBelowVideo:rect(".possession").top>=rect(".video-frame").bottom
+  };
+ });
+ expect(layout).toEqual({possessionInVideo:true,possessionAfterControls:true,playbackOneRow:true,clockOneRow:true,possessionBelowVideo:true});
+});
