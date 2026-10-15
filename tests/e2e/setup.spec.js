@@ -19,6 +19,16 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const hknFixture = path.resolve(here, "../fixtures/hkn_reference.json");
 const h360Fixture = path.resolve(here, "../fixtures/handball360_378107.json");
+async function loadVideoScoutingFixture(page){
+ const fs=await import("node:fs/promises");
+ const game=JSON.parse(await fs.readFile(hknFixture,"utf8"));
+ game.isVideoscoutingFile=true;
+ await page.locator("#continueGameInput").setInputFiles({
+  name:"hkn_video_scouting.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(game))
+ });
+ await expect(page.locator("#modeSelect")).toHaveValue("video");
+}
+
 
 test("loads legacy game with symmetric home and away labels",async({page})=>{
  await page.goto("/");
@@ -203,22 +213,20 @@ test("tablet landscape displays video and nearby events side by side",async({pag
  expect(Math.abs(rects.eventsTop-rects.videoTop)).toBeLessThan(5);
 });
 
-test("tablet Match video events list and editor share video height",async({page})=>{
+test("tablet Match video events list aligns beside video without hosting details",async({page})=>{
  await page.setViewportSize({width:1024,height:768});
  await page.goto("/");
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
- await expect.poll(async()=>page.evaluate(()=>{
-   const list=document.querySelector("#matchNearbyList"),editor=document.querySelector("#matchNearbyEditorHost");
-   return Boolean(list.compareDocumentPosition(editor)&Node.DOCUMENT_POSITION_FOLLOWING);
- })).toBe(true);
  const layout=await page.evaluate(()=>{
    const v=document.querySelector("#matchVideoHost").getBoundingClientRect();
    const e=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
-   return {difference:Math.abs(v.height-e.height),left:e.left,right:v.right};
+   return {difference:Math.abs(v.height-e.height),left:e.left,right:v.right,
+     editorInVideo:document.querySelector("#matchNearbyEditorHost").parentElement?.id==="matchVideoHost"};
  });
  expect(layout.difference).toBeLessThan(5);
  expect(layout.left).toBeGreaterThanOrEqual(layout.right-3);
+ expect(layout.editorInVideo).toBe(true);
 });
 
 test("video tab exposes set current video or real time for selected event",async({page})=>{
@@ -371,9 +379,8 @@ test("review match clock includes editable synchronization dialog",async({page})
 test("iPad video scouting displays editable event details below video and before capture, closable with X",async({page})=>{
  await page.setViewportSize({width:1024,height:768});
  await page.goto("/");
- await page.locator("#continueGameInput").setInputFiles(hknFixture);
+ await loadVideoScoutingFixture(page);
  await page.locator('[data-tab="match"]').click();
- await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#matchNearbyList .match-nearby-item").first()).toBeVisible();
  await page.locator("#matchNearbyList .match-nearby-item").first().click();
  const details=page.locator("#matchNearbyEditorHost");
@@ -409,9 +416,8 @@ test("iPad video scouting displays editable event details below video and before
 
 test("neutral event editor uses defense label and defending team for defender choices",async({page})=>{
  await page.goto("/");
- await page.locator("#continueGameInput").setInputFiles(hknFixture);
+ await loadVideoScoutingFixture(page);
  await page.locator('[data-tab="match"]').click();
- await page.locator("#modeSelect").selectOption("video");
  const shots=page.locator("#matchNearbyList .match-nearby-item");
  await expect(shots.first()).toBeVisible();
  let found=false;
