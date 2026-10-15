@@ -543,3 +543,19 @@ test("mobile video scouting keeps clocks and playback controls in one row and po
  });
  expect(layout).toEqual({possessionInVideo:true,possessionAfterControls:true,playbackOneRow:true,clockOneRow:true,possessionBelowVideo:true});
 });
+
+test("video timestamp editor accepts colon and dot on mobile keyboards",async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto("/");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ const input=page.locator("#reviewClockInput");
+ await expect(input).toHaveAttribute("inputmode","text");
+ await loadVideoScoutingFixture(page);
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#matchNearbyList .match-nearby-item").first().click();
+ const videoTime=page.locator("#veeRealTime");
+ await expect(videoTime).toHaveAttribute("inputmode","text");
+ await videoTime.fill("47:39.6");
+ await expect(videoTime).toHaveValue("47:39.6");
+});
