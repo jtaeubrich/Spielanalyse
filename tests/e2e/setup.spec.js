@@ -405,3 +405,26 @@ test("iPad video scouting displays editable event details below video and before
  await expect(details).toBeHidden();
  await expect(page.locator("#matchNearbyList .match-nearby-item").first()).toBeVisible();
 });
+
+
+test("neutral event editor uses defense label and defending team for defender choices",async({page})=>{
+ await page.goto("/");
+ await page.locator("#continueGameInput").setInputFiles(hknFixture);
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ const shots=page.locator("#matchNearbyList .match-nearby-item");
+ await expect(shots.first()).toBeVisible();
+ let found=false;
+ for(let i=0;i<Math.min(await shots.count(),60);i++){
+   await shots.nth(i).click();
+   const formation=page.locator("#veeDefenseFormation");
+   if(await formation.count()){
+     await expect(formation.locator("xpath=..")).toContainText("Deckungsformation");
+     await expect(formation.locator("xpath=..")).not.toContainText(/Mein Team|Gegner/);
+     await expect(page.locator("#veeTeam")).toBeVisible();
+     found=true;
+     break;
+   }
+ }
+ expect(found).toBe(true);
+});
