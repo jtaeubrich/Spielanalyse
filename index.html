@@ -592,6 +592,16 @@
       body.video-scouting-layout #matchTab #matchVideoHost .video-frame{margin:6px 0}
     }
 .official-time-warning{grid-column:1/-1;padding:7px 10px;border:1px solid #bd9344;border-radius:8px;color:#f2d49d;font-size:12px}
+
+    @media(max-width:759px){
+      body.video-scouting-layout #matchTab #matchVideoHost .video-control-groups{display:grid!important;grid-template-columns:minmax(0,3fr) minmax(0,4fr) minmax(0,2fr);gap:5px;align-items:end}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-control-group{width:100%;min-width:0}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-control-group .video-controls{display:flex;width:100%;gap:2px}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-control-group .video-controls>.btn{flex:1 1 0;min-width:0;padding:6px 0;font-size:10px;text-align:center}
+      body.video-scouting-layout #matchTab #matchVideoHost [data-rate="1.5"]{display:none!important}
+      body.video-scouting-layout #matchTab #matchVideoHost .video-control-groups>.match-review-sync{width:100%;align-items:stretch;justify-content:flex-end;margin:0}
+    }
+    body.video-scouting-layout #matchTab #matchGrid>.side>.events{display:none!important}
 </style>
 </head>
 <body>
@@ -2287,7 +2297,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function placeMatchReviewEditor(enabled){const editor=$("videoEventEditor"),fallback=$("matchReviewEventEditorHost");if(!editor)return;if(!enabled){if(videoEventEditorHome&&editor.parentElement!==videoEventEditorHome)videoEventEditorHome.append(editor);return}const wide=window.innerWidth>=1100;if(wide&&matchEventsPanel){if(editor.parentElement!==matchEventsPanel)matchEventsPanel.append(editor)}else if(fallback&&editor.parentElement!==fallback)fallback.append(editor)}
   function updateMatchReviewLayout(){const nearbyPanel=$("matchNearbyEvents"),grid=$("matchGrid"),side=grid?.querySelector(":scope > .side");if(nearbyPanel&&grid&&side&&nearbyPanel.parentElement!==grid)grid.insertBefore(nearbyPanel,side);const enabled=activeTab==="match"&&matchReviewMode,videoScouting=activeTab==="match"&&analysisMode==="video"&&!enabled,topHost=$("matchReviewTopHost"),host=$("matchReviewCaptureHost");document.body.classList.toggle("match-review-mode",enabled);document.body.classList.toggle("video-scouting-layout",videoScouting);syncSceneWindowInputs();const mobileScouting=videoScouting&&window.innerWidth<760,possControl=$("homePoss")?.closest(".possession"),videoControls=$("matchVideoHost")?.querySelector(".video-control-groups"),timeControls=matchTimeManagement;
     if(mobileScouting){
-      if(topHost&&grid&&topHost.previousElementSibling!==grid)grid.after(topHost);
+      if(topHost&&grid&&topHost.nextElementSibling!==grid)grid.before(topHost);
       if(possControl&&videoControls&&possControl.previousElementSibling!==videoControls)videoControls.after(possControl);
     }else{
       if(topHost&&grid&&topHost.nextElementSibling!==grid)grid.before(topHost);
