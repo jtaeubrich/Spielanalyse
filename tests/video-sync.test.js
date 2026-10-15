@@ -9,7 +9,8 @@ import {
   reviewPosition,
   eventRealTimeFromVideoPosition,
   videoScoutingEventStamp,
-  reconstructedGameClock
+  reconstructedGameClock,
+  scoreAtVideoPosition
 } from "../src/video-sync.js";
 
 describe("video synchronization core", () => {
@@ -272,5 +273,23 @@ describe("reconstructed clock manual controls",()=>{
  test("estimated events never accelerate clock beyond video elapsed time",()=>{
    const events=[{video:20,game:800},{video:40,game:900}];
    expect(reconstructedGameClock(30,1,0,1500,events,[]).seconds).toBe(810);
+ });
+});
+
+describe("score displayed beside reconstructed video clock",()=>{
+ test("counts only goals reached at video position",()=>{
+  const events=[
+   {type:"goal",team:"home",time:20,half:1,realTime:25000,officialSource:"handball.net"},
+   {type:"goal",team:"away",time:40,half:1,realTime:null,officialSource:"handball.net"},
+   {type:"goal",team:"home",time:70,half:1,realTime:75000,officialSource:"handball.net"}
+  ];
+  const options={events,video:{h1SyncRealTime:5},isVideoscoutingFile:true,durationMinutes:25};
+  expect(scoreAtVideoPosition(30,options)).toEqual([1,0]);
+  expect(scoreAtVideoPosition(50,options)).toEqual([1,1]);
+  expect(scoreAtVideoPosition(80,options)).toEqual([2,1]);
+ });
+ test("does not count goals from a future half",()=>{
+  const events=[{type:"goal",team:"home",time:1510,half:2,realTime:null,officialSource:"handball.net"}];
+  expect(scoreAtVideoPosition(100,{events,video:{h1SyncRealTime:0,h2SyncRealTime:1500},isVideoscoutingFile:true})).toEqual([0,0]);
  });
 });
