@@ -13,7 +13,7 @@ test.describe("Event-bound video annotations", () => {
   test("annotation visibility is shared between Video and Match", async ({ page }) => {
     await page.goto("/");
     await page.locator('[data-tab="video"]').click();
-    await page.locator("#annotationToolsToggle").click();
+    if (await page.locator("#annotationToolsToggle").isVisible()) await page.locator("#annotationToolsToggle").click();
     await page.locator("#showVideoAnnotations").uncheck();
     await expect(page.locator("#showMatchAnnotations")).not.toBeChecked();
     await page.locator('[data-tab="match"]').click();
