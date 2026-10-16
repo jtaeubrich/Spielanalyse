@@ -910,6 +910,16 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
 #videoStage.draw-fullscreen #fullscreenMode.selected,#videoStage.draw-fullscreen #fullscreenEditMode.selected{border-color:#35d2ea;background:#135369}
 @media(max-width:700px){#videoStage.draw-fullscreen .fullscreen-draw-toolbar .btn{padding:3px!important;font-size:10px!important}}
 .fullscreen-event-info{display:flex;flex-direction:column;gap:2px;min-width:0}.fullscreen-event-info small{font-size:10px;color:#c6d9e1;white-space:nowrap}.fullscreen-timing-edit{display:flex;align-items:center;gap:3px;color:white;font-size:11px}.fullscreen-timing-edit[hidden]{display:none!important}.fullscreen-timing-edit input{width:57px;min-width:0;background:#152b3a;color:white;border:1px solid #527280;border-radius:5px;padding:4px;font-size:10px}
+
+/* Video tab: Match-sized clock typography; never wrap score onto a second row. */
+#videoTab #reviewClock{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:5px!important;padding:3px 6px!important;font-size:11px!important;min-width:0!important}
+#videoTab #reviewClock>span{white-space:nowrap!important}
+#videoTab #reviewClock strong{font-size:12px!important;white-space:nowrap!important}
+#videoTab #reviewGameTime{font-size:12px!important;padding:2px 4px!important;min-width:0!important}
+#videoTab #reviewClock .review-clock-score{margin-left:auto!important;text-align:right!important;flex-shrink:0!important;white-space:nowrap!important}
+#videoTab #reviewClock small{font-size:10px!important}
+#videoTab #reviewClockPause,#videoTab #reviewClockStart{display:none!important}
+@media(max-width:380px){#videoTab #reviewClock{gap:3px!important;font-size:10px!important}#videoTab #reviewClock strong,#videoTab #reviewGameTime{font-size:11px!important}#videoTab #reviewClock small{font-size:9px!important}}
 </style>
 </head>
 <body>
