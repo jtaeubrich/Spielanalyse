@@ -4,7 +4,7 @@ test.describe("Event-bound video annotations", () => {
   test("drawing actions require a selected event", async ({ page }) => {
     await page.goto("/");
     await page.locator('[data-tab="video"]').click();
-    await page.locator("#annotationToolsToggle").click();
+    if (await page.locator("#annotationToolsToggle").isVisible()) await page.locator("#annotationToolsToggle").click();
     await expect(page.locator("#drawToggle")).toBeDisabled();
     await expect(page.locator("#fullscreenDrawOpen")).toBeDisabled();
     await expect(page.locator("#fullscreenEventLabel")).toBeHidden();
@@ -17,6 +17,8 @@ test.describe("Event-bound video annotations", () => {
     await page.locator("#showVideoAnnotations").uncheck();
     await expect(page.locator("#showMatchAnnotations")).not.toBeChecked();
     await page.locator('[data-tab="match"]').click();
+    await page.locator("#modeSelect").selectOption("video");
+    await expect(page.locator("#showMatchAnnotations")).toBeVisible();
     await expect(page.locator("#showMatchAnnotations")).not.toBeChecked();
     await page.locator("#showMatchAnnotations").check();
     await page.locator('[data-tab="video"]').click();
