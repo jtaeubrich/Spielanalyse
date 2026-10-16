@@ -25,6 +25,14 @@ test.describe("Event-bound video annotations", () => {
     await expect(page.locator("#showVideoAnnotations")).toBeChecked();
   });
 
+  test("fullscreen editing controls are available", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#fullscreenMode")).toHaveCount(1);
+    await expect(page.locator("#fullscreenEditMode")).toHaveCount(1);
+    await expect(page.locator("#selectedShapeDelete")).toBeHidden();
+    await expect(page.locator("#fullscreenClose")).toHaveText("✕");
+  });
+
   test("fullscreen event label and tools exist in the video stage", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("#videoStage #fullscreenEventLabel")).toHaveCount(1);
