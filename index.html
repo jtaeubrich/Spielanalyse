@@ -748,6 +748,20 @@
  #videoTab .video-portrait-playlist-host .clip{box-sizing:border-box!important;flex:0 0 170px!important;height:82px!important;min-height:82px!important;max-height:82px!important;overflow:hidden!important;align-self:flex-start!important;padding:6px 7px!important}
  #videoTab .video-portrait-playlist-host .clip-content{max-height:70px!important;overflow:hidden!important}
 }
+
+/* Portrait video controls: match-style equal-size buttons across one full-width row. */
+@media(max-width:700px) and (orientation:portrait){
+ #videoTab .video-control-groups{display:grid!important;width:100%!important;grid-template-columns:minmax(0,4fr) minmax(0,4fr) minmax(0,2fr)!important;column-gap:6px!important;row-gap:0!important;align-items:start!important}
+ #videoTab .video-control-group:first-child{grid-column:1!important}
+ #videoTab .video-control-group:nth-child(2){grid-column:2!important}
+ #videoTab .video-control-group.match-review-sync{grid-column:3!important;grid-row:1!important;align-items:stretch!important;width:100%!important;min-width:0!important}
+ #videoTab .video-control-group{width:100%!important;min-width:0!important;align-items:stretch!important}
+ #videoTab .video-control-group .video-control-label{display:block!important;text-align:left!important;font-size:9px!important;letter-spacing:0!important;white-space:nowrap!important}
+ #videoTab .match-review-sync .video-control-label{text-align:right!important}
+ #videoTab .video-control-group .video-controls,#videoTab .match-review-sync .video-controls{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;width:100%!important;gap:3px!important;align-items:stretch!important;justify-content:stretch!important}
+ #videoTab .match-review-sync .video-controls{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #videoTab .video-control-group .video-controls .btn,#videoTab .match-review-sync .video-controls .btn{display:flex!important;justify-content:center!important;align-items:center!important;width:100%!important;min-width:0!important;max-width:none!important;height:38px!important;min-height:38px!important;padding:0 1px!important;margin:0!important;font-size:clamp(9px,2.4vw,11px)!important;line-height:1!important;white-space:nowrap!important;flex:none!important}
+}
 </style>
 </head>
 <body>
