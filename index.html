@@ -791,6 +791,9 @@
 body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{display:block!important}
 #videoStage.draw-fullscreen .annotation-canvas{display:block!important}
 #videoTab .annotation-section.open .annotation-toolbar{display:flex!important}
+
+/* Align Sync label with Tempo and Abspielposition on portrait phones. */
+@media(max-width:700px) and (orientation:portrait){#videoTab .match-review-sync .video-control-label{align-self:stretch!important;text-align:left!important}}
 </style>
 </head>
 <body>
@@ -1431,7 +1434,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function eventDescription(e){const main=e.type==="save"?e.throwerName||e.pName:e.pName||e.attackerName||e.note||"Ohne Spieler";const defense=eventDefenseNames(e);return{title:eventLabels[e.type]||e.type||"Ereignis",main,defense}}
   function compactEventLabels(event,position=eventVideoPosition(event)){
     const description=eventDescription(event),seconds=position?.seconds;
-    const gameTime=event.displayTime||(event.time!=null?fmt(event.time):"Spielzeit offen");
+    const gameTime=event.displayTime||(event.time!=null?fmt(event.time):"n.a.");
     const videoTime=Number.isFinite(seconds)?"Video "+fmt(seconds,true):"Videozeit fehlt";
     return {headline:gameTime+" · "+description.title,player:description.main,videoTime};
   }
