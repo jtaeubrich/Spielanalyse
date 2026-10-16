@@ -794,6 +794,37 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
 
 /* Align Sync label with Tempo and Abspielposition on portrait phones. */
 @media(max-width:700px) and (orientation:portrait){#videoTab .match-review-sync .video-control-label{align-self:stretch!important;text-align:left!important}}
+
+/* Phone landscape Video: ensure the right-hand event list remains usable, like Match scouting. */
+@media (orientation:landscape) and (max-height:600px) and (min-width:660px) and (max-width:1100px){
+  #videoTab .video-content-grid{
+    grid-template-columns:minmax(0,1fr) minmax(240px,32%)!important;
+    grid-template-areas:"player events" "production presets"!important;
+    gap:8px!important;
+  }
+  #videoTab #videoPlayerHost,#videoTab #videoEventsCard{min-width:0!important}
+  #videoTab #videoEventsCard{
+    width:100%!important;min-height:0!important;max-width:100%!important;
+    padding:8px!important;overflow:hidden!important;
+  }
+  #videoTab #videoEventsCard .playlist{
+    display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;
+    align-items:stretch!important;gap:5px!important;min-width:0!important;
+    overflow-y:auto!important;overflow-x:hidden!important;max-height:none!important;
+  }
+  #videoTab #videoEventsCard .clip{
+    display:block!important;position:relative!important;flex:0 0 auto!important;
+    width:100%!important;min-width:0!important;height:auto!important;
+    min-height:55px!important;max-height:none!important;
+    padding:7px 8px!important;margin:0!important;overflow:hidden!important;
+  }
+  #videoTab #videoEventsCard .clip-content{min-width:0!important;overflow:hidden!important;padding-right:23px!important}
+  #videoTab #videoEventsCard .clip-head,#videoTab #videoEventsCard .clip-player,
+  #videoTab #videoEventsCard .clip-video{line-height:1.25!important;overflow-wrap:anywhere}
+  #videoTab #videoEventsCard .clip-check{right:6px!important;top:7px!important}
+  #videoTab #videoTabSetCurrentTime{font-size:11px!important;white-space:normal!important;padding:6px!important}
+  #videoTab .video-size{display:flex!important}
+}
 </style>
 </head>
 <body>
