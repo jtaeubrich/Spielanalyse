@@ -894,6 +894,14 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
  #videoTab .review-annotation-toggle{display:none!important}
  #videoTab .annotation-section{margin-top:6px!important}
 }
+
+@media (orientation:landscape) and (max-height:600px){
+ #videoStage.draw-fullscreen .fullscreen-draw-toolbar{top:auto!important;bottom:max(5px,env(safe-area-inset-bottom))!important;max-width:96vw!important;gap:3px!important;padding:3px!important;flex-wrap:nowrap!important}
+ #videoStage.draw-fullscreen .fullscreen-draw-toolbar .btn{font-size:11px!important;padding:3px 4px!important;height:34px!important;min-height:34px!important}
+ #videoStage.draw-fullscreen .fullscreen-draw-toolbar .field{width:95px!important;height:34px!important}
+ #videoStage.draw-fullscreen .fullscreen-draw-toolbar input[type=color]{width:30px!important;height:34px!important;flex-basis:30px!important}
+ #videoStage.draw-fullscreen #fullscreenToolbarHandle{min-height:34px!important}
+}
 </style>
 </head>
 <body>
@@ -2722,7 +2730,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   $("showVideoAnnotations").onchange=e=>setAnnotationVisibility(e.target.checked);
   $("showMatchAnnotations").onchange=e=>setAnnotationVisibility(e.target.checked);
   document.body.classList.add("annotations-visible");
-  $("fullscreenDrawOpen").onclick=()=>{if(!state.events[activeVideoEventIndex])return toast("Zuerst ein Event auswählen.");drawingFullscreen=true;mediaPause();drawingEnabled=true;$("annotationCanvas").classList.add("drawing");$("drawToggle").classList.add("selected");$("drawToggle").textContent="Zeichnen aktiv";for(const id of ["fullscreenEventLabel","fullscreenDrawToolbar"]){const el=$(id);el.style.left="";el.style.top="";el.style.bottom="";el.style.transform=""} $("videoStage").classList.add("draw-fullscreen");$("fullscreenDrawToolbar").hidden=false;renderFullscreenEventLabel();resizeAnnotationCanvas()};
+  $("fullscreenDrawOpen").onclick=()=>{if(!state.events[activeVideoEventIndex])return toast("Zuerst ein Event auswählen.");drawingFullscreen=true;fullscreenLastOrientation=window.matchMedia("(orientation:landscape)").matches;mediaPause();drawingEnabled=true;$("annotationCanvas").classList.add("drawing");$("drawToggle").classList.add("selected");$("drawToggle").textContent="Zeichnen aktiv";for(const id of ["fullscreenEventLabel","fullscreenDrawToolbar"]){const el=$(id);el.style.left="";el.style.top="";el.style.bottom="";el.style.transform=""} $("videoStage").classList.add("draw-fullscreen");$("fullscreenDrawToolbar").hidden=false;renderFullscreenEventLabel();resizeAnnotationCanvas()};
   $("fullscreenClose").onclick=closeDrawingFullscreen;
   $("fullscreenDrawTool").onchange=e=>{$("drawTool").value=e.target.value};
   $("fullscreenDrawColor").oninput=e=>{$("drawColor").value=e.target.value};
@@ -2730,6 +2738,22 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function registerFullscreenDrag(panel,handle){let drag=null;handle.addEventListener("pointerdown",e=>{if(!drawingFullscreen)return;e.preventDefault();const rect=panel.getBoundingClientRect(),box=$("videoStage").getBoundingClientRect();drag={x:e.clientX,y:e.clientY,left:rect.left-box.left,top:rect.top-box.top};handle.setPointerCapture(e.pointerId)});handle.addEventListener("pointermove",e=>{if(!drag)return;const box=$("videoStage");panel.style.transform="none";panel.style.bottom="auto";panel.style.left=Math.max(0,Math.min(box.clientWidth-panel.offsetWidth,drag.left+e.clientX-drag.x))+"px";panel.style.top=Math.max(0,Math.min(box.clientHeight-panel.offsetHeight,drag.top+e.clientY-drag.y))+"px"});for(const type of ["pointerup","pointercancel"])handle.addEventListener(type,()=>{drag=null})}
   registerFullscreenDrag($("fullscreenEventLabel"),$("fullscreenLabelHandle"));
   registerFullscreenDrag($("fullscreenDrawToolbar"),$("fullscreenToolbarHandle"));
+  let fullscreenLastOrientation=window.matchMedia("(orientation:landscape)").matches;
+  function refreshFullscreenOrientation(){
+    if(!drawingFullscreen)return;
+    const landscape=window.matchMedia("(orientation:landscape)").matches;
+    if(landscape!==fullscreenLastOrientation){
+      fullscreenLastOrientation=landscape;
+      for(const id of ["fullscreenDrawToolbar","fullscreenEventLabel"]){
+        const panel=$(id);
+        panel.style.removeProperty("left");panel.style.removeProperty("top");panel.style.removeProperty("bottom");panel.style.removeProperty("transform");
+      }
+    }
+    requestAnimationFrame(()=>{if(!drawingFullscreen)return;for(const id of ["fullscreenDrawToolbar","fullscreenEventLabel"]){const panel=$(id),container=$("videoStage");if(panel.style.top){panel.style.top=Math.max(0,Math.min(container.clientHeight-panel.offsetHeight,parseFloat(panel.style.top)||0))+"px";panel.style.left=Math.max(0,Math.min(container.clientWidth-panel.offsetWidth,parseFloat(panel.style.left)||0))+"px"}}resizeAnnotationCanvas()});
+  }
+  window.addEventListener("resize",refreshFullscreenOrientation);
+  window.addEventListener("orientationchange",refreshFullscreenOrientation);
+
   document.querySelectorAll("[data-fs-seek]").forEach(button=>button.onclick=()=>{if(!mediaReady())return toast("Zuerst Video laden.");mediaSeek(Math.max(0,mediaSeconds()+Number(button.dataset.fsSeek)));renderAnnotation()});
   function renderAnnotation(){const canvas=$("annotationCanvas"),ctx=canvas.getContext("2d"),event=state.events[activeVideoEventIndex],annotation=eventAnnotation(event);ctx.clearRect(0,0,canvas.width,canvas.height);syncDrawingControls();syncAnnotationTimeInputs(event);const current=mediaReady()?mediaSeconds():NaN;if(showVideoAnnotations||drawingFullscreen){for(const candidate of state.events){const candidateAnnotation=eventAnnotation(candidate);for(const shape of candidateAnnotation?.shapes||[]){const start=shape.startSeconds??candidateAnnotation.startSeconds,end=shape.endSeconds??candidateAnnotation.endSeconds;if(annotationVisible({startSeconds:start,endSeconds:end},current))drawAnnotationShape(ctx,shape,canvas.width,canvas.height)}}}if(drawingDraft)drawAnnotationShape(ctx,drawingDraft,canvas.width,canvas.height);$("videoCommentOverlay").textContent="";const commentField=$("videoTabEventComment"),status=$("videoTabCommentStatus");if(commentField){commentField.disabled=!event;if(!event){commentField.value="";if(status)status.textContent="Kein Event ausgewählt"}else{if(document.activeElement!==commentField)commentField.value=annotation?.comment||"";if(status)status.textContent=(event.displayTime||fmt(event.time||0))+" · "+(eventLabels[event.type]||event.type||"Event")}}}
   $("videoTabEventComment").oninput=input=>{const event=state.events[activeVideoEventIndex];if(!event)return;eventAnnotation(event,true).comment=input.target.value;persistSession()};
