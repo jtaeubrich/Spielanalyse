@@ -33,6 +33,14 @@ test.describe("Event-bound video annotations", () => {
     await expect(page.locator("#fullscreenClose")).toHaveText("✕");
   });
 
+  test("fullscreen exposes event and selected drawing timing controls", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("#fullscreenAnnotationTime")).toHaveCount(1);
+    await expect(page.locator("#fullscreenShapeStart")).toHaveCount(1);
+    await expect(page.locator("#fullscreenShapeEnd")).toHaveCount(1);
+    await expect(page.locator("#fullscreenTimingEdit")).toBeHidden();
+  });
+
   test("fullscreen event label and tools exist in the video stage", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("#videoStage #fullscreenEventLabel")).toHaveCount(1);
