@@ -10,19 +10,16 @@ test.describe("Event-bound video annotations", () => {
     await expect(page.locator("#fullscreenEventLabel")).toBeHidden();
   });
 
-  test("annotation visibility is shared between Video and Match", async ({ page }) => {
+  test("single annotation visibility checkbox persists across Video and Match", async ({ page }) => {
     await page.goto("/");
     await page.locator('[data-tab="video"]').click();
     if (await page.locator("#annotationToolsToggle").isVisible()) await page.locator("#annotationToolsToggle").click();
+    await expect(page.locator("#showMatchAnnotations")).toHaveCount(0);
     await page.locator("#showVideoAnnotations").uncheck();
-    await expect(page.locator("#showMatchAnnotations")).not.toBeChecked();
     await page.locator('[data-tab="match"]').click();
     await page.locator("#modeSelect").selectOption("video");
-    await expect(page.locator("#showMatchAnnotations")).toBeVisible();
-    await expect(page.locator("#showMatchAnnotations")).not.toBeChecked();
-    await page.locator("#showMatchAnnotations").check();
     await page.locator('[data-tab="video"]').click();
-    await expect(page.locator("#showVideoAnnotations")).toBeChecked();
+    await expect(page.locator("#showVideoAnnotations")).not.toBeChecked();
   });
 
   test("fullscreen editing controls are available", async ({ page }) => {
