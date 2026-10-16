@@ -285,6 +285,18 @@ test("landscape smartphone shows adjustable video width and compact control grou
  expect(layout.sideBySide).toBe(true);
 });
 
+test("landscape Video width cap does not affect Match tab",async({page})=>{
+ await page.setViewportSize({width:844,height:390});
+ await page.goto("/");
+ await page.locator('[data-tab="video"]').click();
+ await expect(page.locator("#videoSize")).toHaveAttribute("max","65");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#videoSize")).toHaveAttribute("max","90");
+ await page.locator("#videoSize").fill("72");
+ await expect(page.locator("#videoSizeValue")).toHaveText("72 %");
+});
+
 test("landscape Match video has 16:9 geometry and event position shortcut",async({page})=>{
  await page.setViewportSize({width:844,height:390});
  await page.goto("/");
