@@ -709,6 +709,33 @@
  #videoTab #videoEventsCard h2{margin-bottom:6px}
  #videoTab #videoModule .video-control-groups{margin-top:7px}
 }
+
+/* Unified Video-tab controls: three labelled groups in one row on all devices. */
+#videoTab .video-control-groups{display:grid!important;grid-template-columns:max-content minmax(0,1fr) max-content!important;align-items:start!important;gap:clamp(4px,1vw,14px)!important;margin:8px 0 10px!important}
+#videoTab .video-control-group,#videoTab .video-control-group:not(.match-review-sync),#videoTab .video-control-group:first-child,#videoTab .video-control-group:nth-child(2){grid-column:auto!important;grid-row:1!important;min-width:0!important;align-self:start!important}
+#videoTab .video-control-group:first-child{grid-column:1!important}
+#videoTab .video-control-group:nth-child(2){grid-column:2!important}
+#videoTab .video-control-group.match-review-sync{grid-column:3!important;grid-row:1!important;display:flex!important;flex-direction:column!important;align-items:flex-end!important;margin:0!important;width:auto!important}
+#videoTab .video-control-group .video-control-label,#videoTab .video-control-group:nth-child(2)>.video-control-label{display:block!important;font-size:10px!important;line-height:1.2!important;white-space:nowrap!important}
+#videoTab .video-control-group .video-controls{display:flex!important;flex-wrap:nowrap!important;gap:4px!important;min-width:0!important}
+#videoTab .match-review-sync .video-controls{flex-direction:row!important}
+#videoTab .video-controls .btn{white-space:nowrap!important}
+@media(max-width:700px){
+ #videoTab .video-control-groups{grid-template-columns:max-content minmax(0,1fr) max-content!important;column-gap:5px!important}
+ #videoTab .video-control-group .video-control-label{font-size:9px!important}
+ #videoTab .video-controls .btn{font-size:10px!important;padding:6px 3px!important}
+ #videoTab .video-controls [data-video-seek]{font-size:10px!important;padding:6px 2px!important}
+ #videoTab .match-review-sync #matchMarkH1,#videoTab .match-review-sync #matchMarkH2{padding:6px 3px!important}
+}
+@media(max-width:700px) and (orientation:portrait){
+ #videoTab .video-portrait-playlist-host .playlist{min-height:0!important;gap:6px!important;padding:2px 1px 5px!important;align-items:stretch!important}
+ #videoTab .video-portrait-playlist-host .clip{flex:0 0 170px!important;width:170px!important;height:auto!important;min-height:0!important;max-height:none!important;padding:7px 8px!important;border-radius:9px!important}
+ #videoTab .video-portrait-playlist-host .clip-head{font-size:12px!important;line-height:1.25!important}
+ #videoTab .video-portrait-playlist-host .clip-player{font-size:11px!important;line-height:1.2!important}
+ #videoTab .video-portrait-playlist-host .clip-video{font-size:10px!important;line-height:1.2!important}
+ #videoTab .video-portrait-playlist-host .clip-detail,#videoTab .video-portrait-playlist-host .clip-defense,#videoTab .video-portrait-playlist-host .event-tags{display:none!important}
+ #videoTab .video-portrait-playlist-host .clip-check{right:6px!important;top:7px!important}
+}
 </style>
 </head>
 <body>
