@@ -638,6 +638,38 @@
     body.match-unified-layout #matchTab #matchPossessionHost{grid-column:1/-1;grid-row:2}
     body.match-unified-layout #matchTab #matchGrid>.side{grid-row:3}
   }
+
+/* Scoped to Video tab only; Match and Analysis remain unchanged. */
+#videoTab .video-size{display:flex!important;margin:8px 0 10px;gap:6px}
+#videoTab #videoSize{min-width:0}
+#videoTab .video-content-grid{grid-template-columns:minmax(0,var(--video-share,60%)) minmax(0,1fr)}
+#videoTab #reviewClockPause,#videoTab #reviewClockStart{display:none!important}
+#videoTab .match-review-sync{display:flex!important;margin-left:auto;align-items:flex-end}
+#videoTab .match-review-sync .video-controls{display:flex;flex-direction:column;gap:4px}
+#videoTab .match-review-sync .video-control-label{text-align:right}
+#videoTab .match-review-sync .sync-state{font-size:10px;text-align:right;max-width:120px}
+#videoTab .video-events-card .playlist{gap:3px}
+#videoTab .video-events-card .clip{padding:5px 6px;min-height:0}
+#videoTab .video-events-card .clip-primary,#videoTab .video-events-card .clip-secondary{font-size:11px;line-height:1.2}
+@media(max-width:700px){
+#videoTab .video-content-grid{grid-template-columns:minmax(0,var(--video-share,60%)) minmax(0,1fr)!important}
+#videoTab .video-control-groups{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;margin-bottom:5px}
+#videoTab .video-control-group:not(.match-review-sync){grid-column:1}
+#videoTab .match-review-sync{grid-column:2;grid-row:1/span 2;align-self:start}
+#videoTab [data-rate="1.25"],#videoTab [data-rate="1.5"]{display:none!important}
+#videoTab .video-controls{flex-wrap:nowrap;gap:3px}
+#videoTab .video-controls .btn{padding:5px 5px;font-size:11px;min-width:0}
+#videoTab .video-size{font-size:11px}
+#videoTab #videoSizeValue{min-width:34px}
+#videoTab .video-events-card .clip{padding:4px!important}
+#videoTab .video-events-card .clip-title,#videoTab .video-events-card .clip-primary{font-size:10px}
+#videoTab .video-events-card .clip-secondary{font-size:9px;margin-top:2px}
+#videoTab .video-events-card .clip-check{width:15px;height:15px;right:4px;top:4px}
+#videoTab .video-events-card .clip-content{padding-right:17px}
+#videoTab .video-events-card .playlist{gap:2px}
+#videoTab .video-events-card h2{font-size:13px;margin-bottom:4px}
+#videoTab .video-events-card{padding:5px!important}
+}
 </style>
 </head>
 <body>
