@@ -736,6 +736,18 @@
  #videoTab .video-portrait-playlist-host .clip-detail,#videoTab .video-portrait-playlist-host .clip-defense,#videoTab .video-portrait-playlist-host .event-tags{display:none!important}
  #videoTab .video-portrait-playlist-host .clip-check{right:6px!important;top:7px!important}
 }
+
+/* Portrait video event strip: fixed compact height, no flex stretching. */
+@media(max-width:700px) and (orientation:portrait){
+ #videoTab [data-rate="1.25"],#videoTab [data-rate="1.5"]{display:inline-flex!important}
+ #videoTab .video-control-groups{grid-template-columns:max-content minmax(0,1fr) max-content!important;column-gap:4px!important}
+ #videoTab .video-control-group .video-controls{gap:2px!important}
+ #videoTab .video-controls .btn{padding:6px 2px!important;font-size:9px!important}
+ #videoTab .video-portrait-playlist-host.active{height:auto!important;min-height:0!important;max-height:105px!important;overflow:hidden!important;margin:7px 0 4px!important}
+ #videoTab .video-portrait-playlist-host .playlist{height:92px!important;min-height:0!important;max-height:92px!important;flex:0 0 auto!important;align-items:flex-start!important;align-content:flex-start!important;padding:2px 1px 5px!important}
+ #videoTab .video-portrait-playlist-host .clip{box-sizing:border-box!important;flex:0 0 170px!important;height:82px!important;min-height:82px!important;max-height:82px!important;overflow:hidden!important;align-self:flex-start!important;padding:6px 7px!important}
+ #videoTab .video-portrait-playlist-host .clip-content{max-height:70px!important;overflow:hidden!important}
+}
 </style>
 </head>
 <body>
