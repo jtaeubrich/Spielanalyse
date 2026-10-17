@@ -38,6 +38,18 @@ test.describe("Event-bound video annotations", () => {
     await expect(page.locator("#fullscreenTimingEdit")).toBeHidden();
   });
 
+  test("annotation canvas resizes with device orientation", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page.locator('[data-tab="video"]').click();
+    const portrait = await page.locator("#annotationCanvas").evaluate(canvas => ({width:canvas.getBoundingClientRect().width,height:canvas.getBoundingClientRect().height}));
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect.poll(async () => page.locator("#annotationCanvas").evaluate(canvas => canvas.getBoundingClientRect().width)).not.toBe(portrait.width);
+    const dimensions = await page.locator("#annotationCanvas").evaluate(canvas => ({ width: canvas.width, height: canvas.height }));
+    expect(dimensions.width).toBeGreaterThan(0);
+    expect(dimensions.height).toBeGreaterThan(0);
+  });
+
   test("fullscreen event label and tools exist in the video stage", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("#videoStage #fullscreenEventLabel")).toHaveCount(1);
