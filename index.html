@@ -920,6 +920,18 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
 #videoTab #reviewClock small{font-size:10px!important}
 #videoTab #reviewClockPause,#videoTab #reviewClockStart{display:none!important}
 @media(max-width:380px){#videoTab #reviewClock{gap:3px!important;font-size:10px!important}#videoTab #reviewClock strong,#videoTab #reviewGameTime{font-size:11px!important}#videoTab #reviewClock small{font-size:9px!important}}
+
+/* Desktop Video workspace: full available width and non-shrinking scrollable event cards. */
+@media(min-width:1101px) and (min-height:601px){
+  body:has(#videoTab.active) .app{max-width:none!important;width:100%!important;padding-left:clamp(8px,1vw,18px)!important;padding-right:clamp(8px,1vw,18px)!important}
+  #videoTab .video-page,#videoTab .video-content-grid{width:100%!important;max-width:none!important;min-width:0!important}
+  #videoTab .video-content-grid{grid-template-columns:minmax(0,var(--video-share,64%)) minmax(0,1fr)!important;gap:12px!important}
+  #videoTab #videoEventsCard{min-width:0!important;overflow:hidden!important}
+  #videoTab #videoEventsCard .playlist{display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:flex-start!important;gap:5px!important;overflow-y:auto!important;overflow-x:hidden!important;min-height:0!important;max-height:100%!important}
+  #videoTab #videoEventsCard .playlist .clip{display:block!important;box-sizing:border-box!important;flex:0 0 auto!important;align-self:stretch!important;width:100%!important;min-width:0!important;height:auto!important;min-height:57px!important;max-height:none!important;padding:7px 8px!important;overflow:hidden!important}
+  #videoTab #videoEventsCard .clip-content{min-width:0!important;white-space:normal!important;padding-right:23px!important}
+  #videoTab #videoEventsCard .clip-head,#videoTab #videoEventsCard .clip-player,#videoTab #videoEventsCard .clip-video{line-height:1.3!important;overflow-wrap:anywhere}
+}
 </style>
 </head>
 <body>
