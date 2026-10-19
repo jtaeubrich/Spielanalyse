@@ -1,0 +1,199 @@
+{
+  "format": "handball-match-flow-clip-upload-manifest",
+  "version": 1,
+  "source": {
+    "localFileName": "referenzspiel.mp4"
+  },
+  "game": {
+    "name": "03.10.2026 16:00 | Demo Heim - Demo Gast",
+    "competition": "Demo Nachwuchsspiel"
+  },
+  "preset": {
+    "name": "Spielanalyse Dokumentation",
+    "filters": {
+      "type": "all"
+    }
+  },
+  "documentation": {
+    "fixture": "docs/handbuch/demo/fixtures/04-live-video-review.json",
+    "matchDurationPerHalfMinutes": 25,
+    "referenceTiming": "H1/H2-video-sync + live-realTime",
+    "note": "Nur korrekt bei gleicher Video-Zeitachse wie der ursprünglich synchronisierten Aufnahme. Vor Nutzung gegenprüfen."
+  },
+  "outputs": [
+    {
+      "outputId": "01-live-tor",
+      "label": "Live Scouting: Torabschluss",
+      "fileBase": "doku_01_live_tor",
+      "fileName": "doku_01_live_tor.mp4",
+      "visibility": "private",
+      "playlistTargets": [],
+      "segments": [
+        {
+          "start": 54.524,
+          "end": 69.524,
+          "eventId": 1791036959483,
+          "eventType": "goal",
+          "gameTime": "01:03",
+          "videoTime": 64.524,
+          "eventIds": [
+            1791036959483
+          ]
+        }
+      ],
+      "documentationEvents": [
+        {
+          "eventId": 1791036959483,
+          "type": "goal",
+          "gameTime": "01:03",
+          "videoTime": 64.524,
+          "clipTime": 10
+        }
+      ]
+    },
+    {
+      "outputId": "02-abwehr-situation",
+      "label": "Video-Nachanalyse: Abwehrsituation und Schlüssel-Moment",
+      "fileBase": "doku_02_abwehr_situation",
+      "fileName": "doku_02_abwehr_situation.mp4",
+      "visibility": "private",
+      "playlistTargets": [],
+      "segments": [
+        {
+          "start": 243.105,
+          "end": 270.985,
+          "eventId": 1791037146649,
+          "eventType": "goal",
+          "gameTime": "04:11",
+          "videoTime": 253.105,
+          "eventIds": [
+            1791037146649,
+            1791103307408
+          ]
+        }
+      ],
+      "documentationEvents": [
+        {
+          "eventId": 1791037146649,
+          "type": "goal",
+          "gameTime": "04:11",
+          "videoTime": 253.105,
+          "clipTime": 10
+        },
+        {
+          "eventId": 1791103307408,
+          "type": "keyMoment",
+          "gameTime": "04:18",
+          "videoTime": 260.985,
+          "clipTime": 17.88
+        }
+      ]
+    },
+    {
+      "outputId": "03-parade-gegenstoss",
+      "label": "Video Scouting: Parade und anschließender Gegenstoß",
+      "fileBase": "doku_03_parade_gegenstoss",
+      "fileName": "doku_03_parade_gegenstoss.mp4",
+      "visibility": "private",
+      "playlistTargets": [],
+      "segments": [
+        {
+          "start": 314.809,
+          "end": 340.104,
+          "eventId": 1791037211424,
+          "eventType": "save",
+          "gameTime": "05:21",
+          "videoTime": 324.809,
+          "eventIds": [
+            1791037211424,
+            1791037229072
+          ]
+        }
+      ],
+      "documentationEvents": [
+        {
+          "eventId": 1791037211424,
+          "type": "save",
+          "gameTime": "05:21",
+          "videoTime": 324.809,
+          "clipTime": 10
+        },
+        {
+          "eventId": 1791037229072,
+          "type": "goal",
+          "gameTime": "05:30",
+          "videoTime": 332.104,
+          "clipTime": 17.295
+        }
+      ]
+    },
+    {
+      "outputId": "04-highlight",
+      "label": "Eventdetails, Zeichnung und Highlight",
+      "fileBase": "doku_04_highlight",
+      "fileName": "doku_04_highlight.mp4",
+      "visibility": "private",
+      "playlistTargets": [],
+      "segments": [
+        {
+          "start": 1167.057,
+          "end": 1185.057,
+          "eventId": 1791038054765,
+          "eventType": "goal",
+          "gameTime": "16:52",
+          "videoTime": 1179.057,
+          "eventIds": [
+            1791038054765
+          ]
+        }
+      ],
+      "documentationEvents": [
+        {
+          "eventId": 1791038054765,
+          "type": "goal",
+          "gameTime": "16:52",
+          "videoTime": 1179.057,
+          "clipTime": 12
+        }
+      ]
+    },
+    {
+      "outputId": "05-zweite-halbzeit",
+      "label": "H2-Synchronisation: Parade und Tor",
+      "fileBase": "doku_05_zweite_halbzeit",
+      "fileName": "doku_05_zweite_halbzeit.mp4",
+      "visibility": "private",
+      "playlistTargets": [],
+      "segments": [
+        {
+          "start": 1937.234,
+          "end": 1987.299,
+          "eventId": 1791039382672,
+          "eventType": "save",
+          "gameTime": "25:17",
+          "videoTime": 1949.234,
+          "eventIds": [
+            1791039382672,
+            1791039416266
+          ]
+        }
+      ],
+      "documentationEvents": [
+        {
+          "eventId": 1791039382672,
+          "type": "save",
+          "gameTime": "25:17",
+          "videoTime": 1949.234,
+          "clipTime": 12
+        },
+        {
+          "eventId": 1791039416266,
+          "type": "goal",
+          "gameTime": "25:42",
+          "videoTime": 1978.299,
+          "clipTime": 41.065
+        }
+      ]
+    }
+  ]
+}
