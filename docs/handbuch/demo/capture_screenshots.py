@@ -3,7 +3,6 @@
 import argparse
 import pathlib
 import json
-import hashlib
 import functools
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -66,15 +65,31 @@ def main():
                     actual_score = page.locator("#score").inner_text().strip().replace(" ", "")
                     if actual_score != f"{expected_score[0]}:{expected_score[1]}":
                         raise RuntimeError(f"{filename}: score mismatch {actual_score}; expected {expected_score}")
-                print(f"VERIFIED {device} {filename}: {expected_events} events, mode={actual_mode}", flush=True)
+                total_seconds = int(expected["gameTime"])
+                expected_clock = f"{total_seconds // 60:02d}:{total_seconds % 60:02d}"
+                page.wait_for_function(
+                    "(clock) => document.querySelector('#gameClock')?.textContent.trim() === clock",
+                    arg=expected_clock, timeout=10000,
+                )
+                print(f"VERIFIED {device} {filename}: {expected_events} events, "
+                      f"mode={actual_mode}, clock={expected_clock}", flush=True)
                 page.locator('[data-tab="setup"]').click()
                 page.locator("#setupTab.tab-pane.active").wait_for(timeout=10000)
                 folder = args.output / device
                 folder.mkdir(parents=True, exist_ok=True)
                 stem = pathlib.Path(filename).stem
+                # Do not capture the temporary "Spiel zum Fortsetzen geladen" toast.
+                page.locator("#toast").wait_for(state="hidden", timeout=5000)
                 page.screenshot(path=str(folder / (stem + "-setup.png")), full_page=True)
                 page.locator('[data-tab="match"]').click()
                 page.locator("#matchTab.tab-pane.active").wait_for(timeout=10000)
+                if filename == "04-live-video-review.json":
+                    page.locator("#matchReviewToggle").click()
+                    page.locator("body.match-review-mode").wait_for(timeout=10000)
+                else:
+                    if page.locator("body.match-review-mode").count():
+                        raise RuntimeError(f"{filename}: unexpected video-review mode")
+                page.locator("#toast").wait_for(state="hidden", timeout=5000)
                 page.screenshot(path=str(folder / (stem + "-match.png")), full_page=True)
                 print(f"CAPTURED {device} {filename}", flush=True)
             context.close()
