@@ -1,0 +1,2045 @@
+{
+  "format": "handball-spielanalyse",
+  "version": 1,
+  "gameName": "03.10.2026 16:00 | Demo Heim - Demo Gast",
+  "competition": "Demo Nachwuchsspiel",
+  "home": {
+    "name": "Demo Heim",
+    "players": [
+      {
+        "id": 9000000000001,
+        "nr": 1,
+        "nachname": "Spieler 01",
+        "vorname": "",
+        "isTW": true
+      },
+      {
+        "id": 9000000000002,
+        "nr": 4,
+        "nachname": "Spieler 02",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000003,
+        "nr": 6,
+        "nachname": "Spieler 03",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000004,
+        "nr": 9,
+        "nachname": "Spieler 04",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000005,
+        "nr": 10,
+        "nachname": "Spieler 05",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000006,
+        "nr": 12,
+        "nachname": "Spieler 06",
+        "vorname": "",
+        "isTW": true
+      },
+      {
+        "id": 9000000000007,
+        "nr": 13,
+        "nachname": "Spieler 07",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000008,
+        "nr": 14,
+        "nachname": "Spieler 08",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000009,
+        "nr": 18,
+        "nachname": "Spieler 09",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000010,
+        "nr": 20,
+        "nachname": "Spieler 10",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000011,
+        "nr": 22,
+        "nachname": "Spieler 11",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000012,
+        "nr": 23,
+        "nachname": "Spieler 12",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000013,
+        "nr": 27,
+        "nachname": "Spieler 13",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000014,
+        "nr": 28,
+        "nachname": "Spieler 14",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000015,
+        "nr": 29,
+        "nachname": "Spieler 15",
+        "vorname": "",
+        "isTW": false
+      }
+    ]
+  },
+  "away": {
+    "name": "Demo Gast",
+    "players": [
+      {
+        "id": 9000000000016,
+        "nr": 1,
+        "nachname": "Spieler 16",
+        "vorname": "",
+        "isTW": true
+      },
+      {
+        "id": 9000000000017,
+        "nr": 7,
+        "nachname": "Spieler 17",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000018,
+        "nr": 10,
+        "nachname": "Spieler 18",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000019,
+        "nr": 11,
+        "nachname": "Spieler 19",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000020,
+        "nr": 15,
+        "nachname": "Spieler 20",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000021,
+        "nr": 17,
+        "nachname": "Spieler 21",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000022,
+        "nr": 18,
+        "nachname": "Spieler 22",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000023,
+        "nr": 19,
+        "nachname": "Spieler 23",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000024,
+        "nr": 22,
+        "nachname": "Spieler 24",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000025,
+        "nr": 23,
+        "nachname": "Spieler 25",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000026,
+        "nr": 25,
+        "nachname": "Spieler 26",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000027,
+        "nr": 84,
+        "nachname": "Spieler 27",
+        "vorname": "",
+        "isTW": true
+      },
+      {
+        "id": 9000000000028,
+        "nr": 95,
+        "nachname": "Spieler 28",
+        "vorname": "",
+        "isTW": false
+      },
+      {
+        "id": 9000000000029,
+        "nr": 99,
+        "nachname": "Spieler 29",
+        "vorname": "",
+        "isTW": true
+      }
+    ]
+  },
+  "events": [
+    {
+      "id": 1791036929036,
+      "time": 34,
+      "displayTime": "00:34",
+      "half": 1,
+      "realTime": 102745,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 0,
+      "scoreA": 0,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000025,
+          "pName": "Spieler 25",
+          "pNr": 23,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000011,
+      "pName": "Spieler 11",
+      "pNr": 22,
+      "team": "home",
+      "type": "miss",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "RR-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RR",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791036959483,
+      "time": 63,
+      "displayTime": "01:03",
+      "half": 1,
+      "realTime": 129675,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 0,
+      "scoreA": 1,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000020,
+      "pName": "Spieler 20",
+      "pNr": 15,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RR-6m",
+      "gz": null,
+      "is7": false,
+      "assistPId": 9000000000018,
+      "shotDistance": 6,
+      "shotLane": "RR",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037015878,
+      "time": 88,
+      "displayTime": "01:28",
+      "half": 1,
+      "realTime": 156000,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 0,
+      "scoreA": 2,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000028,
+      "pName": "Spieler 28",
+      "pNr": 95,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RR-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RR",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037046357,
+      "time": 164,
+      "displayTime": "02:44",
+      "half": 1,
+      "realTime": 219841,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 0,
+      "scoreA": 2,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": null,
+      "pName": "Unbekannt",
+      "pNr": null,
+      "team": "away",
+      "type": "error",
+      "errorType": "Sonstiges",
+      "endedPossessionOf": "away",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037095337,
+      "time": 218,
+      "displayTime": "03:38",
+      "half": 1,
+      "realTime": 286099,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 0,
+      "scoreA": 2,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000020,
+      "pName": "Spieler 20",
+      "pNr": 15,
+      "team": "away",
+      "type": "miss",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RA",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RA",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037123017,
+      "time": 234,
+      "displayTime": "03:54",
+      "half": 1,
+      "realTime": 302065,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 1,
+      "scoreA": 2,
+      "scoreChanged": true,
+      "defenderUnknown": true,
+      "playerTags": [],
+      "pId": 9000000000007,
+      "pName": "Spieler 07",
+      "pNr": 13,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "RR-9m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 9,
+      "shotLane": "RR",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037146649,
+      "time": 251,
+      "displayTime": "04:11",
+      "half": 1,
+      "realTime": 318256,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 1,
+      "scoreA": 3,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000018,
+      "pName": "Spieler 18",
+      "pNr": 10,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RL-9m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 9,
+      "shotLane": "RL",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791103307408,
+      "type": "keyMoment",
+      "team": "away",
+      "time": 258,
+      "displayTime": "04:18",
+      "half": 1,
+      "realTime": 326136,
+      "note": "Demonstrationshinweis zur Spielsituation",
+      "defenderUnknown": false,
+      "playerTags": [],
+      "scoreChanged": false,
+      "scoreH": 1,
+      "scoreA": 3,
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037173864,
+      "time": 289,
+      "displayTime": "04:49",
+      "half": 1,
+      "realTime": 357679,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 1,
+      "scoreA": 4,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000023,
+      "pName": "Spieler 23",
+      "pNr": 19,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RR-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RR",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      },
+      "highlight": true
+    },
+    {
+      "id": 1791037211424,
+      "time": 321,
+      "displayTime": "05:21",
+      "half": 1,
+      "realTime": 389960,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 1,
+      "scoreA": 4,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000020,
+          "pName": "Spieler 20",
+          "pNr": 15,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000027,
+      "pName": "Spieler 27",
+      "pNr": 84,
+      "team": "away",
+      "type": "save",
+      "throwerId": 9000000000009,
+      "throwerName": "Spieler 09",
+      "endedPossessionOf": "home",
+      "z": "LA",
+      "gz": null,
+      "shotDistance": 6,
+      "shotLane": "LA",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791103705132,
+      "time": 324,
+      "displayTime": "05:24",
+      "half": 1,
+      "realTime": 392472,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 1,
+      "scoreA": 4,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000028,
+      "pName": "Spieler 28",
+      "pNr": 95,
+      "team": "away",
+      "type": "error",
+      "errorType": "Fehlpass",
+      "endedPossessionOf": "away"
+    },
+    {
+      "id": 1791037229072,
+      "time": 330,
+      "displayTime": "05:30",
+      "half": 1,
+      "realTime": 397255,
+      "attackPhase": "1. Welle",
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 2,
+      "scoreA": 4,
+      "scoreChanged": true,
+      "defenderUnknown": true,
+      "playerTags": [],
+      "pId": 9000000000002,
+      "pName": "Spieler 02",
+      "pNr": 4,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "M-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "M",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037258570,
+      "time": 377,
+      "displayTime": "06:17",
+      "half": 1,
+      "realTime": 445657,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 2,
+      "scoreA": 4,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000025,
+      "pName": "Spieler 25",
+      "pNr": 23,
+      "team": "away",
+      "type": "error",
+      "errorType": "Fehlpass",
+      "endedPossessionOf": "away",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037266569,
+      "time": 381,
+      "displayTime": "06:21",
+      "half": 1,
+      "realTime": 448498,
+      "attackPhase": "1. Welle",
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 3,
+      "scoreA": 4,
+      "scoreChanged": true,
+      "defenderUnknown": true,
+      "playerTags": [],
+      "pId": 9000000000009,
+      "pName": "Spieler 09",
+      "pNr": 18,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "RL-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RL",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037285067,
+      "time": 408,
+      "displayTime": "06:48",
+      "half": 1,
+      "realTime": 469252,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 3,
+      "scoreA": 4,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000024,
+      "pName": "Spieler 24",
+      "pNr": 22,
+      "team": "away",
+      "type": "error",
+      "errorType": "Stürmerfoul",
+      "endedPossessionOf": "away",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037315349,
+      "time": 429,
+      "displayTime": "07:09",
+      "half": 1,
+      "realTime": 499604,
+      "attackPhase": null,
+      "tags": [
+        "3:2:1 gegen 2 Kreis",
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 4,
+      "scoreA": 4,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000024,
+          "pName": "Spieler 24",
+          "pNr": 22,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000002,
+      "pName": "Spieler 02",
+      "pNr": 4,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "K",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "K",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037327217,
+      "time": 438,
+      "displayTime": "07:18",
+      "half": 1,
+      "realTime": 504599,
+      "attackPhase": "2. Welle",
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 4,
+      "scoreA": 5,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000018,
+      "pName": "Spieler 18",
+      "pNr": 10,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RL-9m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 9,
+      "shotLane": "RL",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      },
+      "assistPId": 9000000000025
+    },
+    {
+      "id": 1791037361444,
+      "time": 476,
+      "displayTime": "07:56",
+      "half": 1,
+      "realTime": 544818,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 4,
+      "scoreA": 5,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000023,
+          "pName": "Spieler 23",
+          "pNr": 19,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000027,
+      "pName": "Spieler 27",
+      "pNr": 84,
+      "team": "away",
+      "type": "save",
+      "throwerId": 9000000000012,
+      "throwerName": "Spieler 12",
+      "endedPossessionOf": "home",
+      "z": "RA",
+      "gz": null,
+      "shotDistance": 6,
+      "shotLane": "RA",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037370845,
+      "time": 484,
+      "displayTime": "08:04",
+      "half": 1,
+      "realTime": 550579,
+      "attackPhase": "2. Welle",
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 4,
+      "scoreA": 6,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000023,
+      "pName": "Spieler 23",
+      "pNr": 19,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "LA",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "LA",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      },
+      "assistPId": 9000000000018
+    },
+    {
+      "id": 1791037410774,
+      "time": 505,
+      "displayTime": "08:25",
+      "half": 1,
+      "realTime": 603131,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 4,
+      "scoreA": 6,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000018,
+      "pName": "Spieler 18",
+      "pNr": 10,
+      "team": "away",
+      "type": "yellow",
+      "penalizedBank": false,
+      "endedPossessionOf": "home",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037442537,
+      "time": 552,
+      "displayTime": "09:12",
+      "half": 1,
+      "realTime": 627529,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 4,
+      "scoreA": 6,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000020,
+          "pName": "Spieler 20",
+          "pNr": 15,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000009,
+      "pName": "Spieler 09",
+      "pNr": 18,
+      "team": "home",
+      "type": "miss",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "LA",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "LA"
+    },
+    {
+      "id": 1791037455854,
+      "time": 571,
+      "displayTime": "09:31",
+      "half": 1,
+      "realTime": 646611,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 4,
+      "scoreA": 6,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000025,
+      "pName": "Spieler 25",
+      "pNr": 23,
+      "team": "away",
+      "type": "error",
+      "errorType": "Fehlpass",
+      "endedPossessionOf": "away"
+    },
+    {
+      "id": 1791037493082,
+      "time": 610,
+      "displayTime": "10:10",
+      "half": 1,
+      "realTime": 684876,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 4,
+      "scoreA": 6,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": null,
+      "pName": "Unbekannt",
+      "pNr": null,
+      "team": "home",
+      "type": "error",
+      "errorType": "Fehlpass",
+      "endedPossessionOf": "home"
+    },
+    {
+      "id": 1791037540196,
+      "time": 654,
+      "displayTime": "10:54",
+      "half": 1,
+      "realTime": 729356,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 4,
+      "scoreA": 6,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000001,
+      "pName": "Spieler 01",
+      "pNr": 1,
+      "team": "home",
+      "type": "save",
+      "throwerId": 9000000000020,
+      "throwerName": "Spieler 20",
+      "endedPossessionOf": "away",
+      "z": "RA",
+      "gz": null,
+      "shotDistance": 6,
+      "shotLane": "RA",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037558775,
+      "time": 668,
+      "displayTime": "11:08",
+      "half": 1,
+      "realTime": 743089,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 4,
+      "scoreA": 6,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000023,
+          "pName": "Spieler 23",
+          "pNr": 19,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000027,
+      "pName": "Spieler 27",
+      "pNr": 84,
+      "team": "away",
+      "type": "save",
+      "throwerId": null,
+      "throwerName": "Unbekannt",
+      "endedPossessionOf": "home",
+      "z": "RA",
+      "gz": null,
+      "shotDistance": 6,
+      "shotLane": "RA"
+    },
+    {
+      "id": 1791037584240,
+      "time": 691,
+      "displayTime": "11:31",
+      "half": 1,
+      "realTime": 765721,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 4,
+      "scoreA": 6,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000021,
+          "pName": "Spieler 21",
+          "pNr": 17,
+          "team": "away"
+        }
+      ],
+      "pId": null,
+      "pName": "Unbekannt",
+      "pNr": null,
+      "team": "home",
+      "type": "miss",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "M-9m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 9,
+      "shotLane": "M"
+    },
+    {
+      "id": 1791037605688,
+      "time": 721,
+      "displayTime": "12:01",
+      "half": 1,
+      "realTime": 796369,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 4,
+      "scoreA": 6,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000023,
+      "pName": "Spieler 23",
+      "pNr": 19,
+      "team": "away",
+      "type": "error",
+      "errorType": "Schrittfehler",
+      "endedPossessionOf": "away",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037724110,
+      "time": 751,
+      "displayTime": "12:31",
+      "half": 1,
+      "realTime": 909846,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 5,
+      "scoreA": 6,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000017,
+          "pName": "Spieler 17",
+          "pNr": 7,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000002,
+      "pName": "Spieler 02",
+      "pNr": 4,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "K",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "K",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037744744,
+      "time": 781,
+      "displayTime": "13:01",
+      "half": 1,
+      "realTime": 936143,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 5,
+      "scoreA": 6,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000023,
+      "pName": "Spieler 23",
+      "pNr": 19,
+      "team": "away",
+      "type": "miss",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RR-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RR",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037764057,
+      "time": 788,
+      "displayTime": "13:08",
+      "half": 1,
+      "realTime": 946410,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1",
+        "Zuordnung"
+      ],
+      "scoreH": 6,
+      "scoreA": 6,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000017,
+          "pName": "Spieler 17",
+          "pNr": 7,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000002,
+      "pName": "Spieler 02",
+      "pNr": 4,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "K",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "K",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037786245,
+      "time": 812,
+      "displayTime": "13:32",
+      "half": 1,
+      "realTime": 968991,
+      "attackPhase": null,
+      "tags": [
+        "Auslöser:Mensa",
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 6,
+      "scoreA": 7,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000026,
+      "pName": "Spieler 26",
+      "pNr": 25,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "LA",
+      "gz": null,
+      "is7": false,
+      "assistPId": 9000000000021,
+      "shotDistance": 6,
+      "shotLane": "LA",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037812219,
+      "time": 841,
+      "displayTime": "14:01",
+      "half": 1,
+      "realTime": 996474,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 6,
+      "scoreA": 7,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000019,
+          "pName": "Spieler 19",
+          "pNr": 11,
+          "team": "away"
+        }
+      ],
+      "pId": null,
+      "pName": "Unbekannt",
+      "pNr": null,
+      "team": "home",
+      "type": "miss",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "RA",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RA"
+    },
+    {
+      "id": 1791037824670,
+      "time": 849,
+      "displayTime": "14:09",
+      "half": 1,
+      "realTime": 1010955,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 6,
+      "scoreA": 8,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000019,
+      "pName": "Spieler 19",
+      "pNr": 11,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RA",
+      "gz": null,
+      "is7": false,
+      "assistPId": 9000000000023,
+      "shotDistance": 6,
+      "shotLane": "RA"
+    },
+    {
+      "id": 1791037855048,
+      "time": 885,
+      "displayTime": "14:45",
+      "half": 1,
+      "realTime": 1039970,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 6,
+      "scoreA": 8,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000019,
+          "pName": "Spieler 19",
+          "pNr": 11,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000027,
+      "pName": "Spieler 27",
+      "pNr": 84,
+      "team": "away",
+      "type": "save",
+      "throwerId": 9000000000009,
+      "throwerName": "Spieler 09",
+      "endedPossessionOf": "home",
+      "z": "LA",
+      "gz": null,
+      "shotDistance": 6,
+      "shotLane": "LA"
+    },
+    {
+      "id": 1791146239057,
+      "type": "keyMoment",
+      "team": "home",
+      "time": 895,
+      "displayTime": "14:55",
+      "half": 1,
+      "realTime": 963878,
+      "note": "Demonstrationshinweis zur Spielsituation",
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000021,
+          "pName": "Spieler 21",
+          "pNr": 17,
+          "team": "away"
+        },
+        {
+          "pId": 9000000000028,
+          "pName": "Spieler 28",
+          "pNr": 95,
+          "team": "away"
+        }
+      ],
+      "scoreChanged": false,
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      },
+      "scoreH": 6,
+      "scoreA": 8
+    },
+    {
+      "id": 1791037873980,
+      "time": 902,
+      "displayTime": "15:02",
+      "half": 1,
+      "realTime": 1058319,
+      "attackPhase": null,
+      "tags": [
+        "Auslöser:Mensa",
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 6,
+      "scoreA": 9,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000021,
+      "pName": "Spieler 21",
+      "pNr": 17,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RL-6m",
+      "gz": null,
+      "is7": false,
+      "assistPId": 9000000000028,
+      "shotDistance": 6,
+      "shotLane": "RL",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791037902727,
+      "time": 931,
+      "displayTime": "15:31",
+      "half": 1,
+      "realTime": 1089335,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 7,
+      "scoreA": 9,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000028,
+          "pName": "Spieler 28",
+          "pNr": 95,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000004,
+      "pName": "Spieler 04",
+      "pNr": 9,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "RL-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RL"
+    },
+    {
+      "id": 1791037923657,
+      "time": 943,
+      "displayTime": "15:43",
+      "half": 1,
+      "realTime": 1110417,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 7,
+      "scoreA": 9,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000007,
+      "pName": "Spieler 07",
+      "pNr": 13,
+      "team": "home",
+      "type": "2min",
+      "penalizedBank": false,
+      "endedPossessionOf": "away"
+    },
+    {
+      "id": 1791037912062,
+      "time": 944,
+      "displayTime": "15:44",
+      "half": 1,
+      "realTime": 1098218,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 7,
+      "scoreA": 10,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000023,
+      "pName": "Spieler 23",
+      "pNr": 19,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RR-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RR"
+    },
+    {
+      "id": 1791038024482,
+      "time": 983,
+      "displayTime": "16:23",
+      "half": 1,
+      "realTime": 1225810,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 7,
+      "scoreA": 10,
+      "scoreChanged": false,
+      "defenderUnknown": true,
+      "playerTags": [],
+      "pId": 9000000000027,
+      "pName": "Spieler 27",
+      "pNr": 84,
+      "team": "away",
+      "type": "save",
+      "throwerId": 9000000000003,
+      "throwerName": "Spieler 03",
+      "endedPossessionOf": "home",
+      "z": "M-6m",
+      "gz": null,
+      "shotDistance": 6,
+      "shotLane": "M",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791146494133,
+      "type": "keyMoment",
+      "team": "home",
+      "time": 985,
+      "displayTime": "16:25",
+      "half": 1,
+      "realTime": 1053722,
+      "note": "Demonstrationshinweis zur Spielsituation",
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000028,
+          "pName": "Spieler 28",
+          "pNr": 95,
+          "team": "away"
+        },
+        {
+          "pId": 9000000000026,
+          "pName": "Spieler 26",
+          "pNr": 25,
+          "team": "away"
+        }
+      ],
+      "scoreChanged": false,
+      "scoreH": 7,
+      "scoreA": 10
+    },
+    {
+      "id": 1791038037531,
+      "time": 995,
+      "displayTime": "16:35",
+      "half": 1,
+      "realTime": 1222393,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 7,
+      "scoreA": 10,
+      "scoreChanged": false,
+      "defenderUnknown": true,
+      "playerTags": [],
+      "pId": 9000000000003,
+      "pName": "Spieler 03",
+      "pNr": 6,
+      "team": "home",
+      "type": "miss",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "7M",
+      "gz": null,
+      "is7": true,
+      "shotDistance": 7,
+      "shotLane": "M"
+    },
+    {
+      "id": 1791038054765,
+      "time": 1012,
+      "displayTime": "16:52",
+      "half": 1,
+      "realTime": 1244208,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 7,
+      "scoreA": 11,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000028,
+      "pName": "Spieler 28",
+      "pNr": 95,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RL-6m",
+      "gz": null,
+      "is7": false,
+      "assistPId": 9000000000021,
+      "shotDistance": 6,
+      "shotLane": "RL",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      },
+      "highlight": true
+    },
+    {
+      "id": 1791038088176,
+      "time": 1046,
+      "displayTime": "17:26",
+      "half": 1,
+      "realTime": 1276323,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 7,
+      "scoreA": 11,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000008,
+      "pName": "Spieler 08",
+      "pNr": 14,
+      "team": "home",
+      "type": "error",
+      "errorType": "Fehlpass",
+      "endedPossessionOf": "home",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791038098394,
+      "time": 1051,
+      "displayTime": "17:31",
+      "half": 1,
+      "realTime": 1284156,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 7,
+      "scoreA": 12,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000019,
+      "pName": "Spieler 19",
+      "pNr": 11,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RR-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RR"
+    },
+    {
+      "id": 1791038134121,
+      "time": 1073,
+      "displayTime": "17:53",
+      "half": 1,
+      "realTime": 1303271,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 7,
+      "scoreA": 12,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000028,
+          "pName": "Spieler 28",
+          "pNr": 95,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000027,
+      "pName": "Spieler 27",
+      "pNr": 84,
+      "team": "away",
+      "type": "save",
+      "throwerId": 9000000000004,
+      "throwerName": "Spieler 04",
+      "endedPossessionOf": "home",
+      "z": "M-9m",
+      "gz": null,
+      "shotDistance": 9,
+      "shotLane": "M",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      },
+      "highlight": true
+    },
+    {
+      "id": 1791038148203,
+      "time": 1106,
+      "displayTime": "18:26",
+      "half": 1,
+      "realTime": 1335487,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 7,
+      "scoreA": 12,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000021,
+      "pName": "Spieler 21",
+      "pNr": 17,
+      "team": "away",
+      "type": "error",
+      "errorType": "Prellfehler",
+      "endedPossessionOf": "away"
+    },
+    {
+      "id": 1791038180317,
+      "time": 1120,
+      "displayTime": "18:40",
+      "half": 1,
+      "realTime": 1351804,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 8,
+      "scoreA": 12,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000028,
+          "pName": "Spieler 28",
+          "pNr": 95,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000007,
+      "pName": "Spieler 07",
+      "pNr": 13,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "RR-6m",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RR",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791038191549,
+      "time": 1123,
+      "displayTime": "18:43",
+      "half": 1,
+      "realTime": 1352658,
+      "attackPhase": null,
+      "tags": [],
+      "scoreH": 8,
+      "scoreA": 12,
+      "scoreChanged": false,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000021,
+      "pName": "Spieler 21",
+      "pNr": 17,
+      "team": "away",
+      "type": "2min",
+      "penalizedBank": false,
+      "endedPossessionOf": "home",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791146760009,
+      "type": "keyMoment",
+      "team": "home",
+      "time": 1136,
+      "displayTime": "18:56",
+      "half": 1,
+      "realTime": 1204297,
+      "note": "Demonstrationshinweis zur Spielsituation",
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000028,
+          "pName": "Spieler 28",
+          "pNr": 95,
+          "team": "away"
+        }
+      ],
+      "scoreChanged": false,
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      },
+      "scoreH": 8,
+      "scoreA": 12
+    },
+    {
+      "id": 1791038266194,
+      "time": 1138,
+      "displayTime": "18:58",
+      "half": 1,
+      "realTime": 1452610,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 8,
+      "scoreA": 13,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000023,
+      "pName": "Spieler 23",
+      "pNr": 19,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "M-6m",
+      "gz": null,
+      "is7": false,
+      "assistPId": 9000000000025,
+      "shotDistance": 6,
+      "shotLane": "M",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      },
+      "highlight": true
+    },
+    {
+      "id": 1791038291739,
+      "time": 1156,
+      "displayTime": "19:16",
+      "half": 1,
+      "realTime": 1473110,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 9,
+      "scoreA": 13,
+      "scoreChanged": true,
+      "defenderUnknown": true,
+      "playerTags": [],
+      "pId": 9000000000011,
+      "pName": "Spieler 11",
+      "pNr": 22,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "RA",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RA"
+    },
+    {
+      "id": 1791038305993,
+      "time": 1174,
+      "displayTime": "19:34",
+      "half": 1,
+      "realTime": 1490559,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 9,
+      "scoreA": 14,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000019,
+      "pName": "Spieler 19",
+      "pNr": 11,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "RA",
+      "gz": null,
+      "is7": false,
+      "assistPId": 9000000000025,
+      "shotDistance": 6,
+      "shotLane": "RA"
+    },
+    {
+      "id": 1791038322620,
+      "time": 1191,
+      "displayTime": "19:51",
+      "half": 1,
+      "realTime": 1508426,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 10,
+      "scoreA": 14,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000028,
+          "pName": "Spieler 28",
+          "pNr": 95,
+          "team": "away"
+        }
+      ],
+      "pId": 9000000000011,
+      "pName": "Spieler 11",
+      "pNr": 22,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "RA",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RA",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791147466229,
+      "type": "keyMoment",
+      "team": "home",
+      "time": 1204,
+      "displayTime": "20:04",
+      "half": 1,
+      "realTime": 1272361,
+      "note": "Demonstrationshinweis zur Spielsituation",
+      "defenderUnknown": false,
+      "playerTags": [
+        {
+          "pId": 9000000000028,
+          "pName": "Spieler 28",
+          "pNr": 95,
+          "team": "away"
+        }
+      ],
+      "scoreChanged": false,
+      "scoreH": 10,
+      "scoreA": 14
+    },
+    {
+      "id": 1791038354749,
+      "time": 1218,
+      "displayTime": "20:18",
+      "half": 1,
+      "realTime": 1533027,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:6:0"
+      ],
+      "scoreH": 11,
+      "scoreA": 14,
+      "scoreChanged": true,
+      "defenderUnknown": true,
+      "playerTags": [],
+      "pId": 9000000000011,
+      "pName": "Spieler 11",
+      "pNr": 22,
+      "team": "home",
+      "type": "goal",
+      "againstTwId": 9000000000027,
+      "endedPossessionOf": "home",
+      "z": "RA",
+      "gz": null,
+      "is7": false,
+      "shotDistance": 6,
+      "shotLane": "RA",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      }
+    },
+    {
+      "id": 1791038369471,
+      "time": 1237,
+      "displayTime": "20:37",
+      "half": 1,
+      "realTime": 1554273,
+      "attackPhase": null,
+      "tags": [
+        "Deckung:3:2:1"
+      ],
+      "scoreH": 11,
+      "scoreA": 15,
+      "scoreChanged": true,
+      "defenderUnknown": false,
+      "playerTags": [],
+      "pId": 9000000000017,
+      "pName": "Spieler 17",
+      "pNr": 7,
+      "team": "away",
+      "type": "goal",
+      "againstTwId": 9000000000001,
+      "endedPossessionOf": "away",
+      "z": "K",
+      "gz": null,
+      "is7": false,
+      "assistPId": 9000000000028,
+      "shotDistance": 6,
+      "shotLane": "K",
+      "videoAnnotation": {
+        "shapes": [],
+        "comment": ""
+      },
+      "highlight": true
+    }
+  ],
+  "gameTime": 1237,
+  "timer": {
+    "secondsElapsed": 1237,
+    "half": 1,
+    "duration": 25,
+    "active": false
+  },
+  "timeouts": {
+    "home": [
+      false,
+      false
+    ],
+    "away": [
+      false,
+      false
+    ]
+  },
+  "timeoutRule": "3_per_game",
+  "activeTw": {
+    "home": 9000000000001,
+    "away": 9000000000027
+  },
+  "activeDefense": {
+    "home": null,
+    "away": null
+  },
+  "theme": "dark",
+  "possession": "home",
+  "attackPhase": "Position",
+  "shotCapture": {
+    "attacker": true,
+    "location": true,
+    "target": false,
+    "phase": false,
+    "result": true,
+    "assist": true,
+    "tag": false,
+    "defense": true,
+    "trigger": false
+  },
+  "isHistorical": false,
+  "isVideoscoutingFile": false,
+  "videoFileName": null,
+  "video": {
+    "h1SyncRealTime": null,
+    "h2SyncRealTime": null,
+    "h1LiveStartMs": null,
+    "h2LiveStartMs": null,
+    "preRoll": 8,
+    "postRoll": 2,
+    "playbackRate": 1,
+    "autoplay": false,
+    "kickoff": null,
+    "syncUnit": "seconds",
+    "analysisTimeBasis": "live-elapsed-ms",
+    "analysisClockMs": 0,
+    "youtubeId": null,
+    "youtubeUrl": "",
+    "localFileName": null
+  },
+  "ownTeam": "away"
+}
