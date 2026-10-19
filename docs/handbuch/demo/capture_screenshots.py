@@ -2,6 +2,8 @@
 """Genuine Chromium screenshots of Spielanalyse fixtures using the real UI."""
 import argparse
 import pathlib
+import json
+import hashlib
 from playwright.sync_api import sync_playwright
 
 VIEWPORTS = {"phone-portrait": (390, 844), "phone-landscape": (844, 390),
@@ -30,11 +32,31 @@ def main():
                 page.locator("#continueGameInput").set_input_files(str((args.fixtures / filename).resolve()))
                 page.locator("#matchTab.tab-pane.active").wait_for(timeout=10000)
                 page.locator("#continueGameInput").evaluate("(el) => { if (el.files.length) throw new Error('input was not cleared') }")
-                expected = __import__("json").loads((args.fixtures / filename).read_text(encoding="utf-8"))
+                expected = json.loads((args.fixtures / filename).read_text(encoding="utf-8"))
                 page.locator("#setupGameName").wait_for(state="attached")
                 actual_name = page.locator("#setupGameName").input_value()
                 if actual_name != expected["gameName"]:
                     raise RuntimeError(f"{filename}: fixture not loaded: got {actual_name!r}; expected {expected['gameName']!r}")
+                expected_events = len(expected["events"])
+                expected_visible = min(expected_events, 12)
+                actual_visible = page.locator("#eventList .event").count()
+                if actual_visible != expected_visible:
+                    raise RuntimeError(
+                        f"{filename}: expected {expected_visible} visible events "
+                        f"(from {expected_events}), got {actual_visible}"
+                    )
+                expected_mode = "video" if expected.get("isVideoscoutingFile") else "live"
+                actual_mode = page.locator("#modeSelect").input_value()
+                if actual_mode != expected_mode:
+                    raise RuntimeError(f"{filename}: expected {expected_mode} mode, got {actual_mode}")
+                goal_events = [e for e in expected["events"] if e.get("type") == "goal" and e.get("scoreChanged")]
+                if goal_events:
+                    last_goal = goal_events[-1]
+                    expected_score = (last_goal["scoreH"], last_goal["scoreA"])
+                    actual_score = page.locator("#score").inner_text().strip().replace(" ", "")
+                    if actual_score != f"{expected_score[0]}:{expected_score[1]}":
+                        raise RuntimeError(f"{filename}: score mismatch {actual_score}; expected {expected_score}")
+                print(f"VERIFIED {device} {filename}: {expected_events} events, mode={actual_mode}", flush=True)
                 page.locator('[data-tab="setup"]').click()
                 page.locator("#setupTab.tab-pane.active").wait_for(timeout=10000)
                 folder = args.output / device
@@ -44,6 +66,7 @@ def main():
                 page.locator('[data-tab="match"]').click()
                 page.locator("#matchTab.tab-pane.active").wait_for(timeout=10000)
                 page.screenshot(path=str(folder / (stem + "-match.png")), full_page=True)
+                print(f"CAPTURED {device} {filename}", flush=True)
             context.close()
         browser.close()
 
