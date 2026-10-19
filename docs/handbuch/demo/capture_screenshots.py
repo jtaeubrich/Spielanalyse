@@ -4,6 +4,9 @@ import argparse
 import pathlib
 import json
 import hashlib
+import functools
+import threading
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from playwright.sync_api import sync_playwright
 
 VIEWPORTS = {"phone-portrait": (390, 844), "phone-landscape": (844, 390),
@@ -20,7 +23,13 @@ def main():
     parser.add_argument("--only-device", choices=VIEWPORTS)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    with sync_playwright() as p:
+    handler = functools.partial(SimpleHTTPRequestHandler, directory=str(args.app.resolve().parent))
+    server = ThreadingHTTPServer(('127.0.0.1', 0), handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    app_url = f'http://127.0.0.1:{server.server_port}/{args.app.name}'
+    try:
+      with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         for device, (width, height) in VIEWPORTS.items():
             if args.only_device and device != args.only_device:
@@ -28,7 +37,8 @@ def main():
             context = browser.new_context(viewport={"width": width, "height": height}, device_scale_factor=1)
             page = context.new_page()
             for filename in STATES:
-                page.goto(args.app.resolve().as_uri(), wait_until="domcontentloaded")
+                page.goto(app_url, wait_until="domcontentloaded")
+                page.wait_for_function("() => typeof document.querySelector('#continueGameInput')?.onchange === 'function'", timeout=30000)
                 page.locator("#continueGameInput").set_input_files(str((args.fixtures / filename).resolve()))
                 page.locator("#matchTab.tab-pane.active").wait_for(timeout=10000)
                 page.locator("#continueGameInput").evaluate("(el) => { if (el.files.length) throw new Error('input was not cleared') }")
@@ -69,6 +79,9 @@ def main():
                 print(f"CAPTURED {device} {filename}", flush=True)
             context.close()
         browser.close()
+    finally:
+      server.shutdown()
+      server.server_close()
 
 if __name__ == "__main__":
     main()
