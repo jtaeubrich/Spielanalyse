@@ -1,0 +1,27 @@
+name: Documentation screenshots
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'docs/handbuch/demo/**'
+      - '.github/workflows/documentation-screenshots.yml'
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install playwright
+      - run: python -m playwright install --with-deps chromium
+      - name: Capture genuine PWA screenshots
+        run: python docs/handbuch/demo/capture_screenshots.py --app index.html --fixtures docs/handbuch/demo/fixtures --output documentation-screenshots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: documentation-screenshots
+          path: documentation-screenshots
+          if-no-files-found: warn
+          retention-days: 30
