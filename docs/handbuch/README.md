@@ -1,6 +1,6 @@
-# Spielanalyse – Anwenderdokumentation (Phase 1)
+# Spielanalyse – Anwenderdokumentation
 
-**Stand:** 19.10.2026 · **Status:** Textfassung, Abgleich mit `index.html`; Screenshots und Videos folgen in Phase 2/3.
+**Stand:** 21.10.2026 · **Status:** Text und statische Screenshots der echten PWA in Workflows und integrierter `? Hilfe`. Video-Szenen folgen separat.
 
 ## Ziel und Leserführung
 
@@ -14,8 +14,8 @@ Die Dokumentation erklärt **zuerst die Arbeitsabläufe** und danach die einzeln
    - W3: ausschließlich Video Scouting
 2. **[Bedienreferenz](bedienreferenz.md)** – Tabs, Zeitsteuerung, Synchronisation, Bearbeitung, Speicherung, Zeichnungen, Clips
 3. **[Geräteguide](geraete.md)** – Smartphone Hoch-/Querformat, Tablet und PC; Schwerpunkt und Layout
-4. Phase 2 (geplant): reale Ansichten des aktuellen Builds, beschriftete Screenshots, Schrittbilder; pro Bildschirmformat
-5. Phase 3 (geplant): echte Bildschirmaufzeichnungen, kurze Workflow-Videos und Sprechertexte
+4. **[Bildbeispiele](images/generated/)** – echte Playwright-Aufnahmen, für die integrierte Hilfe ausgewählt und verkleinert
+5. Phase 3 (geplant): Szenen aus dem Companion, Videoanleitungen und vertiefte Vollbild-/Zeichenabläufe
 
 ## Welchen Ablauf brauche ich?
 
@@ -37,6 +37,12 @@ Die Dokumentation erklärt **zuerst die Arbeitsabläufe** und danach die einzeln
 - **Spielzeit / Videozeit:** Zeit auf der Spieluhr versus Abspielposition des Videos; nicht gleichsetzen.
 - **Ereignis-Kontext:** Zeichnungen sind mit einem Event verknüpft, nicht global mit dem gesamten Video.
 
+## Herkunft und Aktualisierung der Screenshots
+
+Die Screenshots werden in GitHub Actions mit der tatsächlichen PWA und pseudonymisierten Spiel-JSONs unter `docs/handbuch/demo/fixtures/` aufgenommen. `capture_screenshots.py` liefert die vollständigen Screenshots als CI-Artefakt; `publish_help_images.py` erzeugt aus ausgewählten Ansichten verkleinerte Bilder für `docs/handbuch/images/generated/`. Der Workflow schreibt diese Bilder auch dauerhaft auf `main` und wird bei Änderungen an App oder Demo-Automatisierung erneut gestartet.
+
+Für die integrierte Hilfe sind insbesondere [W1 Live](images/generated/w1-live-desktop.jpg), [W2 Nachanalyse](images/generated/w2-review-desktop.jpg) und [W3 Video-Scouting](images/generated/w3-video-desktop.jpg) enthalten. Das lokale Spielvideo ist **noch nicht eingebunden**. Browser-Screenshots ersetzen keinen Test auf echten iOS-/iPadOS-Geräten. Die automatischen Bilder müssen nach größeren UI-Änderungen zusätzlich visuell geprüft werden.
+
 ## Nachweislage
 
-Diese Fassung wurde mit den tatsächlich im aktuellen Repository vorhandenen UI-Bezeichnungen abgeglichen (`index.html`, Hauptbranch am Erstellungstag). Geräteeignung beschreibt Layout und beabsichtigte Nutzung, **keine durchgeführten Endgerätetests**. Bevor ein Screenshot oder eine Videoanleitung als verbindlich veröffentlicht wird, muss der dargestellte Flow im aktuellen Build praktisch durchlaufen werden.
+Diese Fassung wurde mit den tatsächlich im aktuellen Repository vorhandenen UI-Bezeichnungen abgeglichen (`index.html`, Hauptbranch am Erstellungstag). Geräteeignung beschreibt Layout und beabsichtigte Nutzung, **keine durchgeführten Endgerätetests**. Die Demo-Workflows werden automatisch im Browser durchlaufen; ein grüner CI-Lauf bestätigt die technischen Checks und die Bilderzeugung, ersetzt aber keine visuelle Prüfung der dargestellten Aktionen.
