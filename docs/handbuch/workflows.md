@@ -10,6 +10,11 @@
 
 ## W1 – Ausschließlich Live Scouting
 
+![Live-Scouting im Match-Tab (Desktop)](images/generated/w1-live-desktop.jpg)
+
+[Ansicht auf dem Smartphone](images/generated/w1-live-mobile.jpg) · [Spielanlage im Setup](images/generated/setup-desktop.jpg)
+
+
 **Zweck:** Während des Spiels Ereignisse erfassen und anschließend eine unmittelbare Auswertung erhalten.
 
 **Voraussetzungen:** Spiel eingerichtet, Heim-/Gastmannschaft und möglichst Kader korrekt eingetragen; auf dem Erfassungsgerät ist die Spielzeit bedienbar.
@@ -30,6 +35,11 @@
 **Grenze:** Was live nicht sicher beobachtet wurde, nicht spekulativ nachtragen.
 
 ## W2 – Live Scouting und spätere Video-Nachanalyse
+
+![Match-Tab mit aktivierter Video-Nachanalyse](images/generated/w2-review-desktop.jpg)
+
+[Ansicht auf dem Smartphone](images/generated/w2-review-mobile.jpg) · *Aufnahme ohne echtes Video: Spieler- und Ereignisdaten stammen aus pseudonymisierten Demo-Fixtures.*
+
 
 **Zweck:** Live die wesentlichen Events erfassen, anschließend über ein aufgezeichnetes Video kontrollieren, präzisieren und für Coaching-/Clip-Arbeit nutzen.
 
@@ -54,6 +64,11 @@
 **Grenze:** Nur H1/H2 reichen nicht aus, reale Unterbrechungen sekundengenau abzubilden. Videozeit und Spielzeit können zwischen den Synchronisationspunkten auseinanderlaufen.
 
 ## W3 – Ausschließlich Video Scouting
+
+![Video-Scouting im Match-Tab](images/generated/w3-video-desktop.jpg)
+
+[Ansicht auf dem Smartphone](images/generated/w3-video-mobile.jpg) · *Vorläufig ohne MP4; der schwarze/leere Player ist bei dieser Demoversion erwartet.*
+
 
 **Zweck:** Ein vorhandenes Spielvideo nachträglich analysieren, ohne während des Spiels gescoutet zu haben.
 
