@@ -4,24 +4,50 @@ on:
   push:
     paths:
       - 'docs/handbuch/demo/**'
+      - 'index.html'
+      - 'src/**'
       - '.github/workflows/documentation-screenshots.yml'
+permissions:
+  contents: write
+concurrency:
+  group: documentation-screenshots-main
+  cancel-in-progress: true
 jobs:
   screenshots:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install playwright
+      - run: pip install playwright pillow
       - run: python -m playwright install --with-deps chromium
       - name: Capture genuine PWA screenshots
         run: python docs/handbuch/demo/capture_screenshots.py --app index.html --fixtures docs/handbuch/demo/fixtures --output documentation-screenshots
-      - uses: actions/upload-artifact@v4
+      - name: Create help images
+        run: python docs/handbuch/demo/publish_help_images.py --screenshots documentation-screenshots --output docs/handbuch/images/generated
+      - name: Keep the full screenshots as a downloadable artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: documentation-screenshots
-          path: documentation-screenshots
+          path: |
+            documentation-screenshots
+            docs/handbuch/images/generated
           if-no-files-found: warn
           retention-days: 30
+      - name: Commit the selected screenshots permanently
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/handbuch/images/generated
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: refresh illustrated help screenshots [skip ci]"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
