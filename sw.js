@@ -1,4 +1,4 @@
-const CACHE_NAME = "handball-spielanalyse-network-first-v4";
+const CACHE_NAME = "handball-spielanalyse-network-first-v5";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -30,7 +30,17 @@ const APP_SHELL = [
   "./icons/logo-ball-flow.svg?v=34",
   "./icons/apple-touch-icon-v29.png?v=34",
   "./icons/icon-192.png?v=34",
-  "./icons/icon-512.png?v=34"
+  "./icons/icon-512.png?v=34",
+  "./docs/handbuch/images/generated/setup-desktop.jpg",
+  "./docs/handbuch/images/generated/w1-live-desktop.jpg",
+  "./docs/handbuch/images/generated/w1-live-mobile.jpg",
+  "./docs/handbuch/images/generated/w2-review-desktop.jpg",
+  "./docs/handbuch/images/generated/w2-review-mobile.jpg",
+  "./docs/handbuch/images/generated/w3-video-desktop.jpg",
+  "./docs/handbuch/images/generated/w3-video-mobile.jpg",
+  "./docs/handbuch/images/generated/analysis-desktop.jpg",
+  "./docs/handbuch/images/generated/video-desktop.jpg",
+  "./docs/handbuch/images/generated/data-desktop.jpg"
 ];
 
 self.addEventListener("install", event => {
