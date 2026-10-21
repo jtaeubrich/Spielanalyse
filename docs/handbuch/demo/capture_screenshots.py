@@ -91,6 +91,17 @@ def main():
                         raise RuntimeError(f"{filename}: unexpected video-review mode")
                 page.locator("#toast").wait_for(state="hidden", timeout=5000)
                 page.screenshot(path=str(folder / (stem + "-match.png")), full_page=True)
+                if filename == "03-live-complete.json":
+                    for tab in ("analysis", "data"):
+                        page.locator(f'[data-tab="{tab}"]').click()
+                        page.locator(f"#{tab}Tab.tab-pane.active").wait_for(timeout=10000)
+                        page.screenshot(path=str(folder / (stem + f"-{tab}.png")),
+                                        full_page=False)
+                if filename == "04-live-video-review.json":
+                    page.locator('[data-tab="video"]').click()
+                    page.locator("#videoTab.tab-pane.active").wait_for(timeout=10000)
+                    page.screenshot(path=str(folder / (stem + "-video.png")),
+                                    full_page=False)
                 print(f"CAPTURED {device} {filename}", flush=True)
             context.close()
         browser.close()
