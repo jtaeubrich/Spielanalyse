@@ -29,6 +29,8 @@ jobs:
         run: python docs/handbuch/demo/capture_screenshots.py --app index.html --fixtures docs/handbuch/demo/fixtures --output documentation-screenshots
       - name: Create help images
         run: python docs/handbuch/demo/publish_help_images.py --screenshots documentation-screenshots --output docs/handbuch/images/generated
+      - name: Verify illustrated help in a real browser
+        run: python docs/handbuch/demo/verify_help.py --app index.html --output documentation-screenshots
       - name: Keep the full screenshots as a downloadable artifact
         uses: actions/upload-artifact@v4
         if: always()
