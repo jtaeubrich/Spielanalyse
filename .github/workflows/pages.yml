@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  # Screenshot uploads use GITHUB_TOKEN and do not cause a new push workflow.
+  # Deploy once more after the screenshots have been committed to main.
+  workflow_run:
+    workflows: ["Documentation screenshots"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -18,6 +24,7 @@ concurrency:
 
 jobs:
   test:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Kurze Sammelwartezeit für Folge-Commits
