@@ -1,5 +1,6 @@
 import { migrateGameData } from "./game-format.js";
 import { SEASON_FORMAT, SEASON_VERSION } from "./storage.js";
+import { normalizeSeasonPlayerAliases } from "./season-core.js";
 
 export const LEGACY_SEASON_FORMAT = "handball-match-flow-season";
 
@@ -99,6 +100,7 @@ export function normalizeSeasonArchive(data, currentOwnName = "") {
     format: SEASON_FORMAT,
     version: SEASON_VERSION,
     name: String(data.name || "Saison").trim() || "Saison",
+    playerAliases: normalizeSeasonPlayerAliases(data.playerAliases),
     games: [...restored.values()]
   };
 }
