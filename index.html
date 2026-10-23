@@ -1705,11 +1705,19 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(currentOwn&&away===currentOwn)return"away";
     return"away";
   }
-  function seasonPlayerResolver(games=selectedSeasonGames().length?selectedSeasonGames():seasonGames){return coreCreateAliasedSeasonPlayerKeyResolver(games,seasonPlayerAliases)}
+  function seasonIdentityGames(){return seasonGames.filter(game=>game.ownTeam)}
+  function seasonPlayerResolver(games=selectedSeasonGames().length?selectedSeasonGames():seasonGames){
+    const identityGames=seasonIdentityGames();
+    return coreCreateAliasedSeasonPlayerKeyResolver(identityGames.length?identityGames:games,seasonPlayerAliases);
+  }
   function seasonPlayerKey(player){return seasonPlayerResolver()(player)}
   function seasonPlayerLabel(player){return player?playerName(player):"Unbekannt"}
-  function seasonUnmergedPlayers(games=seasonGames.filter(game=>game.ownTeam)){
-    return coreSeasonPlayerAggregate(games,{playerKey:coreCreateSeasonPlayerKeyResolver(games),playerLabel:seasonPlayerLabel});
+  function seasonUnmergedPlayers(games=seasonIdentityGames()){
+    const identityGames=seasonIdentityGames();
+    return coreSeasonPlayerAggregate(games,{
+      playerKey:coreCreateSeasonPlayerKeyResolver(identityGames.length?identityGames:games),
+      playerLabel:seasonPlayerLabel
+    });
   }
   function seasonMergedPlayers(games){
     const rows=coreSeasonPlayerAggregate(games,{playerKey:seasonPlayerResolver(games),playerLabel:seasonPlayerLabel});
