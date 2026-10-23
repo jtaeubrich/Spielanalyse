@@ -142,13 +142,22 @@ export function seasonPlayerIdentityKey(player) {
 
 export function createSeasonPlayerKeyResolver(games = []) {
   const idsByName = new Map();
+  const ambiguousNames = new Set();
 
   for (const game of games || []) {
-    for (const team of ["home", "away"]) {
+    // The season is always evaluated from the selected team's perspective.
+    // Do not associate a namesake from the opponent roster with our own player.
+    const teams = ["home", "away"].includes(game?.ownTeam)
+      ? [game.ownTeam] : ["home", "away"];
+    const namesInGame = new Set();
+    for (const team of teams) {
       for (const player of game?.state?.[team]?.players || []) {
         const nameKey = seasonPlayerNameKey(player);
+        if (!nameKey) continue;
+        if (namesInGame.has(nameKey)) ambiguousNames.add(nameKey);
+        namesInGame.add(nameKey);
         const handballNetId = String(player.handballNetId || "").trim().toLowerCase();
-        if (!nameKey || !handballNetId) continue;
+        if (!handballNetId) continue;
         if (!idsByName.has(nameKey)) idsByName.set(nameKey, new Set());
         idsByName.get(nameKey).add(handballNetId);
       }
@@ -161,14 +170,55 @@ export function createSeasonPlayerKeyResolver(games = []) {
     if (handballNetId) return "h360:" + handballNetId;
 
     const nameKey = seasonPlayerNameKey(player);
-    const linkedIds = nameKey ? idsByName.get(nameKey) : null;
-    if (linkedIds?.size === 1) {
-      return "h360:" + [...linkedIds][0];
+    const ids = nameKey ? idsByName.get(nameKey) : null;
+    if (nameKey && !ambiguousNames.has(nameKey) && (!ids || ids.size <= 1)) {
+      // A unique complete name is a stable fallback across changing/missing
+      // shirt numbers; a later H360 ID upgrades all corresponding legacy rows.
+      return ids?.size === 1 ? "h360:" + [...ids][0] : "name:" + nameKey;
     }
-
+    // Two people with the same name, or conflicting H360 IDs, must not
+    // silently become one person. Keep the older number-sensitive fallback.
     const fallback = seasonPlayerFallbackKey(player);
     return fallback ? "legacy:" + fallback : null;
   };
+}
+
+/** Stored season-only mappings, never changes a match roster or event. */
+export function normalizeSeasonPlayerAliases(aliases = {}) {
+  if (!aliases || typeof aliases !== "object" || Array.isArray(aliases)) return {};
+  return Object.fromEntries(Object.entries(aliases).filter(([source, target]) =>
+    /^(h360:|name:|legacy:)/.test(source) &&
+    typeof target === "string" &&
+    /^(h360:|name:|legacy:)/.test(target) && source !== target
+  ));
+}
+
+export function resolveSeasonPlayerAliasKey(key, aliases = {}) {
+  if (!key) return null;
+  let current = key;
+  const visited = new Set();
+  while (Object.prototype.hasOwnProperty.call(aliases, current)) {
+    if (visited.has(current)) return key; // never follow a corrupt cycle
+    visited.add(current);
+    current = aliases[current];
+  }
+  return current;
+}
+
+export function setSeasonPlayerAlias(aliases, source, target) {
+  const next = normalizeSeasonPlayerAliases(aliases);
+  if (!source || !target || source === target) throw new Error("Zwei unterschiedliche Spieler auswählen.");
+  const destination = resolveSeasonPlayerAliasKey(target, next);
+  if (destination === source || destination === resolveSeasonPlayerAliasKey(source, next)) {
+    throw new Error("Diese Zusammenführung würde eine Schleife oder doppelte Zuordnung erzeugen.");
+  }
+  next[source] = destination;
+  return next;
+}
+
+export function createAliasedSeasonPlayerKeyResolver(games = [], aliases = {}) {
+  const base = createSeasonPlayerKeyResolver(games);
+  return (player) => resolveSeasonPlayerAliasKey(base(player), aliases);
 }
 
 
@@ -215,6 +265,7 @@ export function seasonPlayerAggregate(
         aggregated.set(key, {
           key,
           label: playerLabel(player),
+          displayHasNumber: player.nr !== null && player.nr !== undefined && String(player.nr).trim() !== "",
           isTW: Boolean(player.isTW),
           games: new Set(),
           shots: 0,
@@ -229,6 +280,12 @@ export function seasonPlayerAggregate(
       }
 
       const target = aggregated.get(key);
+      // Prefer a numbered/identified roster label over an earlier '#?' row.
+      const hasNumber = p => p?.nr !== null && p?.nr !== undefined && String(p.nr).trim() !== "";
+      if (!target.displayHasNumber && hasNumber(player)) {
+        target.label = playerLabel(player);
+        target.displayHasNumber = true;
+      }
       target.isTW = target.isTW || Boolean(player.isTW);
       target.games.add(game.id);
 
