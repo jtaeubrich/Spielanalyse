@@ -48,6 +48,7 @@ test("season merges only user-selected name variants and can undo the mapping", 
   await expect(targetRow.locator("td").nth(1)).toHaveText("2");
 
   // Season-only: the original import buffers and roster names are not modified.
+  await page.locator("#seasonMergeClose").click();
   const [download] = await Promise.all([
     page.waitForEvent("download"),
     page.locator("#seasonExport").click()
@@ -57,6 +58,7 @@ test("season merges only user-selected name variants and can undo the mapping", 
   expect(exported.games[0].data[exported.games[0].data.ownTeam].players[0].nachname).toBe("Pohl");
   expect(exported.games[1].data[exported.games[1].data.ownTeam].players[0].nachname).toBe("Pöhl");
 
+  await page.locator("#seasonMergePlayers").click();
   await page.locator("#seasonMergeMappings button").first().click();
   await expect(page.locator("#seasonPlayerRows")).toContainText("Laurids Pohl");
   await expect(page.locator("#seasonPlayerRows")).toContainText("Laurids Pöhl");
