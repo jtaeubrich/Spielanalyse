@@ -11,7 +11,8 @@ Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz erg
 
 ## Match: Ereignisse erfassen
 - **Scouting-Modus:** `Live Scouting` / `Video Scouting`. Nach erstem Event ist Wechsel des Grundmodus gesperrt.
-- **Live-Zeit:** Start/Stop, Spielzeitkorrektur, Halbzeitwechsel.
+- **Realzeit (Live Scouting):** **Vor dem ersten Event und vor der Spieluhr** über `▶ Realzeit starten` einschalten. Die Realzeit läuft unabhängig von der Spielzeit und ist die Grundlage für das spätere Synchronisieren und Anspringen von Events im Video. Solange das Video eine durchgehende Zeitachse hat, die Realzeit auch bei Spielunterbrechungen/Halbzeitpause weiterlaufen lassen; nicht versehentlich über `Nullen` zurücksetzen.
+- **Spielzeit:** Erst **nach** Start der Realzeit über `▶ SPIELZEIT STARTEN` einschalten; Spielzeitkorrektur und Halbzeitwechsel betreffen die Spieluhr. Die App verweigert im Live-Modus den Start der Spieluhr, wenn die Realzeit nicht läuft; Ereignisse sollten ebenfalls nicht vorher erfasst werden.
 - **Spieler & Aktiver Torwart:** Auswahl passend zur Szene; der verfügbare Ereignisfluss bestimmt die weiteren Felder.
 - **Video:** `YouTube laden` oder `Lokales Video` (Dateiauswahl).
 - **H1/H2:** Legt die Anpfiffposition im Video fest. Die beiden Sync-Schalter gehören zur Video-Zeitzuordnung und starten keine Live-Uhr.
