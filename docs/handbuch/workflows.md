@@ -17,16 +17,19 @@
 
 **Zweck:** Während des Spiels Ereignisse erfassen und anschließend eine unmittelbare Auswertung erhalten.
 
-**Voraussetzungen:** Spiel eingerichtet, Heim-/Gastmannschaft und möglichst Kader korrekt eingetragen; auf dem Erfassungsgerät ist die Spielzeit bedienbar.
+**Voraussetzungen:** Spiel eingerichtet, Heim-/Gastmannschaft und möglichst Kader korrekt eingetragen; im Match-Tab stehen die unabhängigen Uhren **Realzeit** und **Spielzeit** zur Verfügung.
+
+> **Unbedingt vor dem ersten Ereignis:** Im Match-Tab auf **`▶ Realzeit starten`** tippen und kontrollieren, ob sie läuft. Erst danach **`▶ SPIELZEIT STARTEN`** drücken. Die Realzeit liefert den Zeitbezug der Live-Ereignisse, der für eine spätere Zuordnung zum Video benötigt wird. Die Spielzeit allein reicht dafür nicht aus.
 
 ### Ablauf
 1. **Setup:** `Neues Spiel` wählen (alternativ vorhandenes Spiel fortsetzen), Paarung und Spieler kontrollieren. Vor dem ersten Event prüfen, ob Heim/Gast korrekt zugeordnet sind.
 2. **Match:** `Scouting-Modus → Live Scouting` wählen, falls noch nicht aktiv.
-3. **Vor Anpfiff:** Halbzeit und Spielzeit kontrollieren; aktiven Torwart und Abwehrzuordnung nach Bedarf setzen.
-4. **Während des Spiels:** Spielzeit starten und stoppen; Spielereignisse über den Eventfluss im Match-Tab erfassen. Bei Abschluss die von der App angebotenen Folgeangaben (z. B. Spieler, Wurfbereich/Ziel, Ausgang, Spielsituation) nach tatsächlich beobachteten Fakten setzen.
-5. **Unterbrechung/Halbzeit:** Uhr pausieren und Halbzeitwechsel über die vorgesehenen Controls durchführen. Spielzeit bei Bedarf korrigieren.
-6. **Nach Abpfiff:** Events auf Vollständigkeit und Spielstand prüfen; `Analyse` öffnen.
-7. **Sichern:** `Spiel speichern` oder `Kopie exportieren` nutzen. Speicherverhalten hängt vom Browser ab.
+3. **Vor Anpfiff – zuerst Realzeit:** Unter **Realzeit** auf `▶ Realzeit starten` tippen und die laufende Anzeige kontrollieren. Halbzeit, Spielzeit, aktiven Torwart und Abwehrzuordnung prüfen.
+4. **Bei Anpfiff – danach Spielzeit:** `▶ SPIELZEIT STARTEN` betätigen und erst jetzt Ereignisse erfassen. Die App verlangt beim Start der Spielzeit im Live-Modus eine laufende Realzeit.
+5. **Während des Spiels:** Ereignisse über den Eventfluss im Match-Tab erfassen; Folgeangaben (z. B. Spieler, Wurfbereich/Ziel, Ausgang, Spielsituation) nach tatsächlich beobachteten Fakten setzen.
+6. **Unterbrechung/Halbzeit:** **Spielzeit** pausieren und Halbzeit wechseln. **Realzeit nicht zusammen mit der Spielzeit stoppen oder nullen:** Sie soll weiterlaufen, solange die zugehörige Videoaufnahme eine durchgehende Zeitachse hat. Bei unterbrochenen/geschnittenen Aufnahmen muss der Videozeitbezug später entsprechend geprüft werden.
+7. **Nach Abpfiff:** Events auf Vollständigkeit, Spielstand und Realzeitbezug prüfen; `Analyse` öffnen.
+8. **Sichern:** `Spiel speichern` oder `Kopie exportieren` nutzen. Speicherverhalten hängt vom Browser ab.
 
 **Ergebnis:** Ereignisse mit Spielzeit, Mannschafts-/Spielerbezug und auswertbaren Details. Kein Video erforderlich.
 
@@ -44,9 +47,13 @@
 **Zweck:** Live die wesentlichen Events erfassen, anschließend über ein aufgezeichnetes Video kontrollieren, präzisieren und für Coaching-/Clip-Arbeit nutzen.
 
 ### Teil A – Live vor Ort
-1. Spiel wie in **W1** einrichten und im Modus **Live Scouting** erfassen.
-2. Ergebnis und Events prüfen, anschließend die Spiel-JSON sichern.
-3. Optional: Video separat aufnehmen oder später beziehen, z. B. als heruntergeladene Sportlounge-MP4.
+
+> **Voraussetzung für die spätere Video-Nachanalyse:** Unbedingt **vor dem ersten Event die Realzeit starten** und erst danach die Spielzeit. Werden Live-Ereignisse ohne korrekt laufende Realzeit erfasst oder wird die Realzeit zwischenzeitlich unpassend zurückgesetzt, fehlen verlässliche Zeitbezüge zum nachträglich geladenen Video. H1/H2-Sync allein kann die Zeitinformation verlorener beziehungsweise fehlerhafter Realzeitstempel nicht vollständig ersetzen.
+
+1. Spiel wie in **W1** einrichten; **Realzeit starten → Spielzeit starten → Events erfassen**.
+2. Während Spielunterbrechungen die **Spieluhr** pausieren, die **Realzeit** bei durchgehendem Video weiterlaufen lassen; bei Halbzeitwechsel die Zeitbezüge kontrollieren.
+3. Ergebnis, Events und Realzeitbezug prüfen, anschließend die Spiel-JSON sichern.
+4. Optional: Video separat aufnehmen oder später beziehen, z. B. als heruntergeladene Sportlounge-MP4.
 
 ### Teil B – Nach dem Spiel mit Video
 4. **Setup:** Gesicherte Spieldatei laden bzw. Spiel fortsetzen.
@@ -59,7 +66,7 @@
 
 **Ergebnis:** Konsolidierte Live-Events mit geprüften Videobezügen und optionalen Zeichnungen/Clips.
 
-**Qualitätskontrolle:** Stimmen H1 und H2? Springen Events zur richtigen Szene? Ist der Clip-Vorlauf berücksichtigt? Wurde nur verändert, was im Video überprüfbar ist?
+**Qualitätskontrolle:** Waren bei der Live-Erfassung die Realzeit und die Spielzeit korrekt gestartet? Sind Realzeitbezüge an Events vorhanden und plausibel? Stimmen H1 und H2? Springen Events zur richtigen Szene? Ist der Clip-Vorlauf berücksichtigt? Wurde nur verändert, was im Video überprüfbar ist?
 
 **Grenze:** Nur H1/H2 reichen nicht aus, reale Unterbrechungen sekundengenau abzubilden. Videozeit und Spielzeit können zwischen den Synchronisationspunkten auseinanderlaufen.
 
