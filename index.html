@@ -1253,11 +1253,13 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
         <a href="#helpW3"><strong>W3 · Video</strong><span>Erst nach dem Spiel erfassen</span></a>
       </div>
       <h4 id="helpW1">W1 – Ausschließlich Live Scouting</h4>
+      <div class="help-note"><strong>Wichtig vor dem Anpfiff:</strong> Zuerst im Bereich <strong>Realzeit</strong> auf <strong>▶ Realzeit starten</strong> tippen – <strong>vor dem Start der Spieluhr und vor dem ersten Ereignis</strong>. Nur mit einer korrekt laufenden Realzeit erhalten die Live-Ereignisse brauchbare Zeitbezüge für die spätere Video-Nachanalyse. Die Realzeit ist <strong>nicht</strong> die Spieluhr.</div>
       <ol>
         <li>Unter <strong>Setup → Neues Spiel</strong> Spiel, Spielzeit, Heim/Gast und Kader kontrollieren. Bei einer bereits angelegten Datei <strong>Spiel fortsetzen</strong> wählen.</li>
         <li>Im <strong>Match</strong>-Tab den Modus <strong>Live Scouting</strong> verwenden, Torwart, Ballbesitz und gegebenenfalls Deckung setzen.</li>
-        <li>Spielzeit starten. Tore, Würfe, Paraden, technische Fehler, Strafen und Schlüsselmomente über den Eventfluss erfassen.</li>
-        <li>Bei Unterbrechungen die Spielzeit stoppen, zur Halbzeit wechseln und anschließend weiterscouten.</li>
+        <li><strong>Vor dem Anpfiff: ▶ Realzeit starten.</strong> Prüfen, ob die Realzeitanzeige läuft. Erst danach <strong>▶ SPIELZEIT STARTEN</strong> betätigen.</li>
+        <li>Tore, Würfe, Paraden, technische Fehler, Strafen und Schlüsselmomente über den Eventfluss erfassen. Die Ereignisse erhalten dabei den Realzeitbezug für die spätere Video-Zuordnung.</li>
+        <li>Bei Spielunterbrechungen die <strong>Spielzeit</strong> pausieren, die <strong>Realzeit</strong> aber weiterlaufen lassen, solange die zugehörige Videoaufnahme zeitlich weiterläuft. Halbzeitwechsel separat durchführen. Die Realzeit nicht versehentlich stoppen oder nullen.</li>
         <li>Nach dem Spiel im <strong>Analyse</strong>-Tab die Daten prüfen und die Spiel-JSON speichern beziehungsweise exportieren.</li>
       </ol>
       <figure class="help-shot help-shot-wide">
@@ -1271,8 +1273,9 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
         <figcaption>Schritt 2–4: Live-Erfassung im Match-Tab (auf schmalen Geräten mit Smartphone-Ansicht).</figcaption>
       </figure>
       <h4 id="helpW2">W2 – Live Scouting mit späterer Video-Nachanalyse</h4>
+      <div class="help-note"><strong>Voraussetzung für die spätere Nachanalyse:</strong> Bereits beim Live-Scouting <strong>vor dem ersten Ereignis die Realzeit starten</strong> und ihren durchgehenden Bezug zur Aufnahme erhalten. Fehlen korrekte Realzeitstempel, lassen sich die erfassten Events trotz H1/H2-Synchronisation später nicht zuverlässig im Video anspringen.</div>
       <ol>
-        <li>Das Spiel zunächst wie in <a href="#helpW1">W1</a> live erfassen und die JSON-Datei sichern.</li>
+        <li>Das Spiel zunächst wie in <a href="#helpW1">W1</a> live erfassen: <strong>Realzeit zuerst starten, danach Spielzeit</strong>. Anschließend die JSON-Datei sichern.</li>
         <li>Für die Nachanalyse <strong>Spiel fortsetzen</strong> und im <strong>Match</strong>-Tab das lokale MP4 oder ein unterstütztes YouTube-Video laden.</li>
         <li><strong>Video-Nachanalyse starten</strong> wählen; dadurch bleibt der ursprüngliche Live-Scouting-Modus erhalten.</li>
         <li>Videoposition zum Anpfiff von Halbzeit 1 anfahren und <strong>H1</strong> synchronisieren; bei Halbzeit 2 entsprechend <strong>H2</strong>.</li>
@@ -1318,7 +1321,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
     <section class="help-section" id="helpMatch">
       <h3>Match</h3>
       <p>Der Match-Tab dient der Live-Erfassung oder dem Scouting während eines Videos.</p>
-      <ul><li><strong>Spielzeit:</strong> starten, stoppen und bei Bedarf korrigieren.</li><li><strong>Ballbesitz:</strong> legt fest, welches Team angreift.</li><li><strong>Torabschluss:</strong> führt durch die aktivierten Torwurf-Schritte und speichert das Ergebnis als Ereignis.</li><li><strong>Auslösehandlung:</strong> wählt zunächst eine konfigurierte Auslösehandlung; beim anschließenden Torabschluss wird sie als Tag am Ereignis gespeichert.</li><li><strong>Technischer Fehler / Strafe:</strong> erfassen Ballverluste bzw. persönliche Strafen.</li><li><strong>Schlüsselmoment:</strong> setzt einen freien Marker mit Kommentar und optionaler Abwehrzuordnung.</li></ul>
+      <ul><li><strong>Realzeit (Live-Scouting):</strong> Mit <strong>▶ Realzeit starten</strong> vor dem Anpfiff aktivieren und während der zugehörigen durchgehenden Videoaufnahme weiterlaufen lassen. Diese unabhängige Uhr liefert die Zeitbasis für späteres Nachscouting. <strong>Nullen</strong> setzt diese Zeitbasis zurück.</li><li><strong>Spielzeit:</strong> erst <em>nach</em> der Realzeit starten, bei Spielunterbrechungen stoppen und bei Bedarf korrigieren. Das Stoppen der Spielzeit ist nicht das Stoppen der Realzeit.</li><li><strong>Ballbesitz:</strong> legt fest, welches Team angreift.</li><li><strong>Torabschluss:</strong> führt durch die aktivierten Torwurf-Schritte und speichert das Ergebnis als Ereignis.</li><li><strong>Auslösehandlung:</strong> wählt zunächst eine konfigurierte Auslösehandlung; beim anschließenden Torabschluss wird sie als Tag am Ereignis gespeichert.</li><li><strong>Technischer Fehler / Strafe:</strong> erfassen Ballverluste bzw. persönliche Strafen.</li><li><strong>Schlüsselmoment:</strong> setzt einen freien Marker mit Kommentar und optionaler Abwehrzuordnung.</li></ul>
       <p>Die aktuell gewählte Deckungsformation des verteidigenden Teams wird bei gegnerischen Torabschlüssen automatisch als Tag am Ereignis gespeichert.</p>
       <div class="help-note">Zurück/Weiter erscheinen nur innerhalb eines laufenden Erfassungsschritts. Im Grundzustand des Match-Tabs sind diese Buttons ausgeblendet.</div>
     </section>
