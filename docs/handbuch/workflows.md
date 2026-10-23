@@ -56,13 +56,13 @@
 4. Optional: Video separat aufnehmen oder später beziehen, z. B. als heruntergeladene Sportlounge-MP4.
 
 ### Teil B – Nach dem Spiel mit Video
-4. **Setup:** Gesicherte Spieldatei laden bzw. Spiel fortsetzen.
-5. **Match:** Video über `Lokales Video` oder einen unterstützten YouTube-Link laden.
-6. **Match:** `Video-Nachanalyse starten` benutzen. Die bereits erfassten Live-Zeitstempel bleiben dabei unverändert.
-7. **Synchronisieren:** Video auf den Anpfiff H1 setzen, **H1** markieren; für H2 wiederholen. Gegebenenfalls Korrektur der Video-/Spielzeit vornehmen.
-8. **Ereignisse durchgehen:** Eventliste nutzen und an passende Videoabschnitte springen. Im Event-Detail fehlerhafte oder fehlende Angaben korrigieren. Bei neuen Events beachten, ob die Zeit aus dem Video und/oder der Spielzeit übernommen wird.
-9. **Coaching:** Im Event-Kontext Zeichnungen ergänzen, auf Sichtbarkeit und Startzeit achten; aus dem Video-Tab gefilterte Szenen/Clips vorbereiten.
-10. **Speichern:** Aktualisierte Spieldatei erneut sichern und ggf. Clips separat exportieren.
+5. **Setup:** Gesicherte Spieldatei laden bzw. Spiel fortsetzen.
+6. **Match:** Video über `Lokales Video` oder einen unterstützten YouTube-Link laden.
+7. **Match:** `Video-Nachanalyse starten` benutzen. Die bereits erfassten Live-Zeitstempel bleiben dabei unverändert.
+8. **Synchronisieren:** Video auf den Anpfiff H1 setzen, **H1** markieren; für H2 wiederholen. Gegebenenfalls Korrektur der Video-/Spielzeit vornehmen.
+9. **Ereignisse durchgehen:** Eventliste nutzen und an passende Videoabschnitte springen. Im Event-Detail fehlerhafte oder fehlende Angaben korrigieren. Bei neuen Events beachten, ob die Zeit aus dem Video und/oder der Spielzeit übernommen wird.
+10. **Coaching:** Im Event-Kontext Zeichnungen ergänzen, auf Sichtbarkeit und Startzeit achten; aus dem Video-Tab gefilterte Szenen/Clips vorbereiten.
+11. **Speichern:** Aktualisierte Spieldatei erneut sichern und ggf. Clips separat exportieren.
 
 **Ergebnis:** Konsolidierte Live-Events mit geprüften Videobezügen und optionalen Zeichnungen/Clips.
 
