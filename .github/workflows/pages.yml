@@ -19,7 +19,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages-${{ github.ref }}
+  # A cancelled screenshot run must not cancel the push test/deploy for main.
+  group: pages-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
