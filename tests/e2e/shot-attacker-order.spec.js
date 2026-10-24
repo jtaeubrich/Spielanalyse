@@ -29,7 +29,7 @@ async function startShot(page,team="away"){
   await page.locator('[data-flow="shot"]').click();
 }
 async function selectGoalDetails(page){
-  await page.locator('#locationList [data-zone="LA"]').click();
+  await page.locator('#locationList [data-zone="LA"]').first().click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   // The anonymized fixture enables assists by default for the own team.
   if(await page.locator("#assistList").isVisible())
@@ -121,7 +121,7 @@ test("shot: shooter-last clears assist when the announced shooter is also assist
   const original=await openDemo(page);
   await configureOrder(page,"last");
   await startShot(page,"away");
-  await page.locator('#locationList [data-zone="LA"]').click();
+  await page.locator('#locationList [data-zone="LA"]').first().click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   await page.locator("#assistList .option").filter({hasText:"Spieler 17"}).click();
   await expect(page.locator("#playerStep")).toBeVisible();
