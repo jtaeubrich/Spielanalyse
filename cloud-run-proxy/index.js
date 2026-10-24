@@ -338,7 +338,7 @@ app.use((req, res, next) => {
     }
 
     if(req.path==="/logo") normalizeLogoUrl(req.query.url);
-    else if (/^\\/team\\/[^/]+\\/matches\\/?$/.test(req.path)) {
+    else if (req.path.match(/^\/team\/[^/]+\/matches\/?$/)) {
       const id = req.path.split("/")[2];
       try { validateTeamScheduleRequest(id, req.query.from, req.query.to); }
       catch (error) { throw new ApiError(400, "INVALID_TEAM_SCHEDULE", error.message); }
