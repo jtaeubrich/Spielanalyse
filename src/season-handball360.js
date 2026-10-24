@@ -213,10 +213,10 @@ export function enrichSeasonGameFromOfficial(existing, fetched) {
   if (!id || id !== seasonMatchIdentity(fetched)) throw new Error("Match-ID passt nicht zum Saisonspiel.");
   const old = existing.state;
   const fresh = fetched.state;
-  if (String(old.home?.name || "").trim().toLocaleLowerCase("de") !==
+  if (!old.officialSource?.associatedAt && (String(old.home?.name || "").trim().toLocaleLowerCase("de") !==
       String(fresh.home?.name || "").trim().toLocaleLowerCase("de") ||
       String(old.away?.name || "").trim().toLocaleLowerCase("de") !==
-      String(fresh.away?.name || "").trim().toLocaleLowerCase("de")) {
+      String(fresh.away?.name || "").trim().toLocaleLowerCase("de"))) {
     throw new Error("Mannschaften stimmen nicht mit dem vorhandenen Spiel überein.");
   }
   const hadEvents = Array.isArray(old.events) && old.events.length > 0;
