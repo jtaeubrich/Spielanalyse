@@ -240,3 +240,26 @@ test("opens an imported already-scouted match only for analysis and retains cust
   expect(archived.games[0].data.officialSource.matchId).toBe("378107");
   expect(archived.games[0].data.competition).toBe("Nachanalyse ergänzt");
 });
+
+
+test("temporarily viewing a live-scouted season game does not disable later continuation",async({page})=>{
+  const manual=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
+  manual.state.isHistorical=false;
+  manual.state.isVideoscoutingFile=false;
+  manual.state.events[0].comment="Eigene Live-Notiz";
+  await page.locator("#seasonGameInput").setInputFiles(upload("live-scouting.json",manual.state));
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
+  await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
+  await page.locator("#setupSeasonAnalysis").click();
+  await expect(page.locator('[data-tab="analysis"]')).toHaveClass(/active/);
+  await page.locator('[data-tab="setup"]').click();
+  await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
+  await page.locator("#setupSeasonContinue").click();
+  await expect(page.locator('[data-tab="match"]')).toHaveClass(/active/);
+  await page.locator('[data-tab="season"]').click();
+  const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
+  const season=JSON.parse(await readFile(await download.path(),"utf8"));
+  expect(season.games[0].data.isHistorical).toBe(false);
+  expect(season.games[0].data.events[0].comment).toBe("Eigene Live-Notiz");
+});
