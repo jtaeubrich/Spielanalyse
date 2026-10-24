@@ -115,6 +115,15 @@ describe("storage core", () => {
     });
   });
 
+  test("persists optional active season game association without changing legacy sessions", () => {
+    const record=buildSessionRecord({
+      state:{gameName:"Test"},ownTeam:"home",
+      seasonGameId:"sg-1234"
+    });
+    expect(record.seasonGameId).toBe("sg-1234");
+    expect(buildSessionRecord({state:{},ownTeam:"home"})).not.toHaveProperty("seasonGameId");
+  });
+
   test("reports missing IndexedDB explicitly", async () => {
     await expect(openInternalDb(null)).rejects.toThrow("IndexedDB nicht verfügbar");
   });
