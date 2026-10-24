@@ -666,3 +666,21 @@ test("unified Match workspace keeps controls and capture ordered across modes",a
   }
  }
 });
+
+
+test("season game list starts collapsed and remains user-toggleable after data refresh",async({page})=>{
+ await page.goto("/");
+ await page.locator('[data-tab="season"]').click();
+ const details=page.locator("#seasonGamesDetails");
+ await expect(details).not.toHaveAttribute("open", "");
+ await expect(details.locator("summary")).toBeVisible();
+ await expect(page.locator("#seasonGameList")).toBeHidden();
+ await details.locator("summary").click();
+ await expect(details).toHaveAttribute("open", "");
+ await expect(page.locator("#seasonGameList")).toBeVisible();
+ await page.locator("#seasonGameInput").setInputFiles(hknFixture);
+ await expect(page.locator("#seasonGameCount")).toContainText("1 Spiel");
+ await expect(details).toHaveAttribute("open", "");
+ await details.locator("summary").click();
+ await expect(page.locator("#seasonGameList")).toBeHidden();
+});
