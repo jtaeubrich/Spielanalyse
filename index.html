@@ -440,6 +440,9 @@
       .setup-card .roster-tools>label[for="importKnownTeams"]{flex:1 1 100%;width:100%}
       .setup-card label:has(> #knownRosterLogoInput){display:block;min-width:0;margin:12px 0}
       .setup-card details>summary{overflow-wrap:anywhere;white-space:normal}
+      .season-games-details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+      .season-games-details>summary{cursor:pointer;font-weight:700;padding:6px 0}
+      .season-games-details>summary .badge{margin-left:8px;font-weight:400}
     }
 
     /* Video-Scouting: setup above video, capture directly below it. */
@@ -1166,7 +1169,10 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
       <section class="panel season-card wide">
         <div class="clockhead"><div><h2>Saisonanalyse</h2><p class="editor-help">Mehrere Spiel-JSONs laden und gemeinsam auswerten. Die einzelnen Dateien werden dabei nicht verändert.</p></div><span class="badge" id="seasonStatus">Keine Spiele geladen</span></div>
         <div class="season-meta"><label>Saisonname<input class="field" id="seasonName" value="Saison 2026/27" placeholder="z. B. Saison 2026/27"></label><label>Archiv-Mannschaft (jahrgangsunabhängig)<input class="field" id="seasonArchiveTeam" placeholder="z. B. TSV Kronshagen mB"></label><label>Mein Team für die Saison<select class="field" id="seasonPreferredTeam"><option value="">Keine Mannschaft ausgewählt</option></select></label></div><div class="season-tools"><button class="btn primary" id="seasonHandball360Open" type="button">Saison über Handball360 importieren</button><label class="btn" for="seasonGameInput">Spiel-JSONs laden</label><input id="seasonGameInput" type="file" accept=".json,application/json" multiple hidden><input id="seasonUpdateInput" type="file" accept=".json,application/json" hidden><label class="btn" for="seasonImportInput">Saison importieren</label><input id="seasonImportInput" type="file" accept=".json,application/json" hidden><button class="btn" id="seasonExport" type="button">Saison exportieren</button><button class="btn" id="seasonArchiveExport" type="button">Team-Archiv (ZIP) exportieren</button><button class="btn" id="seasonSelectAll" type="button">Alle auswählen</button><button class="btn" id="seasonSelectNone" type="button">Auswahl aufheben</button><button class="btn danger" id="seasonClearGames" type="button">Saison leeren</button></div>
-        <div id="seasonGameList" class="season-game-list"><div class="empty">Noch keine Saisonspiele geladen.</div></div>
+        <details class="season-games-details" id="seasonGamesDetails">
+          <summary>Saisonspiele <span class="badge" id="seasonGameCount">0 Spiele</span></summary>
+          <div id="seasonGameList" class="season-game-list"><div class="empty">Noch keine Saisonspiele geladen.</div></div>
+        </details>
       </section>
       <section class="panel season-card wide">
         <h2>Filter</h2>
@@ -2316,7 +2322,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }finally{seasonH360SetBusy(false)}
   };
   function renderSeasonGames(){
-    const host=$("seasonGameList");if(!host)return;host.replaceChildren();
+    const host=$("seasonGameList");if(!host)return;$("seasonGameCount").textContent=seasonGames.length+" "+(seasonGames.length===1?"Spiel":"Spiele");host.replaceChildren();
     if(!seasonGames.length){host.innerHTML='<div class="empty">Noch keine Saisonspiele geladen.</div>';return}
     for(const game of seasonGames){
       const item=document.createElement("div");item.className="season-game-item";
