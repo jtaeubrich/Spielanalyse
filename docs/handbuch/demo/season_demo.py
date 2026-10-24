@@ -62,8 +62,12 @@ def season_demo():
         data["video"]={"h1SyncRealTime":None,"h2SyncRealTime":None}
         data["isHistorical"]=played
         data["isVideoscoutingFile"]=played
-        data["events"]=copy.deepcopy(sample["events"]) if played else []
-        if not played:data["provisionalRosters"]={"home":True,"away":True}
+        data["events"]=copy.deepcopy(sample["events"][:(116 + idx*5)]) if played else []
+        if not played:
+            data["provisionalRosters"]={"home":True,"away":True}
+            for side in ("home","away"):
+                for player in data[side]["players"]:
+                    player["handballNetId"]=str(player["id"])
         games.append({
             "id":"sg-demo-"+match_id,
             "fileName":"handball360_"+match_id+".json",
@@ -96,9 +100,23 @@ def mock_schedule():
 def mock_match(mid="378112"):
     match=next((item for item in mock_schedule()["matches"] if item["id"]==mid),None)
     if not match:raise ValueError("Unknown demo match "+mid)
-    def player(n):
-        return {"player":{"id":8000+n,"first_name":"Demo","last_name":f"Spieler {n:02d}"},
-                "number":n,"is_goalkeeper":n==1}
+    sample = json.loads((HERE/"fixtures"/"03-live-complete.json").read_text(encoding="utf-8"))
+    def lineup(side):
+        roster=sample[side]["players"]
+        confirmed=[]
+        for idx,person in enumerate(roster[:-1]):
+            number=person["nr"]
+            if idx==2:number=int(number)+2
+            confirmed.append({
+                "player":{"id":person["id"],"first_name":"","last_name":person["nachname"]},
+                "number":number,"is_goalkeeper":person["isTW"]
+            })
+        confirmed.append({
+            "player":{"id":9000000000100 if side=="home" else 9000000000101,
+                      "first_name":"","last_name":"Spieler 30" if side=="home" else "Spieler 31"},
+            "number":30 if side=="home" else 31,"is_goalkeeper":False
+        })
+        return {"players":confirmed}
     return {
         "match_id":mid,
         "match":{"data":[{
@@ -108,7 +126,7 @@ def mock_match(mid="378112"):
         }]},
         "events":[],
         "lineups":{"data":{
-            "local":{"players":[player(n) for n in (1,3,5,7,9,11)]},
-            "visitor":{"players":[player(n) for n in (2,4,6,8,10,12)]}
+            "local":lineup("home"),
+            "visitor":lineup("away")
         }}
     }
