@@ -1418,7 +1418,7 @@ import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeS
 import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection } from "./src/roster.js";
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
-import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial } from "./src/season-handball360.js?v=2";
+import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial } from "./src/season-handball360.js?v=2";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver, createAliasedSeasonPlayerKeyResolver as coreCreateAliasedSeasonPlayerKeyResolver, setSeasonPlayerAlias as coreSetSeasonPlayerAlias, resolveSeasonPlayerAliasKey as coreResolveSeasonPlayerAliasKey } from "./src/season-core.js";
@@ -1889,6 +1889,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       $(id).disabled=busy;
     }
     for(const input of $("seasonH360List").querySelectorAll("input[data-match-id]"))input.disabled=busy||input.dataset.locked==="1";
+    for(const el of $("seasonH360List").querySelectorAll("[data-h360-refresh], .season-h360-associate button, .season-h360-associate select"))el.disabled=busy;
     seasonH360UpdateCount();
   }
   async function fetchSeasonH360Match(match){
@@ -1949,7 +1950,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       row.append(check,main,status);
       if(kind==="existing"){
         const refresh=document.createElement("button");refresh.type="button";refresh.className="tiny";
-        refresh.textContent="Offizielle Daten aktualisieren";
+        refresh.textContent="Offizielle Daten aktualisieren";refresh.dataset.h360Refresh="1";
         refresh.disabled=seasonH360Busy;
         refresh.onclick=()=>refreshSeasonH360Match(match);
         row.append(refresh);
