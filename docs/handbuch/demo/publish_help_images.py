@@ -22,6 +22,14 @@ IMAGES = [
     ("desktop/03-live-complete-analysis.png", "analysis-desktop.jpg", (1440, 900)),
     ("desktop/04-live-video-review-video.png", "video-desktop.jpg", (1440, 900)),
     ("desktop/03-live-complete-data.png", "data-desktop.jpg", (1440, 900)),
+    ("desktop/season-overview.png", "season-overview-desktop.jpg", (1440, 900)),
+    ("phone-portrait/season-overview.png", "season-overview-mobile.jpg", (390, 844)),
+    ("desktop/season-analytics.png", "season-analytics-desktop.jpg", (1440, 900)),
+    ("desktop/setup-season-game.png", "setup-season-game-desktop.jpg", (1440, 900)),
+    ("phone-portrait/setup-season-game.png", "setup-season-game-mobile.jpg", (390, 844)),
+    ("desktop/setup-lineup-review.png", "setup-lineup-review-desktop.jpg", (1440, 900)),
+    ("phone-portrait/setup-lineup-review.png", "setup-lineup-review-mobile.jpg", (390, 844)),
+    ("desktop/season-import-preview.png", "season-import-preview-desktop.jpg", (1440, 900)),
 ]
 
 
