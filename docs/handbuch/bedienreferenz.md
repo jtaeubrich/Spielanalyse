@@ -21,7 +21,10 @@ Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz erg
 
 ## Analyse und Saison
 - **Analyse:** Einzelspiel-Auswertungen, Team-/Spielervergleich, Filter; bietet `Gefilterte Szenen im Video` und `Analyse als PDF`.
-- **Saison:** Mehrere Spiel-JSONs zusammen auswerten; Quelldateien laut UI-Hinweis werden dabei nicht geändert. Das Saison-Team ist getrennt von Heim/Gast der einzelnen Spiele.
+- **Saison:** Mehrere Spiel-JSONs zusammen auswerten; die Originaldateien bleiben unverändert.
+- **Saison über Handball360 importieren:** Im Saison-Tab den Button öffnen, `https://www.handball.net/team/<ID>` oder die reine Team-ID sowie den Saisonzeitraum eingeben und auf **Spielplan laden** tippen. Nach der Spielvorschau verfügbare Spiele auswählen und über **Ausgewählte Spiele importieren** übernehmen. Bereits importierte Spiele sind gesperrt, mögliche Namens-/Datums-Dubletten müssen separat geprüft werden. Zukünftige Spiele sind anfangs abgewählt und werden beim manuellen Import ohne Ereignisse **nicht als gespielte Partien in die Statistiken einbezogen**. Bereits bestehende manuell ergänzte Ereignisse, Videos und Kommentare werden nicht überschrieben.
+- **Einschränkungen offizieller Statistiken:** handball.net stellt u. a. Tore, Strafen und Kader bereit, jedoch keine vollständige eigene Wurfzonen-/Paraden-/Abwehranalyse. Die Statistik aus ausschließlich offiziellen Ereignissen entsprechend vorsichtig interpretieren. Der Team-Spielplan-Abruf verwendet interne, nicht öffentlich zugesicherte Web-Endpunkte.
+- **Spielerzuordnung:** Gleichnamige Spieler werden bei eindeutiger Identität unabhängig von Trikotnummern aggregiert; abweichende Schreibweisen über **Spieler zusammenführen** manuell zuordnen.
 
 ## Video
 - **Aufgabe:** Video ansehen, Eventfilter nutzen, Clips vorbereiten und exportieren.
