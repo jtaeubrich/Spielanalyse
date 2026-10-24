@@ -56,6 +56,15 @@ export function previewOfficialSeasonRosters(game, raw) {
   if (!matchId) throw new Error("Für dieses Saisonspiel ist keine Handball360-Match-ID hinterlegt.");
   const prepared = hbPrepare(raw, { fallbackMatchId: matchId });
   if (String(prepared.matchId) !== matchId) throw new Error("Die Handball360-Antwort gehört zu einer anderen Match-ID.");
+  // Protect against accidentally reversed home/away allocation. Abbreviated
+  // manually assigned team names remain allowed.
+  const localHome=String(game.state?.home?.name||"").trim().toLocaleLowerCase("de");
+  const localAway=String(game.state?.away?.name||"").trim().toLocaleLowerCase("de");
+  const officialHome=prepared.teams.home.trim().toLocaleLowerCase("de");
+  const officialAway=prepared.teams.away.trim().toLocaleLowerCase("de");
+  if (localHome&&localAway&&localHome===officialAway&&localAway===officialHome&&officialHome!==officialAway) {
+    throw new Error("Heim- und Gastmannschaft sind gegenüber Handball360 vertauscht. Bitte Spielzuordnung prüfen.");
+  }
   const plan = {
     matchId, officialNames: prepared.teams,
     sides: {}, availableSides: 0, totalChanges: 0,
