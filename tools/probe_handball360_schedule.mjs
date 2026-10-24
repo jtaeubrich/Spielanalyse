@@ -20,8 +20,16 @@ const probes = [
     path: "/api/new/teams?club_id=5601&season_id=2627&per_page=5&page=1",
   },
   {
+    name: "full-team-schedule",
+    path: "/api/new/matches?team_id=85814&date_from=2026-07-01&date_to=2027-06-30&per_page=50&page=1",
+  },
+  {
     name: "known-match-control",
     path: "/api/new/matches?match_id=378112",
+  },
+  {
+    name: "known-match-events",
+    path: "/api/new/matches/378112/events",
   },
 ];
 
@@ -37,6 +45,7 @@ function safeShape(obj) {
   const ids = (data ?? []).slice(0, 5).map(x => x?.id ?? x?.match_id ?? x?.match?.id ?? null);
   return {
     topLevelFields: keys,
+    firstEntryFields: data?.length ? Object.keys(data[0] ?? {}).slice(0, 24) : [],
     listCountOnFirstPage: data?.length ?? null,
     pagination: page && typeof page === "object" ? {
       total: page.total ?? page.total_items ?? null,
@@ -48,6 +57,8 @@ function safeShape(obj) {
 }
 
 let scheduleUsable = false;
+let fullSeasonComplete = false;
+let eventEndpointUsable = false;
 for (const probe of probes) {
   const url = new URL(probe.path, base);
   const controller = new AbortController();
@@ -86,15 +97,35 @@ for (const probe of probes) {
     }));
     if ((probe.name === "club-matches" || probe.name === "team-matches")
       && res.ok && shape?.listCountOnFirstPage > 0) scheduleUsable = true;
+    if (probe.name === "full-team-schedule" && res.ok && Array.isArray(parsed?.data)) {
+      const ids = parsed.data.map(match => String(match?.id ?? match?.match_id ?? ""));
+      const expected = Number(parsed.pagination?.total);
+      fullSeasonComplete = expected > 0 && expected === ids.length
+        && ids.every(Boolean) && new Set(ids).size === ids.length;
+      console.log(JSON.stringify({
+        probe: "full-team-verification", expected, received: ids.length,
+        uniqueIds: new Set(ids).size,
+        includesReferenceMatch378112: ids.includes("378112"),
+        allMatchesCovered: fullSeasonComplete
+      }));
+    }
+    if (probe.name === "known-match-events" && res.ok && parsed) {
+      eventEndpointUsable = Array.isArray(parsed.data);
+      console.log(JSON.stringify({
+        probe: "known-match-events-verification",
+        eventsCount: Array.isArray(parsed.data) ? parsed.data.length : null,
+        eventEndpointUsable
+      }));
+    }
   } catch (err) {
     console.log(JSON.stringify({ probe: probe.name, error: err?.name === "AbortError" ? "request timed out" : String(err?.message ?? err) }));
   } finally {
     clearTimeout(timeout);
   }
 }
-if (!scheduleUsable) {
-  console.error("RESULT: No usable team/club match-list endpoint confirmed. This does NOT change the working single-match import.");
+if (!scheduleUsable || !fullSeasonComplete || !eventEndpointUsable) {
+  console.error("RESULT: Schedule import validation incomplete; do not assume a reliable full-season importer. Existing game files were not touched.");
   process.exitCode = 2;
 } else {
-  console.log("RESULT: Match-list endpoint returned a non-empty page. Schema and team filtering still require follow-up verification.");
+  console.log("RESULT: Whole team match list and reference-match events endpoint both verified. This is an endpoint-availability test, not a usage license.");
 }
