@@ -92,6 +92,9 @@ export function normalizeSeasonArchive(data, currentOwnName = "") {
       item.fileName || `Spiel_${index + 1}.json`,
       currentOwnName
     );
+    // Keep the archive's stable game ID so a renamed match does not lose its
+    // Setup/session link when the season is reloaded.
+    if (typeof item?.id === "string" && /^sg-[a-z0-9_-]{1,80}$/i.test(item.id)) game.id = item.id;
     game.selected = item.selected !== false;
     restored.set(game.id, game);
   });
