@@ -8,7 +8,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 from playwright.sync_api import sync_playwright
 
-WORKFLOWS = ["helpW1", "helpW2", "helpW3"]
+WORKFLOWS = ["helpEntry", "helpW1", "helpW2", "helpW3"]
 
 
 def main():
@@ -40,7 +40,7 @@ def main():
                         raise RuntimeError(f"{device}: workflow section missing: {workflow}")
                 images = page.locator("#helpDialog img")
                 count = images.count()
-                if count < 7:
+                if count < 12:
                     raise RuntimeError(f"{device}: only {count} help images found")
                 for i in range(count):
                     element = images.nth(i)
