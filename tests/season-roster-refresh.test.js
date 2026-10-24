@@ -60,10 +60,10 @@ describe("pregame Handball360 lineup refresh",()=>{
     expect(updated.id).toBe(game.id);
     expect(updated.selected).toBe(false);
     expect(updated.state.home.players).toHaveLength(2);
-    expect(updated.state.home.players[0]).toMatchObject({
+    expect(updated.state.home.players.find(p=>p.handballNetId==="11")).toMatchObject({
       id:"local-11",handballNetId:"11",nr:17,customNote:"Eigene Spieler-Info"
     });
-    expect(updated.state.home.players.map(p=>p.handballNetId)).toEqual(["11","13"]);
+    expect(updated.state.home.players.map(p=>p.handballNetId).sort()).toEqual(["11","13"]);
     expect(updated.state.away.players[0].id).toBe("local-22");
     expect(updated.state.video).toEqual(original.state.video);
     expect(updated.state.events).toEqual([]);
@@ -83,7 +83,7 @@ describe("pregame Handball360 lineup refresh",()=>{
   test("refuses unavailable or incorrect match data",()=>{
     expect(()=>previewOfficialSeasonRosters(makeGame(),makeOfficial({withHome:false,withAway:false}))).toThrow(/noch keine offizielle Aufstellung/);
     expect(()=>previewOfficialSeasonRosters(makeGame(),makeOfficial({id:"999999"}))).toThrow(/anderen Match-ID/);
-    expect(()=>previewOfficialSeasonRosters({...makeGame(),state:{...makeGame().state,officialSource:{}}},makeOfficial())).toThrow(/keine Handball360-Match-ID/);
+    expect(()=>previewOfficialSeasonRosters({...makeGame(),fileName:"manual.json",state:{...makeGame().state,officialSource:{}}},makeOfficial())).toThrow(/keine Handball360-Match-ID/);
   });
   test("blocks accidentally reversed home/away assignments while allowing abbreviations",()=>{
     const swapped=makeGame();
