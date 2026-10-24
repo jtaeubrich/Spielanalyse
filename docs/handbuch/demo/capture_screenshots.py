@@ -7,6 +7,7 @@ import functools
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from playwright.sync_api import sync_playwright
+from season_demo import season_demo, mock_schedule, mock_match
 
 VIEWPORTS = {"phone-portrait": (390, 844), "phone-landscape": (844, 390),
              "tablet": (1024, 768), "desktop": (1440, 900)}
@@ -103,6 +104,74 @@ def main():
                     page.screenshot(path=str(folder / (stem + "-video.png")),
                                     full_page=False)
                 print(f"CAPTURED {device} {filename}", flush=True)
+            # Extended documentation: reproduce the user's 18-match season
+            # through the real UI, using anonymized fixture players and events.
+            def mock_handball360(route):
+                url=route.request.url
+                cors={"Access-Control-Allow-Origin":"*",
+                      "Access-Control-Allow-Headers":"Authorization",
+                      "Access-Control-Allow-Methods":"GET,OPTIONS"}
+                if route.request.method=="OPTIONS":
+                    return route.fulfill(status=204,headers=cors)
+                if "/team/85814/matches" in url:
+                    data=mock_schedule()
+                elif "/match/378112" in url:
+                    data=mock_match("378112")
+                else:
+                    return route.fulfill(status=404,headers=cors,
+                                         content_type="application/json",body='{"error":"unknown demo match"}')
+                return route.fulfill(status=200,headers=cors,
+                                     content_type="application/json",
+                                     body=json.dumps(data,ensure_ascii=False))
+            page.route("**/handball360-proxy-235703972531.europe-west1.run.app/**",mock_handball360)
+            page.goto(app_url,wait_until="domcontentloaded")
+            page.wait_for_function("() => typeof document.querySelector('#seasonImportInput')?.onchange === 'function'",timeout=30000)
+            season=season_demo()
+            page.locator('[data-tab="season"]').click()
+            page.locator("#seasonImportInput").set_input_files({
+                "name":"anonymisierte-saison-demo.json",
+                "mimeType":"application/json",
+                "buffer":json.dumps(season,ensure_ascii=False).encode("utf-8")
+            })
+            page.wait_for_function("() => document.querySelectorAll('#seasonGameList .season-game-item').length === 18",timeout=10000)
+            # Activate the upcoming fixture before documenting the season, so
+            # the global app header no longer shows an unrelated demo game.
+            page.locator('[data-tab="setup"]').click()
+            page.locator("#setupSeasonGameSelect").select_option(value="sg-demo-378112")
+            page.locator("#setupSeasonContinue").click()
+            page.locator('[data-tab="season"]').click()
+            page.locator("#toast").wait_for(state="hidden",timeout=10000)
+            page.screenshot(path=str(folder/"season-overview.png"),full_page=False)
+            page.locator("#seasonStats").scroll_into_view_if_needed()
+            page.screenshot(path=str(folder/"season-analytics.png"),full_page=False)
+            page.locator('[data-tab="setup"]').click()
+            page.locator("#setupSeasonGameSelect").select_option(value="sg-demo-378112")
+            page.locator("#setupSeasonGameSelect").scroll_into_view_if_needed()
+            page.screenshot(path=str(folder/"setup-season-game.png"),full_page=False)
+            page.locator("#setupSeasonRosterRefresh").click()
+            page.locator("#setupOfficialRosterDialog[open]").wait_for(timeout=10000)
+            page.screenshot(path=str(folder/"setup-lineup-review.png"),full_page=False)
+            page.locator("#setupOfficialRosterCancel").click()
+            page.locator('[data-tab="season"]').click()
+            # One manual game is deliberately left without its official match ID
+            # to illustrate the reassociation UI without using private data.
+            manual=season_demo()
+            manual["games"][0]["fileName"]="manual-demo.json"
+            manual["games"][0]["data"].pop("officialSource",None)
+            page.locator("#seasonImportInput").set_input_files({
+                "name":"anonymisierte-saison-manuell.json",
+                "mimeType":"application/json",
+                "buffer":json.dumps(manual,ensure_ascii=False).encode("utf-8")
+            })
+            page.wait_for_function("() => document.querySelectorAll('#seasonGameList .season-game-item').length === 18",timeout=10000)
+            page.locator("#seasonHandball360Open").click()
+            page.locator("#seasonH360Team").fill("https://www.handball.net/team/85814?phaseId=13580")
+            page.locator("#seasonH360Preview").click()
+            page.wait_for_function("() => document.querySelectorAll('#seasonH360List input[data-match-id]').length === 18",timeout=15000)
+            page.locator("#seasonH360List .season-h360-row").first.scroll_into_view_if_needed()
+            page.screenshot(path=str(folder/"season-import-preview.png"),full_page=False)
+            page.locator("#seasonH360Close").click()
+            print(f"VERIFIED {device} season demo: 18 matches (5 completed), lineup preview, manual match link",flush=True)
             context.close()
         browser.close()
     finally:
