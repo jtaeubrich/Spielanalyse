@@ -41,7 +41,7 @@ test.beforeEach(async({page})=>{
     const url=new URL(request.url());
     if(url.pathname.endsWith("/team/85814/matches"))
       return route.fulfill({status:200,headers:cors,contentType:"application/json",body:JSON.stringify(schedule)});
-    const id=/\\/match\\/(\\d+)$/.exec(url.pathname)?.[1];
+    const id=/\/match\/(\d+)$/.exec(url.pathname)?.[1];
     const raw=games.find(x=>String(x.match_id)===id);
     if(raw)return route.fulfill({status:200,headers:cors,contentType:"application/json",body:JSON.stringify(raw)});
     return route.fulfill({status:404,headers:cors,contentType:"application/json",body:'{"error":{"message":"Not found"}}'});
