@@ -42,6 +42,19 @@ Die Antwort hat absichtlich dieselbe Struktur wie beim bisherigen Worker:
 
 Damit kann die Spielanalyse ohne Parser-Aenderung zwischen den Backends wechseln.
 
+## Spielplan einer Mannschaft (neuer Endpunkt)
+
+```http
+GET /team/85814/matches?from=2026-07-01&to=2027-06-30
+Authorization: Bearer <API_TOKEN>
+```
+
+Die Antwort enthält `teamId`, `dateFrom`, `dateTo`, `total` und `matches` (Match-ID, Datum, Heim/Gast, Wettbewerbsinformationen und vorhandenes Ergebnis). Der Proxy liest nur Match-Metadaten und lädt **keine** Aufstellungen oder Ereignisse für den gesamten Spielplan vorab. Er paginiert selbst (50 Spiele pro Seite, höchstens zehn Seiten), prüft Teamzugehörigkeit und Vollständigkeit und akzeptiert ausschließlich numerische Team-IDs sowie begrenzte Datumsbereiche von maximal 400 Tagen.
+
+Die Saisonanalyse verwendet den Spielplan nur als **Vorschau**. Erst nach Auswahl ruft die PWA bestehende `/match/<ID>`-Endpunkte für die gewünschten Spiele ab und wandelt deren Daten in einzelne Saisonspiele um. Bereits vorhandene Spiele werden nicht verändert; auch bei später verfügbaren offiziellen Ereignissen erfolgt **kein automatischer Merge in manuell bearbeitete Spiele**. Zukünftige Spiele werden standardmäßig abgewählt und bei manueller Übernahme aus der Statistik herausgenommen, solange keine offiziellen Ereignisse vorhanden sind.
+
+**Hinweis:** `/api/new/matches?team_id=...` ist ein interner, nicht offiziell zugesicherter Endpunkt der handball.net-Webseite. Technische Erreichbarkeit bedeutet nicht, dass ein dauerhafter Zugang gestattet oder stabil ist. Für produktive Nutzung den Zugang und zulässige Abrufmengen mit dem DHB klären.
+
 ## Voraussetzungen
 
 - Google-Cloud-Projekt mit aktivierter Abrechnung
