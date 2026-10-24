@@ -1,5 +1,6 @@
 import express from "express";
 import { createHash, timingSafeEqual } from "node:crypto";
+import { fetchHandball360TeamSchedule, validateTeamScheduleRequest } from "./schedule.js";
 
 const BASE_URL = "https://www.handball.net";
 const TIMEOUT_MS = 30_000;
@@ -337,6 +338,11 @@ app.use((req, res, next) => {
     }
 
     if(req.path==="/logo") normalizeLogoUrl(req.query.url);
+    else if (/^\\/team\\/[^/]+\\/matches\\/?$/.test(req.path)) {
+      const id = req.path.split("/")[2];
+      try { validateTeamScheduleRequest(id, req.query.from, req.query.to); }
+      catch (error) { throw new ApiError(400, "INVALID_TEAM_SCHEDULE", error.message); }
+    }
     else getMatchId(req);
 
     return res
@@ -349,6 +355,38 @@ app.use((req, res, next) => {
         "X-Content-Type-Options": "nosniff",
       })
       .end();
+  } catch (error) {
+    return handleError(req, res, error);
+  }
+});
+
+app.get("/team/:id/matches", async (req, res) => {
+  try {
+    requireAuthorization(req);
+    let params;
+    try { params = validateTeamScheduleRequest(req.params.id, req.query.from, req.query.to); }
+    catch (error) { throw new ApiError(400, "INVALID_TEAM_SCHEDULE", error.message); }
+    const headers = {
+      Accept: "application/json",
+      Referer: BASE_URL + "/team/" + params.teamId,
+      "User-Agent": "Spielanalyse/1.0"
+    };
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    try {
+      const schedule = await fetchHandball360TeamSchedule(
+        params.teamId, params.from, params.to,
+        path => getJson(path, headers, controller.signal)
+      );
+      return jsonResponse(res, schedule);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(controller.signal.aborted ? 504 : 502,
+        "TEAM_SCHEDULE_FAILED", error.message || "Spielplan konnte nicht geladen werden.");
+    } finally {
+      clearTimeout(timeout);
+      controller.abort();
+    }
   } catch (error) {
     return handleError(req, res, error);
   }
