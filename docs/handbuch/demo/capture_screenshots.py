@@ -134,6 +134,12 @@ def main():
                 "buffer":json.dumps(season,ensure_ascii=False).encode("utf-8")
             })
             page.wait_for_function("() => document.querySelectorAll('#seasonGameList .season-game-item').length === 18",timeout=10000)
+            # Activate the upcoming fixture before documenting the season, so
+            # the global app header no longer shows an unrelated demo game.
+            page.locator('[data-tab="setup"]').click()
+            page.locator("#setupSeasonGameSelect").select_option(value="sg-demo-378112")
+            page.locator("#setupSeasonContinue").click()
+            page.locator('[data-tab="season"]').click()
             page.locator("#toast").wait_for(state="hidden",timeout=10000)
             page.screenshot(path=str(folder/"season-overview.png"),full_page=False)
             page.locator("#seasonStats").scroll_into_view_if_needed()
