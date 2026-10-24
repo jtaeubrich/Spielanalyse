@@ -20,5 +20,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check team and club schedule APIs (max. 4 GET requests)
+      - name: Check team and club schedule APIs (max. 6 GET requests)
         run: node tools/probe_handball360_schedule.mjs
