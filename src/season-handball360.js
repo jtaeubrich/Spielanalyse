@@ -123,3 +123,129 @@ export function appendNewHandball360SeasonGames(existingGames, importedGames) {
   }
   return { games, added, skipped };
 }
+
+
+// An explicit assignment links a manually scouted game to an official fixture.
+// Never replace its filename, events, video, comments, or internal game ID.
+export function assignHandball360Match(existingGames, gameId, match, teamId) {
+  const matchId = String(match?.id ?? "");
+  if (!/^\d+$/.test(matchId)) throw new Error("Ungültige Match-ID.");
+  if (![match?.local?.id, match?.visitor?.id].some(id => String(id) === String(teamId))) {
+    throw new Error("Match gehört nicht zur ausgewählten Mannschaft.");
+  }
+  if (existingGames.some(game => game.id !== gameId && seasonMatchIdentity(game) === matchId)) {
+    throw new Error("Diese Match-ID wurde bereits einem anderen Spiel zugeordnet.");
+  }
+  const target = existingGames.find(game => game.id === gameId);
+  if (!target) throw new Error("Manuelles Saisonspiel nicht gefunden.");
+  const former = seasonMatchIdentity(target);
+  if (former && former !== matchId) {
+    throw new Error("Das Spiel ist bereits mit einer anderen offiziellen Match-ID verknüpft.");
+  }
+  return existingGames.map(game => game.id !== gameId ? game : {
+    ...game,
+    state: {
+      ...game.state,
+      gameDate: game.state.gameDate || match.date || null,
+      competition: game.state.competition || match.phase?.competition?.name || "",
+      officialSource: {
+        ...(game.state.officialSource || {}),
+        provider: "handball.net",
+        matchId,
+        teamId: String(teamId),
+        matchDate: match.date || null,
+        associatedAt: new Date().toISOString()
+      }
+    }
+  });
+}
+
+function sameRosterPlayer(a, b) {
+  if (a?.handballNetId && b?.handballNetId) {
+    return String(a.handballNetId) === String(b.handballNetId);
+  }
+  const name = p => [p?.vorname, p?.nachname].map(x => String(x || "").trim().toLowerCase()).join("|");
+  return Boolean(name(a).replace("|", "") && name(a) === name(b) &&
+    String(a?.nr ?? "") === String(b?.nr ?? ""));
+}
+
+function mergeRosterPlayers(existing = [], fetched = []) {
+  const result = structuredClone(existing || []);
+  for (const incoming of fetched || []) {
+    const current = result.find(player => sameRosterPlayer(player, incoming));
+    if (!current) { result.push(structuredClone(incoming)); continue; }
+    // Only fill absent attributes; never change manually edited values.
+    for (const [key, value] of Object.entries(incoming)) {
+      if ((current[key] === undefined || current[key] === null || current[key] === "") &&
+          value !== undefined && value !== null && value !== "") current[key] = value;
+    }
+  }
+  return result;
+}
+
+// Team roster from previously analyzed fixtures, not an official match lineup.
+export function seedKnownSeasonRosters(incoming, existingGames = []) {
+  const game = { ...incoming, state: structuredClone(incoming.state) };
+  const tentative = {};
+  for (const side of ["home", "away"]) {
+    if ((game.state[side]?.players || []).length) continue;
+    const name = String(game.state[side]?.name || "").trim().toLocaleLowerCase("de");
+    if (!name) continue;
+    const candidates = existingGames
+      .flatMap(entry => ["home", "away"].map(s => entry.state?.[s]))
+      .filter(team => String(team?.name || "").trim().toLocaleLowerCase("de") === name &&
+        Array.isArray(team.players) && team.players.length);
+    if (!candidates.length) continue;
+    // A known squad is only a provisional roster, not a confirmed lineup.
+    game.state[side].players = mergeRosterPlayers([], candidates.flatMap(team => team.players));
+    tentative[side] = true;
+  }
+  if (Object.keys(tentative).length) {
+    game.state.provisionalRosters = { ...(game.state.provisionalRosters || {}), ...tentative };
+  }
+  return game;
+}
+
+// Update official metadata and available lineups. If we have already scouted
+// events, never replace or append official events (that would double count).
+export function enrichSeasonGameFromOfficial(existing, fetched) {
+  const id = seasonMatchIdentity(existing);
+  if (!id || id !== seasonMatchIdentity(fetched)) throw new Error("Match-ID passt nicht zum Saisonspiel.");
+  const old = existing.state;
+  const fresh = fetched.state;
+  if (String(old.home?.name || "").trim().toLocaleLowerCase("de") !==
+      String(fresh.home?.name || "").trim().toLocaleLowerCase("de") ||
+      String(old.away?.name || "").trim().toLocaleLowerCase("de") !==
+      String(fresh.away?.name || "").trim().toLocaleLowerCase("de")) {
+    throw new Error("Mannschaften stimmen nicht mit dem vorhandenen Spiel überein.");
+  }
+  const hadEvents = Array.isArray(old.events) && old.events.length > 0;
+  const hasNewEvents = Array.isArray(fresh.events) && fresh.events.length > 0;
+  const state = structuredClone(old);
+  state.gameDate ||= fresh.gameDate || null;
+  state.competition ||= fresh.competition || "";
+  state.officialSource = {
+    ...(state.officialSource || {}),
+    ...(fresh.officialSource || {}),
+    associatedAt: state.officialSource?.associatedAt,
+    refreshedAt: new Date().toISOString()
+  };
+  for (const side of ["home", "away"]) {
+    const officialPlayers = fresh[side]?.players || [];
+    const provisional = Boolean(state.provisionalRosters?.[side]);
+    state[side].players = provisional && officialPlayers.length
+      ? mergeRosterPlayers(officialPlayers, [])
+      : mergeRosterPlayers(state[side]?.players, officialPlayers);
+    if (officialPlayers.length && state.provisionalRosters) delete state.provisionalRosters[side];
+  }
+  if (!hadEvents && hasNewEvents) {
+    state.events = structuredClone(fresh.events);
+    state.isHistorical = true;
+    state.isVideoscoutingFile = true;
+  }
+  return {
+    ...existing,
+    state,
+    selected: hadEvents ? existing.selected : (hasNewEvents ? true : existing.selected)
+  };
+}
