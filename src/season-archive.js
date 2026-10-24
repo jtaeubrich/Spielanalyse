@@ -15,12 +15,20 @@ export function seasonArchiveTeamFolder(name) {
   return safePart(name, "Mannschaft");
 }
 
-export function seasonMatchFolder(game) {
+function seasonMatchKey(game) {
   const official = game?.state?.officialSource?.matchId ??
     game?.state?.officialData?.matchId;
   if (official != null && /^\d+$/.test(String(official))) return String(official);
   const id = String(game?.id ?? "").replace(/[^a-zA-Z0-9_-]/g, "");
   return "manuell_" + (id || "spiel");
+}
+
+// Human-readable home/away pairing plus a stable identifier. The names are
+// shortened to keep paths manageable on mobile devices and synced drives.
+export function seasonMatchFolder(game) {
+  const home = safePart(game?.state?.home?.name, "Heim").slice(0, 48);
+  const away = safePart(game?.state?.away?.name, "Gast").slice(0, 48);
+  return home + "_vs_" + away + "_" + seasonMatchKey(game);
 }
 
 export function buildTeamArchiveEntries({
@@ -39,9 +47,10 @@ export function buildTeamArchiveEntries({
   };
   const seen = new Set();
   for (const game of games) {
+    const identity = seasonMatchKey(game);
+    if (seen.has(identity)) throw new Error("Doppelte Spiel-ID im Archiv: " + identity);
+    seen.add(identity);
     const folder = seasonMatchFolder(game);
-    if (seen.has(folder)) throw new Error("Doppelte Spiel-ID im Archiv: " + folder);
-    seen.add(folder);
     const root = team + "/" + folder + "/";
     const path = root + "spiel.json";
     entries.push({ path, data: JSON.stringify(game.state, null, 2) });
