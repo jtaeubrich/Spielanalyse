@@ -72,6 +72,17 @@ describe("season file helpers", () => {
     expect(archive.games[0].selected).toBe(false);
   });
 
+  test("keeps explicitly exported game IDs after game-name or date changes", () => {
+    const oldGame=normalizeSeasonGame(hkn,"hkn.json",hkn.away.name);
+    const renamed={...hkn,gameName:"Nachbearbeitet",gameDate:"2026-11-08"};
+    expect(seasonGameId("hkn.json",renamed)).not.toBe(oldGame.id);
+    const restored=normalizeSeasonArchive({
+      format:SEASON_FORMAT,version:SEASON_VERSION,
+      games:[{id:oldGame.id,fileName:"hkn.json",data:renamed}]
+    });
+    expect(restored.games[0].id).toBe(oldGame.id);
+  });
+
   test("keeps legacy season archives importable", () => {
     const archive = normalizeSeasonArchive({
       format: LEGACY_SEASON_FORMAT,
