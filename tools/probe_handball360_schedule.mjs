@@ -31,6 +31,14 @@ const probes = [
     name: "known-match-events",
     path: "/api/new/matches/378112/events",
   },
+  {
+    name: "earlier-match-events-378087",
+    path: "/api/new/matches/378087/events",
+  },
+  {
+    name: "earlier-match-events-378092",
+    path: "/api/new/matches/378092/events",
+  },
 ];
 
 function safeShape(obj) {
@@ -59,6 +67,7 @@ function safeShape(obj) {
 let scheduleUsable = false;
 let fullSeasonComplete = false;
 let eventEndpointUsable = false;
+let observedPastEvents = 0;
 for (const probe of probes) {
   const url = new URL(probe.path, base);
   const controller = new AbortController();
@@ -109,6 +118,13 @@ for (const probe of probes) {
         allMatchesCovered: fullSeasonComplete
       }));
     }
+    if (probe.name.startsWith("earlier-match-events-") && res.ok && Array.isArray(parsed?.data)) {
+      observedPastEvents += parsed.data.length;
+      console.log(JSON.stringify({
+        probe: "past-match-events-verification", matchId: probe.name.split("-").at(-1),
+        eventCount: parsed.data.length
+      }));
+    }
     if (probe.name === "known-match-events" && res.ok && parsed) {
       eventEndpointUsable = Array.isArray(parsed.data);
       console.log(JSON.stringify({
@@ -127,5 +143,5 @@ if (!scheduleUsable || !fullSeasonComplete || !eventEndpointUsable) {
   console.error("RESULT: Schedule import validation incomplete; do not assume a reliable full-season importer. Existing game files were not touched.");
   process.exitCode = 2;
 } else {
-  console.log("RESULT: Whole team match list and reference-match events endpoint both verified. This is an endpoint-availability test, not a usage license.");
+  console.log("RESULT: Whole team match list and reference-match events endpoint both verified. Earlier-match events found: " + observedPastEvents + ". This is an endpoint-availability test, not a usage license.");
 }
