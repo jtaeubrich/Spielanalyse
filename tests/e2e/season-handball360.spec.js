@@ -163,3 +163,103 @@ test("links manually scouted matches, refreshes safely and exports stable team/m
   expect(manual.data.events[0].comment).toBe("Mein eigenes Scouting");
   expect(manual.data.video.youtubeUrl).toContain("mine");
 });
+
+
+test("opens a future season game in Setup and saves edits to the same archived record",async({page})=>{
+  const future=buildHandball360SeasonGame(games[2],"378122",teamId,schedule.matches[2]);
+  future.state.events=[];
+  future.state.isVideoscoutingFile=true; // Handball360 initially marks imported fixtures as video-scouting files
+  await page.locator("#seasonGameInput").setInputFiles(upload("future.json",future.state));
+  await page.locator('[data-tab="setup"]').click();
+  const picker=page.locator("#setupSeasonGameSelect");
+  await expect(picker.locator("option")).toHaveCount(2);
+  await picker.selectOption({index:1});
+  await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
+  await page.locator("#setupSeasonContinue").click();
+  await expect(page.locator('[data-tab="match"]')).toHaveClass(/active/);
+  await expect(page.locator("#modeSelect")).toHaveValue("live");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupCompetition").fill("Kader im Training vorbereitet");
+  await page.locator("#setupCompetition").dispatchEvent("change");
+  await page.locator("#setupGameName").fill("Vorbereitetes Spiel - überarbeitet");
+  await page.locator("#setupGameName").dispatchEvent("change");
+  await page.locator("#saveBtn").click();
+  await expect(page.locator("#setupSeasonGameStatus")).toContainText("Aktiv mit Saison verknüpft");
+
+  await page.locator('[data-tab="season"]').click();
+  const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
+  const archived=JSON.parse(await readFile(await download.path(),"utf8"));
+  expect(archived.games).toHaveLength(1);
+  expect(archived.games[0].data.competition).toBe("Kader im Training vorbereitet");
+  expect(archived.games[0].data.gameName).toBe("Vorbereitetes Spiel - überarbeitet");
+  expect(archived.games[0].data.officialSource.matchId).toBe("378122");
+  expect(archived.games[0].data.isVideoscoutingFile).toBe(false);
+  const stableId=archived.games[0].id;
+
+  await page.reload();
+  await expect(page.locator("#setupSeasonGameStatus")).toContainText("Aktiv mit Saison verknüpft");
+  await page.locator('[data-tab="season"]').click();
+  const [next]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
+  const restored=JSON.parse(await readFile(await next.path(),"utf8"));
+  expect(restored.games).toHaveLength(1);
+  expect(restored.games[0].id).toBe(stableId);
+  expect(restored.games[0].data.gameName).toBe("Vorbereitetes Spiel - überarbeitet");
+
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#newGame").click();
+  await page.locator("#newGameManual").click();
+  await page.locator("#setupGameName").fill("Unabhängiges Spiel");
+  await page.locator("#setupGameName").dispatchEvent("change");
+  await page.locator('[data-tab="season"]').click();
+  const [last]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
+  const unchanged=JSON.parse(await readFile(await last.path(),"utf8"));
+  expect(unchanged.games[0].data.gameName).toBe("Vorbereitetes Spiel - überarbeitet");
+});
+
+test("opens an imported already-scouted match only for analysis and retains custom events",async({page})=>{
+  const scouted=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
+  scouted.state.events[0].comment="Mein manuelles Scouting";
+  scouted.state.video.youtubeUrl="https://www.youtube.com/watch?v=custom";
+  await page.locator("#seasonGameInput").setInputFiles(upload("scouting.json",scouted.state));
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
+  await expect(page.locator("#setupSeasonContinue")).toBeDisabled();
+  await expect(page.locator("#setupSeasonAnalysis")).toBeEnabled();
+  await page.locator("#setupSeasonAnalysis").click();
+  await expect(page.locator('[data-tab="analysis"]')).toHaveClass(/active/);
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupCompetition").fill("Nachanalyse ergänzt");
+  await page.locator("#setupCompetition").dispatchEvent("change");
+  await page.locator("#saveBtn").click();
+  await page.locator('[data-tab="season"]').click();
+  const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
+  const archived=JSON.parse(await readFile(await download.path(),"utf8"));
+  expect(archived.games).toHaveLength(1);
+  expect(archived.games[0].data.events[0].comment).toBe("Mein manuelles Scouting");
+  expect(archived.games[0].data.video.youtubeUrl).toContain("custom");
+  expect(archived.games[0].data.officialSource.matchId).toBe("378107");
+  expect(archived.games[0].data.competition).toBe("Nachanalyse ergänzt");
+});
+
+
+test("temporarily viewing a live-scouted season game does not disable later continuation",async({page})=>{
+  const manual=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
+  manual.state.isHistorical=false;
+  manual.state.isVideoscoutingFile=false;
+  manual.state.events[0].comment="Eigene Live-Notiz";
+  await page.locator("#seasonGameInput").setInputFiles(upload("live-scouting.json",manual.state));
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
+  await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
+  await page.locator("#setupSeasonAnalysis").click();
+  await expect(page.locator('[data-tab="analysis"]')).toHaveClass(/active/);
+  await page.locator('[data-tab="setup"]').click();
+  await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
+  await page.locator("#setupSeasonContinue").click();
+  await expect(page.locator('[data-tab="match"]')).toHaveClass(/active/);
+  await page.locator('[data-tab="season"]').click();
+  const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
+  const season=JSON.parse(await readFile(await download.path(),"utf8"));
+  expect(season.games[0].data.isHistorical).toBe(false);
+  expect(season.games[0].data.events[0].comment).toBe("Eigene Live-Notiz");
+});
