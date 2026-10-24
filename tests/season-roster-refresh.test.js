@@ -85,6 +85,15 @@ describe("pregame Handball360 lineup refresh",()=>{
     expect(()=>previewOfficialSeasonRosters(makeGame(),makeOfficial({id:"999999"}))).toThrow(/anderen Match-ID/);
     expect(()=>previewOfficialSeasonRosters({...makeGame(),state:{...makeGame().state,officialSource:{}}},makeOfficial())).toThrow(/keine Handball360-Match-ID/);
   });
+  test("blocks accidentally reversed home/away assignments while allowing abbreviations",()=>{
+    const swapped=makeGame();
+    swapped.state.home.name="Gast";
+    swapped.state.away.name="TSV Kronshagen";
+    expect(()=>previewOfficialSeasonRosters(swapped,makeOfficial())).toThrow(/vertauscht/);
+    const abbreviated=makeGame();
+    abbreviated.state.home.name="TSV Kronshagen B-Jugend";
+    expect(previewOfficialSeasonRosters(abbreviated,makeOfficial()).availableSides).toBe(2);
+  });
   test("does not replace already-scouted match player references or events",()=>{
     const game=makeGame(),plan=previewOfficialSeasonRosters(game,makeOfficial());
     game.state.events=[{id:"e1",team:"home",pId:"local-11",comment:"Eigener Treffer"}];
