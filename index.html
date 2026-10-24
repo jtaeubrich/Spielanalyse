@@ -1869,6 +1869,144 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     select.value=names.some(name=>name===seasonPreferredTeam)?seasonPreferredTeam:"";
   }
   $("seasonPreferredTeam").onchange=e=>{seasonPreferredTeam=e.target.value;for(const game of seasonGames){game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":"home"}renderSeason();persistSeasonSoon()};
+  let seasonH360Matches=[],seasonH360TeamId="",seasonH360Busy=false;
+  function seasonH360SelectedRows(){
+    return [...$("seasonH360List").querySelectorAll("input[data-match-id]:checked")]
+      .map(input=>seasonH360Matches.find(m=>String(m.id)===input.dataset.matchId)).filter(Boolean);
+  }
+  function seasonH360UpdateCount(){
+    const count=seasonH360SelectedRows().length;
+    $("seasonH360Import").disabled=seasonH360Busy||!count;
+    $("seasonH360Import").textContent=count?"Ausgewählte Spiele importieren ("+count+")":"Ausgewählte Spiele importieren";
+  }
+  function seasonH360SetBusy(busy){
+    seasonH360Busy=busy;
+    for(const id of ["seasonH360Team","seasonH360From","seasonH360To","seasonH360Preview","seasonH360SelectAll","seasonH360SelectNone","seasonH360Close"]){
+      $(id).disabled=busy;
+    }
+    for(const input of $("seasonH360List").querySelectorAll("input[data-match-id]"))input.disabled=busy||input.dataset.locked==="1";
+    seasonH360UpdateCount();
+  }
+  function renderSeasonH360Preview(){
+    const list=$("seasonH360List");list.replaceChildren();
+    const names={existing:"Bereits in Saison", "possible-existing":"Möglicherweise vorhanden",upcoming:"Künftiges Spiel",available:"Abrufbar","unknown-date":"Datum prüfen"};
+    const matches=seasonH360Matches;
+    for(const match of matches){
+      const kind=seasonScheduleStatus(match,seasonGames);
+      const locked=["existing","possible-existing","unknown-date"].includes(kind);
+      const row=document.createElement("label");row.className="season-h360-row";
+      const check=document.createElement("input");
+      check.type="checkbox";check.dataset.matchId=String(match.id);check.dataset.locked=locked?"1":"0";
+      check.checked=kind==="available";
+      check.disabled=locked||seasonH360Busy;
+      check.onchange=seasonH360UpdateCount;
+      const main=document.createElement("div");
+      const name=document.createElement("strong");
+      name.textContent=String(match.local?.name||"Heim")+" – "+String(match.visitor?.name||"Gast");
+      const meta=document.createElement("small");
+      const date=String(match.date||"").slice(0,16).replace("T"," ");
+      meta.textContent=(date||"Datum unbekannt")+" · Match "+match.id+
+        (match.phase?.competition?.name?" · "+match.phase.competition.name:"");
+      main.append(name,meta);
+      const status=document.createElement("span");status.className="status";status.textContent=names[kind]||kind;
+      row.append(check,main,status);list.append(row);
+    }
+    if(!matches.length)list.innerHTML='<div class="empty">Keine Spiele im Zeitraum gefunden.</div>';
+    $("seasonH360SelectAll").disabled=seasonH360Busy||!matches.length;
+    $("seasonH360SelectNone").disabled=seasonH360Busy||!matches.length;
+    seasonH360UpdateCount();
+  }
+  $("seasonHandball360Open").onclick=()=>{
+    $("seasonHandball360Dialog").showModal();
+    $("seasonH360Team").focus();
+  };
+  $("seasonH360Close").onclick=()=>$("seasonHandball360Dialog").close();
+  $("seasonH360Team").oninput=()=>{
+    seasonH360Matches=[];seasonH360TeamId="";renderSeasonH360Preview();
+    $("seasonH360Status").textContent="Mannschaft geändert. Spielplan erneut laden.";
+  };
+  for(const id of ["seasonH360From","seasonH360To"])$(id).onchange=()=>{
+    seasonH360Matches=[];seasonH360TeamId="";renderSeasonH360Preview();
+    $("seasonH360Status").textContent="Zeitraum geändert. Spielplan erneut laden.";
+  };
+  $("seasonH360SelectAll").onclick=()=>{
+    for(const input of $("seasonH360List").querySelectorAll("input[data-match-id]"))
+      if(!input.disabled&&input.dataset.locked!=="1")input.checked=true;
+    seasonH360UpdateCount();
+  };
+  $("seasonH360SelectNone").onclick=()=>{
+    for(const input of $("seasonH360List").querySelectorAll("input[data-match-id]"))
+      if(!input.disabled)input.checked=false;
+    seasonH360UpdateCount();
+  };
+  $("seasonH360Preview").onclick=async()=>{
+    const teamId=parseHandball360TeamId($("seasonH360Team").value);
+    if(!teamId){$("seasonH360Status").textContent="Bitte eine gültige handball.net-Team-URL oder numerische Team-ID eingeben.";return}
+    const from=$("seasonH360From").value,to=$("seasonH360To").value;
+    seasonH360Matches=[];seasonH360TeamId="";renderSeasonH360Preview();
+    seasonH360SetBusy(true);
+    $("seasonH360Status").textContent="Spielplan wird geladen …";
+    try{
+      const url=HANDBALL_NET_WORKER+"/team/"+encodeURIComponent(teamId)+"/matches?"+
+        new URLSearchParams({from,to}).toString();
+      const response=await fetch(url,{headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"}});
+      const data=await response.json();
+      if(!response.ok)throw Error(data?.error?.message||"Proxy meldet HTTP "+response.status);
+      seasonH360Matches=validateHandball360SeasonSchedule(data,teamId);
+      seasonH360TeamId=teamId;
+      renderSeasonH360Preview();
+      const existing=seasonH360Matches.filter(m=>seasonScheduleStatus(m,seasonGames)==="existing").length;
+      $("seasonH360Status").textContent=seasonH360Matches.length+" Spiele gefunden · "+existing+
+        " bereits vorhanden. Künftige Spiele zunächst abgewählt. Mögliche Dubletten sind gesperrt.";
+    }catch(error){
+      $("seasonH360Status").textContent="Spielplan nicht geladen: "+(error?.message||String(error))+
+        ". Prüfe bei neuer Proxy-Funktion auch den Cloud-Run-Deploy.";
+    }finally{seasonH360SetBusy(false)}
+  };
+  $("seasonH360Import").onclick=async()=>{
+    const selected=seasonH360SelectedRows();
+    if(!selected.length||!seasonH360TeamId||seasonH360Busy)return;
+    const clubTeamName=selected.map(m=>m.local?.id===seasonH360TeamId?m.local?.name:m.visitor?.name).find(Boolean)||"";
+    if(seasonGames.length&&seasonPreferredTeam&&clubTeamName&&seasonPreferredTeam!==clubTeamName){
+      if(!confirm("Die Saison ist derzeit auf „"+seasonPreferredTeam+"“ eingestellt, der Import auf „"+
+        clubTeamName+"“. Die neuen Spiele wären unter diesem Filter ausgeblendet. Trotzdem importieren?"))return;
+    }
+    seasonH360SetBusy(true);
+    const newGames=[],errors=[];let skipped=0;
+    try{
+      for(let index=0;index<selected.length;index++){
+        const match=selected[index];
+        // Check again: the season may have changed since the preview.
+        const status=seasonScheduleStatus(match,[...seasonGames,...newGames]);
+        if(["existing","possible-existing","unknown-date"].includes(status)){skipped++;continue}
+        $("seasonH360Status").textContent="Lade Spiel "+(index+1)+" von "+selected.length+" · Match "+match.id;
+        try{
+          const response=await fetch(HANDBALL_NET_WORKER+"/match/"+encodeURIComponent(match.id),{
+            headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"}
+          });
+          const raw=await response.json();
+          if(!response.ok)throw Error(raw?.error?.message||"HTTP "+response.status);
+          const game=buildHandball360SeasonGame(raw,match.id,seasonH360TeamId,match);
+          // Fixtures without supported events (e.g. future matches) must not
+          // count as played games and distort season averages.
+          game.selected=status!=="upcoming" && game.state.events.length>0;
+          newGames.push(game);
+        }catch(error){errors.push("Match "+match.id+": "+(error?.message||String(error)))}
+      }
+      const merged=appendNewHandball360SeasonGames(seasonGames,newGames);
+      seasonGames=merged.games;
+      if(!seasonPreferredTeam&&!merged.skipped&&clubTeamName&&merged.added>0)seasonPreferredTeam=clubTeamName;
+      for(const game of seasonGames){
+        game.ownTeam=seasonOwnTeam(game);
+        game.opponentTeam=game.ownTeam==="home"?"away":game.ownTeam==="away"?"home":null;
+      }
+      renderSeason();persistSeasonSoon();renderSeasonH360Preview();
+      const summary=merged.added+" neu importiert · "+(skipped+merged.skipped)+" übersprungen · "+
+        errors.length+" fehlgeschlagen.";
+      $("seasonH360Status").textContent=summary+(errors.length?" "+errors.slice(0,3).join(" | "):"");
+      toast(summary);
+    }finally{seasonH360SetBusy(false)}
+  };
   function renderSeasonGames(){
     const host=$("seasonGameList");if(!host)return;host.replaceChildren();
     if(!seasonGames.length){host.innerHTML='<div class="empty">Noch keine Saisonspiele geladen.</div>';return}
