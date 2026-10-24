@@ -1,4 +1,7 @@
-# Die drei Arbeitsabläufe
+# Die drei Scouting-Arbeitsabläufe
+
+**Vor dem Scouting:** Zuerst entscheiden, ob es sich um ein [eigenständiges Einzelspiel oder ein Saisonspiel](saison-workflow.md) handelt. Bei einem Saisonspiel erfolgt die Auswahl im Setup. Dort können kurz vor dem Anpfiff die offiziellen Handball360-Kader aktualisiert werden. W1–W3 gelten für beide Einstiege.
+
 
 ## Vor dem Start: Entscheidung
 
@@ -22,14 +25,14 @@
 > **Unbedingt vor dem ersten Ereignis:** Im Match-Tab auf **`▶ Realzeit starten`** tippen und kontrollieren, ob sie läuft. Erst danach **`▶ SPIELZEIT STARTEN`** drücken. Die Realzeit liefert den Zeitbezug der Live-Ereignisse, der für eine spätere Zuordnung zum Video benötigt wird. Die Spielzeit allein reicht dafür nicht aus.
 
 ### Ablauf
-1. **Setup:** `Neues Spiel` wählen (alternativ vorhandenes Spiel fortsetzen), Paarung und Spieler kontrollieren. Vor dem ersten Event prüfen, ob Heim/Gast korrekt zugeordnet sind.
+1. **Setup:** `Neues Spiel` wählen oder über **Spiel aus Saison laden** die Begegnung auswählen und **Vorbereiten / fortsetzen** nutzen. Paarung und Spieler kontrollieren. Vor dem ersten Event prüfen, ob Heim/Gast korrekt zugeordnet sind.
 2. **Match:** `Scouting-Modus → Live Scouting` wählen, falls noch nicht aktiv.
 3. **Vor Anpfiff – zuerst Realzeit:** Unter **Realzeit** auf `▶ Realzeit starten` tippen und die laufende Anzeige kontrollieren. Halbzeit, Spielzeit, aktiven Torwart und Abwehrzuordnung prüfen.
 4. **Bei Anpfiff – danach Spielzeit:** `▶ SPIELZEIT STARTEN` betätigen und erst jetzt Ereignisse erfassen. Die App verlangt beim Start der Spielzeit im Live-Modus eine laufende Realzeit.
 5. **Während des Spiels:** Ereignisse über den Eventfluss im Match-Tab erfassen; Folgeangaben (z. B. Spieler, Wurfbereich/Ziel, Ausgang, Spielsituation) nach tatsächlich beobachteten Fakten setzen.
 6. **Unterbrechung/Halbzeit:** **Spielzeit** pausieren und Halbzeit wechseln. **Realzeit nicht zusammen mit der Spielzeit stoppen oder nullen:** Sie soll weiterlaufen, solange die zugehörige Videoaufnahme eine durchgehende Zeitachse hat. Bei unterbrochenen/geschnittenen Aufnahmen muss der Videozeitbezug später entsprechend geprüft werden.
 7. **Nach Abpfiff:** Events auf Vollständigkeit, Spielstand und Realzeitbezug prüfen; `Analyse` öffnen.
-8. **Sichern:** `Spiel speichern` oder `Kopie exportieren` nutzen. Speicherverhalten hängt vom Browser ab.
+8. **Sichern:** `Spiel speichern` oder `Kopie exportieren` nutzen. Bei verknüpften Saisonspielen wird der Saison-Datensatz aktualisiert; bei unabhängigen Dateien hängt die Speicherung vom Browser ab.
 
 **Ergebnis:** Ereignisse mit Spielzeit, Mannschafts-/Spielerbezug und auswertbaren Details. Kein Video erforderlich.
 
@@ -56,7 +59,7 @@
 4. Optional: Video separat aufnehmen oder später beziehen, z. B. als heruntergeladene Sportlounge-MP4.
 
 ### Teil B – Nach dem Spiel mit Video
-5. **Setup:** Gesicherte Spieldatei laden bzw. Spiel fortsetzen.
+5. **Setup:** Gesicherte Spieldatei laden bzw. Spiel fortsetzen; bei einer Saison über **Spiel aus Saison laden → Für Analyse öffnen** auswählen.
 6. **Match:** Video über `Lokales Video` oder einen unterstützten YouTube-Link laden.
 7. **Match:** `Video-Nachanalyse starten` benutzen. Die bereits erfassten Live-Zeitstempel bleiben dabei unverändert.
 8. **Synchronisieren:** Video auf den Anpfiff H1 setzen, **H1** markieren; für H2 wiederholen. Gegebenenfalls Korrektur der Video-/Spielzeit vornehmen.
