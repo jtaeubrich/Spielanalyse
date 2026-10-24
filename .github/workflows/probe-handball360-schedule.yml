@@ -1,0 +1,24 @@
+name: Probe Handball360 Saison-Endpunkte
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/probe_handball360_schedule.mjs'
+      - '.github/workflows/probe-handball360-schedule.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Read-only endpoint check
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check team and club schedule APIs (max. 4 GET requests)
+        run: node tools/probe_handball360_schedule.mjs
