@@ -331,6 +331,7 @@ test("pregame Setup lineup refresh previews and replaces only the active match r
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await page.locator("#setupSeasonContinue").click();
+  await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupSeasonRosterRefresh").click();
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("Keine Abweichungen");
