@@ -76,6 +76,16 @@ describe("safe manual match association and official refresh",()=>{
     expect(()=>assignHandball360Match(associated,"mine",{...match,id:"378113"},"85814"))
       .toThrow(/anderen/);
   });
+  test("refreshes explicitly linked scouting despite abbreviated manual team labels",()=>{
+    const original=baseGame("abbrev",[{id:"a",type:"goal",comment:"Bleibt"}]);
+    original.state.home.name="TSV Kronshagen B";
+    const linked=assignHandball360Match([original],"abbrev",match,"85814")[0];
+    const fetched=baseGame("fetched",[{id:"b",type:"goal",comment:"offiziell"}]);
+    fetched.state.officialSource={provider:"handball.net",matchId:"378112"};
+    const refreshed=enrichSeasonGameFromOfficial(linked,fetched);
+    expect(refreshed.state.home.name).toBe("TSV Kronshagen B");
+    expect(refreshed.state.events).toEqual(original.state.events);
+  });
   test("prohibits assigning one official fixture twice",()=>{
     const a=assignHandball360Match([baseGame("a"),baseGame("b")],"a",match,"85814");
     expect(()=>assignHandball360Match(a,"b",match,"85814")).toThrow(/bereits/);
