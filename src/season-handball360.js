@@ -7,7 +7,7 @@ export function parseHandball360TeamId(input) {
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || !["handball.net", "www.handball.net"].includes(url.hostname)) return null;
-    return /^\\/team\\/(\\d{1,12})\\/?$/.exec(url.pathname)?.[1] ?? null;
+    return /^\/team\/(\d{1,12})\/?$/.exec(url.pathname)?.[1] ?? null;
   } catch { return null; }
 }
 
@@ -22,7 +22,7 @@ export function validateHandball360SeasonSchedule(payload, expectedTeamId) {
   const uniqueIds = new Set();
   return payload.matches.map(entry => {
     const id = String(entry?.id ?? "");
-    if (!/^\\d+$/.test(id) || uniqueIds.has(id)) throw new Error("Ungueltige oder doppelte Match-ID.");
+    if (!/^\d+$/.test(id) || uniqueIds.has(id)) throw new Error("Ungueltige oder doppelte Match-ID.");
     uniqueIds.add(id);
     if (![String(entry.local?.id), String(entry.visitor?.id)].includes(teamId)) {
       throw new Error("Spiel einer anderen Mannschaft in der Antwort.");
@@ -35,9 +35,9 @@ export function seasonMatchIdentity(game) {
   const id = game?.state?.officialSource?.matchId ??
     game?.state?.officialData?.matchId ??
     game?.state?.officialData?.payload?.match_id;
-  if (id != null && /^\\d+$/.test(String(id))) return String(id);
+  if (id != null && /^\d+$/.test(String(id))) return String(id);
   // Only filenames created by this dedicated importer are reliable fallback IDs.
-  return /^handball360_(\\d+)\\.json$/i.exec(String(game?.fileName ?? ""))?.[1] ?? null;
+  return /^handball360_(\d+)\.json$/i.exec(String(game?.fileName ?? ""))?.[1] ?? null;
 }
 
 function sameDate(a, b) {
@@ -81,7 +81,7 @@ export function buildHandball360SeasonGame(raw, matchId, teamId, scheduleMatch =
   const ownTeam = homeId === String(teamId) ? "home" : awayId === String(teamId) ? "away" : null;
   if (!ownTeam) throw new Error("Match gehoert nicht zur gewaehlten Mannschaft.");
   const localDate = String(x.matchDate ?? "").slice(0, 10);
-  const dateLabel = /^\\d{4}-\\d{2}-\\d{2}$/.test(localDate)
+  const dateLabel = /^\d{4}-\d{2}-\d{2}$/.test(localDate)
     ? localDate.split("-").reverse().join(".") + " | " : "";
   const gameState = {
     format: "handball-spielanalyse", version: 1,
