@@ -67,13 +67,17 @@ export function seasonScheduleStatus(match, existingGames, now = new Date()) {
   return date > now.getTime() ? "upcoming" : "available";
 }
 
-export function buildHandball360SeasonGame(raw, matchId, teamId) {
+export function buildHandball360SeasonGame(raw, matchId, teamId, scheduleMatch = null) {
   const x = hbPrepare(raw, { fallbackMatchId: matchId });
   const id = String(x.matchId ?? matchId);
   if (id !== String(matchId)) throw new Error("Match-ID der Antwort stimmt nicht ueberein.");
   const meta = x.matchMeta;
-  const homeId = String(meta?.local?.id ?? "");
-  const awayId = String(meta?.visitor?.id ?? "");
+  const homeId = String(meta?.local?.id ?? scheduleMatch?.local?.id ?? "");
+  const awayId = String(meta?.visitor?.id ?? scheduleMatch?.visitor?.id ?? "");
+  if (scheduleMatch && (String(meta?.local?.name ?? "").trim() !== String(scheduleMatch.local?.name ?? "").trim() ||
+      String(meta?.visitor?.name ?? "").trim() !== String(scheduleMatch.visitor?.name ?? "").trim())) {
+    throw new Error("Mannschaftsnamen stimmen nicht mit dem Spielplan ueberein.");
+  }
   const ownTeam = homeId === String(teamId) ? "home" : awayId === String(teamId) ? "away" : null;
   if (!ownTeam) throw new Error("Match gehoert nicht zur gewaehlten Mannschaft.");
   const localDate = String(x.matchDate ?? "").slice(0, 10);
