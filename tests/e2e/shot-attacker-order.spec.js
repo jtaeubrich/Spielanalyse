@@ -6,9 +6,10 @@ import { fileURLToPath } from "node:url";
 const fixture=path.resolve(path.dirname(fileURLToPath(import.meta.url)),
   "../../docs/handbuch/demo/fixtures/00-setup.json");
 
-async function openDemo(page){
+async function openDemo(page,{assist=false,defense=false}={}){
   await page.goto("/");
   const source=JSON.parse(await readFile(fixture,"utf8"));
+  source.shotCapture={...source.shotCapture,assist,defense};
   await page.locator("#continueGameInput").setInputFiles({
     name:"demo_schuss.json",mimeType:"application/json",
     buffer:Buffer.from(JSON.stringify(source))
@@ -31,7 +32,7 @@ async function startShot(page,team="away"){
 async function selectGoalDetails(page){
   await page.locator('#locationList button[data-zone="7M"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
-  // The anonymized fixture enables assists by default for the own team.
+  // If enabled for this test, the optional assist step must be completed.
   if(await page.locator("#assistList").isVisible())
     await page.locator("#assistList").getByRole("button",{name:"Kein Assist"}).click();
 }
@@ -100,7 +101,7 @@ test("shot: scorer-last accepts unknown shooter and still commits exactly once",
 });
 
 test("shot: scorer-last preserves the opponent defensive assignment before selecting shooter",async({page})=>{
-  const original=await openDemo(page);
+  const original=await openDemo(page,{defense:true});
   await configureOrder(page,"last");
   await startShot(page,"home");
   await expect(page.locator("#locationStep")).toBeVisible();
@@ -118,7 +119,7 @@ test("shot: scorer-last preserves the opponent defensive assignment before selec
 });
 
 test("shot: shooter-last clears assist when the announced shooter is also assist provider",async({page})=>{
-  const original=await openDemo(page);
+  const original=await openDemo(page,{assist:true});
   await configureOrder(page,"last");
   await startShot(page,"away");
   await page.locator('#locationList button[data-zone="7M"]').click();
