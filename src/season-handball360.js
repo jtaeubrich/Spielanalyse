@@ -98,7 +98,7 @@ export function buildHandball360SeasonGame(raw, matchId, teamId, scheduleMatch =
     officialSource: {
       provider: "handball.net", matchId: id, matchDate: x.matchDate || null,
       venue: x.venue || null, competition: x.competition || null,
-      importedAt: new Date().toISOString()
+      rosterSource: x.rosterSource, importedAt: new Date().toISOString()
     }
   };
   const filename = "handball360_" + id + ".json";
@@ -233,10 +233,11 @@ export function enrichSeasonGameFromOfficial(existing, fetched) {
   for (const side of ["home", "away"]) {
     const officialPlayers = fresh[side]?.players || [];
     const provisional = Boolean(state.provisionalRosters?.[side]);
-    state[side].players = provisional && officialPlayers.length
+    const confirmedLineup = fresh.officialSource?.rosterSource === "lineups";
+    state[side].players = provisional && confirmedLineup && officialPlayers.length
       ? mergeRosterPlayers(officialPlayers, [])
       : mergeRosterPlayers(state[side]?.players, officialPlayers);
-    if (officialPlayers.length && state.provisionalRosters) delete state.provisionalRosters[side];
+    if (officialPlayers.length && confirmedLineup && state.provisionalRosters) delete state.provisionalRosters[side];
   }
   if (!hadEvents && hasNewEvents) {
     state.events = structuredClone(fresh.events);
