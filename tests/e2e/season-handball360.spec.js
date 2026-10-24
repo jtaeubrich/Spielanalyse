@@ -263,3 +263,93 @@ test("temporarily viewing a live-scouted season game does not disable later cont
   expect(season.games[0].data.isHistorical).toBe(false);
   expect(season.games[0].data.events[0].comment).toBe("Eigene Live-Notiz");
 });
+
+
+test("pregame Setup lineup refresh previews and replaces only the active match roster",async({page})=>{
+  const future=buildHandball360SeasonGame(games[2],"378122",teamId,schedule.matches[2]);
+  future.state.events=[];
+  future.state.home.players=[
+    {id:"local-21",handballNetId:"21",nr:7,vorname:"Mia",nachname:"Test",isTW:false},
+    {id:"local-old",handballNetId:"24",nr:9,vorname:"Nicht",nachname:"Gemeldet",isTW:false}
+  ];
+  future.state.away.players=[];
+  future.state.video.youtubeUrl="https://youtu.be/roster-test";
+  const official=payload("378122","2026-11-15T16:00:00Z");
+  official.events=[];
+  official.lineups={data:{
+    local:{players:[
+      {player:{id:21,first_name:"Mia",last_name:"Test"},number:18,is_goalkeeper:false},
+      {player:{id:23,first_name:"Neuer",last_name:"Spieler"},number:3,is_goalkeeper:false}
+    ]},
+    visitor:{players:[
+      {player:{id:32,first_name:"Gina",last_name:"Gast"},number:1,is_goalkeeper:true}
+    ]}
+  }};
+  await page.route("**/match/378122", route=>route.fulfill({
+    status:200,
+    headers:{"access-control-allow-origin":"*"},
+    contentType:"application/json",body:JSON.stringify(official)
+  }));
+  await page.locator("#seasonGameInput").setInputFiles(upload("future.json",future.state));
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
+  await expect(page.locator("#setupSeasonRosterRefresh")).toBeEnabled();
+  await page.locator("#setupSeasonContinue").click();
+  await page.locator('[data-tab="setup"]').click();
+
+  await page.locator("#setupSeasonRosterRefresh").click();
+  const dialog=page.locator("#setupOfficialRosterDialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("2 von 2 Spielkadern verfügbar");
+  await expect(dialog).toContainText("Nicht Gemeldet");
+  await expect(dialog).toContainText("Nr. 7 → 18");
+  await dialog.locator("#setupOfficialRosterCancel").click();
+  await expect(page.locator("#setupSeasonRosterStatus")).toContainText("abgebrochen");
+
+  await page.locator("#setupSeasonRosterRefresh").click();
+  await expect(dialog).toBeVisible();
+  await dialog.locator("#setupOfficialRosterConfirm").click();
+  await expect(page.locator("#setupSeasonRosterStatus")).toContainText("Kader aktualisiert");
+  await expect(page.locator("#setupSeasonGameStatus")).toContainText("Aktiv mit Saison verknüpft");
+  await page.locator("#saveBtn").click();
+
+  await page.locator('[data-tab="season"]').click();
+  const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
+  const archive=JSON.parse(await readFile(await download.path(),"utf8"));
+  expect(archive.games).toHaveLength(1);
+  const snapshot=archive.games[0].data;
+  expect(snapshot.home.players).toHaveLength(2);
+  expect(snapshot.home.players.map(p=>p.handballNetId).sort()).toEqual(["21","23"]);
+  expect(snapshot.home.players.find(p=>p.handballNetId==="21")).toMatchObject({id:"local-21",nr:18});
+  expect(snapshot.away.players).toHaveLength(1);
+  expect(snapshot.events).toEqual([]);
+  expect(snapshot.video.youtubeUrl).toContain("roster-test");
+  expect(snapshot.lineupSync).toMatchObject({matchId:"378122",homeConfirmed:true,awayConfirmed:true});
+  expect(snapshot.officialSource.matchId).toBe("378122");
+
+  await page.reload();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
+  await page.locator("#setupSeasonContinue").click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonRosterRefresh").click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("Keine Abweichungen");
+  await dialog.locator("#setupOfficialRosterCancel").click();
+});
+
+test("pregame Setup roster refresh refuses missing Handball360 lineup without changing season",async({page})=>{
+  const future=buildHandball360SeasonGame(games[2],"378122",teamId,schedule.matches[2]);
+  future.state.events=[];
+  future.state.home.players=[{id:"local-21",handballNetId:"21",nr:7,vorname:"Mia",nachname:"Test",isTW:false}];
+  await page.locator("#seasonGameInput").setInputFiles(upload("future.json",future.state));
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
+  await page.locator("#setupSeasonRosterRefresh").click();
+  await expect(page.locator("#setupSeasonRosterStatus")).toContainText("noch keine offizielle Aufstellung");
+  await expect(page.locator("#setupOfficialRosterDialog")).not.toBeVisible();
+  await page.locator('[data-tab="season"]').click();
+  const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
+  const archive=JSON.parse(await readFile(await download.path(),"utf8"));
+  expect(archive.games[0].data.home.players).toEqual(future.state.home.players);
+});
