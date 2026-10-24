@@ -121,6 +121,7 @@ test("links manually scouted matches, refreshes safely and exports stable team/m
   await expect(row.locator("[data-h360-refresh]")).toHaveCount(1);
   await row.locator("[data-h360-refresh]").click();
   await expect(page.locator("#seasonH360Status")).toContainText("aktualisiert");
+  await page.locator('input[data-match-id="378112"]').uncheck();
   await page.locator('input[data-match-id="378122"]').check();
   await page.locator("#seasonH360Import").click();
   await expect(page.locator("#seasonH360Status")).toContainText("1 neu importiert");
