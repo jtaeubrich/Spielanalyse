@@ -105,7 +105,7 @@ describe("safe manual match association and official refresh",()=>{
     expect(future.state.home.players).toEqual([]);
     seeded.state.officialSource={provider:"handball.net",matchId:"378112"};
     const fetched=baseGame("official",[{type:"goal"}]);
-    fetched.state.officialSource={provider:"handball.net",matchId:"378112"};
+    fetched.state.officialSource={provider:"handball.net",matchId:"378112",rosterSource:"lineups"};
     fetched.state.home.players=[{vorname:"Alex",nachname:"Aktuell",nr:11,handballNetId:"99"}];
     const updated=enrichSeasonGameFromOfficial(seeded,fetched);
     expect(updated.state.provisionalRosters.home).toBeUndefined();
