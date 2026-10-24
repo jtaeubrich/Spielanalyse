@@ -102,3 +102,57 @@ test("never replaces an existing manually enriched match",async({page})=>{
   expect(originalGame.data.events[0].comment).toBe("Eigenes Scouting bleibt");
   expect(originalGame.data.video.youtubeUrl).toContain("example");
 });
+
+
+test("links manually scouted matches, refreshes safely and exports stable team/match ZIP",async({page})=>{
+  const oldGame=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
+  delete oldGame.state.officialSource;
+  oldGame.state.events[0].comment="Mein eigenes Scouting";
+  oldGame.state.video.youtubeUrl="https://www.youtube.com/watch?v=mine";
+  await page.locator("#seasonGameInput").setInputFiles(upload("manuell.json",oldGame.state));
+  await preview(page);
+  const row=page.locator("#seasonH360List .season-h360-row").filter({
+    has:page.locator('input[data-match-id="378107"]')
+  });
+  await expect(row).toContainText("Möglicherweise vorhanden");
+  await expect(row.locator(".season-h360-associate select")).not.toHaveValue("");
+  page.once("dialog",dialog=>dialog.accept());
+  await row.locator(".season-h360-associate button").click();
+  await expect(row.locator("[data-h360-refresh]")).toHaveCount(1);
+  await row.locator("[data-h360-refresh]").click();
+  await expect(page.locator("#seasonH360Status")).toContainText("aktualisiert");
+  await page.locator('input[data-match-id="378112"]').uncheck();
+  await page.locator('input[data-match-id="378122"]').check();
+  await page.locator("#seasonH360Import").click();
+  await expect(page.locator("#seasonH360Status")).toContainText("1 neu importiert");
+  await page.locator("#seasonH360Close").click();
+  await page.locator("#seasonArchiveTeam").fill("TSV Kronshagen mB");
+  await page.locator("#seasonArchiveTeam").dispatchEvent("change");
+  const [download]=await Promise.all([
+    page.waitForEvent("download"),
+    page.locator("#seasonArchiveExport").click()
+  ]);
+  const bytes=await readFile(await download.path());
+  const paths=[];
+  let offset=0;
+  while(offset+30<=bytes.length && bytes.readUInt32LE(offset)===0x04034b50){
+    const size=bytes.readUInt32LE(offset+18);
+    const nameLength=bytes.readUInt16LE(offset+26);
+    const extraLength=bytes.readUInt16LE(offset+28);
+    paths.push(bytes.subarray(offset+30,offset+30+nameLength).toString("utf8"));
+    offset+=30+nameLength+extraLength+size;
+  }
+  expect(paths).toContain("TSV_Kronshagen_mB/378107/spiel.json");
+  expect(paths).toContain("TSV_Kronshagen_mB/378122/spiel.json");
+  expect(paths).toContain("TSV_Kronshagen_mB/378107/videos/");
+  expect(paths).not.toContain("TSV_Kronshagen_mB/2026-27/378107/spiel.json");
+  const [seasonDownload]=await Promise.all([
+    page.waitForEvent("download"),page.locator("#seasonExport").click()
+  ]);
+  const season=JSON.parse(await readFile(await seasonDownload.path(),"utf8"));
+  expect(season.archiveTeam).toBe("TSV Kronshagen mB");
+  const manual=season.games.find(g=>g.data.officialSource?.matchId==="378107");
+  expect(manual.fileName).toBe("manuell.json");
+  expect(manual.data.events[0].comment).toBe("Mein eigenes Scouting");
+  expect(manual.data.video.youtubeUrl).toContain("mine");
+});
