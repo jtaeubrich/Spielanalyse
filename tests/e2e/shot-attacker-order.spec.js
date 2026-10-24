@@ -29,7 +29,7 @@ async function startShot(page,team="away"){
   await page.locator('[data-flow="shot"]').click();
 }
 async function selectGoalDetails(page){
-  await page.locator('#locationList [data-zone="LA"]').first().click();
+  await page.locator('#locationList button[data-zone="7M"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   // The anonymized fixture enables assists by default for the own team.
   if(await page.locator("#assistList").isVisible())
@@ -62,7 +62,7 @@ test("shot: scorer-last waits for hall speaker while preserving original event s
   await expect(page.locator("#idleStep")).toBeVisible();
   await expect(page.locator("#eventCount")).toHaveText("1 Ereignisse");
   const e=await latestEvent(page);
-  expect(e).toMatchObject({type:"goal",team:"away",pId:shooter.id,pNr:7,z:"LA",scoreA:1,scoreChanged:true});
+  expect(e).toMatchObject({type:"goal",team:"away",pId:shooter.id,pNr:7,z:"7M",scoreA:1,scoreChanged:true});
   expect(e.realTime).toBeDefined();
   expect(e.time).toBeDefined();
   expect(e.endedPossessionOf).toBe("away");
@@ -83,7 +83,7 @@ test("shot: default shooter-first sequence remains unchanged",async({page})=>{
   await selectGoalDetails(page);
   await expect(page.locator("#idleStep")).toBeVisible();
   const e=await latestEvent(page);
-  expect(e).toMatchObject({type:"goal",team:"away",pId:original.away.players.find(p=>p.nr===7).id,scoreA:1,z:"LA"});
+  expect(e).toMatchObject({type:"goal",team:"away",pId:original.away.players.find(p=>p.nr===7).id,scoreA:1,z:"7M"});
 });
 
 test("shot: scorer-last accepts unknown shooter and still commits exactly once",async({page})=>{
@@ -104,7 +104,7 @@ test("shot: scorer-last preserves the opponent defensive assignment before selec
   await configureOrder(page,"last");
   await startShot(page,"home");
   await expect(page.locator("#locationStep")).toBeVisible();
-  await page.locator('#locationList [data-zone="K"]').click();
+  await page.locator('#locationList button[data-zone="7M"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   await expect(page.locator("#tagsStep")).toBeVisible();
   const ownDefender=original.away.players.find(p=>p.nr===7);
@@ -121,7 +121,7 @@ test("shot: shooter-last clears assist when the announced shooter is also assist
   const original=await openDemo(page);
   await configureOrder(page,"last");
   await startShot(page,"away");
-  await page.locator('#locationList [data-zone="LA"]').first().click();
+  await page.locator('#locationList button[data-zone="7M"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   await page.locator("#assistList .option").filter({hasText:"Spieler 17"}).click();
   await expect(page.locator("#playerStep")).toBeVisible();
