@@ -159,7 +159,7 @@
 .setup-season-loader .setup-actions{display:flex;flex-wrap:wrap;gap:8px}
 .setup-season-loader p{margin:0}
 .setup-roster-dialog{width:min(720px,96vw);max-height:88dvh;overflow:auto}
-.setup-roster-dialog h2{margin:0 0 12px}
+.setup-roster-dialog>h3{margin:0 0 12px;font-size:1.2rem}
 .setup-roster-preview{display:grid;gap:12px;margin:12px 0}
 .setup-roster-side{border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
 .setup-roster-side h3{margin:0 0 6px}
@@ -980,7 +980,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
           <p class="number-help" id="setupSeasonGameStatus" role="status">Saisonspiele stehen nach dem Import im Saison-Tab hier zur Verfügung.</p>
         </div>
         <dialog id="setupOfficialRosterDialog" class="setup-roster-dialog" aria-labelledby="setupOfficialRosterTitle">
-          <h2 id="setupOfficialRosterTitle">Offizielle Spielkader abgleichen</h2>
+          <h3 id="setupOfficialRosterTitle">Offizielle Spielkader abgleichen</h3>
           <div id="setupOfficialRosterPreview" class="setup-roster-preview"></div>
           <p class="number-help">Nur die Kader dieses Spiels werden verändert. Mannschaftssammlung, Scouting-Ereignisse, Video und Kommentare bleiben unverändert.</p>
           <div class="setup-actions">
