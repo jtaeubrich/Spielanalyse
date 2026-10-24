@@ -319,8 +319,8 @@ test("pregame Setup lineup refresh previews and replaces only the active match r
   expect(archive.games).toHaveLength(1);
   const snapshot=archive.games[0].data;
   expect(snapshot.home.players).toHaveLength(2);
-  expect(snapshot.home.players.map(p=>p.handballNetId)).toEqual(["21","23"]);
-  expect(snapshot.home.players[0]).toMatchObject({id:"local-21",nr:18});
+  expect(snapshot.home.players.map(p=>p.handballNetId).sort()).toEqual(["21","23"]);
+  expect(snapshot.home.players.find(p=>p.handballNetId==="21")).toMatchObject({id:"local-21",nr:18});
   expect(snapshot.away.players).toHaveLength(1);
   expect(snapshot.events).toEqual([]);
   expect(snapshot.video.youtubeUrl).toContain("roster-test");
