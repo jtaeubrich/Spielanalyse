@@ -652,6 +652,26 @@
   }
   body.match-unified-layout.match-review-mode #matchTab #matchGrid>.events .eventlist{max-height:40vh}
 
+  /* Live Scouting uses the full screen for clocks and event capture.
+     Video and both event lists are reserved for video scouting/review. */
+  body.match-unified-layout.live-scouting-layout #matchTab #matchVideoHost,
+  body.match-unified-layout.live-scouting-layout #matchTab #matchNearbyEvents,
+  body.match-unified-layout.live-scouting-layout #matchTab #matchGrid>.events,
+  body.match-unified-layout.live-scouting-layout #matchTab #matchGrid>.side>.events{display:none!important}
+  body.match-unified-layout.live-scouting-layout #matchTab #matchGrid{
+    display:flex!important;flex-direction:column!important;
+    grid-template-columns:none!important;gap:8px!important;width:100%
+  }
+  body.match-unified-layout.live-scouting-layout #matchTab #matchGrid>.side{
+    width:100%!important;max-width:none!important;min-width:0!important;grid-column:1/-1
+  }
+  body.match-unified-layout.live-scouting-layout #matchTab #matchPossessionHost{
+    width:100%!important;max-width:none!important;grid-column:1/-1
+  }
+  #matchTab #liveUndoBtn{display:none}
+  body.match-unified-layout.live-scouting-layout #matchTab #liveUndoBtn{display:inline-flex;align-items:center;white-space:nowrap}
+
+
   /* Permanent independent possession area, shared by all Match modes. */
   #matchTab #matchPossessionHost{padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;min-width:0}
   #matchTab #matchPossessionHost .possession{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px;margin:7px 0 0}
@@ -1091,7 +1111,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
         </div>
         <button class="run" id="runBtn">▶ SPIELZEIT STARTEN</button>
         <div class="possession"><button class="poss active" data-team="home" id="homePoss">Gegner im Ballbesitz</button><span class="arrow">⇄</span><button class="poss" data-team="away" id="awayPoss">Mein Team im Ballbesitz</button></div>
-        <div class="status"><span id="flowHint">Bereit für den nächsten Angriff</span><span class="badge" id="eventCount">0 Ereignisse</span></div>
+        <div class="status"><span id="flowHint">Bereit für den nächsten Angriff</span><span class="badge" id="eventCount">0 Ereignisse</span><button class="tiny" id="liveUndoBtn" type="button" aria-label="Letztes Ereignis löschen" disabled>Letztes löschen</button></div>
       </div>
       <div id="stepSummary" class="step-summary"></div>
       <div class="step active" id="idleStep"><h2>Angriff erfassen</h2>        <div class="label" style="margin-bottom:8px">Wie endet der Angriff?</div>
@@ -1697,7 +1717,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function pinMatchReviewEvent(index){if(!Number.isInteger(index)||!state.events[index])return;reviewPinnedEventIndex=index;activeVideoEventIndex=index;selectedVideoEvents.clear();selectedVideoEvents.add(index);renderEvents();renderVideoEventEditor();renderAnnotation()}
   function unpinMatchReviewEvent(){reviewPinnedEventIndex=null;reviewSelectionHoldUntil=performance.now()+350;renderEvents();renderVideoEventEditor();if(activeTab==="match"&&matchReviewMode&&mediaReady())setTimeout(()=>updateMatchReviewActiveEvent(),360)}
   function seekMatchReviewEvent(index){const e=state.events[index],exact=e?eventVideoSeconds(e):NaN;if(!e||!Number.isFinite(exact))return toast("Für dieses Ereignis ist keine Videozeit berechenbar.");if(!mediaReady())return toast("Zuerst das passende Video laden.");const window=playEventScene(exact);if(!window)return;pinMatchReviewEvent(index);reviewSelectionHoldUntil=performance.now()+500;$("videoMessage").textContent=`Szene bei ${fmt(exact,true)} · ${window.preRoll} s davor / ${window.postRoll} s danach. Ereignis ist für die Korrektur fixiert.`}
-  function renderEvents(){const el=$("eventList"),review=activeTab==="match"&&matchReviewMode,items=review?matchReviewEntries():[...state.events].sort((a,b)=>(b.time||0)-(a.time||0)).slice(0,12).map(event=>({event,index:state.events.indexOf(event),video:eventVideoSeconds(event)}));if(!items.length){el.innerHTML='<div class="empty">'+(review?'Keine Ereignisse mit berechenbarer Videozeit.':'Noch keine Ereignisse erfasst.')+'</div>';return}el.innerHTML=items.map(({event:e,index,video})=>{const jumpable=Number.isFinite(video),current=review&&index===activeVideoEventIndex;return `<div class="event${jumpable?' jumpable':''}${current?' current':''}"${jumpable?` data-event-index="${index}" role="button" tabindex="0" title="Zum Ereignis im Video springen"`:''}><span class="eventtime">${review&&jumpable?fmt(video,true):(e.displayTime||(e.time!=null?fmt(e.time):"Spielzeit offen"))}</span><div><strong>${eventLabels[e.type]||e.type}</strong><div class="eventmeta">${review?(e.displayTime||fmt(e.time||0))+" · ":""}${escapeHtml(e.pName||e.throwerName||e.note||"")}${e.playerTags?.length?` · Abwehr: ${e.playerTags.map(t=>escapeHtml(t.pName)).join(", ")}`:e.defenderUnknown?" · Abwehr: Unbekannt":""}</div></div><button class="delete" data-id="${e.id}" aria-label="Ereignis löschen">×</button></div>`}).join("");el.querySelectorAll(".event.jumpable").forEach(row=>{const index=Number(row.dataset.eventIndex),jump=()=>review?seekMatchReviewEvent(index):seekEvent(state.events[index]);row.onclick=jump;row.onkeydown=ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();jump()}}});el.querySelectorAll(".delete").forEach(b=>b.onclick=ev=>{ev.stopPropagation();state.events=state.events.filter(e=>String(e.id)!==b.dataset.id);activeVideoEventIndex=null;reviewPinnedEventIndex=null;update()})}
+  function renderEvents(){const liveUndo=$("liveUndoBtn");if(liveUndo)liveUndo.disabled=!state.events.length;const el=$("eventList"),review=activeTab==="match"&&matchReviewMode,items=review?matchReviewEntries():[...state.events].sort((a,b)=>(b.time||0)-(a.time||0)).slice(0,12).map(event=>({event,index:state.events.indexOf(event),video:eventVideoSeconds(event)}));if(!items.length){el.innerHTML='<div class="empty">'+(review?'Keine Ereignisse mit berechenbarer Videozeit.':'Noch keine Ereignisse erfasst.')+'</div>';return}el.innerHTML=items.map(({event:e,index,video})=>{const jumpable=Number.isFinite(video),current=review&&index===activeVideoEventIndex;return `<div class="event${jumpable?' jumpable':''}${current?' current':''}"${jumpable?` data-event-index="${index}" role="button" tabindex="0" title="Zum Ereignis im Video springen"`:''}><span class="eventtime">${review&&jumpable?fmt(video,true):(e.displayTime||(e.time!=null?fmt(e.time):"Spielzeit offen"))}</span><div><strong>${eventLabels[e.type]||e.type}</strong><div class="eventmeta">${review?(e.displayTime||fmt(e.time||0))+" · ":""}${escapeHtml(e.pName||e.throwerName||e.note||"")}${e.playerTags?.length?` · Abwehr: ${e.playerTags.map(t=>escapeHtml(t.pName)).join(", ")}`:e.defenderUnknown?" · Abwehr: Unbekannt":""}</div></div><button class="delete" data-id="${e.id}" aria-label="Ereignis löschen">×</button></div>`}).join("");el.querySelectorAll(".event.jumpable").forEach(row=>{const index=Number(row.dataset.eventIndex),jump=()=>review?seekMatchReviewEvent(index):seekEvent(state.events[index]);row.onclick=jump;row.onkeydown=ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();jump()}}});el.querySelectorAll(".delete").forEach(b=>b.onclick=ev=>{ev.stopPropagation();state.events=state.events.filter(e=>String(e.id)!==b.dataset.id);activeVideoEventIndex=null;reviewPinnedEventIndex=null;update()})}
   const eventLabels={shot:"Torwurf",freethrow:"Freiwurf",goal:"Tor",save:"Parade",miss:"Fehlwurf",block:"Block",error:"Technischer Fehler",yellow:"Gelbe Karte","2min":"2 Minuten","2plus2":"2+2 Minuten",red:"Rote Karte",blue:"Blaue Karte",keyMoment:"Schlüsselmoment"};
   const eventPlayerIds=e=>new Set([e.pId,e.throwerId,e.attackerId,e.assistPId,e.againstTwId,...(e.playerTags||[]).map(t=>t.pId)].filter(v=>v!==null&&v!==undefined&&v!=="").map(String));
   const eventDefensePlayerIds=e=>new Set((e.playerTags||[]).map(t=>t.pId).filter(v=>v!==null&&v!==undefined&&v!=="").map(String));
@@ -3258,10 +3278,12 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     const nearbyPanel=$("matchNearbyEvents"),grid=$("matchGrid"),side=grid?.querySelector(":scope > .side");
     const enabled=activeTab==="match"&&matchReviewMode;
     const videoScouting=activeTab==="match"&&analysisMode==="video"&&!enabled;
+    const liveScouting=activeTab==="match"&&analysisMode==="live"&&!enabled;
     const topHost=$("matchReviewTopHost"),videoHost=$("matchVideoHost"),videoControls=videoHost?.querySelector(".video-control-groups");
     const host=$("matchReviewCaptureHost"),possession=$("homePoss")?.closest(".possession");
     document.body.classList.toggle("match-review-mode",enabled);
     document.body.classList.toggle("video-scouting-layout",videoScouting);
+    document.body.classList.toggle("live-scouting-layout",liveScouting);
     document.body.classList.toggle("match-unified-layout",activeTab==="match");
     syncSceneWindowInputs();
     if(topHost&&grid&&topHost.nextElementSibling!==grid)grid.before(topHost);
@@ -3318,6 +3340,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function setMatchReviewMode(enabled,{announce=true}={}){enabled=Boolean(enabled&&analysisMode==="live"&&!state.isHistorical&&state.events.length);if(enabled===matchReviewMode){updateMatchReviewControls();refreshSecondaryClockControls();updateMatchReviewLayout();return}stopGame();if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}mediaPause();scenePlayback.cancel();matchReviewMode=enabled;updateMatchReviewControls();refreshSecondaryClockControls();if(enabled){showTab("match");resizeAnnotationCanvas()}updateMatchReviewLayout();if(announce)toast(enabled?"Video-Nachanalyse aktiv – Events können am Video ergänzt und korrigiert werden":"Video-Nachanalyse beendet")}
   function setAnalysisMode(mode){const changed=mode!==analysisMode;if(mode!=="live"&&matchReviewMode)setMatchReviewMode(false,{announce:false});stopGame();if(mode==="live"){mediaPause();if(!liveClockInitialized){liveClockBase=0;liveClockInitialized=true}analysisMode="live";state.video.analysisTimeBasis="live-elapsed-ms"}else{if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}analysisMode="video";state.video.analysisTimeBasis="video-absolute-ms"}if(!state.isHistorical)state.isVideoscoutingFile=analysisMode==="video";document.body.classList.toggle("live-mode",analysisMode==="live");$("modeSelect").value=analysisMode;updateMatchReviewLayout();refreshSecondaryClockControls();mediaLast=analysisMode==="video"&&mediaReady()?mediaSeconds():null;updateMatchReviewControls();if(persistenceReady)persistSession();if(changed)toast(analysisMode==="live"?"Live Scouting aktiv – Realzeit separat starten":"Video Scouting aktiv")}
   $("modeSelect").onchange=e=>{if(state.events.length&&e.target.value!==analysisMode){e.target.value=analysisMode;return toast("Scouting-Modus nach dem ersten Ereignis nicht wechseln.")}setAnalysisMode(e.target.value)};
+  $("liveUndoBtn").onclick=()=>{if(state.events.length)$("undoBtn").click()};
   $("matchReviewToggle").onclick=()=>setMatchReviewMode(!matchReviewMode);
   function applyGameTime(totalSeconds,message='Spielzeit korrigiert'){const offset=(state.timer.half-1)*state.timer.duration*60,t=Number(totalSeconds);if(!Number.isFinite(t)||t<offset||t>offset+state.timer.duration*60)throw Error('Zeit passt nicht zur gewählten Halbzeit.');gameBase=t-offset;gameStarted=performance.now();mediaLast=mediaReady()?mediaSeconds():null;state.timer.secondsElapsed=gameBase;state.gameTime=t;$("gameTimeInput").value=fmt(t);if(draft)draft.stamp={...draft.stamp,time:Math.round(t),displayTime:fmt(t),half:state.timer.half};if(currentStep==='key'&&keyStamp)keyStamp={...keyStamp,time:Math.round(t),displayTime:fmt(t),half:state.timer.half};persistSession();toast(message)}
   $("gameTimeForm").onsubmit=e=>{e.preventDefault();try{applyGameTime(parseTime($("gameTimeInput").value.trim()))}catch(err){toast(err.message)}};
