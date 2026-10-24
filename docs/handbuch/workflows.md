@@ -20,6 +20,8 @@
 
 **Zweck:** Während des Spiels Ereignisse erfassen und anschließend eine unmittelbare Auswertung erhalten.
 
+**Bildschirm:** Im Live-Modus bleiben **Video und Eventliste ausgeblendet**, damit die Ereigniserfassung die volle Breite nutzt. Ein falsch erfasstes letztes Event kannst du direkt über **Letztes löschen** entfernen. Die Video-Nachanalyse blendet Video und Ereignisliste bei Bedarf wieder ein.
+
 **Voraussetzungen:** Spiel eingerichtet, Heim-/Gastmannschaft und möglichst Kader korrekt eingetragen; im Match-Tab stehen die unabhängigen Uhren **Realzeit** und **Spielzeit** zur Verfügung.
 
 > **Unbedingt vor dem ersten Ereignis:** Im Match-Tab auf **`▶ Realzeit starten`** tippen und kontrollieren, ob sie läuft. Erst danach **`▶ SPIELZEIT STARTEN`** drücken. Die Realzeit liefert den Zeitbezug der Live-Ereignisse, der für eine spätere Zuordnung zum Video benötigt wird. Die Spielzeit allein reicht dafür nicht aus.

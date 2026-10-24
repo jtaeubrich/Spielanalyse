@@ -648,12 +648,18 @@ test("unified Match workspace keeps controls and capture ordered across modes",a
    const result=await page.evaluate(()=>{
     const bounds=id=>document.querySelector(id).getBoundingClientRect();
     const video=document.querySelector("#matchVideoHost");
+    const videoHidden=getComputedStyle(video).display==="none";
     const possession=document.querySelector("#homePoss").closest(".possession");
     return {
-     topFirst:bounds("#matchReviewTopHost").bottom<=bounds("#matchVideoHost").top+3,
+     // Live no longer has a video row. Check visible ordering instead.
+     topFirst:videoHidden
+       ? bounds("#matchReviewTopHost").bottom<=bounds("#idleStep").top+3
+       : bounds("#matchReviewTopHost").bottom<=bounds("#matchVideoHost").top+3,
      possessionInHost:document.querySelector("#matchPossessionHost").contains(possession),
      possessionAboveCapture:bounds("#matchPossessionHost").bottom<=bounds("#idleStep").top+3,
-     captureBelowVideo:bounds("#idleStep").top>=bounds("#matchVideoHost").top
+     captureBelowVideo:videoHidden
+       ? getComputedStyle(document.querySelector("#matchGrid > .events")).display==="none"
+       : bounds("#idleStep").top>=bounds("#matchVideoHost").top
     };
    });
    expect(result).toEqual({topFirst:true,possessionInHost:true,possessionAboveCapture:true,captureBelowVideo:true});
