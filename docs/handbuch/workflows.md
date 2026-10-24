@@ -20,7 +20,7 @@
 
 **Zweck:** Während des Spiels Ereignisse erfassen und anschließend eine unmittelbare Auswertung erhalten.
 
-**Bildschirm:** Im Live-Modus bleiben **Video und Eventliste ausgeblendet**, damit die Ereigniserfassung die volle Breite nutzt. Ein falsch erfasstes letztes Event kannst du direkt über **Letztes löschen** entfernen. Die Video-Nachanalyse blendet Video und Ereignisliste bei Bedarf wieder ein.
+**Bildschirm:** Im Live-Modus bleiben **Video und Eventliste ausgeblendet**, damit die Ereigniserfassung die volle Breite nutzt. Wenn der Hallensprecher die Torschützen erst nach dem Abschluss nennt, kann im **Setup → Torwurf-Erfassung** die Option **Schütze zuletzt** aktiviert werden. Dann werden zunächst Wurfdetails und Ergebnis erfasst; der Schütze wird am Ende gewählt, ohne den ursprünglichen Zeitstempel zu verändern. Ein falsch erfasstes letztes Event kannst du direkt über **Letztes löschen** entfernen. Die Video-Nachanalyse blendet Video und Ereignisliste bei Bedarf wieder ein.
 
 **Voraussetzungen:** Spiel eingerichtet, Heim-/Gastmannschaft und möglichst Kader korrekt eingetragen; im Match-Tab stehen die unabhängigen Uhren **Realzeit** und **Spielzeit** zur Verfügung.
 
