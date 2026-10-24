@@ -1,6 +1,6 @@
 # Spielanalyse – Anwenderdokumentation
 
-**Stand:** 21.10.2026 · **Status:** Text und statische Screenshots der echten PWA in Workflows und integrierter `? Hilfe`. Video-Szenen folgen separat.
+**Stand:** 24.10.2026 · **Status:** Text und statische Screenshots der echten PWA in Workflows und integrierter `? Hilfe`. Video-Szenen folgen separat.
 
 ## Ziel und Leserführung
 
@@ -8,19 +8,22 @@ Die Dokumentation erklärt **zuerst die Arbeitsabläufe** und danach die einzeln
 
 ## Inhaltsverzeichnis
 
-1. **[Workflows](workflows.md)** – drei vollständige Arbeitsabläufe und Entscheidungshilfe
+1. **[Einzelspiel oder Saison](saison-workflow.md)** – Saison importieren, Spiele zuordnen, Kader synchronisieren, Team-Archiv exportieren
+2. **[Workflows](workflows.md)** – drei Scouting-Arbeitsabläufe und Entscheidungshilfe
    - W1: ausschließlich Live Scouting
    - W2: Live Scouting mit anschließender Video-Nachanalyse
    - W3: ausschließlich Video Scouting
-2. **[Bedienreferenz](bedienreferenz.md)** – Tabs, Zeitsteuerung, Synchronisation, Bearbeitung, Speicherung, Zeichnungen, Clips
-3. **[Geräteguide](geraete.md)** – Smartphone Hoch-/Querformat, Tablet und PC; Schwerpunkt und Layout
-4. **[Bildbeispiele](images/generated/)** – echte Playwright-Aufnahmen, für die integrierte Hilfe ausgewählt und verkleinert
-5. Phase 3 (geplant): Szenen aus dem Companion, Videoanleitungen und vertiefte Vollbild-/Zeichenabläufe
+3. **[Bedienreferenz](bedienreferenz.md)** – Tabs, Zeitsteuerung, Synchronisation, Bearbeitung, Speicherung, Zeichnungen, Clips
+4. **[Geräteguide](geraete.md)** – Smartphone Hoch-/Querformat, Tablet und PC; Schwerpunkt und Layout
+5. **[Bildbeispiele](images/generated/)** – echte Playwright-Aufnahmen, für die integrierte Hilfe ausgewählt und verkleinert
+6. Phase 3 (geplant): Szenen aus dem Companion, Videoanleitungen und vertiefte Vollbild-/Zeichenabläufe
 
 ## Welchen Ablauf brauche ich?
 
 | Ausgangslage | Workflow | Hauptansicht |
 |---|---|---|
+| Ich möchte eine komplette Saison und Spielkader vor Anpfiff verwalten | [Saisonworkflow](saison-workflow.md) | Saison → Setup → Match |
+| Ich möchte ein unabhängiges Einzelspiel verwalten | [Einzelspiel](saison-workflow.md#welcher-einstieg-ist-richtig) | Setup → Match |
 | Ich sitze live beim Spiel und möchte unmittelbar Ereignisse erfassen | [W1 Live](workflows.md#w1--ausschließlich-live-scouting) | Match / Live Scouting |
 | Ich erfasse live und ergänze anschließend Details mit Video | [W2 Live + Video](workflows.md#w2--live-scouting-und-spätere-video-nachanalyse) | Match / Live Scouting → Video-Nachanalyse |
 | Ich habe ein fertiges Video, aber noch keine Ereignisse | [W3 Video](workflows.md#w3--ausschließlich-video-scouting) | Match / Video Scouting |
@@ -41,7 +44,7 @@ Die Dokumentation erklärt **zuerst die Arbeitsabläufe** und danach die einzeln
 
 Die Screenshots werden in GitHub Actions mit der tatsächlichen PWA und pseudonymisierten Spiel-JSONs unter `docs/handbuch/demo/fixtures/` aufgenommen. `capture_screenshots.py` liefert die vollständigen Screenshots als CI-Artefakt; `publish_help_images.py` erzeugt aus ausgewählten Ansichten verkleinerte Bilder für `docs/handbuch/images/generated/`. Der Workflow schreibt diese Bilder auch dauerhaft auf `main` und wird bei Änderungen an App oder Demo-Automatisierung erneut gestartet.
 
-Für die integrierte Hilfe sind insbesondere [W1 Live](images/generated/w1-live-desktop.jpg), [W2 Nachanalyse](images/generated/w2-review-desktop.jpg) und [W3 Video-Scouting](images/generated/w3-video-desktop.jpg) enthalten. Das lokale Spielvideo ist **noch nicht eingebunden**. Browser-Screenshots ersetzen keinen Test auf echten iOS-/iPadOS-Geräten. Die automatischen Bilder müssen nach größeren UI-Änderungen zusätzlich visuell geprüft werden.
+Neu sind [Saisonspiel-Liste](images/generated/season-overview-desktop.jpg), [Spielplan/Zuordnung](images/generated/season-import-preview-desktop.jpg), [Setup-Saisonspiel](images/generated/setup-season-game-desktop.jpg), [Kadervergleich](images/generated/setup-lineup-review-desktop.jpg) und [Saisonstatistik](images/generated/season-analytics-desktop.jpg). Spiel- und Spielerwerte stammen aus anonymisierten Demodaten. Für die integrierte Hilfe sind insbesondere [W1 Live](images/generated/w1-live-desktop.jpg), [W2 Nachanalyse](images/generated/w2-review-desktop.jpg) und [W3 Video-Scouting](images/generated/w3-video-desktop.jpg) enthalten. Das lokale Spielvideo ist **noch nicht eingebunden**. Browser-Screenshots ersetzen keinen Test auf echten iOS-/iPadOS-Geräten. Die automatischen Bilder müssen nach größeren UI-Änderungen zusätzlich visuell geprüft werden.
 
 ## Nachweislage
 
