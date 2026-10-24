@@ -5,7 +5,7 @@ export function validateTeamScheduleRequest(teamId, from, to) {
   const id = String(teamId ?? "").trim();
   if (!/^[0-9]{1,12}$/.test(id)) throw new Error("Ungueltige numerische Team-ID.");
   const validDate = value => {
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(value ?? ""))) return false;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value ?? ""))) return false;
     const date = new Date(String(value) + "T00:00:00Z");
     return !Number.isNaN(+date) && date.toISOString().slice(0, 10) === value;
   };
@@ -17,7 +17,7 @@ export function validateTeamScheduleRequest(teamId, from, to) {
 
 export function summarizeHandball360Match(match) {
   const id = String(match?.id ?? "");
-  if (!/^\\d+$/.test(id)) return null;
+  if (!/^\d+$/.test(id)) return null;
   const side = entry => ({
     id: String(entry?.id ?? ""), name: String(entry?.name ?? "").trim()
   });
