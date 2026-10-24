@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildHandball360SeasonGame } from "../../src/season-handball360.js";
+import { seasonMatchFolder } from "../../src/season-archive.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const original = JSON.parse(await readFile(path.resolve(here,"../fixtures/handball360_378107.json"),"utf8"));
@@ -142,10 +143,16 @@ test("links manually scouted matches, refreshes safely and exports stable team/m
     paths.push(bytes.subarray(offset+30,offset+30+nameLength).toString("utf8"));
     offset+=30+nameLength+extraLength+size;
   }
-  expect(paths).toContain("TSV_Kronshagen_mB/378107/spiel.json");
-  expect(paths).toContain("TSV_Kronshagen_mB/378122/spiel.json");
-  expect(paths).toContain("TSV_Kronshagen_mB/378107/videos/");
-  expect(paths).not.toContain("TSV_Kronshagen_mB/2026-27/378107/spiel.json");
+  const firstFolder=seasonMatchFolder(oldGame);
+  const future=buildHandball360SeasonGame(games[2],"378122",teamId,schedule.matches[2]);
+  const futureFolder=seasonMatchFolder(future);
+  expect(firstFolder).toContain("_vs_");
+  expect(firstFolder).toContain("378107");
+  expect(futureFolder).toContain("378122");
+  expect(paths).toContain("TSV_Kronshagen_mB/"+firstFolder+"/spiel.json");
+  expect(paths).toContain("TSV_Kronshagen_mB/"+futureFolder+"/spiel.json");
+  expect(paths).toContain("TSV_Kronshagen_mB/"+firstFolder+"/videos/");
+  expect(paths).not.toContain("TSV_Kronshagen_mB/2026-27/"+firstFolder+"/spiel.json");
   const [seasonDownload]=await Promise.all([
     page.waitForEvent("download"),page.locator("#seasonExport").click()
   ]);
