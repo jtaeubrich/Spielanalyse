@@ -29,7 +29,7 @@ function baseGame(id="manuell-1",events=[]) {
   };
 }
 describe("portable per-team game archive",()=>{
-  test("uses team -> match ID -> game, video and export folders without year/team ID layers",async()=>{
+  test("uses team -> home vs away + match ID -> game, video and export folders without year/team ID layers",async()=>{
     const game=baseGame();
     game.state.officialSource={matchId:"378112",provider:"handball.net",teamId:"85814"};
     const {entries,index,team}=buildTeamArchiveEntries({
@@ -38,20 +38,33 @@ describe("portable per-team game archive",()=>{
     });
     expect(team).toBe("TSV_Kronshagen_mB");
     expect(entries.map(item=>item.path)).toEqual([
-      "TSV_Kronshagen_mB/378112/spiel.json",
-      "TSV_Kronshagen_mB/378112/videos/",
-      "TSV_Kronshagen_mB/378112/exports/",
+      "TSV_Kronshagen_mB/TSV_Kronshagen_vs_Gast_378112/spiel.json",
+      "TSV_Kronshagen_mB/TSV_Kronshagen_vs_Gast_378112/videos/",
+      "TSV_Kronshagen_mB/TSV_Kronshagen_vs_Gast_378112/exports/",
       "TSV_Kronshagen_mB/Saison_2026_27_index.json"
     ]);
     expect(JSON.parse(entries[0].data).events).toEqual([]);
-    expect(index.games[0].path).toBe("378112/spiel.json");
-    expect(seasonMatchFolder(baseGame())).toBe("manuell_manuell-1");
+    expect(index.games[0].path).toBe("TSV_Kronshagen_vs_Gast_378112/spiel.json");
+    expect(seasonMatchFolder(baseGame())).toBe("TSV_Kronshagen_vs_Gast_manuell_manuell-1");
     const zip=createTeamArchive({teamName:"TSV Kronshagen mB",seasonName:"2026-27",games:[game]});
     const buffer=new Uint8Array(await zip.blob.arrayBuffer());
     const view=new DataView(buffer.buffer);
     expect(view.getUint32(0,true)).toBe(0x04034b50);
     expect(view.getUint32(buffer.length-22,true)).toBe(0x06054b50);
     expect(view.getUint16(buffer.length-12,true)).toBe(4);
+  });
+  test("keeps home/away order and stable IDs distinct for different fixtures",()=>{
+    const first=baseGame("one");
+    first.state.officialSource={matchId:"378112"};
+    const second=structuredClone(first);
+    second.id="two";
+    second.state.officialSource.matchId="378113";
+    second.state.home.name="Gast";
+    second.state.away.name="TSV Kronshagen";
+    expect(seasonMatchFolder(first)).toBe("TSV_Kronshagen_vs_Gast_378112");
+    expect(seasonMatchFolder(second)).toBe("Gast_vs_TSV_Kronshagen_378113");
+    const entries=buildTeamArchiveEntries({teamName:"Team",games:[first,second]}).entries;
+    expect(entries.filter(entry=>entry.path.endsWith("/spiel.json"))).toHaveLength(2);
   });
   test("does not produce unsafe paths or duplicate match folders",()=>{
     const game=baseGame();
