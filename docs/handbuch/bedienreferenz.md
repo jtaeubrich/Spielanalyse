@@ -1,6 +1,6 @@
 # Bedienreferenz der aktuellen PWA
 
-Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz ergänzt die [Workflows](workflows.md), statt sie zu ersetzen.
+Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz ergänzt den [Saison-/Einzelspiel-Einstieg](saison-workflow.md) und die [Scouting-Workflows](workflows.md), statt sie zu ersetzen.
 
 ## Setup
 - **Neues Spiel:** Ein Spiel neu anlegen; im Dialog existiert die Option `Manuell anlegen`.
@@ -23,7 +23,7 @@ Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz erg
 
 ## Analyse und Saison
 - **Analyse:** Einzelspiel-Auswertungen, Team-/Spielervergleich, Filter; bietet `Gefilterte Szenen im Video` und `Analyse als PDF`.
-- **Saison:** Mehrere Spiel-JSONs zusammen auswerten; die Originaldateien bleiben unverändert.
+- **Saison:** Mehrere Spiel-JSONs zusammen auswerten. Importierte unabhängige Originaldateien bleiben unverändert; direkt aus der Saison geöffnete Spiele werden dagegen mit dem lokalen Saisonarchiv synchronisiert. Der spätere Download per Saison-JSON oder ZIP bleibt ein separater Export.
 - **Saison über Handball360 importieren:** Im Saison-Tab den Button öffnen, `https://www.handball.net/team/<ID>` oder die reine Team-ID sowie den Saisonzeitraum eingeben und auf **Spielplan laden** tippen. Für die zunächst selbst erfassten Spiele unter jeder passenden Begegnung **Manuelles Spiel zuordnen** wählen und die Verknüpfung bestätigen. Erst danach auf **Alle neuen auswählen (auch zukünftige)** und **Ausgewählte Spiele importieren** tippen. Bereits zugeordnete Spiele bleiben vom erneuten Import ausgeschlossen. Zukünftige Spiele werden als leere Partien angelegt, nach Möglichkeit mit bekannten vorläufigen Mannschaftskadern, und zunächst **nicht als gespielte Partien in die Statistik einbezogen**. Bei bestehenden Matches führt **Offizielle Daten aktualisieren** einen neuen Abruf aus: fehlende Metadaten/Spieler und – nur bei bislang leeren Ereignislisten – die offiziellen Ereignisse werden übernommen. Manuelle Ereignisse, Kommentare, Videos und Zeichnungen bleiben erhalten. Die automatische Dublettenerkennung ist nur eine Hilfestellung, manuelle Zuordnungen müssen kontrolliert werden.
 - **Einschränkungen offizieller Statistiken:** handball.net stellt u. a. Tore, Strafen und Kader bereit, jedoch keine vollständige eigene Wurfzonen-/Paraden-/Abwehranalyse. Die Statistik aus ausschließlich offiziellen Ereignissen entsprechend vorsichtig interpretieren. Der Team-Spielplan-Abruf verwendet interne, nicht öffentlich zugesicherte Web-Endpunkte.
 - **Spielerzuordnung:** Gleichnamige Spieler werden bei eindeutiger Identität unabhängig von Trikotnummern aggregiert; abweichende Schreibweisen über **Spieler zusammenführen** manuell zuordnen.
