@@ -143,7 +143,7 @@ test("links manually scouted matches, refreshes safely and exports stable team/m
     paths.push(bytes.subarray(offset+30,offset+30+nameLength).toString("utf8"));
     offset+=30+nameLength+extraLength+size;
   }
-  const firstFolder=seasonMatchFolder(oldGame);
+  const firstFolder=seasonMatchFolder({...oldGame,state:{...oldGame.state,officialSource:{matchId:"378107"}}});
   const future=buildHandball360SeasonGame(games[2],"378122",teamId,schedule.matches[2]);
   const futureFolder=seasonMatchFolder(future);
   expect(firstFolder).toContain("_vs_");
