@@ -90,10 +90,16 @@ test("HTML match report never overwrites own video-scouting and references",asyn
 test("nuLiga online link retrieves public group schedule and match report without HTML files",async({page})=>{
   const requests=[];
   await page.route("**/nuliga/html?*",async route=>{
+    if(route.request().method()==="OPTIONS"){
+      await route.fulfill({status:204,headers:{"access-control-allow-origin":"*",
+        "access-control-allow-methods":"GET, OPTIONS","access-control-allow-headers":"authorization"}});
+      return;
+    }
     const query=new URL(route.request().url()).searchParams;
     const target=new URL(query.get("url")||"");
     requests.push(target);
-    await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
+    await route.fulfill({status:200,contentType:"application/json",
+      headers:{"access-control-allow-origin":"*"},body:JSON.stringify({
       source:"nuliga",url:target.href,html:target.pathname.endsWith("/groupPage")?fixture:report
     })});
   });
@@ -124,6 +130,7 @@ test("nuLiga online link retrieves public group schedule and match report withou
 test("nuLiga online error is displayed and does not add incomplete games",async({page})=>{
   await page.route("**/nuliga/html?*",route=>route.fulfill({
     status:502,contentType:"application/json",
+    headers:{"access-control-allow-origin":"*","access-control-allow-headers":"authorization"},
     body:JSON.stringify({error:{message:"nuLiga momentan nicht erreichbar."}})
   }));
   await page.goto("/");
