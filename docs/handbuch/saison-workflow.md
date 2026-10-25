@@ -9,7 +9,7 @@ Die Spielanalyse unterstützt zwei organisatorische Einstiege. Die eigentliche E
 | Einzelne Begegnung ohne Saisonverknüpfung | **Setup → Neues Spiel** oder **Spiel laden (JSON)** | Eigenständige Spiel-JSON; **Spiel speichern** aktualisiert die geöffnete Datei, sofern der Browser dies ermöglicht, oder bietet einen Download |
 | Begegnung der verwalteten Saison | **Setup → Spiel aus Saison laden** | Änderungen werden unter der bestehenden Saisonspiel-ID lokal im Saisonarchiv aktualisiert; **Spiel speichern** sichert diesen Datensatz |
 | Nachanalyse einer Saisonbegegnung | **Setup → Spiel aus Saison laden → Für Analyse öffnen** | Dieselbe Saisonbegegnung, keine zusätzliche Kopie |
-| Dateien zur Archivierung/Übertragung | **Saison → Saison exportieren** oder **Team-Archiv (ZIP) exportieren** | Exportierte Momentaufnahme; kein automatischer Abgleich mit früher heruntergeladenen Dateien |
+| Dateien zur Archivierung/Übertragung | **Setup → Saison → Saison exportieren** oder **Team-Archiv (ZIP) exportieren** | Exportierte Momentaufnahme; kein automatischer Abgleich mit früher heruntergeladenen Dateien |
 
 ## Eine Saison erstmals einrichten
 
@@ -24,11 +24,19 @@ Die Spielanalyse unterstützt zwei organisatorische Einstiege. Die eigentliche E
 
 **Achtung:** Handball360 liefert nicht alle handballspezifischen Auswertungen der Spielanalyse. Insbesondere Wurfpositionen, Wurfziele und vollständige Torhüterstatistiken können aus reinen offiziellen Ereignissen fehlen. Bereits selbst gescoutete Ereignisse werden bei der offiziellen Aktualisierung nicht ungefragt ersetzt.
 
+## Saisonverwaltung und Analysebereiche (aktuelle Navigation)
+
+Die Verwaltung der geladenen Saison befindet sich unter **Setup → Saison** und ist von der **Saisonanalyse** getrennt. Unter **Setup → Einzelspiel** werden weiterhin einzelne Matches angelegt, mit Kader und Spielzeit vorbereitet oder zum Scouting geöffnet.
+
+Unter **Setup → Saison → Gespeicherte Saisons** lassen sich mehrere Saisons getrennt auf demselben Gerät verwalten. Mit **+ Neue Saison** entsteht eine weitere, zunächst leere Saison; über die Auswahl kann man zwischen vorhandenen Saisons wechseln, ohne deren Spiele zu vermischen. Die bisherige lokal gespeicherte Saison wird beim ersten Start in die neue Saisonbibliothek übernommen. Ein **Saison-JSON-Import** erzeugt ebenfalls einen eigenen gespeicherten Saisoneintrag. **Saison leeren** entfernt nur die Spiele der ausgewählten Saison; andere lokal gespeicherte Saisons bleiben erhalten. Zur Sicherung auf anderen Geräten weiterhin **Saison exportieren** oder **Team-Archiv (ZIP) exportieren** verwenden. Die lokale Saisonbibliothek wird nicht zwischen Geräten synchronisiert.
+
+Der Haupttab **Analyse** zeigt das **Einzelspiel**. Sein Dropdown **Einzelspiel auswählen** bietet die geladenen Saisonbegegnungen oder das aktuelle Match an. Die Auswahl verändert **nicht** das aktive Live-Scouting-Spiel, die Spielzeit oder das Video. Für die Videonachanalyse eines anderen Spiels muss es unter **Setup → Einzelspiel → Spiel aus Saison laden** ausdrücklich geöffnet werden. Der separate Haupttab **Saisonanalyse** zeigt ausschließlich spielübergreifende Auswertungen der ausgewählten Saisonspiele.
+
 ## nuLiga-Demonstration: Saison per Online-Link
 
-Im **Saison**-Tab steht **nuLiga HTML-Demo** mit einer **Online-Link-Anbindung** bereit. Der Prototyp ruft nur auf Benutzeraktion die jeweils öffentliche nuLiga-Seite über den bestehenden Cloud-Run-Proxy ab. Er speichert keine separaten HTML-Dateien, crawlt nicht im Hintergrund und nutzt keine Zugangsdaten.
+Unter **Setup → Saison** steht **nuLiga HTML-Demo** mit einer **Online-Link-Anbindung** bereit. Der Prototyp ruft nur auf Benutzeraktion die jeweils öffentliche nuLiga-Seite über den bestehenden Cloud-Run-Proxy ab. Er speichert keine separaten HTML-Dateien, crawlt nicht im Hintergrund und nutzt keine Zugangsdaten.
 
-1. **Saison → nuLiga HTML-Demo** wählen und einen öffentlichen Mannschaftslink einfügen, beispielsweise HC Bremen / HVNB 2026/27.
+1. **Setup → Saison → nuLiga HTML-Demo** wählen und einen öffentlichen Mannschaftslink einfügen, beispielsweise HC Bremen / HVNB 2026/27.
 2. **Spielplan online laden** wählen. Bei einer Teamseite mit Staffelreferenz wird die zugehörige öffentliche Gesamtspielplan-Seite einmalig angefordert. Die Begegnungen werden als Vorschau mit Datum, Spielnummer und Gegner angezeigt.
 3. Neue Saisonspiele markieren und mit **Ausgewählte Saisonspiele anlegen** übernehmen. Bereits vorhandene nuLiga-Spielnummern werden nicht doppelt importiert. Unbespielte Partien bleiben zunächst ohne Ereignisse und aus der Statistik abgewählt.
 4. Ein Saisonspiel zum Abgleich auswählen. Wenn aus dem Spielplan eine passende Spielbericht-URL bekannt ist, steht sie im Feld **Online-Spielbericht-URL**. Andernfalls die öffentliche Bericht-URL selbst einfügen.
@@ -63,7 +71,7 @@ Ein versteckter optionaler Dateiimport unter **Optional: lokal vorhandene HTML-S
 2. Der Dialog zeigt für Heim und Gast neue Spieler, nicht mehr gemeldete Spieler und Änderungen etwa an Trikotnummern.
 3. **Offizielle Kader übernehmen** bestätigt die Aktualisierung. Über **Abbrechen** bleibt alles wie bisher.
 4. Fehlende offizielle Aufstellungen ersetzen vorhandene Kader **nicht**. Ein erneut ausgeführter Abruf ist möglich, sobald die Meldung vorliegt.
-5. **Auch bereits gescoutete Saisonspiele können abgeglichen werden:** Statt den bestehenden Kader zu ersetzen, werden offizielle Spieler nur bei eindeutiger Zuordnung mit stabilen lokalen Spieler-IDs aktualisiert. Nicht gemeldete historische Spieler, Ereignisse, Videos und Kommentare bleiben erhalten; neue Spieler werden ergänzt. Unterschiede vor der Bestätigung prüfen. Bei fehlender Match-ID im Saison-Tab zuerst **Manuelles Spiel zuordnen** durchführen.
+5. **Auch bereits gescoutete Saisonspiele können abgeglichen werden:** Statt den bestehenden Kader zu ersetzen, werden offizielle Spieler nur bei eindeutiger Zuordnung mit stabilen lokalen Spieler-IDs aktualisiert. Nicht gemeldete historische Spieler, Ereignisse, Videos und Kommentare bleiben erhalten; neue Spieler werden ergänzt. Unterschiede vor der Bestätigung prüfen. Bei fehlender Match-ID unter **Setup → Saison** zuerst **Manuelles Spiel zuordnen** durchführen.
 
 Der Kadervergleich ändert nur den jeweiligen Spielkader, nicht die globale Mannschaftssammlung. Ein bereits geöffnetes und mit der Saison verbundenes Spiel wird ebenfalls synchronisiert.
 
