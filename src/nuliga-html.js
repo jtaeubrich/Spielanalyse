@@ -37,45 +37,85 @@ function sourceLink(tr, baseUrl) {
   }
   return {href:null,meetingId:null};
 }
-// nuLiga repeats the date only in the first row of each day. Carry it
-// forward within a table, but never across different tables.
+// Schedule columns vary between team, group and court pages. A nuLiga
+// match number must come from the "Nr."/"Spiel-Nr." header, not from the
+// first long number in a row (often the six-digit venue/hall identifier).
+const scheduleHeader = value => norm(value).replace(/[^a-z0-9]/g,"");
+function scheduleColumns(table) {
+  for(const row of [...table.querySelectorAll("tr")].slice(0,12)){
+    const cols=cellsOf(row),labels=cols.map(c=>scheduleHeader(cellText(c)));
+    const home=labels.findIndex(v=>/^(heimmannschaft|heimteam|heim)$/.test(v));
+    const away=labels.findIndex(v=>/^(gastmannschaft|gastteam|gast)$/.test(v));
+    if(home<0||away<0)continue;
+    const number=labels.findIndex(v=>/^(nr|spielnr|spielnummer|spielno|spnr|nummer)$/.test(v));
+    const date=labels.findIndex(v=>/^(datum|spieltag|date)$/.test(v));
+    const time=labels.findIndex(v=>/^(zeit|uhrzeit|anpfiff)$/.test(v));
+    const hall=labels.findIndex(v=>/^(halle|hallennr|spielort|spielstatte|spielstaette)$/.test(v));
+    const result=labels.findIndex(v=>/^(ergebnis|tore|resultat)$/.test(v));
+    return {home,away,number,date,time,hall,result};
+  }
+  return null;
+}
+function rowDate(texts, dateCol, previous) {
+  const candidate=dateCol>=0?texts[dateCol]:"";
+  const match=(candidate.match(dateRe)||texts.join(" ").match(dateRe));
+  return match?match[3]+"-"+match[2]+"-"+match[1]:previous;
+}
+function scheduleNumber(texts,columns) {
+  if(columns?.number>=0){
+    const number=clean(texts[columns.number]);
+    // nuLiga competitions include short game numbers (1, 25, 104 etc.).
+    return /^\d{1,9}$/.test(number)?number:null;
+  }
+  // No usable header: take the numeric cell immediately before the age
+  // class/competition column, never an arbitrary earlier venue identifier.
+  const ageIndex=texts.findIndex((t,i)=>i>=2 && /^(?:M|F|mJ[A-E]|wJ[A-E]|MJA|MJB|MJC|MJD|WJA|WJB|WJC|WJD)$/i.test(t));
+  const candidate=ageIndex>0?texts[ageIndex-1]:"";
+  if(/^\d{1,9}$/.test(candidate))return candidate;
+  return null;
+}
+// nuLiga may omit day and date in following rows. Carry the most recent
+// date forward within that specific schedule table only.
 export function parseNuLigaScheduleHtml(html,sourceUrl,{teamName=""}={}) {
   const info=nuLigaUrlInfo(sourceUrl),doc=parseDocument(html),found=new Map();
+  const wanted=norm(teamName);
   for(const table of doc.querySelectorAll("table")){
     let day="";
-    const headers=[...table.querySelectorAll("tr")].slice(0,3).map(tr=>cellsOf(tr).map(cellText));
-    const columnNames=headers.find(xs=>xs.some(x=>/Heimmannschaft/i.test(x))&&xs.some(x=>/Gastmannschaft/i.test(x)))||[];
-    const homeCol=columnNames.findIndex(x=>/Heimmannschaft/i.test(x));
-    const awayCol=columnNames.findIndex(x=>/Gastmannschaft/i.test(x));
+    const columns=scheduleColumns(table);
     for(const row of table.querySelectorAll("tr")){
-      const cols=cellsOf(row),texts=cols.map(cellText);
-      if(texts.length<7)continue;
-      const date=texts.join(" ").match(dateRe);
-      if(date)day=date[3]+"-"+date[2]+"-"+date[1];
-      const numberIndex=texts.findIndex(t=>/^\d{5,9}$/.test(t));
-      if(numberIndex<0 || !day || numberIndex+2>=texts.length)continue;
-      const gameNumber=texts[numberIndex];
-      const home=homeCol>=0?texts[homeCol]:texts[numberIndex+1];
-      const away=awayCol>=0?texts[awayCol]:texts[numberIndex+2];
+      const texts=cellsOf(row).map(cellText);
+      if(texts.length<5)continue;
+      day=rowDate(texts,columns?.date??-1,day);
+      if(!day)continue;
+      const number=scheduleNumber(texts,columns);
+      if(!number)continue;
+      const home=columns?texts[columns.home]:null;
+      const away=columns?texts[columns.away]:null;
       if(!home||!away||/^(heim|gast|heimmannschaft|gastmannschaft)$/i.test(home))continue;
-      // For the standard groupPage schedule, time comes before the game no.
-      const before=texts.slice(0,numberIndex);
-      const clock=[...before].reverse().map(t=>t.match(timeRe)).find(Boolean);
+      if(wanted&&norm(home)!==wanted&&norm(away)!==wanted)continue;
+      const clockRaw=columns?.time>=0?texts[columns.time]:"";
+      const clock=clockRaw.match(timeRe) || texts.slice(0,columns?.number??0).map(t=>t.match(timeRe)).find(Boolean);
       const time=clock?String(clock[1]).padStart(2,"0")+":"+clock[2]:"";
-      const result=texts.slice(numberIndex+3).map(t=>t.match(scoreRe)).find(Boolean);
+      const score=columns?.result>=0?texts[columns.result].match(scoreRe):
+        texts.slice(Math.max(columns?.away??0,0)+1).map(t=>t.match(scoreRe)).find(Boolean);
       const report=sourceLink(row,info.url);
-      const id=[info.group||"group",info.championship||"season",gameNumber].join(":");
-      found.set(id,{id,gameNumber,meetingId:report.meetingId,reportUrl:report.href,
+      const id=[info.group||"group",info.championship||"season",number].join(":");
+      // Two different source tables may show the same match; keep the
+      // version with the richer report link / result instead of duplicating.
+      const previous=found.get(id);
+      const item={id,gameNumber:number,meetingId:report.meetingId,reportUrl:report.href,
         home,away,date:day,time,matchDate:day+(time?"T"+time+":00":"T00:00:00"),
-        result:result?result[0]:null,sourceUrl:info.url,group:info.group,
-        championship:info.championship,teamtable:info.teamtable});
+        result:score?score[0]:null,sourceUrl:info.url,group:info.group,
+        championship:info.championship,teamtable:info.teamtable};
+      if(!previous || (!previous.meetingId&&item.meetingId) || (!previous.result&&item.result))found.set(id,item);
     }
   }
-  const matches=[...found.values()].filter(m=>!teamName || norm(m.home)===norm(teamName)||norm(m.away)===norm(teamName))
+  const matches=[...found.values()]
     .sort((a,b)=>a.matchDate.localeCompare(b.matchDate)||a.gameNumber.localeCompare(b.gameNumber));
-  if(!matches.length)throw new Error("Keine erkennbaren Saisonspiele gefunden. Bitte den vollständigen nuLiga-Spielplan (Gesamt) als HTML speichern.");
+  if(!matches.length)throw new Error("Keine Begegnungen erkannt. Prüfe die nuLiga-Staffel und die genaue Mannschaftsbezeichnung.");
   return matches;
 }
+
 export function buildNuLigaSeasonGame(match,preferredTeam="") {
   const own=norm(match.home)===norm(preferredTeam)?"home":"away";
   const matchId=String(match.meetingId||match.gameNumber);
