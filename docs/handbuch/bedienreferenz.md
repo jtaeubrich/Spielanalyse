@@ -11,6 +11,12 @@ Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz erg
 - **Teams/Kader:** Spieler manuell verwalten oder aus unterstützten Dateien übernehmen; Trikotnummern vor Scouting prüfen.
 - **Datensicherung:** `Spiel speichern` aktualisiert ggf. eine geöffnete Datei, soweit der Browser das unterstützt; `Kopie exportieren` erzeugt eine neue JSON-Datei. iPhone/iPad können stattdessen Download/Teilen anbieten.
 
+## nuLiga HTML-Demo
+
+- **Saison → nuLiga HTML-Demo:** Gespeicherte nuLiga-Spielplan-Seite (.html) mit passender URL und Mannschaftsname auswerten. Es werden nur explizit ausgewählte, noch nicht vorhandene Begegnungen in die bestehende Saison eingefügt. Die Importreferenz enthält `officialSource.provider = "nuliga"`, die Spielnummer, optional eine Meeting-ID sowie die Quell-URL.
+- **Bericht und Kader abgleichen:** nuLiga-Saisonspiel wählen und einen lokal gespeicherten Spielbericht (.html) laden. Erkennbare Spieler und Spielereignisse können übernommen werden. Wenn bereits eigene Scouting-Events vorhanden sind, werden diese **nicht ersetzt**; die offiziellen Daten bleiben zusätzlich unter `officialData.nuLigaEvents` abgelegt. Vor der Zuordnung die Spielnummer prüfen.
+- **Einschränkungen:** Der Browser kann direkte Abrufe fremder Seiten per CORS verhindern; dann HTML-Datei selbst auswählen. Kein automatischer Abruf über einen Drittanbieter-Proxy und keine Umgehung von Authentifizierung. Die HTML-Struktur kann abweichen. Diese Demo ersetzt keinen lizenzierten offiziellen Datenzugang.
+
 ## Match: Ereignisse erfassen
 - **Scouting-Modus:** `Live Scouting` / `Video Scouting`. Nach erstem Event ist Wechsel des Grundmodus gesperrt.
 - **Bildschirmaufbau im Live Scouting:** Der Match-Tab zeigt **kein Videofenster und keine Ereignisliste**. Die volle Breite steht für Mannschaftsauswahl, Real-/Spielzeit, Ballbesitz und Ereigniserfassung zur Verfügung. Das letzte Event kann über **Letztes löschen** direkt neben der Ereignisanzahl rückgängig gemacht werden. Beim Wechsel zur **Video-Nachanalyse** oder zu **Video Scouting** werden Video und zugehörige Ereignisliste wieder eingeblendet.
