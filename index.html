@@ -87,6 +87,38 @@
     .court .zone.selected{fill:var(--cyan);stroke:#e9fdff;stroke-width:.1}.shot-placement .btn.selected{border-color:var(--cyan);background:#123d4c;color:#fff}.court text{fill:white;font:.52px system-ui;text-anchor:middle;dominant-baseline:middle}.court .line{fill:none;stroke:white;stroke-width:.07;pointer-events:none}.court .selected{fill:#18879c;stroke:#ffca55;stroke-width:.15}.court .sector-label{font-size:.52px;font-weight:850}.court .distance-label{font-size:.46px;fill:#cce5eb}
     #locationList,#targetList{display:block;max-height:none}.shot-placement{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}.shot-placement h3,.phase-result-grid h3{margin:0 0 6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.shot-placement .court{width:min(100%,360px);margin:auto}.shot-placement .label-position-tools{display:none}.shot-placement .goal-map{width:min(100%,360px);margin:auto;aspect-ratio:1}.goal-map{display:grid;grid-template-columns:46px 1fr 46px;grid-template-rows:46px minmax(0,1fr);gap:4px}.goal-map button{padding:3px;text-align:center;min-width:0;font-size:13px}.goal-left,.goal-right{writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.02em}.phase-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}.phase-result-grid p{margin:0 0 8px;color:var(--muted);font-size:13px}.phase-result-grid #phaseList{grid-template-columns:repeat(2,minmax(0,1fr))}.result-options{grid-template-columns:repeat(2,minmax(0,1fr))}.result-options .option{min-height:74px;text-align:center;font-size:18px}.result-auto{padding:18px;border:1px solid var(--amber);border-radius:12px;background:#3a3015;color:var(--amber);font-weight:800;text-align:center}.goal-over{grid-column:2;grid-row:1}.goal-left{grid-column:1;grid-row:2}.goal-right{grid-column:3;grid-row:2}.goal-inner{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px;border:5px solid white;border-bottom:0;padding:3px;background:repeating-linear-gradient(90deg,transparent 0 14px,#ffffff18 14px 15px)}.goal-inner button{border-radius:5px;background:#16414d;font-size:14px}.selected{border-color:var(--cyan)}#videoMessage{font-size:14px;color:var(--muted);margin:8px 0}.step-summary{color:var(--cyan);font-size:14px;margin-bottom:10px}
     @media(max-width:1050px){.video-content-grid{grid-template-columns:1fr;grid-template-areas:"player" "events" "production" "presets"}.video-events-card{max-height:none}.video-events-card .playlist{max-height:none}}@media(max-width:1000px){.grid{grid-template-columns:1fr}.top{grid-template-columns:1fr}.filebar{justify-content:flex-start}.side{min-height:0}.score{order:0}.video-size{display:none}}@media(max-width:720px){.shot-detail-grid .court{width:min(100%,330px)}.shot-detail-grid .goal-map{width:min(100%,330px)}.step-head{align-items:flex-start}.backbar{gap:4px}.backbar button{padding:6px 8px;font-size:12px}#flowCancel{display:none}}@media(max-width:760px){.game-time-row{flex-wrap:wrap}.time-edit{margin-left:auto}.time-nudges .tiny{padding:5px 6px;font-size:12px}}@media(max-width:560px){.video-form{flex-wrap:wrap}.video-form input{flex-basis:100%}.clockrow{grid-template-columns:1fr 1fr}.time{font-size:30px}.clock{padding:10px}.time-edit{flex-wrap:wrap}.goal-map{grid-template-columns:30px 1fr 30px;grid-template-rows:32px minmax(0,1fr)}.goal-map button{font-size:10px}.goal-inner button{font-size:12px}}
+
+    /* Fast jersey-number chooser: phone keypad / iPad 4×4, shared across capture flows. */
+    .players.fast-player-host,.tags.fast-player-host{display:block!important;max-height:none!important;overflow:visible}
+    .fast-player-picker{display:grid;gap:9px;min-width:0;width:100%}
+    .fast-picker-actions{display:flex;gap:7px;flex-wrap:wrap}
+    .fast-picker-extra,.fast-picker-missing{min-height:40px;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:#1a3441;color:var(--text);font-weight:750;cursor:pointer}
+    .fast-picker-extra.selected,.fast-picker-missing.selected{border-color:var(--cyan)}
+    .fast-player-tile{min-width:0;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:7px 3px;border:1px solid var(--line);border-radius:9px;background:#13323d;color:var(--text);cursor:pointer;touch-action:manipulation}
+    .fast-player-tile.selected,.fast-player-tile:focus-visible{border-color:var(--cyan);outline:2px solid var(--cyan);outline-offset:0}
+    .fast-player-number{font-size:22px;color:var(--cyan);line-height:1.15;font-variant-numeric:tabular-nums}
+    .fast-player-name{max-width:100%;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+    .fast-picker-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+    .fast-picker-pagination{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;color:var(--muted)}
+    .fast-picker-pagination[hidden],.fast-picker-missing[hidden]{display:none!important}
+    .fast-picker-pagination button{padding:7px 12px;border-radius:8px;background:#193441;border:1px solid var(--line);color:var(--text)}
+    .fast-picker-pagination button:disabled{opacity:.4}
+    .fast-picker-display{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:10px;padding:9px 12px;background:#0a222e;border:1px solid var(--line)}
+    .fast-picker-display>span{color:var(--muted);font-size:12px}
+    .fast-picker-digits{font-size:24px;font-variant-numeric:tabular-nums}
+    .fast-picker-clear{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#1a3542;color:var(--text)}
+    .fast-picker-keypad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+    .fast-picker-key{min-height:47px;padding:4px;border:1px solid var(--line);border-radius:9px;background:#173847;color:var(--text);font-size:20px;font-weight:800;touch-action:manipulation}
+    .fast-picker-key:active,.fast-player-tile:active{background:#205e70}
+    .fast-picker-key:focus-visible{outline:2px solid var(--cyan)}
+    .fast-picker-hint{min-height:16px;font-size:12px;color:var(--muted)}
+    .fast-picker-results{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+    .fast-picker-results .fast-player-tile{min-height:57px;padding:5px 2px}
+    .fast-picker-results .fast-player-number{font-size:18px}
+    .fast-picker-results .fast-player-name{font-size:9px}
+    .fast-picker-bottom{display:flex;flex-wrap:wrap;gap:6px}
+    @media(max-width:390px){.fast-picker-key{min-height:42px}.fast-player-tile{min-height:55px}.fast-picker-results .fast-player-number{font-size:17px}}
+
     .player-label{display:flex;align-items:center;gap:5px;text-align:left;line-height:1.15}.player-label>span:last-child{overflow-wrap:anywhere}.player-number{display:inline-grid;place-items:center;min-width:30px;min-height:28px;padding:2px 4px;background:#154653;color:var(--cyan);border-radius:7px;font-size:13px;font-weight:900;flex-shrink:0}.player-number.missing{font-size:10px;color:var(--muted);background:#25313b}
 
     @media(min-width:1001px){
@@ -1756,15 +1788,107 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function sortedPlayers(team,context="all",keeperFirst=false){return [...(state[team]?.players||[])].sort((a,b)=>(keeperFirst?(Number(b.isTW)-Number(a.isTW)):0)||(participationCount(b.id,context)-participationCount(a.id,context))||(Number(a.nr)||999)-(Number(b.nr)||999)||playerName(a).localeCompare(playerName(b),"de"))}
   function renderActiveKeepers(){for(const [id,team] of [["activeOwnKeeper","home"],["activeOpponentKeeper","away"]]){const select=$(id),keepers=sortedPlayers(team,"all",true).filter(p=>p.isTW),current=state.activeTw[team];select.replaceChildren(new Option(keepers.length?"Torwart wählen":"Kein TW markiert",""));for(const p of keepers)select.add(new Option(playerName(p),String(p.id)));if(keepers.length&&!keepers.some(p=>String(p.id)===String(current)))state.activeTw[team]=keepers[0].id;select.value=state.activeTw[team]??"";select.onchange=e=>{state.activeTw[team]=e.target.value===""?null:getPlayer(e.target.value)?.id??null;persistSession()}}}
   function unknownButton(onClick,selected=false){const b=document.createElement("button");b.type="button";b.className="option unknown-option"+(selected?" selected":"");b.innerHTML='<span class="number-badge">?</span><span class="player-label">Unbekannt</span>';b.onclick=onClick;return b}
+  // Use a stable numeric order: participation-based reordering makes a live
+  // picker hard to memorize, especially when the next attack has started.
+  function fastPickerPlayers(players){return [...players].sort((a,b)=>{
+    const na=String(a.nr??"").trim(),nb=String(b.nr??"").trim(),va=/^\d{1,3}$/.test(na),vb=/^\d{1,3}$/.test(nb);
+    return (va?0:1)-(vb?0:1)||(va?Number(na)-Number(nb):0)||playerName(a).localeCompare(playerName(b),"de");
+  })}
+  function fastPickerIsPhone(){
+    return /iPhone|iPod|Android.*Mobile/i.test(navigator.userAgent)||window.matchMedia("(max-width: 700px)").matches;
+  }
+  // One reusable control for the shooter, technical error, penalty, assist,
+  // and single-defender assignment. No implicit selection from partial digits.
+  function renderFastPlayerPicker(host,players,choose,{extras=[],selectedId=null}={}){
+    host.classList.add("fast-player-host");
+    const ordered=fastPickerPlayers(players);
+    const root=document.createElement("div");root.className="fast-player-picker";
+    const actions=document.createElement("div");actions.className="fast-picker-actions";
+    for(const extra of extras){
+      const b=document.createElement("button");b.type="button";b.className="fast-picker-extra"+(extra.selected?" selected":"");
+      b.textContent=extra.label;b.onclick=extra.action;actions.append(b);
+    }
+    if(actions.childElementCount)root.append(actions);
+    const phone=fastPickerIsPhone();
+    const panel=document.createElement("div");panel.className=phone?"fast-picker-phone":"fast-picker-tablet";root.append(panel);
+    const makePlayerButton=p=>{
+      const b=document.createElement("button");b.type="button";b.className="fast-player-tile";
+      if(selectedId!=null&&String(p.id)===String(selectedId))b.classList.add("selected");
+      b.dataset.playerId=String(p.id);
+      const nr=String(p.nr??"").trim(),label=playerName(p);
+      b.setAttribute("aria-label",(nr?"Trikotnummer "+nr:"Ohne Trikotnummer")+" · "+label);
+      const number=document.createElement("strong");number.className="fast-player-number";number.textContent=nr?"#"+nr:"–";
+      const name=document.createElement("small");name.className="fast-player-name";name.textContent=(p.nachname||p.vorname||label).trim();
+      b.append(number,name);b.onclick=()=>choose(p.id);return b;
+    };
+    const noNumber=ordered.filter(p=>!/^\d{1,3}$/.test(String(p.nr??"").trim()));
+    if(phone){
+      let digits="",showUnnumbered=false;
+      const typed=document.createElement("div");typed.className="fast-picker-display";typed.setAttribute("aria-live","polite");
+      const title=document.createElement("span");title.textContent="Trikotnummer";
+      const value=document.createElement("strong");value.className="fast-picker-digits";
+      const clear=document.createElement("button");clear.type="button";clear.className="fast-picker-clear";clear.textContent="Löschen";
+      typed.append(title,value,clear);
+      const keypad=document.createElement("div");keypad.className="fast-picker-keypad";keypad.setAttribute("aria-label","Trikotnummer eingeben");
+      const results=document.createElement("div");results.className="fast-picker-results";results.setAttribute("aria-label","Passende Spieler");
+      const hint=document.createElement("div");hint.className="fast-picker-hint";hint.setAttribute("aria-live","polite");
+      const extrasBottom=document.createElement("div");extrasBottom.className="fast-picker-bottom";
+      const missing=document.createElement("button");missing.type="button";missing.className="fast-picker-missing";
+      missing.textContent="Ohne Trikotnummer ("+noNumber.length+")";
+      missing.hidden=!noNumber.length;
+      missing.onclick=()=>{showUnnumbered=!showUnnumbered;digits="";updateResults()};
+      extrasBottom.append(missing);
+      const updateResults=()=>{
+        value.textContent=digits?"#"+digits:"–";
+        clear.disabled=!digits&&!showUnnumbered;
+        missing.classList.toggle("selected",showUnnumbered);
+        results.replaceChildren();
+        const matched=showUnnumbered?noNumber:digits?ordered.filter(p=>String(p.nr??"").startsWith(digits)):[];
+        for(const p of matched)results.append(makePlayerButton(p));
+        hint.textContent=showUnnumbered?matched.length+" Spieler ohne Nummer":digits?
+          matched.length+" passende Spieler · Antippen zum Zuordnen":
+          "Erste Ziffer eingeben · Spieler dann direkt antippen";
+        if(digits&&!matched.length)hint.textContent="Keine passende Trikotnummer · korrigieren oder Unbekannt wählen";
+      };
+      clear.onclick=()=>{digits="";showUnnumbered=false;updateResults()};
+      for(const digit of ["1","2","3","4","5","6","7","8","9","C","0","⌫"]){
+        const button=document.createElement("button");button.type="button";button.className="fast-picker-key";
+        button.textContent=digit;button.setAttribute("aria-label",digit==="C"?"Eingabe löschen":digit==="⌫"?"Letzte Ziffer löschen":"Ziffer "+digit);
+        button.onclick=()=>{showUnnumbered=false;digits=digit==="C"?"":digit==="⌫"?digits.slice(0,-1):digits.length<3?digits+digit:digit;updateResults()};
+        keypad.append(button);
+      }
+      panel.append(typed,keypad,hint,results,extrasBottom);
+      updateResults();
+    }else{
+      let page=0;const pageSize=16;
+      const grid=document.createElement("div");grid.className="fast-picker-tiles";
+      const footer=document.createElement("div");footer.className="fast-picker-pagination";
+      const prev=document.createElement("button");prev.type="button";prev.textContent="← Zurück";
+      const status=document.createElement("span");
+      const next=document.createElement("button");next.type="button";next.textContent="Weiter →";
+      footer.append(prev,status,next);
+      const updatePage=()=>{
+        const count=Math.max(1,Math.ceil(ordered.length/pageSize));page=Math.max(0,Math.min(page,count-1));
+        grid.replaceChildren();
+        for(const p of ordered.slice(page*pageSize,(page+1)*pageSize))grid.append(makePlayerButton(p));
+        status.textContent=(page+1)+" / "+count;
+        prev.disabled=page===0;next.disabled=page>=count-1;footer.hidden=count===1;
+        if(!ordered.length){const empty=document.createElement("p");empty.textContent="Keine Spieler im Kader";grid.append(empty)}
+      };
+      prev.onclick=()=>{page--;updatePage()};next.onclick=()=>{page++;updatePage()};
+      panel.append(grid,footer);updatePage();
+    }
+    host.replaceChildren(root);
+  }
   function nextAfterAttacker(){if(draft.flow==="shot"){if(shotAttackerLast()&&draft.attackerChosen)return finalizeShotCapture();const first=shotStepIds()[0];first?showStep(first):openShotTagStep()}else showStep("error")}
   function chooseAttacker(id){draft.attacker=id;if(shotAttackerLast()){draft.attackerChosen=true;if(id!==null&&String(id)===String(draft.assistPId)){draft.assistPId=null;draft.assistChosen=true;toast("Assist entfernt: Schütze und Assistgeber dürfen nicht identisch sein.")}}nextAfterAttacker()}
-  function renderPlayers(){const ps=sortedPlayers(draft.team,"attack"),list=$("playerList");$("playerTeamText").textContent=(state[draft.team]?.name||"Ballbesitzteam")+(shotAttackerLast()?" · Schütze nach Durchsage wählen":"");const heading=$("playerStep").querySelector(":scope > .step-head > h2, :scope > h2");if(heading)heading.textContent=shotAttackerLast()?"Schütze auswählen · letzter Schritt":"Angreifender Spieler";list.replaceChildren();list.append(unknownButton(()=>chooseAttacker(null)));ps.forEach(p=>{const b=document.createElement("button");b.className="option";playerLabel(b,p);b.onclick=()=>chooseAttacker(p.id);list.appendChild(b)})}
+  function renderPlayers(){const ps=state[draft.team]?.players||[],list=$("playerList");$("playerTeamText").textContent=(state[draft.team]?.name||"Ballbesitzteam")+(shotAttackerLast()?" · Schütze nach Durchsage wählen":"");const heading=$("playerStep").querySelector(":scope > .step-head > h2, :scope > h2");if(heading)heading.textContent=shotAttackerLast()?"Schütze auswählen · letzter Schritt":"Angreifender Spieler";renderFastPlayerPicker(list,ps,chooseAttacker,{extras:[{label:"? Unbekannt",action:()=>chooseAttacker(null)}]})}
   options($("errorList"),errors,(v)=>{draft.errorType=v;draft.result="error";$("commitEvent").click()});
   function choosePenalized(id,{bank=false}={}){draft.penalized=id;draft.penalizedBank=bank;showStep("penaltyType")}
-  function renderAssistPlayers(){const list=$("assistList");if(!list||!draft)return;list.replaceChildren();const none=document.createElement("button");none.type="button";none.className="option"+(draft.assistChosen&&draft.assistPId==null?" selected":"");none.textContent="Kein Assist";none.onclick=()=>{draft.assistPId=null;draft.assistChosen=true;renderAssistPlayers();maybeAdvanceShotPage()};list.append(none);for(const p of sortedPlayers(draft.team,"attack")){if(draft.attacker!==null&&String(p.id)===String(draft.attacker))continue;const b=document.createElement("button");b.type="button";b.className="option"+(draft.assistChosen&&String(draft.assistPId)===String(p.id)?" selected":"");playerLabel(b,p);b.onclick=()=>{draft.assistPId=p.id;draft.assistChosen=true;renderAssistPlayers();maybeAdvanceShotPage()};list.append(b)}}
+  function renderAssistPlayers(){const list=$("assistList");if(!list||!draft)return;const players=(state[draft.team]?.players||[]).filter(p=>draft.attacker===null||String(p.id)!==String(draft.attacker));renderFastPlayerPicker(list,players,id=>{draft.assistPId=id;draft.assistChosen=true;renderAssistPlayers();maybeAdvanceShotPage()},{selectedId:draft.assistPId,extras:[{label:"Kein Assist",selected:draft.assistChosen&&draft.assistPId==null,action:()=>{draft.assistPId=null;draft.assistChosen=true;renderAssistPlayers();maybeAdvanceShotPage()}}]})}
   function syncPenaltyQuickTeam(){if(!draft)return;const defaultTeam=draft.team==="home"?"away":"home",otherTeam=draft.team;$("penaltyQuickTeamLeft").textContent=state[defaultTeam].name;$("penaltyQuickTeamRight").textContent=state[otherTeam].name;$("penaltyQuickTeamSwitch").checked=draft.penaltyTeam===otherTeam}
   $("penaltyQuickTeamSwitch").onchange=event=>{if(!draft)return;draft.penaltyTeam=event.target.checked?draft.team:(draft.team==="home"?"away":"home");draft.penalized=null;draft.penalizedBank=false;syncPenaltyQuickTeam()};
-  function renderPenaltyPlayers(){const defaultTeam=draft.team==="home"?"away":"home",otherTeam=draft.team;$("penaltyTeamLeft").textContent=state[defaultTeam].name;$("penaltyTeamRight").textContent=state[otherTeam].name;$("penaltyTeamSwitch").checked=draft.penaltyTeam===otherTeam;const list=$("penaltyList");list.replaceChildren();list.append(unknownButton(()=>choosePenalized(null)));const bank=document.createElement("button");bank.className="option unknown-option";bank.type="button";bank.innerHTML='<span class="number-badge">▤</span><span class="player-label">Bank</span>';bank.onclick=()=>choosePenalized(null,{bank:true});list.append(bank);sortedPlayers(draft.penaltyTeam).forEach(p=>{const b=document.createElement("button");b.className="option";playerLabel(b,p);b.onclick=()=>choosePenalized(p.id);list.appendChild(b)})}
+  function renderPenaltyPlayers(){const defaultTeam=draft.team==="home"?"away":"home",otherTeam=draft.team;$("penaltyTeamLeft").textContent=state[defaultTeam].name;$("penaltyTeamRight").textContent=state[otherTeam].name;$("penaltyTeamSwitch").checked=draft.penaltyTeam===otherTeam;renderFastPlayerPicker($("penaltyList"),state[draft.penaltyTeam]?.players||[],id=>choosePenalized(id),{extras:[{label:"? Unbekannt",action:()=>choosePenalized(null)},{label:"▤ Bank",action:()=>choosePenalized(null,{bank:true})}]})}
   $("penaltyTeamSwitch").onchange=event=>{draft.penaltyTeam=event.target.checked?draft.team:(draft.team==="home"?"away":"home");draft.penalized=null;draft.penalizedBank=false;renderPenaltyPlayers()};
   function ownPlayers(){return state[ownTeam]?.players||[]}
   function renderTagList(el,set){el.replaceChildren();const unknownKey="__unknown__";el.append(unknownButton(()=>{if(set.has(unknownKey))set.delete(unknownKey);else{set.clear();set.add(unknownKey)}renderTagList(el,set)},set.has(unknownKey)));sortedPlayers(state.possession==="home"?"away":"home","defense").forEach(p=>{const key=String(p.id),b=document.createElement("button");b.className="option"+(set.has(key)?" selected":"");b.dataset.playerId=key;playerLabel(b,p);b.onclick=()=>{set.delete(unknownKey);set.has(key)?set.delete(key):set.add(key);renderTagList(el,set)};el.appendChild(b)})}
