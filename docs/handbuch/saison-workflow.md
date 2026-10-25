@@ -48,7 +48,7 @@ Die Spielanalyse unterstützt zwei organisatorische Einstiege. Die eigentliche E
 2. Der Dialog zeigt für Heim und Gast neue Spieler, nicht mehr gemeldete Spieler und Änderungen etwa an Trikotnummern.
 3. **Offizielle Kader übernehmen** bestätigt die Aktualisierung. Über **Abbrechen** bleibt alles wie bisher.
 4. Fehlende offizielle Aufstellungen ersetzen vorhandene Kader **nicht**. Ein erneut ausgeführter Abruf ist möglich, sobald die Meldung vorliegt.
-5. **Nach bereits erfassten Scouting-Ereignissen ist die automatische Kaderersetzung gesperrt**, um Spielerreferenzen in den Events nicht zu beschädigen.
+5. **Auch bereits gescoutete Saisonspiele können abgeglichen werden:** Statt den bestehenden Kader zu ersetzen, werden offizielle Spieler nur bei eindeutiger Zuordnung mit stabilen lokalen Spieler-IDs aktualisiert. Nicht gemeldete historische Spieler, Ereignisse, Videos und Kommentare bleiben erhalten; neue Spieler werden ergänzt. Unterschiede vor der Bestätigung prüfen. Bei fehlender Match-ID im Saison-Tab zuerst **Manuelles Spiel zuordnen** durchführen.
 
 Der Kadervergleich ändert nur den jeweiligen Spielkader, nicht die globale Mannschaftssammlung. Ein bereits geöffnetes und mit der Saison verbundenes Spiel wird ebenfalls synchronisiert.
 
