@@ -43,6 +43,10 @@ export function parseNuLigaScheduleHtml(html,sourceUrl,{teamName=""}={}) {
   const info=nuLigaUrlInfo(sourceUrl),doc=parseDocument(html),found=new Map();
   for(const table of doc.querySelectorAll("table")){
     let day="";
+    const headers=[...table.querySelectorAll("tr")].slice(0,3).map(tr=>cellsOf(tr).map(cellText));
+    const columnNames=headers.find(xs=>xs.some(x=>/Heimmannschaft/i.test(x))&&xs.some(x=>/Gastmannschaft/i.test(x)))||[];
+    const homeCol=columnNames.findIndex(x=>/Heimmannschaft/i.test(x));
+    const awayCol=columnNames.findIndex(x=>/Gastmannschaft/i.test(x));
     for(const row of table.querySelectorAll("tr")){
       const cols=cellsOf(row),texts=cols.map(cellText);
       if(texts.length<7)continue;
@@ -51,7 +55,8 @@ export function parseNuLigaScheduleHtml(html,sourceUrl,{teamName=""}={}) {
       const numberIndex=texts.findIndex(t=>/^\d{5,9}$/.test(t));
       if(numberIndex<0 || !day || numberIndex+2>=texts.length)continue;
       const gameNumber=texts[numberIndex];
-      const home=texts[numberIndex+1],away=texts[numberIndex+2];
+      const home=homeCol>=0?texts[homeCol]:texts[numberIndex+1];
+      const away=awayCol>=0?texts[awayCol]:texts[numberIndex+2];
       if(!home||!away||/^(heim|gast|heimmannschaft|gastmannschaft)$/i.test(home))continue;
       // For the standard groupPage schedule, time comes before the game no.
       const before=texts.slice(0,numberIndex);
@@ -107,14 +112,14 @@ function playerIdFromLink(cell) {
 }
 export function parseNuLigaReportHtml(html) {
   const doc=parseDocument(html),bodyText=clean(doc.body?.textContent);
-  const gameNumber=/Spielnummer\s+(\d{5,9})\b/.exec(bodyText)?.[1]||null;
+  const gameNumber=/(?:Spielnummer|Spiel-Nr\.?|Spielnr\.?)\s*[:#]?\s*(\d{5,9})\b/i.exec(bodyText)?.[1]||null;
   const rosters={home:[],away:[]},events=[];
   let rosterTables=0;
   for(const table of doc.querySelectorAll("table")){
     const rows=[...table.querySelectorAll("tr")];
     if(!rows.length)continue;
     const headings=rows.slice(0,3).map(tr=>cellsOf(tr).map(cellText).join(" ")).join(" ");
-    if(/Trikot/.test(headings)&&/Name[, ]+Vorname/i.test(headings)){
+    if(/(?:Trikot|Nr\.?|Nummer)/i.test(headings)&&/Name/i.test(headings)&&!/Zeit.+Stand.+Ereignis/i.test(headings)){
       if(rosterTables>=2)continue;
       const side=rosterTables++===0?"home":"away";
       for(const tr of rows) {
@@ -130,38 +135,43 @@ export function parseNuLigaReportHtml(html) {
     }
     if(!/Team/.test(headings)||!/Zeit/.test(headings)||!/Ereignis/.test(headings))continue;
     for(const tr of rows){
-      const cols=cellsOf(tr),c=cols.map(cellText);
-      if(c.length<4)continue;
-      const side=/^Heim$/i.test(c[0])?"home":/^Gast$/i.test(c[0])?"away":null;
-      const tm=c[1]?.match(/^(\d{1,3}):(\d{2})$/);
-      if(!tm)continue;
-      const seconds=Number(tm[1])*60+Number(tm[2]),action=c[3]||"";
-      const key=norm(action);
-      let type=null;
-      if(/^(7m mit tor|tor)$/.test(key))type="goal";
-      else if(/^7m ohne tor/.test(key))type="miss";
-      else if(/2 minuten/.test(key))type="2min";
-      else if(/verwarnung/.test(key))type="yellow";
-      else if(/disqualifikation|rote karte/.test(key))type="red";
-      else if(/auszeit/.test(key))type="timeout";
-      if(!type)continue;
-      const person=reportPerson(cols[4],side);
-      const player=side&&person?rosters[side].find(p=>String(p.nr)===person.nr):null;
-      const score=(c[2]||"").match(scoreRe),is7=/7m/.test(key);
-      events.push({id:"nuliga-"+(gameNumber||"report")+"-"+events.length,
-        time:seconds,displayTime:String(tm[1]).padStart(2,"0")+":"+tm[2],half:seconds>=1800?2:1,
-        type,team:side||(/heim/.test(key)?"home":/gast/.test(key)?"away":null),
-        pId:player?.id||null,pName:person?.name||"Unbekannt",pNr:person?.nr?Number(person.nr):null,
-        scoreH:score?Number(score[1]):null,scoreA:score?Number(score[2]):null,
-        scoreChanged:type==="goal",is7:is7||undefined,z:is7?"7M":undefined,
-        tags:[],playerTags:[],attackPhase:is7?"7-Meter":null,
-        officialSource:"nuliga",officialEventType:action,
-        endedPossessionOf:["goal","miss"].includes(type)?side:undefined});
+      const cols=cellsOf(tr);
+      // Printed nuLiga reports often put two timelines beside each other.
+      // Treat every five-column block as a separate sequence.
+      for(let offset=0;offset+4<cols.length;offset+=5){
+        const chunk=cols.slice(offset,offset+5),c=chunk.map(cellText);
+        const side=/^Heim$/i.test(c[0])?"home":/^Gast$/i.test(c[0])?"away":null;
+        const tm=c[1]?.match(/^(\d{1,3}):(\d{2})$/);
+        if(!tm)continue;
+        const seconds=Number(tm[1])*60+Number(tm[2]),action=c[3]||"";
+        const key=norm(action);
+        let type=null;
+        if(/^(7m mit tor|tor)$/.test(key))type="goal";
+        else if(/^7m ohne tor/.test(key))type="miss";
+        else if(/2 minuten/.test(key))type="2min";
+        else if(/verwarnung/.test(key))type="yellow";
+        else if(/disqualifikation|rote karte/.test(key))type="red";
+        else if(/auszeit/.test(key))type="timeout";
+        if(!type)continue;
+        const person=reportPerson(chunk[4],side);
+        const player=side&&person?rosters[side].find(p=>String(p.nr)===person.nr):null;
+        const score=(c[2]||"").match(scoreRe),is7=/7m/.test(key);
+        events.push({id:"nuliga-"+(gameNumber||"report")+"-"+events.length,
+          time:seconds,displayTime:String(tm[1]).padStart(2,"0")+":"+tm[2],half:seconds>=1800?2:1,
+          type,team:side||(/heim/.test(key)?"home":/gast/.test(key)?"away":null),
+          pId:player?.id||null,pName:person?.name||"Unbekannt",pNr:person?.nr?Number(person.nr):null,
+          scoreH:score?Number(score[1]):null,scoreA:score?Number(score[2]):null,
+          scoreChanged:type==="goal",is7:is7||undefined,z:is7?"7M":undefined,
+          tags:[],playerTags:[],attackPhase:is7?"7-Meter":null,
+          officialSource:"nuliga",officialEventType:action,
+          endedPossessionOf:["goal","miss"].includes(type)?side:undefined});
+      }
     }
   }
-  if(!gameNumber || (!rosters.home.length&&!rosters.away.length&&!events.length)){
+  if(!rosters.home.length&&!rosters.away.length&&!events.length){
     throw new Error("Kein unterstützter vollständiger nuLiga-Spielbericht erkannt.");
   }
+  events.sort((a,b)=>a.time-b.time||String(a.id).localeCompare(String(b.id)));
   return {gameNumber,rosters,events,reportStatus:/Spielbericht\s*\(genehmigt\)/i.test(bodyText)?"genehmigt":"ungeprüft"};
 }
 function joinPlayers(existing,incoming,side){
