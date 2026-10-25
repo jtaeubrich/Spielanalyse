@@ -1,6 +1,7 @@
 import express from "express";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { fetchHandball360TeamSchedule, validateTeamScheduleRequest } from "./schedule.js";
+import { validateNuLigaUrl, fetchNuLigaHtml } from "./nuliga-fetch.js";
 
 const BASE_URL = "https://www.handball.net";
 const TIMEOUT_MS = 30_000;
@@ -337,7 +338,8 @@ app.use((req, res, next) => {
       );
     }
 
-    if(req.path==="/logo") normalizeLogoUrl(req.query.url);
+    if(req.path==="/nuliga/html") validateNuLigaUrl(req.query.url);
+    else if(req.path==="/logo") normalizeLogoUrl(req.query.url);
     else if (req.path.match(/^\/team\/[^/]+\/matches\/?$/)) {
       const id = req.path.split("/")[2];
       try { validateTeamScheduleRequest(id, req.query.from, req.query.to); }
@@ -393,6 +395,20 @@ app.get("/team/:id/matches", async (req, res) => {
 });
 
 app.get("/logo",async(req,res)=>{try{return await sendLogo(req,res);}catch(error){return handleError(req,res,error);}});
+app.get("/nuliga/html",async(req,res)=>{
+  try{
+    requireAuthorization(req);
+    let result;
+    try{result=await fetchNuLigaHtml(req.query.url);}
+    catch(error){
+      if(/Ungültig|erlaubt|zu lang|Parameter/i.test(error.message))
+        throw new ApiError(400,"NULIGA_INVALID_URL",error.message);
+      throw new ApiError(502,"NULIGA_FETCH_FAILED",
+        "Die öffentliche nuLiga-Seite konnte nicht abgerufen werden: "+error.message);
+    }
+    return jsonResponse(res,{source:"nuliga",url:result.url,html:result.html});
+  }catch(error){return handleError(req,res,error)}
+});
 
 app.get(["/", "/match/:id"], async (req, res) => {
   try {
