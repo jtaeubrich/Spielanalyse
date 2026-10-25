@@ -24,18 +24,20 @@ Die Spielanalyse unterstützt zwei organisatorische Einstiege. Die eigentliche E
 
 **Achtung:** Handball360 liefert nicht alle handballspezifischen Auswertungen der Spielanalyse. Insbesondere Wurfpositionen, Wurfziele und vollständige Torhüterstatistiken können aus reinen offiziellen Ereignissen fehlen. Bereits selbst gescoutete Ereignisse werden bei der offiziellen Aktualisierung nicht ungefragt ersetzt.
 
-## nuLiga-Demonstration: Saison aus HTML-Dateien
+## nuLiga-Demonstration: Saison per Online-Link
 
-Im **Saison**-Tab ist zusätzlich **nuLiga HTML-Demo** verfügbar. Dieser Prototyp nutzt eine öffentlich sichtbare nuLiga-Team- oder Staffel-URL als Bezugsadresse, **automatisiert aber keinen Zugriff auf die nuLiga-Website**.
+Im **Saison**-Tab steht **nuLiga HTML-Demo** mit einer **Online-Link-Anbindung** bereit. Der Prototyp ruft nur auf Benutzeraktion die jeweils öffentliche nuLiga-Seite über den bestehenden Cloud-Run-Proxy ab. Er speichert keine separaten HTML-Dateien, crawlt nicht im Hintergrund und nutzt keine Zugangsdaten.
 
-1. In nuLiga die Mannschafts- oder Staffel-Seite (Spielplan **Gesamt**) im Browser öffnen und als **HTML-Datei** speichern.
-2. **Saison → nuLiga HTML-Demo** öffnen. Die nuLiga-URL eintragen (z. B. HC Bremen, HVNB 2026/27), die Mannschaft benennen und die gespeicherte HTML-Datei auswählen.
-3. **HTML-Spielplan auswerten** zeigt die erkannten Begegnungen. Bereits importierte Spielnummern werden gesperrt. Über die Häkchen die neuen Spiele auswählen und **Ausgewählte Saisonspiele anlegen** ausführen.
-4. Die angelegten Spiele besitzen Datum, Heim/Gast, Wettbewerb sowie eigene nuLiga-Referenzen. Zukünftige Spiele bleiben zunächst ohne Scouting-Ereignisse und aus der Saisonanalyse abgewählt. Danach im **Setup → Spiel aus Saison laden** öffnen.
-5. Für bereits gespielte Begegnungen die öffentliche **nuLiga-Spielbericht-Seite** separat als HTML-Datei sichern. Im selben Demo-Dialog unter **Spielbericht und Kader ergänzen** die Begegnung wählen und das HTML zuordnen.
-6. Wenn Kader und Spielverlauf im gespeicherten Bericht enthalten sind, werden die unterstützten Spieler und Ereignisse übernommen. **Bei bereits vorhandenen eigenen Events** bleibt das Scouting unverändert und der offizielle nuLiga-Verlauf wird separat unter `officialData.nuLigaEvents` zur späteren Gegenüberstellung gespeichert.
+1. **Saison → nuLiga HTML-Demo** wählen und einen öffentlichen Mannschaftslink einfügen, beispielsweise HC Bremen / HVNB 2026/27.
+2. **Spielplan online laden** wählen. Bei einer Teamseite mit Staffelreferenz wird die zugehörige öffentliche Gesamtspielplan-Seite einmalig angefordert. Die Begegnungen werden als Vorschau mit Datum, Spielnummer und Gegner angezeigt.
+3. Neue Saisonspiele markieren und mit **Ausgewählte Saisonspiele anlegen** übernehmen. Bereits vorhandene nuLiga-Spielnummern werden nicht doppelt importiert. Unbespielte Partien bleiben zunächst ohne Ereignisse und aus der Statistik abgewählt.
+4. Ein Saisonspiel zum Abgleich auswählen. Wenn aus dem Spielplan eine passende Spielbericht-URL bekannt ist, steht sie im Feld **Online-Spielbericht-URL**. Andernfalls die öffentliche Bericht-URL selbst einfügen.
+5. Über **Bericht online laden und abgleichen** den einzelnen öffentlichen Bericht einlesen. Verfügbare Kader und offizielle Ereignisse werden übernommen. Bereits selbst gescoutete Ereignisse, Kommentare und Video bleiben unverändert; die offiziellen Ereignisse werden dann separat unter `officialData.nuLigaEvents` abgelegt.
 
-**Grenzen:** Der direkte Einzelabruf einer nuLiga-Seite kann wegen CORS im Browser scheitern. Dann die HTML-Datei lokal auswählen. Dies ist ein manuell ausgelöster Import von vom Nutzer bereitgestelltem HTML, **kein automatischer Scraper oder regelmäßiger Abgleich**. Team-/Staffelseiten und Spielberichte müssen tatsächlich tabellarische Daten enthalten, damit sie erkannt werden. Die genaue HTML-Struktur kann je nach Verband variieren. Die Import- und Spielzuordnungsfunktionen dienen ausschließlich der Demonstration; vor einem produktiven Abruf ist die Berechtigung durch nuLiga/HVNB zu klären.
+Ein versteckter optionaler Dateiimport unter **Optional: lokal vorhandene HTML-Seite verwenden** bleibt als Reserve erhalten, ist aber für den Online-Ablauf nicht nötig.
+
+**Technische Grenzen:** Der Online-Abruf erfolgt über `/nuliga/html` des bestehenden Cloud-Run-Proxys mit fest begrenztem nuLiga-HVNB-Host, öffentlichen Seitenpfaden, maximaler Antwortgröße und Zeitlimit. Er kann trotzdem an Änderungen des HTML-Aufbaus, CORS/Proxy-Fehlern, Server-Sperren oder Weiterleitungen scheitern. Für eine produktive, dauerhafte automatische Datennutzung sind die Bedingungen von nuLiga und HVNB zu klären.
+
 
 ## Ein Saisonspiel im Setup vorbereiten
 
