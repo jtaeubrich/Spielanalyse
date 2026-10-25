@@ -19,7 +19,8 @@ const htmlFile=(name,text)=>({name,mimeType:"text/html",buffer:Buffer.from(text)
 
 async function openDemo(page){
   await page.goto("/");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   await page.locator("#seasonNuLigaOpen").click();
   await expect(page.locator("#seasonNuLigaDialog")).toBeVisible();
   await page.locator("#seasonNuLigaUrl").fill(url);
@@ -104,7 +105,8 @@ test("nuLiga online link retrieves public group schedule and match report withou
     })});
   });
   await page.goto("/");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   await page.locator("#seasonNuLigaOpen").click();
   await page.locator("#seasonNuLigaUrl").fill(url);
   await page.locator("#seasonNuLigaTeam").fill("HC Bremen");
@@ -134,7 +136,8 @@ test("nuLiga online error is displayed and does not add incomplete games",async(
     body:JSON.stringify({error:{message:"nuLiga momentan nicht erreichbar."}})
   }));
   await page.goto("/");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   await page.locator("#seasonNuLigaOpen").click();
   await page.locator("#seasonNuLigaUrl").fill(url);
   await page.locator("#seasonNuLigaPreview").click();
@@ -160,7 +163,8 @@ test("real nuLiga schedule table: Ort is not Nr, and games spanning the full sea
     body:JSON.stringify({source:"nuliga",url,html})
   }));
   await page.goto("/");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   await page.locator("#seasonNuLigaOpen").click();
   await page.locator("#seasonNuLigaTeam").fill("HC Bremen");
   await page.locator("#seasonNuLigaPreview").click();
