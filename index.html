@@ -1901,7 +1901,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const selected=seasonGames.find(game=>game.id===select.value);
     $("setupSeasonContinue").disabled=!selected||!seasonGameCanContinue(selected);
     $("setupSeasonAnalysis").disabled=!selected;
-    $("setupSeasonRosterRefresh").disabled=!selected||!seasonMatchIdentity(selected)||Boolean(selected.state?.events?.length)||setupRosterRefreshBusy;
+    $("setupSeasonRosterRefresh").disabled=!selected||!seasonMatchIdentity(selected)||setupRosterRefreshBusy;
     const active=seasonGames.find(game=>game.id===activeSeasonGameId);
     const status=$("setupSeasonGameStatus");
     if(active)status.textContent="Aktiv mit Saison verknüpft: "+(active.state?.gameName||active.fileName)+" · Änderungen werden automatisch in der Saison gespeichert.";
@@ -1953,6 +1953,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const title=document.createElement("p");
     title.textContent="Handball360 Match "+plan.matchId+" · "+plan.availableSides+" von 2 Spielkadern verfügbar.";
     host.append(title);
+    if(plan.hasScoutingEvents){
+      const notice=document.createElement("p");notice.className="setup-roster-warning";
+      notice.textContent="Dieses Spiel enthält Scouting-Ereignisse: Alle bisherigen Spieler-IDs und Ereignisse bleiben erhalten. Nicht offiziell gemeldete Spieler werden nicht entfernt; neue Spieler werden ergänzt.";
+      host.append(notice);
+    }
     for(const side of ["home","away"]){
       const p=plan.sides[side],section=document.createElement("section");section.className="setup-roster-side";
       const heading=document.createElement("h3");heading.textContent=(side==="home"?"Heim: ":"Gast: ")+p.name;section.append(heading);
@@ -1966,6 +1971,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         section.append(info);
         appendRosterPreviewDetails(section,"Neu gemeldet",p.added);
         appendRosterPreviewDetails(section,"Nicht mehr gemeldet (aus Spielkader entfernen)",p.removed);
+        if(plan.hasScoutingEvents)appendRosterPreviewDetails(section,"Nicht offiziell gemeldet (bleibt im historischen Spiel)",p.retained||[]);
         appendRosterPreviewDetails(section,"Geändert",p.changed);
         if(!p.added.length&&!p.removed.length&&!p.changed.length){
           const unchanged=document.createElement("p");unchanged.textContent="Keine Abweichungen.";section.append(unchanged);
@@ -2001,7 +2007,6 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(!selected)return toast("Bitte zuerst ein Saisonspiel auswählen.");
     const matchId=seasonMatchIdentity(selected);
     if(!matchId)return toast("Dieses Saisonspiel hat keine offizielle Match-ID.");
-    if(selected.state?.events?.length)return toast("Für bereits gescoutete Spiele ist die automatische Kaderersetzung gesperrt.");
     setupRosterRefreshBusy=true;
     const button=$("setupSeasonRosterRefresh"),status=$("setupSeasonRosterStatus");
     button.disabled=true;
@@ -2039,8 +2044,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       }
       renderSeason();persistSeasonSoon();
       await storeInternalSeason();
-      status.textContent="Kader aktualisiert · "+plan.availableSides+" offizielle Aufstellung(en) · "+plan.totalChanges+
-        " Änderung(en). Nicht verfügbare Kader wurden beibehalten.";
+      status.textContent=(plan.hasScoutingEvents?"Historischen Kader sicher abgeglichen":"Kader aktualisiert")+
+        " · "+plan.availableSides+" offizielle Aufstellung(en) · "+plan.totalChanges+
+        " Änderung(en). Scouting-Ereignisse und nicht gemeldete historische Spieler bleiben erhalten.";
       toast("Offizielle Spielkader übernommen");
     }catch(error){
       status.textContent="Kaderaktualisierung nicht durchgeführt: "+(error?.message||String(error));
