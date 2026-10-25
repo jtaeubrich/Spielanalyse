@@ -172,6 +172,7 @@ test("opens a future season game in Setup and saves edits to the same archived r
   future.state.isVideoscoutingFile=true; // Handball360 initially marks imported fixtures as video-scouting files
   await page.locator("#seasonGameInput").setInputFiles(upload("future.json",future.state));
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   const picker=page.locator("#setupSeasonGameSelect");
   await expect(picker.locator("option")).toHaveCount(2);
   await picker.selectOption({index:1});
@@ -209,6 +210,7 @@ test("opens a future season game in Setup and saves edits to the same archived r
   expect(restored.games[0].data.gameName).toBe("Vorbereitetes Spiel - überarbeitet");
 
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   await page.locator("#newGame").click();
   await page.locator("#newGameManual").click();
   await page.locator("#setupGameName").fill("Unabhängiges Spiel");
@@ -226,6 +228,7 @@ test("opens an imported already-scouted match only for analysis and retains cust
   scouted.state.video.youtubeUrl="https://www.youtube.com/watch?v=custom";
   await page.locator("#seasonGameInput").setInputFiles(upload("scouting.json",scouted.state));
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await expect(page.locator("#setupSeasonContinue")).toBeDisabled();
   await expect(page.locator("#setupSeasonAnalysis")).toBeEnabled();
@@ -254,6 +257,7 @@ test("temporarily viewing a live-scouted season game does not disable later cont
   manual.state.events[0].comment="Eigene Live-Notiz";
   await page.locator("#seasonGameInput").setInputFiles(upload("live-scouting.json",manual.state));
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
   await page.locator("#setupSeasonAnalysis").click();
@@ -298,6 +302,7 @@ test("pregame Setup lineup refresh previews and replaces only the active match r
   }));
   await page.locator("#seasonGameInput").setInputFiles(upload("future.json",future.state));
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await expect(page.locator("#setupSeasonRosterRefresh")).toBeEnabled();
   await page.locator("#setupSeasonContinue").click();
@@ -336,6 +341,7 @@ test("pregame Setup lineup refresh previews and replaces only the active match r
 
   await page.reload();
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await page.locator("#setupSeasonContinue").click();
   await page.locator('[data-tab="setup"]').click();
@@ -351,6 +357,7 @@ test("pregame Setup roster refresh refuses missing Handball360 lineup without ch
   future.state.home.players=[{id:"local-21",handballNetId:"21",nr:7,vorname:"Mia",nachname:"Test",isTW:false}];
   await page.locator("#seasonGameInput").setInputFiles(upload("future.json",future.state));
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await page.locator("#setupSeasonRosterRefresh").click();
   await expect(page.locator("#setupSeasonRosterStatus")).toContainText("noch keine offizielle Aufstellung");
@@ -393,6 +400,7 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   }));
   await page.locator("#seasonGameInput").setInputFiles(upload("historisch.json",game.state));
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await expect(page.locator("#setupSeasonRosterRefresh")).toBeEnabled();
   await expect(page.locator("#setupSeasonAnalysis")).toBeEnabled();
@@ -406,6 +414,7 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   ]);
   const before=JSON.parse(await readFile(await beforeDownload.path(),"utf8")).games[0].data;
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await page.locator("#setupSeasonRosterRefresh").click();
   const dialog=page.locator("#setupOfficialRosterDialog");
@@ -432,6 +441,7 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   expect(actual.away.players.some(p=>p.handballNetId==="32")).toBe(true);
   expect(actual.officialSource.matchId).toBe("378122");
   await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await page.locator("#setupSeasonRosterRefresh").click();
   await expect(dialog).toContainText("Keine Abweichungen");
