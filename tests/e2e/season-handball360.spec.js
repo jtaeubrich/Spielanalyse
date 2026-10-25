@@ -353,3 +353,72 @@ test("pregame Setup roster refresh refuses missing Handball360 lineup without ch
   const archive=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(archive.games[0].data.home.players).toEqual(future.state.home.players);
 });
+
+
+test("historical Setup lineup reconciliation preserves scouted events, video and local player references",async({page})=>{
+  const game=buildHandball360SeasonGame(games[2],"378122",teamId,schedule.matches[2]);
+  game.state.home.players=[
+    {id:"local-21",handballNetId:"21",nr:7,vorname:"Mia",nachname:"Test",isTW:false},
+    {id:"local-old",handballNetId:"24",nr:9,vorname:"Nicht",nachname:"Gemeldet",isTW:false}
+  ];
+  game.state.away.players=[];
+  game.state.events=[
+    {id:"local-goal",team:"home",type:"goal",pId:"local-21",scoreH:1,scoreA:0,comment:"Altes Live-Scouting",videoTime:222},
+    {id:"local-defense",team:"away",type:"error",pId:"local-old",playerTags:[{pId:"local-21"}],comment:"Manuelle Abwehrzuordnung"}
+  ];
+  game.state.video.youtubeUrl="https://youtu.be/history-preserve";
+  const official=payload("378122","2026-11-15T16:00:00Z");
+  official.events=[];
+  official.lineups={data:{
+    local:{players:[
+      {player:{id:21,first_name:"Mia",last_name:"Test"},number:18,is_goalkeeper:false},
+      {player:{id:23,first_name:"Neuer",last_name:"Spieler"},number:3,is_goalkeeper:false}
+    ]},
+    visitor:{players:[
+      {player:{id:32,first_name:"Gina",last_name:"Gast"},number:1,is_goalkeeper:true}
+    ]}
+  }};
+  await page.route("**/match/378122",route=>route.fulfill({
+    status:200,headers:{"access-control-allow-origin":"*"},
+    contentType:"application/json",body:JSON.stringify(official)
+  }));
+  await page.locator("#seasonGameInput").setInputFiles(upload("historisch.json",game.state));
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
+  await expect(page.locator("#setupSeasonRosterRefresh")).toBeEnabled();
+  await expect(page.locator("#setupSeasonAnalysis")).toBeEnabled();
+  await page.locator("#setupSeasonAnalysis").click();
+  await page.locator('[data-tab="setup"]').click();
+  const [beforeDownload]=await Promise.all([
+    page.waitForEvent("download"),page.locator("#saveAsBtn").click()
+  ]);
+  const before=JSON.parse(await readFile(await beforeDownload.path(),"utf8"));
+  await page.locator("#setupSeasonRosterRefresh").click();
+  const dialog=page.locator("#setupOfficialRosterDialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("Scouting-Ereignisse");
+  await expect(dialog).toContainText("Nicht offiziell gemeldet (bleibt im historischen Spiel)");
+  await expect(dialog).toContainText("Nicht Gemeldet");
+  await expect(dialog).toContainText("Nr. 7 → 18");
+  await dialog.locator("#setupOfficialRosterConfirm").click();
+  await expect(page.locator("#setupSeasonRosterStatus")).toContainText("Historischen Kader sicher abgeglichen");
+  await page.locator("#saveBtn").click();
+  await page.locator('[data-tab="season"]').click();
+  const [download]=await Promise.all([
+    page.waitForEvent("download"),page.locator("#seasonExport").click()
+  ]);
+  const archive=JSON.parse(await readFile(await download.path(),"utf8"));
+  const actual=archive.games[0].data;
+  expect(actual.events).toEqual(before.events);
+  expect(actual.video).toEqual(before.video);
+  expect(actual.home.players.find(p=>p.id==="local-21")).toMatchObject({nr:18,handballNetId:"21"});
+  expect(actual.home.players.find(p=>p.id==="local-old")).toBeDefined();
+  expect(actual.home.players.some(p=>p.handballNetId==="23")).toBe(true);
+  expect(actual.away.players.some(p=>p.handballNetId==="32")).toBe(true);
+  expect(actual.officialSource.matchId).toBe("378122");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
+  await page.locator("#setupSeasonRosterRefresh").click();
+  await expect(dialog).toContainText("Keine Abweichungen");
+  await dialog.locator("#setupOfficialRosterCancel").click();
+});
