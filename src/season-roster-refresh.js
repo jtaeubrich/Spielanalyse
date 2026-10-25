@@ -23,6 +23,37 @@ function pairedPlayers(current, official) {
     return { incoming, existing: match === undefined ? null : current[match] };
   }).concat([...remaining].map(i => ({ incoming: null, existing: current[i] })));
 }
+// Historical games must keep all local player IDs: older events, video
+// annotations and season statistics may still refer to any local player.
+function pairedHistoricalPlayers(current, official) {
+  const remaining = new Set(current.map((_, index) => index));
+  return official.map(incoming => {
+    const id = idOf(incoming);
+    const byId = id ? [...remaining].filter(i => idOf(current[i]) === id) : [];
+    let match = byId.length === 1 ? byId[0] : undefined;
+    if (match === undefined && !byId.length) {
+      const byName = [...remaining].filter(i =>
+        nameOf(incoming) && nameOf(current[i]) === nameOf(incoming) &&
+        (!idOf(current[i]) || idOf(current[i]) === id));
+      // Never guess between two names or override a different official ID.
+      if (byName.length === 1) match = byName[0];
+    }
+    if (match !== undefined) remaining.delete(match);
+    return { incoming, existing: match === undefined ? null : current[match] };
+  }).concat([...remaining].map(i => ({ incoming: null, existing: current[i] })));
+}
+function collisionSafePlayer(incoming, side, usedIds) {
+  const result = structuredClone(incoming);
+  const original = String(result.id ?? "");
+  if (usedIds.has(original)) {
+    const base = "h360-" + side + "-" + (idOf(result) || original || "player");
+    let unique = base, sequence = 2;
+    while (usedIds.has(String(unique))) unique = base + "-" + sequence++;
+    result.id = unique;
+  }
+  usedIds.add(String(result.id));
+  return result;
+}
 function officialMatchRoster(raw, side) {
   const lineups = hbLineupSides(raw);
   const data = side === "home" ? lineups.local : lineups.visitor;
@@ -65,27 +96,43 @@ export function previewOfficialSeasonRosters(game, raw) {
   if (localHome&&localAway&&localHome===officialAway&&localAway===officialHome&&officialHome!==officialAway) {
     throw new Error("Heim- und Gastmannschaft sind gegenüber Handball360 vertauscht. Bitte Spielzuordnung prüfen.");
   }
+  const hasScoutingEvents = Boolean(game.state?.events?.length);
+  const usedIds = new Set(["home", "away"].flatMap(side =>
+    (game.state?.[side]?.players || []).map(player => String(player.id))));
   const plan = {
     matchId, officialNames: prepared.teams,
     sides: {}, availableSides: 0, totalChanges: 0,
-    hasScoutingEvents: Boolean(game.state?.events?.length)
+    hasScoutingEvents
   };
   for (const side of ["home", "away"]) {
     const oldPlayers = game.state?.[side]?.players || [];
     const incomingPlayers = officialMatchRoster(raw, side);
     const available = incomingPlayers.length > 0;
-    const paired = available ? pairedPlayers(oldPlayers, incomingPlayers) : [];
+    const paired = available
+      ? (hasScoutingEvents ? pairedHistoricalPlayers(oldPlayers, incomingPlayers) : pairedPlayers(oldPlayers, incomingPlayers))
+      : [];
     const added = paired.filter(p => !p.existing && p.incoming).map(p => labelOf(p.incoming));
-    const removed = paired.filter(p => p.existing && !p.incoming).map(p => labelOf(p.existing));
+    const missing = paired.filter(p => p.existing && !p.incoming).map(p => labelOf(p.existing));
+    const removed = hasScoutingEvents ? [] : missing;
+    const retained = hasScoutingEvents ? missing : [];
     const changed = paired.filter(p => p.existing && p.incoming)
       .map(p => {
         const merged = mergedOfficialPlayer(p.existing, p.incoming);
         return { name: labelOf(merged), changes: playerChanges(p.existing, merged) };
       }).filter(p => p.changes.length);
-    const players = paired.filter(p => p.incoming).map(p => mergedOfficialPlayer(p.existing, p.incoming));
+    const players = hasScoutingEvents
+      ? [
+          ...oldPlayers.map(existing => {
+            const matched = paired.find(p => p.existing === existing && p.incoming);
+            return matched ? mergedOfficialPlayer(existing, matched.incoming) : structuredClone(existing);
+          }),
+          ...paired.filter(p => p.incoming && !p.existing)
+            .map(p => collisionSafePlayer(p.incoming, side, usedIds))
+        ]
+      : paired.filter(p => p.incoming).map(p => mergedOfficialPlayer(p.existing, p.incoming));
     plan.sides[side] = {
       available, name: prepared.teams[side], oldCount: oldPlayers.length,
-      newCount: incomingPlayers.length, players, added, removed, changed
+      newCount: incomingPlayers.length, players, added, removed, retained, changed
     };
     if (available) {
       plan.availableSides++;
@@ -102,8 +149,17 @@ export function applyOfficialSeasonRosters(game, plan, updatedAt = new Date().to
   if (String(seasonMatchIdentity(game)) !== String(plan?.matchId)) {
     throw new Error("Die Match-ID der Kaderaktualisierung passt nicht zum Saisonspiel.");
   }
-  if (game.state?.events?.length) {
-    throw new Error("Nach Beginn des Scoutings werden Spielkader nicht automatisch ersetzt. Vorhandene Ereigniszuordnungen bleiben geschützt.");
+  if (Boolean(game.state?.events?.length) !== Boolean(plan.hasScoutingEvents)) {
+    throw new Error("Der Scouting-Status hat sich seit der Vorschau verändert. Kader bitte erneut abrufen.");
+  }
+  if (plan.hasScoutingEvents) {
+    for (const side of ["home", "away"]) {
+      if (!plan.sides?.[side]?.available) continue;
+      const retained = new Set((plan.sides[side].players || []).map(p => String(p.id)));
+      if ((game.state?.[side]?.players || []).some(p => !retained.has(String(p.id)))) {
+        throw new Error("Ein bestehender Spieler würde entfernt. Kaderaktualisierung abgebrochen.");
+      }
+    }
   }
   const updated = structuredClone(game.state);
   for (const side of ["home", "away"]) {
