@@ -86,3 +86,51 @@ test("HTML match report never overwrites own video-scouting and references",asyn
   expect(after.data.away.players.find(p=>p.id==="own-local-7")).toBeDefined();
   expect(after.data.officialData.nuLigaEvents).toHaveLength(4);
 });
+
+test("nuLiga online link retrieves public group schedule and match report without HTML files",async({page})=>{
+  const requests=[];
+  await page.route("**/nuliga/html?*",async route=>{
+    const query=new URL(route.request().url()).searchParams;
+    const target=new URL(query.get("url")||"");
+    requests.push(target);
+    await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({
+      source:"nuliga",url:target.href,html:target.pathname.endsWith("/groupPage")?fixture:report
+    })});
+  });
+  await page.goto("/");
+  await page.locator('[data-tab="season"]').click();
+  await page.locator("#seasonNuLigaOpen").click();
+  await page.locator("#seasonNuLigaUrl").fill(url);
+  await page.locator("#seasonNuLigaTeam").fill("HC Bremen");
+  await page.locator("#seasonNuLigaPreview").click();
+  await expect(page.locator("#seasonNuLigaStatus")).toContainText("2 Begegnungen erkannt");
+  expect(requests).toHaveLength(1);
+  expect(requests[0].pathname).toContain("/groupPage");
+  expect(requests[0].searchParams.get("group")).toBe("489136");
+  await page.locator("#seasonNuLigaImport").click();
+  await page.locator("#seasonNuLigaReportMatch").selectOption({index:1});
+  await expect(page.locator("#seasonNuLigaReportUrl")).toHaveValue(/groupMeetingReport.*meeting=8279246/);
+  await page.locator("#seasonNuLigaApplyReport").click();
+  await expect(page.locator("#seasonNuLigaReportStatus")).toContainText("4 offizielle Ereignisse");
+  expect(requests).toHaveLength(2);
+  expect(requests[1].pathname).toContain("/groupMeetingReport");
+  const archive=await saveSeason(page);
+  const match=archive.games.find(g=>g.data.officialSource.gameNumber==="102005");
+  expect(match.data.events).toHaveLength(4);
+  expect(match.data.home.players).toHaveLength(1);
+  expect(match.data.away.players).toHaveLength(1);
+});
+
+test("nuLiga online error is displayed and does not add incomplete games",async({page})=>{
+  await page.route("**/nuliga/html?*",route=>route.fulfill({
+    status:502,contentType:"application/json",
+    body:JSON.stringify({error:{message:"nuLiga momentan nicht erreichbar."}})
+  }));
+  await page.goto("/");
+  await page.locator('[data-tab="season"]').click();
+  await page.locator("#seasonNuLigaOpen").click();
+  await page.locator("#seasonNuLigaUrl").fill(url);
+  await page.locator("#seasonNuLigaPreview").click();
+  await expect(page.locator("#seasonNuLigaStatus")).toContainText("nicht erreichbar");
+  await expect(page.locator("#seasonNuLigaImport")).toBeDisabled();
+});
