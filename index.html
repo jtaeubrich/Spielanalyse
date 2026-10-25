@@ -2253,7 +2253,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(activeSeasonGameId===id){for(const side of ["home","away"])state[side].players=structuredClone(updated.state[side].players);
         state.officialSource=structuredClone(updated.state.officialSource);
         state.officialData=structuredClone(updated.state.officialData||{});
-        if(!(state.events||[]).length)state.events=structuredClone(updated.state.events);
+        if(!(state.events||[]).length){state.events=structuredClone(updated.state.events);state.isHistorical=updated.state.isHistorical;state.isVideoscoutingFile=updated.state.isVideoscoutingFile;}
         update();}
       renderSeason();persistSeasonSoon();await storeInternalSeason();
       status.textContent="Bericht zugeordnet: "+report.rosters.home.length+" Heim- und "+report.rosters.away.length+
