@@ -2194,7 +2194,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("seasonNuLigaUrl").oninput=refreshNuLigaGroupLink;
   $("seasonNuLigaOpen").onclick=()=>{
     if(!$("seasonNuLigaUrl").value)$("seasonNuLigaUrl").value="https://hvnb-handball.liga.nu/cgi-bin/WebObjects/nuLigaHBDE.woa/wa/teamPortrait?teamtable=2220643&pageState=vorrunde&championship=HVNB+26%2F27&group=489136";
-    if(!$("seasonNuLigaTeam").value)$("seasonNuLigaTeam").value=seasonPreferredTeam||"HC Bremen";
+    if(!$("seasonNuLigaTeam").value)$("seasonNuLigaTeam").value="HC Bremen";
     refreshNuLigaGroupLink();refreshNuLigaReportSelect();$("seasonNuLigaDialog").showModal();
   };
   $("seasonNuLigaClose").onclick=()=>$("seasonNuLigaDialog").close();
