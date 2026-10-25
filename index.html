@@ -1308,22 +1308,20 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
 
 <dialog id="clipPresetDialog"><form id="clipPresetForm" class="preset-form"><h2 id="clipPresetDialogTitle">Clip-Vorlage speichern</h2><div class="preset-form-grid"><label class="wide">Name<input class="field" id="presetName" required></label><label>Team<select class="field" id="presetTeam"></select></label><label>Spieler<select class="field" id="presetPlayer"></select></label><label>Ereignis<select class="field" id="presetType"></select></label><label>Spielsituation<select class="field" id="presetPhase"></select></label><label>Abwurfposition<select class="field" id="presetZone"></select></label><label>Wurfziel<select class="field" id="presetTarget"></select></label><label>Tag<select class="field" id="presetTag"></select></label><label>Eigene Clips erzeugen für<select class="field" id="presetSplitBy"><option value="none">Keine Aufteilung</option><option value="player">Jeden Spieler</option><option value="defender">Jeden Abwehrspieler</option><option value="keeper">Jeden Torwart</option><option value="tag">Jeden Tag</option><option value="phase">Jede Spielsituation</option><option value="zone">Jede Abwurfposition</option><option value="target">Jedes Wurfziel</option></select></label><label>Ausgabe<select class="field" id="presetOutputMode"><option value="individual">Ein Clip je Gruppe</option><option value="combined">Ein gemeinsamer Clip</option></select></label><label>Vorlauf in Sekunden<input class="field" id="presetPreRoll" type="number" min="0" step="0.5"></label><label>Nachlauf in Sekunden<input class="field" id="presetPostRoll" type="number" min="0" step="0.5"></label><label class="wide">Dateiname<input class="field" id="presetFileName" placeholder="z. B. Tore_{Spieler}"></label></div><p class="preset-summary">Bei einer Aufteilung wird für jeden vorhandenen Wert mit passenden Ereignissen eine Gruppe erzeugt.</p><div class="footerbuttons"><button class="btn" type="button" id="cancelClipPreset">Abbrechen</button><button class="btn primary" type="submit">Vorlage speichern</button></div></form></dialog>
 <dialog id="seasonNuLigaDialog" class="season-h360-dialog" aria-labelledby="seasonNuLigaTitle">
-  <div class="clockhead"><h2 id="seasonNuLigaTitle">nuLiga – HTML-Demonstration</h2><button class="btn" id="seasonNuLigaClose" type="button">Schließen</button></div>
-  <p class="editor-help">Lokal gespeicherte, selbst bereitgestellte nuLiga-HTML-Seiten auswerten. Ein direkter Einzelabruf über den Browser kann an CORS scheitern. Kein automatisches Crawling, keine Umgehung von Zugangssperren. Für produktiven Datenbezug ist eine Berechtigung erforderlich.</p>
+  <div class="clockhead"><h2 id="seasonNuLigaTitle">nuLiga – Online-Saisonimport (Demo)</h2><button class="btn" id="seasonNuLigaClose" type="button">Schließen</button></div>
+  <p class="editor-help">Team-Link eingeben und die öffentliche nuLiga-Seite einmalig online abrufen. Ein geschützter Cloud-Run-Endpunkt liest die angeforderte HTML-Seite; kein Download von HTML-Dateien erforderlich, keine Anmeldung oder Hintergrundabfrage. Für produktive Nutzung sind die nuLiga-Zugriffsbedingungen zu klären.</p>
   <label>nuLiga-Team- oder Staffel-URL<input class="field" id="seasonNuLigaUrl" type="url" placeholder="https://hvnb-handball.liga.nu/.../teamPortrait?teamtable=..."></label>
-  <div class="season-h360-inputs">
-    <label>Zu importierende Mannschaft<input class="field" id="seasonNuLigaTeam" placeholder="z. B. HC Bremen"></label>
-    <label>Gespeicherter Spielplan (HTML)<input class="field" type="file" accept=".html,.htm,text/html" id="seasonNuLigaHtml"></label>
-  </div>
-  <div class="season-tools"><a class="btn" id="seasonNuLigaGroupLink" target="_blank" rel="noopener noreferrer" hidden>Staffelspielplan im Browser öffnen</a><button class="btn primary" type="button" id="seasonNuLigaPreview">HTML-Spielplan auswerten</button><button class="btn" type="button" id="seasonNuLigaSelectAll">Alle neuen markieren</button><button class="btn" type="button" id="seasonNuLigaSelectNone">Auswahl aufheben</button></div>
-  <p role="status" id="seasonNuLigaStatus" class="number-help">Team- oder Gruppenlink einfügen, HTML-Datei auswählen und Spielplan auswerten.</p>
+  <label>Zu importierende Mannschaft<input class="field" id="seasonNuLigaTeam" placeholder="z. B. HC Bremen"></label>
+  <details><summary>Optional: lokal vorhandene HTML-Seite verwenden</summary><p class="editor-help">Nur als Ausweichmöglichkeit bei nicht erreichbarer Online-Seite.</p><input class="field" type="file" accept=".html,.htm,text/html" id="seasonNuLigaHtml"></details>
+  <div class="season-tools"><a class="btn" id="seasonNuLigaGroupLink" target="_blank" rel="noopener noreferrer" hidden>Staffelspielplan im Browser öffnen</a><button class="btn primary" type="button" id="seasonNuLigaPreview">Spielplan online laden</button><button class="btn" type="button" id="seasonNuLigaSelectAll">Alle neuen markieren</button><button class="btn" type="button" id="seasonNuLigaSelectNone">Auswahl aufheben</button></div>
+  <p role="status" id="seasonNuLigaStatus" class="number-help">nuLiga-Teamlink einfügen und „Spielplan online laden“ wählen.</p>
   <div id="seasonNuLigaList" class="season-h360-list"><div class="empty">Noch keine Begegnungen gelesen.</div></div>
   <div class="footerbuttons"><button class="btn primary" type="button" id="seasonNuLigaImport" disabled>Ausgewählte Saisonspiele anlegen</button></div>
   <hr>
   <h3>Spielbericht und Kader ergänzen</h3>
-  <p class="editor-help">Offiziellen Spielbericht als HTML speichern, das dazugehörige Saisonspiel auswählen und die Datei zuordnen. Bestehende eigene Scouting-Events bleiben unverändert.</p>
-  <div class="season-h360-inputs"><label>Saisonspiel<select class="field" id="seasonNuLigaReportMatch"></select></label><label>Gespeicherter Spielbericht (HTML)<input class="field" type="file" accept=".html,.htm,text/html" id="seasonNuLigaReportHtml"></label></div>
-  <button class="btn" id="seasonNuLigaApplyReport" type="button">Bericht und Kader abgleichen</button>
+  <p class="editor-help">nuLiga-Spielbericht online per Link laden. Bei bereits angelegten nuLiga-Spielen wird die bekannte Bericht-URL vorausgefüllt. Eigene Scouting-Events bleiben erhalten.</p>
+  <div class="season-h360-inputs"><label>Saisonspiel<select class="field" id="seasonNuLigaReportMatch"></select></label><label>Online-Spielbericht-URL<input class="field" type="url" id="seasonNuLigaReportUrl" placeholder="https://hvnb-handball.liga.nu/.../groupMeetingReport?meeting=..."></label></div><details><summary>Optional: HTML-Spielbericht als Datei verwenden</summary><input class="field" type="file" accept=".html,.htm,text/html" id="seasonNuLigaReportHtml"></details>
+  <button class="btn" id="seasonNuLigaApplyReport" type="button">Bericht online laden und abgleichen</button>
   <p role="status" class="number-help" id="seasonNuLigaReportStatus">Noch kein Bericht zugeordnet.</p>
 </dialog>
 <dialog id="seasonHandball360Dialog" class="season-h360-dialog">
@@ -2195,9 +2193,25 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("seasonNuLigaOpen").onclick=()=>{
     if(!$("seasonNuLigaUrl").value)$("seasonNuLigaUrl").value="https://hvnb-handball.liga.nu/cgi-bin/WebObjects/nuLigaHBDE.woa/wa/teamPortrait?teamtable=2220643&pageState=vorrunde&championship=HVNB+26%2F27&group=489136";
     if(!$("seasonNuLigaTeam").value)$("seasonNuLigaTeam").value="HC Bremen";
-    refreshNuLigaGroupLink();refreshNuLigaReportSelect();$("seasonNuLigaDialog").showModal();
+    refreshNuLigaGroupLink();refreshNuLigaReportSelect();refreshNuLigaReportLink();$("seasonNuLigaDialog").showModal();
   };
   $("seasonNuLigaClose").onclick=()=>$("seasonNuLigaDialog").close();
+  async function getNuLigaOnlineHtml(url){
+    nuLigaUrlInfo(url);
+    const response=await fetch(HANDBALL_NET_WORKER+"/nuliga/html?"+new URLSearchParams({url}),{
+      headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"},
+      cache:"no-store"
+    });
+    const data=await response.json().catch(()=>null);
+    if(!response.ok)throw Error(data?.error?.message||"nuLiga-Proxy: HTTP "+response.status);
+    if(typeof data?.html!=="string"||!data.html.trim())throw Error("nuLiga-Proxy lieferte kein HTML.");
+    return data.html;
+  }
+  function refreshNuLigaReportLink(){
+    const game=seasonGames.find(g=>g.id===$("seasonNuLigaReportMatch").value),input=$("seasonNuLigaReportUrl");
+    input.value=game?.state?.officialSource?.reportUrl||"";
+  }
+  $("seasonNuLigaReportMatch").onchange=refreshNuLigaReportLink;
   $("seasonNuLigaList").onchange=nuLigaUpdateSelection;
   $("seasonNuLigaSelectAll").onclick=()=>{for(const input of $("seasonNuLigaList").querySelectorAll('input[data-nu-liga-key]'))if(!input.disabled)input.checked=true;nuLigaUpdateSelection()};
   $("seasonNuLigaSelectNone").onclick=()=>{for(const input of $("seasonNuLigaList").querySelectorAll('input[data-nu-liga-key]'))input.checked=false;nuLigaUpdateSelection()};
@@ -2207,17 +2221,19 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     try{
       const source=$("seasonNuLigaUrl").value;nuLigaUrlInfo(source);
       const input=$("seasonNuLigaHtml").files?.[0];
-      let html;
-      if(input)html=await input.text();
-      else {
-        try{const response=await fetch(source,{credentials:"omit",mode:"cors"});
-          if(!response.ok)throw Error("HTTP "+response.status);
-          html=await response.text();
-        }catch{
-          throw Error("Direktabruf durch Browser/CORS nicht möglich. Öffne die nuLiga-Seite im Browser, speichere sie als HTML und wähle die Datei hier aus.");
-        }
+      const info=nuLigaUrlInfo(source);
+      const team=$("seasonNuLigaTeam").value.trim();
+      // nuLiga teamPortrait pages sometimes contain no complete fixture table.
+      // From a team link we can request its explicit group (same user click).
+      const groupUrl=new URL(source);
+      if(info.group&&groupUrl.pathname.endsWith("/teamPortrait")){
+        groupUrl.pathname=groupUrl.pathname.replace(/\/teamPortrait$/,"/groupPage");
+        groupUrl.search=new URLSearchParams({championship:info.championship,
+          displayDetail:"meetings",displayTyp:"vorrunde",group:info.group}).toString();
       }
-      nuLigaMatches=parseNuLigaScheduleHtml(html,source,{teamName:$("seasonNuLigaTeam").value.trim()});
+      const scheduleUrl=input?source:groupUrl.href;
+      const html=input?await input.text():await getNuLigaOnlineHtml(scheduleUrl);
+      nuLigaMatches=parseNuLigaScheduleHtml(html,scheduleUrl,{teamName:team});
       renderNuLigaMatches();
       status.textContent=nuLigaMatches.length+" Begegnungen erkannt. Bereits vorhandene Spiele sind gesperrt. Neue Spiele zunächst ohne Statistik.";
     }catch(error){nuLigaMatches=[];renderNuLigaMatches();status.textContent="Importvorschau fehlgeschlagen: "+(error?.message||String(error))}
@@ -2240,9 +2256,20 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("seasonNuLigaApplyReport").onclick=async()=>{
     const status=$("seasonNuLigaReportStatus"),id=$("seasonNuLigaReportMatch").value,file=$("seasonNuLigaReportHtml").files?.[0];
     const game=seasonGames.find(g=>g.id===id);
-    if(!game||!file){status.textContent="Bitte Saisonspiel und gespeicherten HTML-Spielbericht auswählen.";return}
+    if(!game){status.textContent="Bitte zuerst ein Saisonspiel auswählen.";return}
+    const reportUrl=$("seasonNuLigaReportUrl").value.trim();
+    if(!file&&!reportUrl){status.textContent="Für das Spiel ist noch keine Bericht-URL bekannt. Bitte eine nuLiga-Spielbericht-URL einfügen.";return}
+    const button=$("seasonNuLigaApplyReport");button.disabled=true;
+    status.textContent="nuLiga-Spielbericht wird gelesen …";
     try{
-      const report=parseNuLigaReportHtml(await file.text());
+      if(!file){
+        const action=new URL(nuLigaUrlInfo(reportUrl).url).pathname.split("/").at(-1);
+        if(!["groupMeetingReport","clubMeetingReport"].includes(action))throw Error("Bitte eine nuLiga-Spielbericht-URL angeben.");
+        const expected=game.state.officialSource?.reportUrl;
+        if(expected&&new URL(expected).searchParams.get("meeting")!==new URL(reportUrl).searchParams.get("meeting"))
+          throw Error("Bericht gehört nicht zum ausgewählten Spiel (Meeting-ID abweichend).");
+      }
+      const report=parseNuLigaReportHtml(file?await file.text():await getNuLigaOnlineHtml(reportUrl));
       if(!report.gameNumber){
         if(!confirm("Die HTML-Datei enthält keine lesbare Spielnummer. Bericht ausdrücklich dem ausgewählten Spiel zuordnen?"))return;
         report.gameNumber=String(game.state.officialSource.gameNumber);
@@ -2259,6 +2286,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       status.textContent="Bericht zugeordnet: "+report.rosters.home.length+" Heim- und "+report.rosters.away.length+
         " Gastspieler, "+report.events.length+" offizielle Ereignisse. Eigenes Scouting bleibt erhalten.";
     }catch(error){status.textContent="Bericht nicht übernommen: "+(error?.message||String(error))}
+    finally{button.disabled=false}
   };
   let seasonH360Matches=[],seasonH360TeamId="",seasonH360Busy=false;
   function seasonH360SelectedRows(){
