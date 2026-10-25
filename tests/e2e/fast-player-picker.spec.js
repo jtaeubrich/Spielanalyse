@@ -130,6 +130,7 @@ test("penalties and assists reuse the responsive player picker",async({page,isMo
   await expect(page.locator("#penaltyTypeStep")).toBeVisible();
   await page.locator('[data-penalty-type="2min"]').click();
   await expect(page.locator("#idleStep")).toBeVisible();
+  await page.locator("#awayPoss").click();
   await page.locator('[data-flow="shot"]').click();
   await expect(page.locator("#playerStep")).toBeVisible();
   const attackers=page.locator("#playerList");
@@ -140,7 +141,7 @@ test("penalties and assists reuse the responsive player picker",async({page,isMo
   const assists=page.locator("#assistList");
   await expect(assists.locator(isMobile?".fast-picker-phone":".fast-picker-tablet")).toBeVisible();
   if(isMobile)await assists.getByRole("button",{name:"Ziffer 1",exact:true}).click();
-  await expect(assists.locator('.fast-player-tile[data-jersey-number="7"]')).toHaveCount(isMobile?0:0);
+  await expect(assists.locator('.fast-player-tile[data-jersey-number="7"]')).toHaveCount(0);
   await assists.locator('.fast-player-tile[data-jersey-number="1"]').click();
   await expect(page.locator("#idleStep")).toBeVisible();
   const event=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state.events.at(-1));
