@@ -1315,7 +1315,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
     <label>Zu importierende Mannschaft<input class="field" id="seasonNuLigaTeam" placeholder="z. B. HC Bremen"></label>
     <label>Gespeicherter Spielplan (HTML)<input class="field" type="file" accept=".html,.htm,text/html" id="seasonNuLigaHtml"></label>
   </div>
-  <div class="season-tools"><button class="btn primary" type="button" id="seasonNuLigaPreview">HTML-Spielplan auswerten</button><button class="btn" type="button" id="seasonNuLigaSelectAll">Alle neuen markieren</button><button class="btn" type="button" id="seasonNuLigaSelectNone">Auswahl aufheben</button></div>
+  <div class="season-tools"><a class="btn" id="seasonNuLigaGroupLink" target="_blank" rel="noopener noreferrer" hidden>Staffelspielplan im Browser öffnen</a><button class="btn primary" type="button" id="seasonNuLigaPreview">HTML-Spielplan auswerten</button><button class="btn" type="button" id="seasonNuLigaSelectAll">Alle neuen markieren</button><button class="btn" type="button" id="seasonNuLigaSelectNone">Auswahl aufheben</button></div>
   <p role="status" id="seasonNuLigaStatus" class="number-help">Team- oder Gruppenlink einfügen, HTML-Datei auswählen und Spielplan auswerten.</p>
   <div id="seasonNuLigaList" class="season-h360-list"><div class="empty">Noch keine Begegnungen gelesen.</div></div>
   <div class="footerbuttons"><button class="btn primary" type="button" id="seasonNuLigaImport" disabled>Ausgewählte Saisonspiele anlegen</button></div>
@@ -2179,10 +2179,23 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("seasonNuLigaImport").disabled=!count;
     $("seasonNuLigaImport").textContent=count?"Ausgewählte Saisonspiele anlegen ("+count+")":"Ausgewählte Saisonspiele anlegen";
   }
+  function refreshNuLigaGroupLink(){
+    const link=$("seasonNuLigaGroupLink");
+    try{
+      const source=nuLigaUrlInfo($("seasonNuLigaUrl").value);
+      if(!source.group)throw Error("Keine Staffel-ID");
+      const target=new URL(source.url);
+      target.pathname=target.pathname.replace(/\/wa\/[^/]+$/,"/wa/groupPage");
+      target.search=new URLSearchParams({championship:source.championship,displayDetail:"meetings",
+        displayTyp:"vorrunde",group:source.group}).toString();
+      link.href=target.href;link.hidden=false;
+    }catch{link.hidden=true;link.removeAttribute("href")}
+  }
+  $("seasonNuLigaUrl").oninput=refreshNuLigaGroupLink;
   $("seasonNuLigaOpen").onclick=()=>{
     if(!$("seasonNuLigaUrl").value)$("seasonNuLigaUrl").value="https://hvnb-handball.liga.nu/cgi-bin/WebObjects/nuLigaHBDE.woa/wa/teamPortrait?teamtable=2220643&pageState=vorrunde&championship=HVNB+26%2F27&group=489136";
     if(!$("seasonNuLigaTeam").value)$("seasonNuLigaTeam").value=seasonPreferredTeam||"HC Bremen";
-    refreshNuLigaReportSelect();$("seasonNuLigaDialog").showModal();
+    refreshNuLigaGroupLink();refreshNuLigaReportSelect();$("seasonNuLigaDialog").showModal();
   };
   $("seasonNuLigaClose").onclick=()=>$("seasonNuLigaDialog").close();
   $("seasonNuLigaList").onchange=nuLigaUpdateSelection;
