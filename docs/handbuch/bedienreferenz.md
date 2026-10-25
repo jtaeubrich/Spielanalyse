@@ -11,11 +11,13 @@ Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz erg
 - **Teams/Kader:** Spieler manuell verwalten oder aus unterstützten Dateien übernehmen; Trikotnummern vor Scouting prüfen.
 - **Datensicherung:** `Spiel speichern` aktualisiert ggf. eine geöffnete Datei, soweit der Browser das unterstützt; `Kopie exportieren` erzeugt eine neue JSON-Datei. iPhone/iPad können stattdessen Download/Teilen anbieten.
 
-## nuLiga HTML-Demo
+## nuLiga Online-Demo
 
-- **Saison → nuLiga HTML-Demo:** Gespeicherte nuLiga-Spielplan-Seite (.html) mit passender URL und Mannschaftsname auswerten. Es werden nur explizit ausgewählte, noch nicht vorhandene Begegnungen in die bestehende Saison eingefügt. Die Importreferenz enthält `officialSource.provider = "nuliga"`, die Spielnummer, optional eine Meeting-ID sowie die Quell-URL.
-- **Bericht und Kader abgleichen:** nuLiga-Saisonspiel wählen und einen lokal gespeicherten Spielbericht (.html) laden. Erkennbare Spieler und Spielereignisse können übernommen werden. Wenn bereits eigene Scouting-Events vorhanden sind, werden diese **nicht ersetzt**; die offiziellen Daten bleiben zusätzlich unter `officialData.nuLigaEvents` abgelegt. Vor der Zuordnung die Spielnummer prüfen.
-- **Einschränkungen:** Der Browser kann direkte Abrufe fremder Seiten per CORS verhindern; dann HTML-Datei selbst auswählen. Kein automatischer Abruf über einen Drittanbieter-Proxy und keine Umgehung von Authentifizierung. Die HTML-Struktur kann abweichen. Diese Demo ersetzt keinen lizenzierten offiziellen Datenzugang.
+- **Saison → nuLiga HTML-Demo:** nuLiga-Team- oder Staffel-Link eingeben und **Spielplan online laden** wählen. Der Cloud-Run-Proxy holt nur die angeforderte öffentliche Seite. Die Vorschau zeigt erkannte Begegnungen; nur ausgewählte neue Spielnummern werden angelegt.
+- **Bericht und Kader abgleichen:** Nach Wahl des Saisonspiels wird die bekannte öffentliche Spielbericht-URL, wenn vorhanden, automatisch angeboten. **Bericht online laden und abgleichen** übernimmt unterstützte offizielle Informationen. Bei eigenen Events bleiben diese unverändert; der offizielle Verlauf wird zusätzlich unter `officialData.nuLigaEvents` abgelegt.
+- **Ohne HTML-Speichern:** Die bisherige Dateiauswahl ist optional und unter einem aufklappbaren Bereich verborgen. Ein einziger Online-Link genügt, soweit die öffentliche Seite erreichbar und ihr HTML erkennbar ist.
+- **Einschränkungen:** Kein automatisches Crawling, keine Anmeldung, keine Umgehung von Zugangssperren. Die öffentliche nuLiga-Seite, deren Nutzungsbedingungen und ihr HTML-Aufbau können den Abruf einschränken.
+
 
 ## Match: Ereignisse erfassen
 - **Scouting-Modus:** `Live Scouting` / `Video Scouting`. Nach erstem Event ist Wechsel des Grundmodus gesperrt.
