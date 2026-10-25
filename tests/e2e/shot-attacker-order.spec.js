@@ -36,6 +36,14 @@ async function selectGoalDetails(page){
   if(await page.locator("#assistList").isVisible())
     await page.locator("#assistList").getByRole("button",{name:"Kein Assist"}).click();
 }
+async function pickJersey(page,host,number){
+  const picker=page.locator(host);
+  if(await picker.locator(".fast-picker-phone").isVisible()){
+    for(const digit of String(number))
+      await picker.locator(".fast-picker-key").filter({hasText:new RegExp("^"+digit+"$")}).click();
+  }
+  await picker.locator('.fast-player-tile[data-jersey-number="'+number+'"]').click();
+}
 async function latestEvent(page){
   return page.evaluate(()=>{
     const raw=localStorage.getItem("handballSpielanalyse.session");
@@ -59,7 +67,7 @@ test("shot: scorer-last waits for hall speaker while preserving original event s
   await page.locator("#flowNext").click();
   await expect(page.locator("#playerStep")).toBeVisible();
   const shooter=original.away.players.find(p=>p.nr===7);
-  await page.locator("#playerList .option").filter({hasText:"Spieler 17"}).click();
+  await pickJersey(page,"#playerList",7);
   await expect(page.locator("#idleStep")).toBeVisible();
   await expect(page.locator("#eventCount")).toHaveText("1 Ereignisse");
   const e=await latestEvent(page);
@@ -79,7 +87,7 @@ test("shot: default shooter-first sequence remains unchanged",async({page})=>{
   await startShot(page,"away");
   await expect(page.locator("#playerStep")).toBeVisible();
   await expect(page.locator("#locationStep")).toBeHidden();
-  await page.locator("#playerList .option").filter({hasText:"Spieler 17"}).click();
+  await pickJersey(page,"#playerList",7);
   await expect(page.locator("#locationStep")).toBeVisible();
   await selectGoalDetails(page);
   await expect(page.locator("#idleStep")).toBeVisible();
@@ -112,7 +120,7 @@ test("shot: scorer-last preserves the opponent defensive assignment before selec
   await page.locator("#tagList .option").filter({hasText:"Spieler 17"}).click();
   await expect(page.locator("#playerStep")).toBeVisible();
   const shooter=original.home.players.find(p=>p.nr===4);
-  await page.locator("#playerList .option").filter({hasText:"Spieler 02"}).click();
+  await pickJersey(page,"#playerList",4);
   const e=await latestEvent(page);
   expect(e).toMatchObject({type:"goal",team:"home",pId:shooter.id,scoreH:1});
   expect(e.playerTags).toEqual(expect.arrayContaining([expect.objectContaining({pId:ownDefender.id})]));
@@ -124,9 +132,9 @@ test("shot: shooter-last clears assist when the announced shooter is also assist
   await startShot(page,"away");
   await page.locator('#locationList button[data-zone="7M"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
-  await page.locator("#assistList .option").filter({hasText:"Spieler 17"}).click();
+  await pickJersey(page,"#assistList",7);
   await expect(page.locator("#playerStep")).toBeVisible();
-  await page.locator("#playerList .option").filter({hasText:"Spieler 17"}).click();
+  await pickJersey(page,"#playerList",7);
   const e=await latestEvent(page);
   expect(e.pId).toBe(original.away.players.find(p=>p.nr===7).id);
   expect(e).not.toHaveProperty("assistPId");
