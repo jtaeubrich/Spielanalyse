@@ -357,9 +357,10 @@ test("pregame Setup roster refresh refuses missing Handball360 lineup without ch
 
 test("historical Setup lineup reconciliation preserves scouted events, video and local player references",async({page})=>{
   const game=buildHandball360SeasonGame(games[2],"378122",teamId,schedule.matches[2]);
+  // Legacy manual roster: local player IDs exist, but Handball360 IDs are absent.
   game.state.home.players=[
-    {id:"local-21",handballNetId:"21",nr:7,vorname:"Mia",nachname:"Test",isTW:false},
-    {id:"local-old",handballNetId:"24",nr:9,vorname:"Nicht",nachname:"Gemeldet",isTW:false}
+    {id:"local-21",nr:7,vorname:"Mia",nachname:"Test",isTW:false},
+    {id:"local-old",nr:9,vorname:"Nicht",nachname:"Gemeldet",isTW:false}
   ];
   game.state.away.players=[];
   game.state.events=[
