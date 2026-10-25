@@ -21,14 +21,15 @@ function upload(name, json) {
 
 test("season merges only user-selected name variants and can undo the mapping", async ({ page }) => {
   await page.goto("/");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   await page.locator("#seasonGameInput").setInputFiles([
     upload("saison_pohl.json", asGame("Pohl")),
     upload("saison_poehl.json", asGame("Pöhl"))
   ]);
   await expect(page.locator("#seasonPlayerRows")).toContainText("Laurids Pohl");
   await expect(page.locator("#seasonPlayerRows")).toContainText("Laurids Pöhl");
-
+  await page.locator('[data-tab="season"]').click();
   await page.locator("#seasonMergePlayers").click();
   await expect(page.locator("#seasonMergeDialog")).toBeVisible();
   const options = await page.locator("#seasonMergeFrom option").evaluateAll(
@@ -49,6 +50,8 @@ test("season merges only user-selected name variants and can undo the mapping", 
 
   // Season-only: the original import buffers and roster names are not modified.
   await page.locator("#seasonMergeClose").click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [download] = await Promise.all([
     page.waitForEvent("download"),
     page.locator("#seasonExport").click()
@@ -58,6 +61,7 @@ test("season merges only user-selected name variants and can undo the mapping", 
   expect(exported.games[0].data[exported.games[0].data.ownTeam].players[0].nachname).toBe("Pohl");
   expect(exported.games[1].data[exported.games[1].data.ownTeam].players[0].nachname).toBe("Pöhl");
 
+  await page.locator('[data-tab="season"]').click();
   await page.locator("#seasonMergePlayers").click();
   await page.locator("#seasonMergeMappings button").first().click();
   await expect(page.locator("#seasonPlayerRows")).toContainText("Laurids Pohl");
@@ -65,6 +69,8 @@ test("season merges only user-selected name variants and can undo the mapping", 
 
   // Exported association is restored if the season is imported again.
   await page.locator("#seasonMergeClose").click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   await page.locator("#seasonImportInput").setInputFiles(upload("season.json", exported));
   await expect(page.locator("#seasonPlayerRows")).not.toContainText("Laurids Pohl");
   await expect(page.locator("#seasonPlayerRows tr").filter({hasText:"Laurids Pöhl"}).locator("td").nth(1)).toHaveText("2");
@@ -76,7 +82,8 @@ test("exact names are aggregated regardless of shirt number", async ({ page }) =
   a[a.ownTeam].players[0].nr = "";
   b[b.ownTeam].players[0].nr = 17;
   await page.goto("/");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   await page.locator("#seasonGameInput").setInputFiles([
     upload("game_no_number.json", a), upload("game_with_number.json", b)
   ]);
