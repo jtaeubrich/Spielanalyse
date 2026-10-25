@@ -24,6 +24,19 @@ Die Spielanalyse unterstützt zwei organisatorische Einstiege. Die eigentliche E
 
 **Achtung:** Handball360 liefert nicht alle handballspezifischen Auswertungen der Spielanalyse. Insbesondere Wurfpositionen, Wurfziele und vollständige Torhüterstatistiken können aus reinen offiziellen Ereignissen fehlen. Bereits selbst gescoutete Ereignisse werden bei der offiziellen Aktualisierung nicht ungefragt ersetzt.
 
+## nuLiga-Demonstration: Saison aus HTML-Dateien
+
+Im **Saison**-Tab ist zusätzlich **nuLiga HTML-Demo** verfügbar. Dieser Prototyp nutzt eine öffentlich sichtbare nuLiga-Team- oder Staffel-URL als Bezugsadresse, **automatisiert aber keinen Zugriff auf die nuLiga-Website**.
+
+1. In nuLiga die Mannschafts- oder Staffel-Seite (Spielplan **Gesamt**) im Browser öffnen und als **HTML-Datei** speichern.
+2. **Saison → nuLiga HTML-Demo** öffnen. Die nuLiga-URL eintragen (z. B. HC Bremen, HVNB 2026/27), die Mannschaft benennen und die gespeicherte HTML-Datei auswählen.
+3. **HTML-Spielplan auswerten** zeigt die erkannten Begegnungen. Bereits importierte Spielnummern werden gesperrt. Über die Häkchen die neuen Spiele auswählen und **Ausgewählte Saisonspiele anlegen** ausführen.
+4. Die angelegten Spiele besitzen Datum, Heim/Gast, Wettbewerb sowie eigene nuLiga-Referenzen. Zukünftige Spiele bleiben zunächst ohne Scouting-Ereignisse und aus der Saisonanalyse abgewählt. Danach im **Setup → Spiel aus Saison laden** öffnen.
+5. Für bereits gespielte Begegnungen die öffentliche **nuLiga-Spielbericht-Seite** separat als HTML-Datei sichern. Im selben Demo-Dialog unter **Spielbericht und Kader ergänzen** die Begegnung wählen und das HTML zuordnen.
+6. Wenn Kader und Spielverlauf im gespeicherten Bericht enthalten sind, werden die unterstützten Spieler und Ereignisse übernommen. **Bei bereits vorhandenen eigenen Events** bleibt das Scouting unverändert und der offizielle nuLiga-Verlauf wird separat unter `officialData.nuLigaEvents` zur späteren Gegenüberstellung gespeichert.
+
+**Grenzen:** Der direkte Einzelabruf einer nuLiga-Seite kann wegen CORS im Browser scheitern. Dann die HTML-Datei lokal auswählen. Dies ist ein manuell ausgelöster Import von vom Nutzer bereitgestelltem HTML, **kein automatischer Scraper oder regelmäßiger Abgleich**. Team-/Staffelseiten und Spielberichte müssen tatsächlich tabellarische Daten enthalten, damit sie erkannt werden. Die genaue HTML-Struktur kann je nach Verband variieren. Die Import- und Spielzuordnungsfunktionen dienen ausschließlich der Demonstration; vor einem produktiven Abruf ist die Berechtigung durch nuLiga/HVNB zu klären.
+
 ## Ein Saisonspiel im Setup vorbereiten
 
 ![Setup: Saisonspiel auswählen und vorbereiten – Desktop](images/generated/setup-season-game-desktop.jpg)
