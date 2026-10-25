@@ -179,13 +179,15 @@ test("symmetric capture and season-only preferred team selector",async({page})=>
  await expect(page.locator("#awayPoss")).toContainText("Ballbesitz");
  await expect(page.locator("#activeOwnKeeper").locator("..")).toContainText("Heim");
  await expect(page.locator("#activeOpponentKeeper").locator("..")).toContainText("Gast");
- await page.locator('[data-tab="season"]').click();
+ await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
  await expect(page.locator("#seasonPreferredTeam")).toBeVisible();
 });
 
 test("season preferred team maps imported home and away matches",async({page})=>{
  await page.goto("/");
- await page.locator('[data-tab="season"]').click();
+ await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
  await page.locator("#seasonGameInput").setInputFiles(hknFixture);
  const team=page.locator("#seasonPreferredTeam");
  await expect(team.locator("option")).toContainText(["Keine Mannschaft ausgewählt","HSG Herzhorn/Kollmar/Neuendorf","Mein Team"]);
@@ -670,7 +672,8 @@ test("unified Match workspace keeps controls and capture ordered across modes",a
 
 test("season game list starts collapsed and remains user-toggleable after data refresh",async({page})=>{
  await page.goto("/");
- await page.locator('[data-tab="season"]').click();
+ await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
  const details=page.locator("#seasonGamesDetails");
  await expect(details).not.toHaveAttribute("open", "");
  await expect(details.locator("summary")).toBeVisible();
