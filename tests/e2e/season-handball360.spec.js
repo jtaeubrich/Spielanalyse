@@ -389,11 +389,15 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   await expect(page.locator("#setupSeasonRosterRefresh")).toBeEnabled();
   await expect(page.locator("#setupSeasonAnalysis")).toBeEnabled();
   await page.locator("#setupSeasonAnalysis").click();
-  await page.locator('[data-tab="setup"]').click();
+  // Export the season snapshot: "Kopie exportieren" may use a native
+  // file picker instead of emitting a Playwright download.
+  await page.locator('[data-tab="season"]').click();
   const [beforeDownload]=await Promise.all([
-    page.waitForEvent("download"),page.locator("#saveAsBtn").click()
+    page.waitForEvent("download"),page.locator("#seasonExport").click()
   ]);
-  const before=JSON.parse(await readFile(await beforeDownload.path(),"utf8"));
+  const before=JSON.parse(await readFile(await beforeDownload.path(),"utf8")).games[0].data;
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await page.locator("#setupSeasonRosterRefresh").click();
   const dialog=page.locator("#setupOfficialRosterDialog");
   await expect(dialog).toBeVisible();
