@@ -32,7 +32,7 @@ test("disabled player capture skips penalty player but keeps team selection", as
   await expect(page.locator("#penaltyStep")).not.toHaveClass(/active/);
   await expect(page.locator("#penaltyQuickTeam")).toBeVisible();
   const quick = page.locator("#penaltyQuickTeamSwitch");
-  await quick.check();
+  await page.locator("#penaltyQuickTeam .team-switch").click();
   await expect(quick).toBeChecked();
   await page.locator("#flowBack").click();
   await expect(page.locator("#idleStep")).toHaveClass(/active/);
@@ -47,7 +47,10 @@ test("enabled player capture retains both existing player steps", async ({ page 
   await expect(page.locator("#playerStep")).toHaveClass(/active/);
   await page.locator("#playerList .unknown-option").click();
   await expect(page.locator("#errorStep")).toHaveClass(/active/);
-  await page.locator("#flowCancel").click();
+  await page.locator("#flowBack").click();
+  await expect(page.locator("#playerStep")).toHaveClass(/active/);
+  await page.locator("#flowBack").click();
+  await expect(page.locator("#idleStep")).toHaveClass(/active/);
   await page.locator('[data-flow="penalty"]').click();
   await expect(page.locator("#penaltyStep")).toHaveClass(/active/);
   await page.locator("#penaltyList .unknown-option").first().click();
