@@ -1805,7 +1805,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const root=document.createElement("div");root.className="fast-player-picker";
     const actions=document.createElement("div");actions.className="fast-picker-actions";
     for(const extra of extras){
-      const b=document.createElement("button");b.type="button";b.className="fast-picker-extra"+(extra.selected?" selected":"");
+      const b=document.createElement("button");b.type="button";b.className="fast-picker-extra"+(extra.selected?" selected":"")+(extra.kind==="unknown"?" unknown-option":"");
       b.textContent=extra.label;b.onclick=extra.action;actions.append(b);
     }
     if(actions.childElementCount)root.append(actions);
@@ -1815,7 +1815,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const b=document.createElement("button");b.type="button";b.className="fast-player-tile";
       if(selectedId!=null&&String(p.id)===String(selectedId))b.classList.add("selected");
       b.dataset.playerId=String(p.id);
-      const nr=String(p.nr??"").trim(),label=playerName(p);
+      const nr=String(p.nr??"").trim(),label=playerName(p);b.dataset.jerseyNumber=nr;
       b.setAttribute("aria-label",(nr?"Trikotnummer "+nr:"Ohne Trikotnummer")+" · "+label);
       const number=document.createElement("strong");number.className="fast-player-number";number.textContent=nr?"#"+nr:"–";
       const name=document.createElement("small");name.className="fast-player-name";name.textContent=(p.nachname||p.vorname||label).trim();
@@ -1882,13 +1882,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   function nextAfterAttacker(){if(draft.flow==="shot"){if(shotAttackerLast()&&draft.attackerChosen)return finalizeShotCapture();const first=shotStepIds()[0];first?showStep(first):openShotTagStep()}else showStep("error")}
   function chooseAttacker(id){draft.attacker=id;if(shotAttackerLast()){draft.attackerChosen=true;if(id!==null&&String(id)===String(draft.assistPId)){draft.assistPId=null;draft.assistChosen=true;toast("Assist entfernt: Schütze und Assistgeber dürfen nicht identisch sein.")}}nextAfterAttacker()}
-  function renderPlayers(){const ps=state[draft.team]?.players||[],list=$("playerList");$("playerTeamText").textContent=(state[draft.team]?.name||"Ballbesitzteam")+(shotAttackerLast()?" · Schütze nach Durchsage wählen":"");const heading=$("playerStep").querySelector(":scope > .step-head > h2, :scope > h2");if(heading)heading.textContent=shotAttackerLast()?"Schütze auswählen · letzter Schritt":"Angreifender Spieler";renderFastPlayerPicker(list,ps,chooseAttacker,{extras:[{label:"? Unbekannt",action:()=>chooseAttacker(null)}]})}
+  function renderPlayers(){const ps=state[draft.team]?.players||[],list=$("playerList");$("playerTeamText").textContent=(state[draft.team]?.name||"Ballbesitzteam")+(shotAttackerLast()?" · Schütze nach Durchsage wählen":"");const heading=$("playerStep").querySelector(":scope > .step-head > h2, :scope > h2");if(heading)heading.textContent=shotAttackerLast()?"Schütze auswählen · letzter Schritt":"Angreifender Spieler";renderFastPlayerPicker(list,ps,chooseAttacker,{extras:[{label:"? Unbekannt",kind:"unknown",action:()=>chooseAttacker(null)}]})}
   options($("errorList"),errors,(v)=>{draft.errorType=v;draft.result="error";$("commitEvent").click()});
   function choosePenalized(id,{bank=false}={}){draft.penalized=id;draft.penalizedBank=bank;showStep("penaltyType")}
   function renderAssistPlayers(){const list=$("assistList");if(!list||!draft)return;const players=(state[draft.team]?.players||[]).filter(p=>draft.attacker===null||String(p.id)!==String(draft.attacker));renderFastPlayerPicker(list,players,id=>{draft.assistPId=id;draft.assistChosen=true;renderAssistPlayers();maybeAdvanceShotPage()},{selectedId:draft.assistPId,extras:[{label:"Kein Assist",selected:draft.assistChosen&&draft.assistPId==null,action:()=>{draft.assistPId=null;draft.assistChosen=true;renderAssistPlayers();maybeAdvanceShotPage()}}]})}
   function syncPenaltyQuickTeam(){if(!draft)return;const defaultTeam=draft.team==="home"?"away":"home",otherTeam=draft.team;$("penaltyQuickTeamLeft").textContent=state[defaultTeam].name;$("penaltyQuickTeamRight").textContent=state[otherTeam].name;$("penaltyQuickTeamSwitch").checked=draft.penaltyTeam===otherTeam}
   $("penaltyQuickTeamSwitch").onchange=event=>{if(!draft)return;draft.penaltyTeam=event.target.checked?draft.team:(draft.team==="home"?"away":"home");draft.penalized=null;draft.penalizedBank=false;syncPenaltyQuickTeam()};
-  function renderPenaltyPlayers(){const defaultTeam=draft.team==="home"?"away":"home",otherTeam=draft.team;$("penaltyTeamLeft").textContent=state[defaultTeam].name;$("penaltyTeamRight").textContent=state[otherTeam].name;$("penaltyTeamSwitch").checked=draft.penaltyTeam===otherTeam;renderFastPlayerPicker($("penaltyList"),state[draft.penaltyTeam]?.players||[],id=>choosePenalized(id),{extras:[{label:"? Unbekannt",action:()=>choosePenalized(null)},{label:"▤ Bank",action:()=>choosePenalized(null,{bank:true})}]})}
+  function renderPenaltyPlayers(){const defaultTeam=draft.team==="home"?"away":"home",otherTeam=draft.team;$("penaltyTeamLeft").textContent=state[defaultTeam].name;$("penaltyTeamRight").textContent=state[otherTeam].name;$("penaltyTeamSwitch").checked=draft.penaltyTeam===otherTeam;renderFastPlayerPicker($("penaltyList"),state[draft.penaltyTeam]?.players||[],id=>choosePenalized(id),{extras:[{label:"? Unbekannt",kind:"unknown",action:()=>choosePenalized(null)},{label:"▤ Bank",action:()=>choosePenalized(null,{bank:true})}]})}
   $("penaltyTeamSwitch").onchange=event=>{draft.penaltyTeam=event.target.checked?draft.team:(draft.team==="home"?"away":"home");draft.penalized=null;draft.penalizedBank=false;renderPenaltyPlayers()};
   function ownPlayers(){return state[ownTeam]?.players||[]}
   function renderTagList(el,set){el.replaceChildren();const unknownKey="__unknown__";el.append(unknownButton(()=>{if(set.has(unknownKey))set.delete(unknownKey);else{set.clear();set.add(unknownKey)}renderTagList(el,set)},set.has(unknownKey)));sortedPlayers(state.possession==="home"?"away":"home","defense").forEach(p=>{const key=String(p.id),b=document.createElement("button");b.className="option"+(set.has(key)?" selected":"");b.dataset.playerId=key;playerLabel(b,p);b.onclick=()=>{set.delete(unknownKey);set.has(key)?set.delete(key):set.add(key);renderTagList(el,set)};el.appendChild(b)})}
