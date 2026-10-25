@@ -1973,7 +1973,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         appendRosterPreviewDetails(section,"Nicht mehr gemeldet (aus Spielkader entfernen)",p.removed);
         if(plan.hasScoutingEvents)appendRosterPreviewDetails(section,"Nicht offiziell gemeldet (bleibt im historischen Spiel)",p.retained||[]);
         appendRosterPreviewDetails(section,"Geändert",p.changed);
-        if(!p.added.length&&!p.removed.length&&!p.changed.length){
+        if(!p.added.length&&!p.removed.length&&!p.changed.length&&!(p.retained||[]).length){
           const unchanged=document.createElement("p");unchanged.textContent="Keine Abweichungen.";section.append(unchanged);
         }
       }
