@@ -141,3 +141,38 @@ test("nuLiga online error is displayed and does not add incomplete games",async(
   await expect(page.locator("#seasonNuLigaStatus")).toContainText("nicht erreichbar");
   await expect(page.locator("#seasonNuLigaImport")).toBeDisabled();
 });
+
+
+test("real nuLiga schedule table: Ort is not Nr, and games spanning the full season are retained",async({page})=>{
+  const html=String.raw`<html><body><h1>Oberliga Männer Nord</h1><table>
+  <thead><tr><th>Tag</th><th>Datum</th><th>Zeit</th><th>Ort</th><th>Nr.</th><th>Liga</th><th>Heimmannschaft</th><th>Gastmannschaft</th><th></th><th></th><th></th><th></th></tr></thead>
+  <tbody>
+  <tr><td>Sa</td><td>05.09.2026</td><td>19:30</td><td>101199</td><td>102005</td><td>OL M</td><td>SG Achim/Baden</td><td>HC Bremen</td><td><a href="groupMeetingReport?meeting=8279246&amp;group=489136">29:28</a></td></tr>
+  <tr><td>Sa</td><td>10.10.2026</td><td>19:30</td><td>813037</td><td>102040</td><td>OL M</td><td>TV Neerstedt</td><td>HC Bremen</td><td>38:44</td></tr>
+  <tr><td>So</td><td>25.10.2026</td><td>17:00</td><td>101199</td><td>102049</td><td>OL M</td><td>HC Bremen</td><td>HSG Delmenhorst</td><td></td></tr>
+  <tr><td>Sa</td><td>24.04.2027</td><td>19:00</td><td>101199</td><td>102170</td><td>OL M</td><td>HC Bremen</td><td>TV Oyten</td><td></td></tr>
+  <tr><td></td><td></td><td>20:00</td><td>101199</td><td>102171</td><td>OL M</td><td>HC Bremen</td><td>SV Beckdorf</td><td></td></tr>
+  <tr><td>So</td><td>01.05.2027</td><td>14:00</td><td>809107</td><td>102180</td><td>OL M</td><td>TV Dinklage</td><td>HC Bremen</td><td></td></tr>
+  <tr><td>So</td><td>02.05.2027</td><td>13:00</td><td>809107</td><td>3</td><td>MJC</td><td>TV Dinklage II</td><td>HC Bremen II</td><td></td></tr>
+  </tbody></table></body></html>`;
+  await page.route("**/nuliga/html?*",route=>route.fulfill({status:200,contentType:"application/json",
+    headers:{"access-control-allow-origin":"*","access-control-allow-headers":"authorization"},
+    body:JSON.stringify({source:"nuliga",url,html})
+  }));
+  await page.goto("/");
+  await page.locator('[data-tab="season"]').click();
+  await page.locator("#seasonNuLigaOpen").click();
+  await page.locator("#seasonNuLigaTeam").fill("HC Bremen");
+  await page.locator("#seasonNuLigaPreview").click();
+  await expect(page.locator("#seasonNuLigaStatus")).toContainText("6 Begegnungen erkannt");
+  const rows=page.locator("#seasonNuLigaList .season-h360-row");
+  await expect(rows).toHaveCount(6);
+  await expect(rows.first()).toContainText("102005");
+  await expect(rows).toContainText(["SG Achim/Baden – HC Bremen", "TV Neerstedt – HC Bremen","HC Bremen – HSG Delmenhorst","HC Bremen – TV Oyten","HC Bremen – SV Beckdorf","TV Dinklage – HC Bremen"]);
+  await expect(page.locator("#seasonNuLigaList")).not.toContainText("Nr. 101199");
+  await expect(page.locator("#seasonNuLigaList")).not.toContainText("Nr. 809107");
+  await expect(page.locator("#seasonNuLigaList")).not.toContainText("HC Bremen II");
+  await expect(rows.nth(4)).toContainText("2027-04-24");
+  await page.locator("#seasonNuLigaImport").click();
+  await expect(page.locator("#seasonNuLigaStatus")).toContainText("6 neue Saisonspiele");
+});
