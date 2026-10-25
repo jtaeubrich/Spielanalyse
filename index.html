@@ -1168,7 +1168,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
     <div class="season-page">
       <section class="panel season-card wide">
         <div class="clockhead"><div><h2>Saisonanalyse</h2><p class="editor-help">Mehrere Spiel-JSONs laden und gemeinsam auswerten. Die einzelnen Dateien werden dabei nicht verändert.</p></div><span class="badge" id="seasonStatus">Keine Spiele geladen</span></div>
-        <div class="season-meta"><label>Saisonname<input class="field" id="seasonName" value="Saison 2026/27" placeholder="z. B. Saison 2026/27"></label><label>Archiv-Mannschaft (jahrgangsunabhängig)<input class="field" id="seasonArchiveTeam" placeholder="z. B. TSV Kronshagen mB"></label><label>Mein Team für die Saison<select class="field" id="seasonPreferredTeam"><option value="">Keine Mannschaft ausgewählt</option></select></label></div><div class="season-tools"><button class="btn primary" id="seasonHandball360Open" type="button">Saison über Handball360 importieren</button><label class="btn" for="seasonGameInput">Spiel-JSONs laden</label><input id="seasonGameInput" type="file" accept=".json,application/json" multiple hidden><input id="seasonUpdateInput" type="file" accept=".json,application/json" hidden><label class="btn" for="seasonImportInput">Saison importieren</label><input id="seasonImportInput" type="file" accept=".json,application/json" hidden><button class="btn" id="seasonExport" type="button">Saison exportieren</button><button class="btn" id="seasonArchiveExport" type="button">Team-Archiv (ZIP) exportieren</button><button class="btn" id="seasonSelectAll" type="button">Alle auswählen</button><button class="btn" id="seasonSelectNone" type="button">Auswahl aufheben</button><button class="btn danger" id="seasonClearGames" type="button">Saison leeren</button></div>
+        <div class="season-meta"><label>Saisonname<input class="field" id="seasonName" value="Saison 2026/27" placeholder="z. B. Saison 2026/27"></label><label>Archiv-Mannschaft (jahrgangsunabhängig)<input class="field" id="seasonArchiveTeam" placeholder="z. B. TSV Kronshagen mB"></label><label>Mein Team für die Saison<select class="field" id="seasonPreferredTeam"><option value="">Keine Mannschaft ausgewählt</option></select></label></div><div class="season-tools"><button class="btn primary" id="seasonHandball360Open" type="button">Saison über Handball360 importieren</button><button class="btn" id="seasonNuLigaOpen" type="button">nuLiga HTML-Demo</button><label class="btn" for="seasonGameInput">Spiel-JSONs laden</label><input id="seasonGameInput" type="file" accept=".json,application/json" multiple hidden><input id="seasonUpdateInput" type="file" accept=".json,application/json" hidden><label class="btn" for="seasonImportInput">Saison importieren</label><input id="seasonImportInput" type="file" accept=".json,application/json" hidden><button class="btn" id="seasonExport" type="button">Saison exportieren</button><button class="btn" id="seasonArchiveExport" type="button">Team-Archiv (ZIP) exportieren</button><button class="btn" id="seasonSelectAll" type="button">Alle auswählen</button><button class="btn" id="seasonSelectNone" type="button">Auswahl aufheben</button><button class="btn danger" id="seasonClearGames" type="button">Saison leeren</button></div>
         <details class="season-games-details" id="seasonGamesDetails">
           <summary>Saisonspiele <span class="badge" id="seasonGameCount">0 Spiele</span></summary>
           <div id="seasonGameList" class="season-game-list"><div class="empty">Noch keine Saisonspiele geladen.</div></div>
@@ -1307,6 +1307,25 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
 <dialog id="analysisExportDialog" class="analysis-export-dialog"><form id="analysisExportForm"><h2>Analyse als PDF</h2><p class="number-help">Wähle die Bereiche für die Druckansicht. Nicht gepflegte Auswertungen werden automatisch deaktiviert.</p><div class="export-selection-actions"><button class="btn" id="selectAllAnalysisSections" type="button">Alles auswählen</button><button class="btn" id="selectAvailableAnalysisSections" type="button">Nur vorhandene Daten</button><button class="btn" id="clearAnalysisSections" type="button">Auswahl aufheben</button></div><div class="export-section-list" id="analysisExportSections"></div><div class="footerbuttons"><button class="btn" id="cancelAnalysisExport" type="button">Abbrechen</button><button class="btn primary" type="submit">Druckansicht öffnen</button></div></form></dialog>
 
 <dialog id="clipPresetDialog"><form id="clipPresetForm" class="preset-form"><h2 id="clipPresetDialogTitle">Clip-Vorlage speichern</h2><div class="preset-form-grid"><label class="wide">Name<input class="field" id="presetName" required></label><label>Team<select class="field" id="presetTeam"></select></label><label>Spieler<select class="field" id="presetPlayer"></select></label><label>Ereignis<select class="field" id="presetType"></select></label><label>Spielsituation<select class="field" id="presetPhase"></select></label><label>Abwurfposition<select class="field" id="presetZone"></select></label><label>Wurfziel<select class="field" id="presetTarget"></select></label><label>Tag<select class="field" id="presetTag"></select></label><label>Eigene Clips erzeugen für<select class="field" id="presetSplitBy"><option value="none">Keine Aufteilung</option><option value="player">Jeden Spieler</option><option value="defender">Jeden Abwehrspieler</option><option value="keeper">Jeden Torwart</option><option value="tag">Jeden Tag</option><option value="phase">Jede Spielsituation</option><option value="zone">Jede Abwurfposition</option><option value="target">Jedes Wurfziel</option></select></label><label>Ausgabe<select class="field" id="presetOutputMode"><option value="individual">Ein Clip je Gruppe</option><option value="combined">Ein gemeinsamer Clip</option></select></label><label>Vorlauf in Sekunden<input class="field" id="presetPreRoll" type="number" min="0" step="0.5"></label><label>Nachlauf in Sekunden<input class="field" id="presetPostRoll" type="number" min="0" step="0.5"></label><label class="wide">Dateiname<input class="field" id="presetFileName" placeholder="z. B. Tore_{Spieler}"></label></div><p class="preset-summary">Bei einer Aufteilung wird für jeden vorhandenen Wert mit passenden Ereignissen eine Gruppe erzeugt.</p><div class="footerbuttons"><button class="btn" type="button" id="cancelClipPreset">Abbrechen</button><button class="btn primary" type="submit">Vorlage speichern</button></div></form></dialog>
+<dialog id="seasonNuLigaDialog" class="season-h360-dialog" aria-labelledby="seasonNuLigaTitle">
+  <div class="clockhead"><h2 id="seasonNuLigaTitle">nuLiga – HTML-Demonstration</h2><button class="btn" id="seasonNuLigaClose" type="button">Schließen</button></div>
+  <p class="editor-help">Lokal gespeicherte, selbst bereitgestellte nuLiga-HTML-Seiten auswerten. Ein direkter Einzelabruf über den Browser kann an CORS scheitern. Kein automatisches Crawling, keine Umgehung von Zugangssperren. Für produktiven Datenbezug ist eine Berechtigung erforderlich.</p>
+  <label>nuLiga-Team- oder Staffel-URL<input class="field" id="seasonNuLigaUrl" type="url" placeholder="https://hvnb-handball.liga.nu/.../teamPortrait?teamtable=..."></label>
+  <div class="season-h360-inputs">
+    <label>Zu importierende Mannschaft<input class="field" id="seasonNuLigaTeam" placeholder="z. B. HC Bremen"></label>
+    <label>Gespeicherter Spielplan (HTML)<input class="field" type="file" accept=".html,.htm,text/html" id="seasonNuLigaHtml"></label>
+  </div>
+  <div class="season-tools"><button class="btn primary" type="button" id="seasonNuLigaPreview">HTML-Spielplan auswerten</button><button class="btn" type="button" id="seasonNuLigaSelectAll">Alle neuen markieren</button><button class="btn" type="button" id="seasonNuLigaSelectNone">Auswahl aufheben</button></div>
+  <p role="status" id="seasonNuLigaStatus" class="number-help">Team- oder Gruppenlink einfügen, HTML-Datei auswählen und Spielplan auswerten.</p>
+  <div id="seasonNuLigaList" class="season-h360-list"><div class="empty">Noch keine Begegnungen gelesen.</div></div>
+  <div class="footerbuttons"><button class="btn primary" type="button" id="seasonNuLigaImport" disabled>Ausgewählte Saisonspiele anlegen</button></div>
+  <hr>
+  <h3>Spielbericht und Kader ergänzen</h3>
+  <p class="editor-help">Offiziellen Spielbericht als HTML speichern, das dazugehörige Saisonspiel auswählen und die Datei zuordnen. Bestehende eigene Scouting-Events bleiben unverändert.</p>
+  <div class="season-h360-inputs"><label>Saisonspiel<select class="field" id="seasonNuLigaReportMatch"></select></label><label>Gespeicherter Spielbericht (HTML)<input class="field" type="file" accept=".html,.htm,text/html" id="seasonNuLigaReportHtml"></label></div>
+  <button class="btn" id="seasonNuLigaApplyReport" type="button">Bericht und Kader abgleichen</button>
+  <p role="status" class="number-help" id="seasonNuLigaReportStatus">Noch kein Bericht zugeordnet.</p>
+</dialog>
 <dialog id="seasonHandball360Dialog" class="season-h360-dialog">
   <div class="clockhead"><h2>Saison über Handball360 importieren</h2><button class="btn" id="seasonH360Close" type="button">Schließen</button></div>
   <p class="editor-help">Zuerst bestehende manuelle Spiele ihren Match-IDs zuordnen. Danach neue Spiele übernehmen. Zukünftige Spiele enthalten nur die verfügbaren Daten und bleiben aus der Statistik abgewählt. Über „Offizielle Daten aktualisieren“ können sie später ergänzt werden, ohne manuelle Ereignisse zu überschreiben. Die Schnittstelle nutzt nicht offiziell dokumentierte handball.net-Web-Endpunkte.</p>
@@ -1493,6 +1512,7 @@ import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterSta
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial } from "./src/season-handball360.js?v=2";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
+import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport } from "./src/nuliga-html.js?v=1";
 import { previewOfficialSeasonRosters, applyOfficialSeasonRosters } from "./src/season-roster-refresh.js?v=1";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver, createAliasedSeasonPlayerKeyResolver as coreCreateAliasedSeasonPlayerKeyResolver, setSeasonPlayerAlias as coreSetSeasonPlayerAlias, resolveSeasonPlayerAliasKey as coreResolveSeasonPlayerAliasKey } from "./src/season-core.js";
@@ -2126,6 +2146,107 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   let seasonArchiveTeam="";
   function archiveTeamName(){return seasonArchiveTeam.trim()||seasonPreferredTeam||"Mannschaft"}
   $("seasonArchiveTeam").onchange=e=>{seasonArchiveTeam=e.target.value.trim();e.target.value=seasonArchiveTeam;persistSeasonSoon()};
+  // The nuLiga HTML demo imports user-provided files. Existing season and
+  // Handball360 records are never overwritten simply by re-importing fixtures.
+  let nuLigaMatches=[];
+  function nuLigaGameKey(game){const source=game?.state?.officialSource;return source?.provider==="nuliga"
+    ?[String(source.group||""),String(source.championship||""),String(source.gameNumber||"")].join(":"):null}
+  function nuLigaFixtureKey(match){return [String(match.group||""),String(match.championship||""),String(match.gameNumber||"")].join(":")}
+  function refreshNuLigaReportSelect(){
+    const select=$("seasonNuLigaReportMatch"),old=select.value;select.replaceChildren(new Option("Saisonspiel auswählen …",""));
+    for(const game of seasonGames.filter(g=>g.state?.officialSource?.provider==="nuliga"))
+      select.add(new Option(game.state.gameName+" · "+game.state.officialSource.gameNumber,game.id));
+    if([...select.options].some(o=>o.value===old))select.value=old;
+  }
+  function renderNuLigaMatches(){
+    const host=$("seasonNuLigaList");host.replaceChildren();
+    const existing=new Set(seasonGames.map(nuLigaGameKey).filter(Boolean));
+    for(const match of nuLigaMatches){
+      const row=document.createElement("div");row.className="season-h360-row";
+      const input=document.createElement("input");input.type="checkbox";input.dataset.nuLigaKey=nuLigaFixtureKey(match);input.disabled=existing.has(nuLigaFixtureKey(match));input.checked=!input.disabled;
+      const main=document.createElement("div");main.className="season-h360-main";
+      const title=document.createElement("strong");title.textContent=match.home+" – "+match.away;
+      const meta=document.createElement("small");meta.textContent=match.date+(match.time?" · "+match.time:"")+" · Nr. "+match.gameNumber+(match.result?" · "+match.result:"");
+      main.append(title,meta);
+      const state=document.createElement("span");state.className="status";state.textContent=input.disabled?"Bereits angelegt":(match.result?"Ergebnis vorhanden":"Offen");
+      row.append(input,main,state);host.append(row);
+    }
+    if(!nuLigaMatches.length)host.innerHTML='<div class="empty">Noch keine Begegnungen gelesen.</div>';
+    nuLigaUpdateSelection();
+  }
+  function nuLigaUpdateSelection(){
+    const count=$("seasonNuLigaList").querySelectorAll('input[data-nu-liga-key]:checked').length;
+    $("seasonNuLigaImport").disabled=!count;
+    $("seasonNuLigaImport").textContent=count?"Ausgewählte Saisonspiele anlegen ("+count+")":"Ausgewählte Saisonspiele anlegen";
+  }
+  $("seasonNuLigaOpen").onclick=()=>{
+    if(!$("seasonNuLigaUrl").value)$("seasonNuLigaUrl").value="https://hvnb-handball.liga.nu/cgi-bin/WebObjects/nuLigaHBDE.woa/wa/teamPortrait?teamtable=2220643&pageState=vorrunde&championship=HVNB+26%2F27&group=489136";
+    if(!$("seasonNuLigaTeam").value)$("seasonNuLigaTeam").value=seasonPreferredTeam||"HC Bremen";
+    refreshNuLigaReportSelect();$("seasonNuLigaDialog").showModal();
+  };
+  $("seasonNuLigaClose").onclick=()=>$("seasonNuLigaDialog").close();
+  $("seasonNuLigaList").onchange=nuLigaUpdateSelection;
+  $("seasonNuLigaSelectAll").onclick=()=>{for(const input of $("seasonNuLigaList").querySelectorAll('input[data-nu-liga-key]'))if(!input.disabled)input.checked=true;nuLigaUpdateSelection()};
+  $("seasonNuLigaSelectNone").onclick=()=>{for(const input of $("seasonNuLigaList").querySelectorAll('input[data-nu-liga-key]'))input.checked=false;nuLigaUpdateSelection()};
+  $("seasonNuLigaPreview").onclick=async()=>{
+    const status=$("seasonNuLigaStatus"),button=$("seasonNuLigaPreview");
+    button.disabled=true;status.textContent="Spielplan wird ausgewertet …";
+    try{
+      const source=$("seasonNuLigaUrl").value;nuLigaUrlInfo(source);
+      const input=$("seasonNuLigaHtml").files?.[0];
+      let html;
+      if(input)html=await input.text();
+      else {
+        try{const response=await fetch(source,{credentials:"omit",mode:"cors"});
+          if(!response.ok)throw Error("HTTP "+response.status);
+          html=await response.text();
+        }catch{
+          throw Error("Direktabruf durch Browser/CORS nicht möglich. Öffne die nuLiga-Seite im Browser, speichere sie als HTML und wähle die Datei hier aus.");
+        }
+      }
+      nuLigaMatches=parseNuLigaScheduleHtml(html,source,{teamName:$("seasonNuLigaTeam").value.trim()});
+      renderNuLigaMatches();
+      status.textContent=nuLigaMatches.length+" Begegnungen erkannt. Bereits vorhandene Spiele sind gesperrt. Neue Spiele zunächst ohne Statistik.";
+    }catch(error){nuLigaMatches=[];renderNuLigaMatches();status.textContent="Importvorschau fehlgeschlagen: "+(error?.message||String(error))}
+    finally{button.disabled=false}
+  };
+  $("seasonNuLigaImport").onclick=()=>{
+    const keys=new Set([...$("seasonNuLigaList").querySelectorAll('input[data-nu-liga-key]:checked')].map(x=>x.dataset.nuLigaKey));
+    const existing=new Set(seasonGames.map(nuLigaGameKey).filter(Boolean));let count=0;
+    for(const match of nuLigaMatches){
+      const key=nuLigaFixtureKey(match);if(!keys.has(key)||existing.has(key))continue;
+      const raw=buildNuLigaSeasonGame(match,$("seasonNuLigaTeam").value.trim());
+      const game=coreNormalizeSeasonGame(raw.state,raw.fileName,raw.state[raw.ownTeam]?.name);
+      game.selected=false;game.ownTeam=raw.ownTeam;game.opponentTeam=raw.opponentTeam;
+      seasonGames.push(game);existing.add(key);count++;
+    }
+    if(count&&!seasonPreferredTeam)seasonPreferredTeam=$("seasonNuLigaTeam").value.trim();
+    renderSeason();persistSeasonSoon();refreshNuLigaReportSelect();renderNuLigaMatches();
+    $("seasonNuLigaStatus").textContent=count+" neue Saisonspiele angelegt, bestehende unverändert.";
+  };
+  $("seasonNuLigaApplyReport").onclick=async()=>{
+    const status=$("seasonNuLigaReportStatus"),id=$("seasonNuLigaReportMatch").value,file=$("seasonNuLigaReportHtml").files?.[0];
+    const game=seasonGames.find(g=>g.id===id);
+    if(!game||!file){status.textContent="Bitte Saisonspiel und gespeicherten HTML-Spielbericht auswählen.";return}
+    try{
+      const report=parseNuLigaReportHtml(await file.text());
+      if(!report.gameNumber){
+        if(!confirm("Die HTML-Datei enthält keine lesbare Spielnummer. Bericht ausdrücklich dem ausgewählten Spiel zuordnen?"))return;
+        report.gameNumber=String(game.state.officialSource.gameNumber);
+      }
+      if(String(report.gameNumber)!==String(game.state.officialSource.gameNumber))throw Error("Spielnummer stimmt nicht überein.");
+      const updated=applyNuLigaReport(game,report),index=seasonGames.indexOf(game);
+      seasonGames[index]=updated;
+      if(activeSeasonGameId===id){for(const side of ["home","away"])state[side].players=structuredClone(updated.state[side].players);
+        state.officialSource=structuredClone(updated.state.officialSource);
+        state.officialData=structuredClone(updated.state.officialData||{});
+        if(!(state.events||[]).length)state.events=structuredClone(updated.state.events);
+        update();}
+      renderSeason();persistSeasonSoon();await storeInternalSeason();
+      status.textContent="Bericht zugeordnet: "+report.rosters.home.length+" Heim- und "+report.rosters.away.length+
+        " Gastspieler, "+report.events.length+" offizielle Ereignisse. Eigenes Scouting bleibt erhalten.";
+    }catch(error){status.textContent="Bericht nicht übernommen: "+(error?.message||String(error))}
+  };
   let seasonH360Matches=[],seasonH360TeamId="",seasonH360Busy=false;
   function seasonH360SelectedRows(){
     return [...$("seasonH360List").querySelectorAll("input[data-match-id]:checked")]
