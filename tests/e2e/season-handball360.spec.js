@@ -48,7 +48,8 @@ test.beforeEach(async({page})=>{
     return route.fulfill({status:404,headers:cors,contentType:"application/json",body:'{"error":{"message":"Not found"}}'});
   });
   await page.goto("/");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
 });
 
 async function preview(page) {
@@ -186,7 +187,8 @@ test("opens a future season game in Setup and saves edits to the same archived r
   await page.locator("#saveBtn").click();
   await expect(page.locator("#setupSeasonGameStatus")).toContainText("Aktiv mit Saison verknüpft");
 
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const archived=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(archived.games).toHaveLength(1);
@@ -198,7 +200,8 @@ test("opens a future season game in Setup and saves edits to the same archived r
 
   await page.reload();
   await expect(page.locator("#setupSeasonGameStatus")).toContainText("Aktiv mit Saison verknüpft");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [next]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const restored=JSON.parse(await readFile(await next.path(),"utf8"));
   expect(restored.games).toHaveLength(1);
@@ -210,7 +213,8 @@ test("opens a future season game in Setup and saves edits to the same archived r
   await page.locator("#newGameManual").click();
   await page.locator("#setupGameName").fill("Unabhängiges Spiel");
   await page.locator("#setupGameName").dispatchEvent("change");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [last]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const unchanged=JSON.parse(await readFile(await last.path(),"utf8"));
   expect(unchanged.games[0].data.gameName).toBe("Vorbereitetes Spiel - überarbeitet");
@@ -231,7 +235,8 @@ test("opens an imported already-scouted match only for analysis and retains cust
   await page.locator("#setupCompetition").fill("Nachanalyse ergänzt");
   await page.locator("#setupCompetition").dispatchEvent("change");
   await page.locator("#saveBtn").click();
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const archived=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(archived.games).toHaveLength(1);
@@ -257,7 +262,8 @@ test("temporarily viewing a live-scouted season game does not disable later cont
   await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
   await page.locator("#setupSeasonContinue").click();
   await expect(page.locator('[data-tab="match"]')).toHaveClass(/active/);
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const season=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(season.games[0].data.isHistorical).toBe(false);
@@ -313,7 +319,8 @@ test("pregame Setup lineup refresh previews and replaces only the active match r
   await expect(page.locator("#setupSeasonGameStatus")).toContainText("Aktiv mit Saison verknüpft");
   await page.locator("#saveBtn").click();
 
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const archive=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(archive.games).toHaveLength(1);
@@ -348,7 +355,8 @@ test("pregame Setup roster refresh refuses missing Handball360 lineup without ch
   await page.locator("#setupSeasonRosterRefresh").click();
   await expect(page.locator("#setupSeasonRosterStatus")).toContainText("noch keine offizielle Aufstellung");
   await expect(page.locator("#setupOfficialRosterDialog")).not.toBeVisible();
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const archive=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(archive.games[0].data.home.players).toEqual(future.state.home.players);
@@ -391,7 +399,8 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   await page.locator("#setupSeasonAnalysis").click();
   // Export the season snapshot: "Kopie exportieren" may use a native
   // file picker instead of emitting a Playwright download.
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [beforeDownload]=await Promise.all([
     page.waitForEvent("download"),page.locator("#seasonExport").click()
   ]);
@@ -408,7 +417,8 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   await dialog.locator("#setupOfficialRosterConfirm").click();
   await expect(page.locator("#setupSeasonRosterStatus")).toContainText("Historischen Kader sicher abgeglichen");
   await page.locator("#saveBtn").click();
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
   const [download]=await Promise.all([
     page.waitForEvent("download"),page.locator("#seasonExport").click()
   ]);
