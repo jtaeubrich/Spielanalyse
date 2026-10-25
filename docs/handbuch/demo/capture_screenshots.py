@@ -127,7 +127,8 @@ def main():
             page.goto(app_url,wait_until="domcontentloaded")
             page.wait_for_function("() => typeof document.querySelector('#seasonImportInput')?.onchange === 'function'",timeout=30000)
             season=season_demo()
-            page.locator('[data-tab="season"]').click()
+            page.locator('[data-tab="setup"]').click()
+            page.locator("#setupModeSeason").click()
             page.locator("#seasonImportInput").set_input_files({
                 "name":"anonymisierte-saison-demo.json",
                 "mimeType":"application/json",
@@ -139,9 +140,11 @@ def main():
             page.locator('[data-tab="setup"]').click()
             page.locator("#setupSeasonGameSelect").select_option(value="sg-demo-378112")
             page.locator("#setupSeasonContinue").click()
-            page.locator('[data-tab="season"]').click()
+            page.locator('[data-tab="setup"]').click()
+            page.locator("#setupModeSeason").click()
             page.locator("#toast").wait_for(state="hidden",timeout=10000)
             page.screenshot(path=str(folder/"season-overview.png"),full_page=False)
+            page.locator('[data-tab="season"]').click()
             page.locator("#seasonStats").scroll_into_view_if_needed()
             page.screenshot(path=str(folder/"season-analytics.png"),full_page=False)
             page.locator('[data-tab="setup"]').click()
@@ -152,7 +155,8 @@ def main():
             page.locator("#setupOfficialRosterDialog[open]").wait_for(timeout=10000)
             page.screenshot(path=str(folder/"setup-lineup-review.png"),full_page=False)
             page.locator("#setupOfficialRosterCancel").click()
-            page.locator('[data-tab="season"]').click()
+            page.locator('[data-tab="setup"]').click()
+            page.locator("#setupModeSeason").click()
             # One manual game is deliberately left without its official match ID
             # to illustrate the reassociation UI without using private data.
             manual=season_demo()
