@@ -11,6 +11,17 @@ Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz erg
 - **Teams/Kader:** Spieler manuell verwalten oder aus unterstützten Dateien übernehmen; Trikotnummern vor Scouting prüfen.
 - **Datensicherung:** `Spiel speichern` aktualisiert ggf. eine geöffnete Datei, soweit der Browser das unterstützt; `Kopie exportieren` erzeugt eine neue JSON-Datei. iPhone/iPad können stattdessen Download/Teilen anbieten.
 
+## Schnelle Spielerwahl beim Live-Scouting
+
+Bei **Torabschluss**, **technischem Fehler** und **Strafe** erscheint eine nach Trikotnummern sortierte Spielerwahl. Auch die optionale **Assist-Zuordnung** nutzt denselben Spielerwähler.
+
+- **iPhone / kleine mobile Ansicht:** Zahlenblock mit sofortigem Präfix-Filter. Die Eingabe `1` zeigt nur Nummern, die mit `1` beginnen, beispielsweise `1`, `10`, `11`, `17` und `19`. Eine zweite Ziffer verfeinert den Filter. Erst das Antippen einer Trefferkachel ordnet einen Spieler zu; eine einzelne eingegebene Ziffer löst niemals eine automatische Zuordnung aus. Mit **⌫**, **C** oder **Löschen** kann die Eingabe korrigiert werden.
+- **iPad / größere Ansicht:** Die Spieler erscheinen in einem numerisch sortierten **4×4-Feld**. Bei mehr als 16 Spielern wechseln die Pfeiltasten zwischen den Seiten.
+- Die Auswahl **Unbekannt** bleibt verfügbar. Spieler ohne Trikotnummer sind auf dem iPhone über **Ohne Trikotnummer** erreichbar.
+- Die Einstellung **Schütze zuerst / Schütze zuletzt** unter **Setup → Einzelspiel → Torwurf-Erfassung** bleibt erhalten. Die ausgewählte Nummer wird weiterhin über die vorhandene Spieler-ID zugeordnet. Bei der Assistauswahl steht **Kein Assist** zur Verfügung.
+
+Die Spielerwahl verändert nicht automatisch bestehende Ereignisse oder deren Zeitstempel. Bereits gespeicherte Zuordnungen können weiterhin in der Ereignis-/Datenbearbeitung korrigiert werden.
+
 ## Navigation und lokale Saisonbibliothek
 
 - **Setup → Einzelspiel** enthält das Anlegen, Vorbereiten und Fortsetzen eines Spiels samt Kadern und Einstellungen.
