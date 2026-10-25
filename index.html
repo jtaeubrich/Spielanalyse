@@ -1558,7 +1558,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     {id:"standard-defense-by-player",name:"Alle Abwehraktionen je Spieler",builtIn:true,filters:{team:"all",player:"all",type:"defense",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"defender",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Abwehr_{Spieler}"}},
     {id:"standard-saves-by-keeper",name:"Alle Paraden je Torwart",builtIn:true,filters:{team:"own",player:"all",type:"save",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"keeper",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Paraden_{Spieler}"}}
   ];
-  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},activeSeasonGameId=null;
+  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},activeSeasonGameId=null,seasonLibraryId=null,seasonLibraryRecords=[],seasonWriteQueue=Promise.resolve();
   let gameRunning=false, gameBase=0, gameStarted=0;
   let videoRunning=false, videoBase=0, videoStarted=0;
   let liveClockRunning=false,liveClockBase=0,liveClockStarted=0,liveClockInitialized=false;
@@ -2606,7 +2606,15 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function renderSeason(){renderAnalysisGamePicker();renderSeasonLibrary();$("seasonMergePlayers").disabled=!seasonGames.length;renderSetupSeasonPicker();$("seasonArchiveTeam").value=seasonArchiveTeam;seasonPopulatePreferredTeam();const seasonFilter=$("seasonTeamFilter");if(seasonFilter){const own=seasonFilter.querySelector('option[value="own"]'),opponent=seasonFilter.querySelector('option[value="opponent"]');if(own)own.textContent=seasonPreferredTeam?"Mein Team · "+seasonPreferredTeam:"Mannschaft A (aus Spieldaten)";if(opponent)opponent.textContent=seasonPreferredTeam?"Gegner":"Mannschaft B (aus Spieldaten)"}const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
   $("seasonGameInput").onchange=event=>{const files=[...(event.target.files||[])];event.target.value="";if(files.length)loadSeasonFiles(files)};
   $("seasonUpdateInput").onchange=async event=>{const file=event.target.files?.[0],targetId=seasonUpdateTargetId;event.target.value="";seasonUpdateTargetId=null;if(!file||!targetId)return;try{await updateSeasonGameFromFile(file,targetId)}catch(error){toast(error?.message||"Saisonspiel konnte nicht aktualisiert werden")}};
-  $("seasonImportInput").onchange=async event=>{const file=event.target.files?.[0];event.target.value="";if(!file)return;try{const rawText=await file.text(),rawSeason=JSON.parse(rawText),restored=parseSeasonText(rawText,seasonCurrentOwnName());seasonName=restored.name;persistSession();activeSeasonGameId=null;persistSession();seasonGames=restored.games;seasonPlayerAliases=restored.playerAliases||{};seasonPreferredTeam=rawSeason?.preferredTeam||"";seasonArchiveTeam=rawSeason?.archiveTeam||"";for(const game of seasonGames){game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":"home"}renderSeason();persistSeasonSoon();toast(`Saison mit ${seasonGames.length} Spielen importiert`)}catch(error){toast(error?.message||"Saison konnte nicht importiert werden")}};
+  $("seasonImportInput").onchange=async event=>{
+    const file=event.target.files?.[0];event.target.value="";if(!file)return;
+    try{
+      const raw=JSON.parse(await file.text());
+      const parsed=normalizeSeasonArchive(raw,seasonCurrentOwnName());
+      await activateNewSeason({...raw,...parsed},parsed.name);
+      toast("Saison mit "+seasonGames.length+" Spielen als eigener Eintrag importiert");
+    }catch(error){toast(error?.message||"Saison konnte nicht importiert werden")}
+  };
   $("seasonExport").onclick=downloadSeasonExport;
   $("seasonArchiveExport").onclick=()=>{
     if(!seasonGames.length)return toast("Keine Saisonspiele zum Exportieren geladen.");
@@ -2618,10 +2626,17 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       toast("ZIP mit "+archive.index.games.length+" Spielen exportiert");
     }catch(error){toast(error?.message||"Team-Archiv konnte nicht erstellt werden")}
   };
-  $("seasonName").onchange=event=>{seasonName=event.target.value.trim()||"Saison";event.target.value=seasonName;persistSeasonSoon()};
+  $("seasonName").onchange=event=>{seasonName=event.target.value.trim()||"Saison";event.target.value=seasonName;renderSeasonLibrary();persistSeasonSoon()};
   $("seasonSelectAll").onclick=()=>{seasonGames.forEach(game=>game.selected=true);renderSeason();persistSeasonSoon()};
   $("seasonSelectNone").onclick=()=>{seasonGames.forEach(game=>game.selected=false);renderSeason();persistSeasonSoon()};
-  $("seasonClearGames").onclick=async()=>{if(seasonGames.length&&!confirm("Gespeicherte Saison wirklich leeren?"))return;persistSession();activeSeasonGameId=null;persistSession();seasonGames=[];seasonPlayerAliases={};renderSeason();await clearInternalSeason();toast("Saisonliste und lokaler Saison-Speicher geleert")};
+  $("seasonClearGames").onclick=async()=>{
+    if(seasonGames.length&&!confirm("Nur Spiele der aktuell ausgewählten Saison leeren? Andere gespeicherte Saisons bleiben erhalten."))return;
+    persistSession();activeSeasonGameId=null;persistSession();
+    seasonGames=[];seasonPlayerAliases={};analysisSelectedGameId="";
+    renderSeason();
+    try{await storeInternalSeason();toast("Spiele der aktiven Saison geleert")}
+    catch(error){toast("Saison konnte nicht gespeichert werden: "+error.message)}
+  };
   for(const id of ["seasonTeamFilter","seasonPlayerFilter","seasonTypeFilter","seasonZoneFilter","seasonTargetFilter","seasonPhaseFilter","seasonTagFilter"])$(id).onchange=renderSeasonAnalysis;
   $("seasonCompareAbsolute").onclick=()=>{seasonCompareMode="absolute";renderSeasonComparison()};
   $("seasonCompareAverage").onclick=()=>{seasonCompareMode="average";renderSeasonComparison()};
@@ -2634,11 +2649,103 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   let internalAutosaveTimer=null;
   async function readInternalGame(){try{return await readInternalRecord(INTERNAL_GAME_STORE,INTERNAL_GAME_KEY)}catch{return null}}
   async function storeInternalGame(text,fileName=defaultGameFileName()){const record=buildInternalGameRecord({text,fileName,gameName:state.gameName||"Handball-Spiel"});return writeInternalRecord(INTERNAL_GAME_STORE,record)}
-  async function storeInternalSeason(){const record={...buildSeasonRecord({name:seasonName||"Saison",games:seasonGames}),preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,playerAliases:seasonPlayerAliases};return writeInternalRecord(INTERNAL_SEASON_STORE,record)}
+  const seasonLibraryPointer="handballSpielanalyse.activeSeasonLibrary";
+  function freshSeasonLibraryId(){
+    return "library-"+(globalThis.crypto?.randomUUID?.()||Date.now()+"-"+Math.random().toString(36).slice(2));
+  }
+  function seasonSnapshot(){
+    return {...buildSeasonRecord({name:seasonName||"Saison",games:seasonGames}),
+      preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,playerAliases:seasonPlayerAliases};
+  }
+  function renderSeasonLibrary(){
+    const select=$("seasonLibrarySelect");if(!select)return;
+    const selected=seasonLibraryId;
+    select.replaceChildren();
+    const entries=[...seasonLibraryRecords];
+    if(selected&&!entries.some(s=>s.id===selected)){
+      entries.push({id:selected,name:seasonName,games:seasonGames});
+    }
+    entries.sort((a,b)=>String(a.name).localeCompare(String(b.name),"de"));
+    for(const entry of entries){
+      const title=entry.id===selected?seasonName:entry.name;
+      select.add(new Option(title+" · "+(entry.id===selected?seasonGames.length:entry.games?.length||0)+" Spiele",entry.id));
+    }
+    select.value=selected||"";
+    $("seasonLibraryStatus").textContent=entries.length+" gespeicherte Saison(en) auf diesem Gerät. "+
+      "Andere Saisons bleiben beim Wechsel erhalten; das laufende Match wird nicht gewechselt.";
+  }
+  function updateSeasonLibraryCache(record){
+    const index=seasonLibraryRecords.findIndex(s=>s.id===record.id);
+    if(index<0)seasonLibraryRecords.push(record);
+    else seasonLibraryRecords[index]=record;
+    renderSeasonLibrary();
+  }
+  async function storeInternalSeason(){
+    if(!seasonLibraryId)seasonLibraryId=freshSeasonLibraryId();
+    const id=seasonLibraryId,snapshot=seasonSnapshot(),record={...snapshot,id};
+    // Serialize writes: an older autosave must never overwrite a newly
+    // selected season. Keep 'current' as a backwards-compatible mirror.
+    seasonWriteQueue=seasonWriteQueue.catch(()=>{}).then(async()=>{
+      await writeInternalRecord(INTERNAL_SEASON_STORE,record);
+      if(seasonLibraryId===id)await writeInternalRecord(INTERNAL_SEASON_STORE,{...snapshot,id:INTERNAL_SEASON_KEY});
+    });
+    await seasonWriteQueue;
+    updateSeasonLibraryCache(record);
+    return record;
+  }
   async function readInternalSeason(){try{return await readInternalRecord(INTERNAL_SEASON_STORE,INTERNAL_SEASON_KEY)}catch{return null}}
   async function clearInternalSeason(){try{await deleteInternalRecord(INTERNAL_SEASON_STORE,INTERNAL_SEASON_KEY)}catch{}}
   let seasonPersistTimer=null;
-  function persistSeasonSoon(){clearTimeout(seasonPersistTimer);seasonPersistTimer=setTimeout(()=>storeInternalSeason().catch(()=>{}),150)}
+  function persistSeasonSoon(){
+    clearTimeout(seasonPersistTimer);
+    seasonPersistTimer=setTimeout(()=>storeInternalSeason().catch(error=>{
+      console.error("Saison konnte nicht gespeichert werden",error);
+    }),150);
+  }
+  async function switchSeasonLibrary(id){
+    if(!id||id===seasonLibraryId)return;
+    clearTimeout(seasonPersistTimer);
+    persistSession();
+    await storeInternalSeason();
+    const record=await readInternalRecord(INTERNAL_SEASON_STORE,id);
+    if(!record)throw Error("Diese Saison wurde im lokalen Speicher nicht gefunden.");
+    // Unlink the old scouting session without replacing its current data.
+    activeSeasonGameId=null;persistSession();
+    seasonLibraryId=id;localStorage.setItem(seasonLibraryPointer,id);
+    analysisSelectedGameId="";
+    applySeasonObject(record,{save:false});
+    await storeInternalSeason();
+  }
+  async function activateNewSeason(data,name){
+    clearTimeout(seasonPersistTimer);
+    persistSession();
+    if(seasonLibraryId)await storeInternalSeason();
+    activeSeasonGameId=null;persistSession();
+    seasonLibraryId=freshSeasonLibraryId();
+    localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
+    seasonName=String(name||"Neue Saison").trim()||"Neue Saison";
+    seasonGames=[];seasonPreferredTeam="";seasonArchiveTeam="";seasonPlayerAliases={};
+    analysisSelectedGameId="";
+    if(data)applySeasonObject(data,{save:false});
+    else renderSeason();
+    await storeInternalSeason();
+  }
+  $("seasonLibrarySelect").onchange=async event=>{
+    const value=event.target.value;
+    $("seasonLibrarySelect").disabled=true;
+    try{await switchSeasonLibrary(value);toast("Saison gewechselt: "+seasonName)}
+    catch(error){toast(error?.message||"Saisonwechsel fehlgeschlagen")}
+    finally{$("seasonLibrarySelect").disabled=false;renderSeasonLibrary()}
+  };
+  $("seasonNew").onclick=async()=>{
+    const suggestion="Neue Saison "+new Date().getFullYear()+"/"+String((new Date().getFullYear()+1)%100).padStart(2,"0");
+    const name=prompt("Name der neuen Saison:",suggestion);
+    if(name===null)return;
+    $("seasonNew").disabled=true;
+    try{await activateNewSeason(null,name);toast("Neue Saison angelegt")}
+    catch(error){toast(error?.message||"Neue Saison konnte nicht angelegt werden")}
+    finally{$("seasonNew").disabled=false}
+  };
   function seasonExportObject(){return {...buildSeasonExport({name:seasonName||"Saison",games:seasonGames}),preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,playerAliases:seasonPlayerAliases}}
   function downloadSeasonExport(){
     if(!seasonGames.length)return toast("Keine Saisonspiele zum Exportieren geladen.");
@@ -2646,13 +2753,39 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),safe+"_spielanalyse_saison.json");
     toast(`Saison mit ${seasonGames.length} Spielen exportiert`);
   }
-  function applySeasonObject(data){
+  function applySeasonObject(data,{save=true}={}){
     const restored=normalizeSeasonArchive(data,seasonCurrentOwnName());
-    seasonName=restored.name;seasonGames=restored.games;seasonPlayerAliases=restored.playerAliases||{};seasonPreferredTeam=data?.preferredTeam||"";seasonArchiveTeam=data?.archiveTeam||"";for(const game of seasonGames){game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":"home"}renderSeason();persistSeasonSoon();
+    seasonName=restored.name;seasonGames=restored.games;seasonPlayerAliases=restored.playerAliases||{};seasonPreferredTeam=data?.preferredTeam||"";seasonArchiveTeam=data?.archiveTeam||"";for(const game of seasonGames){game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":"home"} renderSeason();if(save)persistSeasonSoon();
   }
   async function restoreStoredSeason(){
-    const saved=await readInternalSeason();if(!saved?.games?.length)return false;
-    try{applySeasonObject(saved);return true}catch{return false}
+    try{
+      const records=await listInternalRecords(INTERNAL_SEASON_STORE);
+      seasonLibraryRecords=records.filter(s=>String(s.id||"").startsWith("library-"));
+      const selected=localStorage.getItem(seasonLibraryPointer);
+      const stored=seasonLibraryRecords.find(s=>s.id===selected);
+      const legacy=await readInternalSeason();
+      if(stored){
+        seasonLibraryId=stored.id;
+        applySeasonObject(stored,{save:false});
+      }else if(legacy?.games?.length){
+        // Migration: retain the complete old 'current' season unchanged,
+        // and add a copy to the multi-season library once.
+        seasonLibraryId=freshSeasonLibraryId();
+        applySeasonObject(legacy,{save:false});
+      }else if(seasonLibraryRecords.length){
+        seasonLibraryId=seasonLibraryRecords[0].id;
+        applySeasonObject(seasonLibraryRecords[0],{save:false});
+      }else{
+        seasonLibraryId=freshSeasonLibraryId();
+        renderSeason();
+      }
+      localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
+      await storeInternalSeason();
+      return Boolean(seasonGames.length);
+    }catch(error){
+      console.error("Gespeicherte Saison konnte nicht wiederhergestellt werden",error);
+      return false;
+    }
   }
   function queueInternalAutosave(copy){clearTimeout(internalAutosaveTimer);internalAutosaveTimer=setTimeout(()=>storeInternalGame(JSON.stringify(copy,null,2),currentGameFileName||defaultGameFileName()).catch(()=>{}),250)}
   function restoreSessionObject(saved){if(!saved?.state||!saved.state.home||!saved.state.away)return false;activeSeasonGameId=typeof saved.seasonGameId==="string"?saved.seasonGameId:null;state=migrateGameData(saved.state);ownTeam=["home","away"].includes(saved.ownTeam)?saved.ownTeam:ownTeam;myTeamLeft=saved.myTeamLeft!==false;analysisMode=saved.analysisMode==="video"?"video":"live";gameBase=Number(saved.gameBase??state.timer?.secondsElapsed??0)||0;videoBase=Number(state.video?.analysisClockMs||0);liveClockBase=videoBase;liveClockInitialized=analysisMode==="live";currentGameFileName=saved.currentGameFileName||null;currentGameFileHandle=null;gameRunning=videoRunning=liveClockRunning=false;normalize();restoreSavedVideoReference();return true}
