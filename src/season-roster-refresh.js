@@ -33,10 +33,13 @@ function pairedHistoricalPlayers(current, official) {
     let match = byId.length === 1 ? byId[0] : undefined;
     if (match === undefined && !byId.length) {
       const byName = [...remaining].filter(i =>
-        nameOf(incoming) && nameOf(current[i]) === nameOf(incoming) &&
-        (!idOf(current[i]) || idOf(current[i]) === id));
-      // Never guess between two names or override a different official ID.
-      if (byName.length === 1) match = byName[0];
+        nameOf(incoming) && nameOf(current[i]) === nameOf(incoming));
+      // A same-name player with a different official ID makes the name
+      // ambiguous too; preserve both legacy identities rather than guessing.
+      if (byName.length === 1 &&
+          (!idOf(current[byName[0]]) || idOf(current[byName[0]]) === id)) {
+        match = byName[0];
+      }
     }
     if (match !== undefined) remaining.delete(match);
     return { incoming, existing: match === undefined ? null : current[match] };
