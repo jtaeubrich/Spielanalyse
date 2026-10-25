@@ -147,6 +147,26 @@ Accept: application/json
 
 Die verwendeten handball.net-Endpunkte sind nicht Teil einer von uns kontrollierten API. Aenderungen auf Seiten von handball.net koennen deshalb Anpassungen am Proxy erforderlich machen.
 
+## nuLiga HTML-Demo: öffentlicher Einzelabruf
+
+Zusätzlich zu Handball360 akzeptiert der Proxy einen **gezielt durch den Nutzer ausgelösten** nuLiga-HTML-Abruf:
+
+```http
+GET /nuliga/html?url=<URL-ENCODED-NULIGA-URL>
+Authorization: Bearer <API_TOKEN>
+```
+
+Die Antwort ist JSON (`{source:"nuliga",url:"...",html:"..."}`). Der Parser und die Zuordnung der Saisonspiele bzw. Kader/Ereignisse laufen in der PWA über `src/nuliga-html.js`.
+
+- Nur `https://hvnb-handball.liga.nu`, nur die öffentlichen Pfade `teamPortrait`, `groupPage`, `groupMeetingReport` und `clubMeetingReport`.
+- HTTPS ohne Zugangsdaten; keine Redirects, keine Anmeldung, keine freie Proxy-Adresse.
+- Maximal 2 MB HTML pro Benutzeraktion, Zeitlimit 12 Sekunden, keine Speicherung und keine Hintergrundjobs.
+- Eine nuLiga-Teamseite wird, soweit sie die Staffelreferenz trägt, clientseitig in den Gesamtspielplan-Link derselben Staffel umgesetzt; ein Klick lädt jeweils eine Seite.
+- **Nicht produktionsreif ohne Freigabe:** nuLiga/HVNB untersagen automatisiertes Auslesen nach ihren Hinweisen. Zugriffsrechte und die Zulässigkeit der Weiterverarbeitung vor einem öffentlichen oder kommerziellen Einsatz mit dem Anbieter klären.
+- Auch der Cloud-Proxy kann HTTP-Ablehnungen, Server-Sperren oder HTML-Änderungen nicht überbrücken. Die PWA bietet eine optionale lokale HTML-Auswahl als technische Reserve.
+
+Tests: `node --test cloud-run-proxy/nuliga-fetch.test.js`.
+
 ## Vereinslogos
 
 `GET /logo?url=<URL-ENCODED-LOGO-URL>` ruft ausschliesslich HTTPS-Vereinslogos vom Host `handball360.isquad.de` und dem Pfad `/images/afiliacion_clubs/<NUMMER>/square_<NAME>.(jpg|jpeg|png|webp)` ab. Der Endpunkt nutzt den bestehenden Bearer-Token und dieselbe CORS-Origin-Liste; maximale Bildgroesse: 1 MB. Es gibt keine frei waehlbaren Upstream-Hosts.
