@@ -28,6 +28,7 @@ async function expectLiveFullWidth(page){
 
 test("Live Scouting fills available width, hides video and all event lists",async({page})=>{
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="match"]').click();
   await expectLiveFullWidth(page);
   await expect(page.locator("#liveUndoBtn")).toBeDisabled();
@@ -42,6 +43,7 @@ test("Live Scouting fills available width, hides video and all event lists",asyn
 
 test("live event capture stays full width while review temporarily shows video and events",async({page})=>{
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   const game=JSON.parse(await readFile(fixture,"utf8"));
   game.isHistorical=false;
   game.isVideoscoutingFile=false;
