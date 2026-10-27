@@ -8,6 +8,7 @@ const fixture=path.resolve(path.dirname(fileURLToPath(import.meta.url)),
 
 async function openDemo(page,{assist=false,defense=false}={}){
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   const source=JSON.parse(await readFile(fixture,"utf8"));
   source.shotCapture={...source.shotCapture,assist,defense};
   await page.locator("#continueGameInput").setInputFiles({
