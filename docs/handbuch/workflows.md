@@ -9,7 +9,7 @@
 2. **Eine spätere Videoüberprüfung ist geplant?** → W2.
 3. **Ein Video ist schon vorhanden und Ereignisse müssen erst erfasst werden?** → W3.
 
-> Die Auswahl **Scouting-Modus** befindet sich im **Match-Tab** und bietet **Live Scouting** oder **Video Scouting**. Der Code verhindert den Wechsel dieses Grundmodus, sobald Ereignisse erfasst wurden. Eine spätere **Video-Nachanalyse** der Live-Ereignisse ist eine eigene Funktion, kein Umschalten auf Video Scouting.
+> Die Auswahl **Scouting-Modus** befindet sich im **Match-Tab** und bietet **Live Scouting** oder **Video Scouting**. Der Code verhindert den Wechsel dieses Grundmodus, sobald Ereignisse erfasst wurden. **Video-Nachanalyse** von Live-Ereignissen ist ein eigener Arbeitsmodus, kein Umschalten auf Video Scouting. Über **Live-Scouting abschließen** wird diese Nachanalyse dauerhaft aktiviert; reines Video-Scouting bleibt über **Fortsetzen** editierbar.
 
 ## W1 – Ausschließlich Live Scouting
 
@@ -57,13 +57,13 @@
 
 1. Spiel wie in **W1** einrichten; **Realzeit starten → Spielzeit starten → Events erfassen**.
 2. Während Spielunterbrechungen die **Spieluhr** pausieren, die **Realzeit** bei durchgehendem Video weiterlaufen lassen; bei Halbzeitwechsel die Zeitbezüge kontrollieren.
-3. Ergebnis, Events und Realzeitbezug prüfen, anschließend die Spiel-JSON sichern.
+3. Ergebnis, Events und Realzeitbezug prüfen und die Spiel-JSON sichern. Wenn vor Ort keine weitere Live-Erfassung stattfinden soll, im Match-Tab **Live-Scouting abschließen** wählen und bestätigen. Anschließend ist nur noch die Video-Nachanalyse zur Ereigniserfassung nutzbar; bereits erfasste Ereignisse bleiben erhalten.
 4. Optional: Video separat aufnehmen oder später beziehen, z. B. als heruntergeladene Sportlounge-MP4.
 
 ### Teil B – Nach dem Spiel mit Video
-5. **Setup:** Gesicherte Spieldatei laden bzw. Spiel fortsetzen; bei einer Saison über **Spiel aus Saison laden → Für Analyse öffnen** auswählen.
+5. **Start → Saison → Laden** oder **Start → Einzelspiel → Laden**: Das vorhandene Spiel mit **Fortsetzen** öffnen (nicht bloß mit **Analysieren**).
 6. **Match:** Video über `Lokales Video` oder einen unterstützten YouTube-Link laden.
-7. **Match:** `Video-Nachanalyse starten` benutzen. Die bereits erfassten Live-Zeitstempel bleiben dabei unverändert.
+7. **Match:** Sofern Live-Scouting noch nicht abgeschlossen wurde, **Video-Nachanalyse starten** verwenden. Bei abgeschlossenem Live-Scouting wird die Video-Nachanalyse automatisch aktiviert und kann nicht wieder in Live-Scouting zurückgeschaltet werden. Die ursprünglichen Live-Zeitstempel bleiben unverändert.
 8. **Synchronisieren:** Video auf den Anpfiff H1 setzen, **H1** markieren; für H2 wiederholen. Gegebenenfalls Korrektur der Video-/Spielzeit vornehmen.
 9. **Ereignisse durchgehen:** Eventliste nutzen und an passende Videoabschnitte springen. Im Event-Detail fehlerhafte oder fehlende Angaben korrigieren. Bei neuen Events beachten, ob die Zeit aus dem Video und/oder der Spielzeit übernommen wird.
 10. **Coaching:** Im Event-Kontext Zeichnungen ergänzen, auf Sichtbarkeit und Startzeit achten; aus dem Video-Tab gefilterte Szenen/Clips vorbereiten.
@@ -94,7 +94,7 @@
 5. **Ereignisse erfassen:** Mit dem Video an die relevante Szene gehen; das neue Event im Match-Tab erzeugen und beobachtbare Details zuordnen. Ereignisse entlang der Videoposition überprüfen.
 6. **Szenen prüfen:** Events auswählen, ihre Daten bearbeiten, Zeichnungen ggf. im Event-Kontext anlegen.
 7. **Auswerten:** `Analyse` und ggf. `Video` für Filterung und Clips nutzen.
-8. **Sichern:** Spiel-JSON speichern/exportieren; erzeugte Clips gesondert sichern.
+8. **Sichern:** Spiel-JSON speichern/exportieren; erzeugte Clips gesondert sichern. Über **Fortsetzen** kann auch ein vollständig videobasiert erfasstes Saisonspiel später im Video-Scouting weiterbearbeitet werden. Ein Wechsel zu Live-Scouting nach dem ersten Event ist gesperrt.
 
 **Ergebnis:** Eine Eventanalyse, deren primärer zeitlicher Bezug vom Video stammt.
 
