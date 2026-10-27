@@ -2,6 +2,19 @@
 
 Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz ergänzt den [Saison-/Einzelspiel-Einstieg](saison-workflow.md) und die [Scouting-Workflows](workflows.md), statt sie zu ersetzen.
 
+## Start: Einfacher Einstieg
+
+Die PWA öffnet standardmäßig die Registerkarte **Start**, ohne die zuletzt gespeicherte Spielsession oder eine gespeicherte Saison zu verändern.
+
+1. **Saison** oder **Einzelspiel** mit einer der beiden großen Kacheln auswählen.
+2. Anschließend **Öffnen** (bereits lokal in dieser PWA gespeichert), **Importieren** (JSON-Datei von einem anderen Gerät) oder **Neu anlegen** wählen.
+3. Beim Öffnen einer Saison wird die lokal gespeicherte Saisonbibliothek angezeigt. Nach der Auswahl erscheint die **Saisonübersicht** mit allen Spielen; dort **Fortsetzen** für Live-Scouting bzw. **Analysieren** für die Einzelspielanalyse antippen. **Saisonanalyse öffnen** zeigt die gemeinsame Statistik. Über **Saison verwalten** gelangst du zu den erweiterten Verwaltungsfunktionen in Setup.
+4. Beim Öffnen eines Einzelspiels werden die zuletzt bearbeitete Session und die Saisonspiele aus der lokalen Bibliothek angeboten. Auch Spiele anderer gespeicherter Saisons lassen sich öffnen; die dazugehörige Saison wird zuvor ausgewählt.
+5. **Einzelspiel → Neu anlegen** verwendet weiterhin die vorhandene Auswahl **Manuell anlegen / Handball360**. **Saison → Neu anlegen** erstellt einen neuen, unabhängigen Saisoneintrag. **Importieren** verwendet weiterhin die bekannten JSON-Importer.
+6. Im Startbildschirm führt **Schneller Wiedereinstieg** direkt zur zuletzt geöffneten Spielsession oder aktiven Saison, sofern verfügbar.
+
+Alle Expertenregister **Setup**, **Match**, **Analyse**, **Saisonanalyse**, **Video** und **Daten editieren** bleiben erreichbar. Start ist eine reine Navigationshilfe; das Betreten der Startansicht verändert keine Spieldaten. Das Wechseln einer Saison ersetzt das im Match-Tab aktuell geöffnete Spiel nicht automatisch. Gespeicherte Daten sind gerätegebunden; zur Übertragung weiterhin JSON exportieren/importieren.
+
 ## Setup
 - **Neues Spiel:** Ein Spiel neu anlegen; im Dialog existiert die Option `Manuell anlegen`.
 - **Spiel fortsetzen / Spiel laden:** Vorhandene JSON-Datei öffnen bzw. wiederverwenden; den angezeigten Spielstand prüfen.
