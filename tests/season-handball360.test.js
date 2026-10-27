@@ -8,7 +8,9 @@ import {
   seasonMatchIdentity,
   seasonScheduleStatus,
   buildHandball360SeasonGame,
-  appendNewHandball360SeasonGames
+  appendNewHandball360SeasonGames,
+  officialSeasonLogoEntries,
+  mergeOfficialSeasonLogoRecord
 } from "../src/season-handball360.js";
 import {
   validateTeamScheduleRequest,
@@ -66,6 +68,33 @@ describe("Handball360 team season import", () => {
     expect(seasonMatchIdentity(game)).toBe("378107");
     expect(() => buildHandball360SeasonGame(raw, "378107", "99999", summary)).toThrow();
     expect(() => buildHandball360SeasonGame(raw, "999999", "85814", summary)).toThrow();
+  });
+
+
+  test("keeps official club logos on season game without copying image data into games", () => {
+    const fixture=structuredClone(raw);
+    fixture.match.data[0].local.club={id:"club-200",logo:"https://handball360.isquad.de/images/afiliacion_clubs/5512/square_home.jpg"};
+    fixture.match.data[0].visitor.club={id:"club-85814",logo:"https://handball360.isquad.de/images/afiliacion_clubs/5512/square_away.jpg"};
+    const game=buildHandball360SeasonGame(fixture,"378107","85814",summary);
+    const entries=officialSeasonLogoEntries(game);
+    expect(entries).toHaveLength(2);
+    expect(entries.map(e=>e.teamName)).toEqual([m.local.name,m.visitor.name]);
+    expect(entries[0].logoUrl).toContain("square_home.jpg");
+    expect(entries[1].teamId).toBe("85814");
+    expect(game.state.officialSource.clubLogos.visitor.clubId).toBe("club-85814");
+    expect(game.state.officialData).toBeUndefined();
+    const manual={id:"custom",teamName:m.local.name,players:[{id:"p1",isTW:true}],
+      logoDataUrl:"data:image/png;base64,bWFudWFs",logoUrl:"https://my.example/logo.png"};
+    const retained=mergeOfficialSeasonLogoRecord(manual,entries[0]);
+    expect(retained.logoDataUrl).toBe(manual.logoDataUrl);
+    expect(retained.logoUrl).toBe(manual.logoUrl);
+    expect(retained.players).toEqual(manual.players);
+    const blank={id:"new",teamName:m.visitor.name,players:[]};
+    const filled=mergeOfficialSeasonLogoRecord(blank,entries[1]);
+    expect(filled.logoUrl).toBe(entries[1].logoUrl);
+    expect(filled.handball360TeamId).toBe("85814");
+    expect(filled.handball360ClubId).toBe("club-85814");
+    expect(officialSeasonLogoEntries({state:{home:{name:"Test"},officialSource:{clubLogos:{home:{logoUrl:"http://evil.test/logo"}}}}})).toEqual([]);
   });
 
   test("never overwrites existing scouting events, video data or comment fields", () => {

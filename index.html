@@ -1691,7 +1691,7 @@ import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeS
 import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection, applyStoredGoalkeeperMarkings } from "./src/roster.js";
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
-import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial } from "./src/season-handball360.js?v=2";
+import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
@@ -2778,6 +2778,65 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const el of $("seasonH360List").querySelectorAll("[data-h360-refresh], .season-h360-associate button, .season-h360-associate select"))el.disabled=busy;
     seasonH360UpdateCount();
   }
+  // Season fixture import and "Offizielle Daten aktualisieren" share the same
+  // non-destructive club-logo synchronisation. No player or goalkeeper changes.
+  async function syncOfficialSeasonClubLogos(games) {
+    const result={downloaded:0,failed:[],updated:0};
+    const cachedLogos=new Map();
+    for(const game of games){
+      for(const entry of officialSeasonLogoEntries(game)){
+        try{
+          const saved=await readRosterCollection(entry.teamName,entry.players);
+          const original=saved||buildRosterRecord({
+            id:rosterTeamKey(entry.teamName),teamName:entry.teamName,players:[]
+          });
+          const updated=mergeOfficialSeasonLogoRecord(original,entry);
+          if(!updated.logoDataUrl&&updated.logoUrl){
+            if(!cachedLogos.has(updated.logoUrl)){
+              cachedLogos.set(updated.logoUrl,(async()=>{
+                const response=await fetch(HANDBALL_NET_WORKER+"/logo?url="+encodeURIComponent(updated.logoUrl),{
+                  headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN}
+                });
+                if(!response.ok)throw Error("Logo-Proxy HTTP "+response.status);
+                const blob=await response.blob();
+                if(!["image/png","image/jpeg","image/webp"].includes(blob.type)||blob.size>1024*1024)
+                  throw Error("Logoformat oder Dateigröße nicht unterstützt");
+                return new Promise((resolve,reject)=>{
+                  const reader=new FileReader();
+                  reader.onload=()=>resolve(reader.result);
+                  reader.onerror=()=>reject(Error("Logo konnte nicht gelesen werden"));
+                  reader.readAsDataURL(blob);
+                });
+              })().catch(error=>({error:error?.message||String(error)})));
+            }
+            const loaded=await cachedLogos.get(updated.logoUrl);
+            if(typeof loaded==="string"&&/^data:image\/(png|jpeg|webp);base64,/i.test(loaded)){
+              updated.logoDataUrl=loaded;
+              result.downloaded++;
+            }else{
+              const error=loaded?.error||"Ungültige Bilddaten";
+              if(!result.failed.some(item=>item.startsWith(entry.teamName+":")))
+                result.failed.push(entry.teamName+": "+error);
+            }
+          }
+          if(!saved||JSON.stringify(updated)!==JSON.stringify(saved)){
+            await writeInternalRecord(INTERNAL_ROSTER_STORE,updated);
+            result.updated++;
+          }
+        }catch(error){
+          result.failed.push(entry.teamName+": "+(error?.message||String(error)));
+        }
+      }
+    }
+    if(result.updated)await refreshKnownRosterOptions();
+    return result;
+  }
+  function seasonLogoStatus(result){
+    if(!result)return "";
+    return (result.downloaded?" · "+result.downloaded+" Vereinslogos übernommen":"")+
+      (result.failed.length?" · Logos nicht verfügbar: "+result.failed.slice(0,2).join("; "):"");
+  }
+
   async function fetchSeasonH360Match(match){
     const response=await fetch(HANDBALL_NET_WORKER+"/match/"+encodeURIComponent(match.id),{
       headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"}
@@ -2807,7 +2866,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const fetched=await fetchSeasonH360Match(match);
       seasonGames[index]=enrichSeasonGameFromOfficial(seasonGames[index],fetched);
       renderSeason();persistSeasonSoon();renderSeasonH360Preview();
-      $("seasonH360Status").textContent="Match "+match.id+" aktualisiert. Eigene Scouting-Daten wurden beibehalten.";
+      const logos=await syncOfficialSeasonClubLogos([fetched]);
+      $("seasonH360Status").textContent="Match "+match.id+" aktualisiert. Eigene Scouting-Daten wurden beibehalten."+seasonLogoStatus(logos);
     }catch(error){$("seasonH360Status").textContent="Aktualisierung fehlgeschlagen: "+(error?.message||String(error))}
     finally{seasonH360SetBusy(false)}
   }
@@ -2948,6 +3008,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       }
       const merged=appendNewHandball360SeasonGames(seasonGames,newGames);
       seasonGames=merged.games;
+      $("seasonH360Status").textContent="Übernehme Vereinslogos in die Mannschaftssammlung …";
+      const logos=await syncOfficialSeasonClubLogos(newGames);
       if(!seasonPreferredTeam&&!merged.skipped&&clubTeamName&&merged.added>0)seasonPreferredTeam=clubTeamName;
       for(const game of seasonGames){
         game.ownTeam=seasonOwnTeam(game);
@@ -2956,7 +3018,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       renderSeason();persistSeasonSoon();renderSeasonH360Preview();
       const summary=merged.added+" neu importiert · "+(skipped+merged.skipped)+" übersprungen · "+
         errors.length+" fehlgeschlagen.";
-      $("seasonH360Status").textContent=summary+(errors.length?" "+errors.slice(0,3).join(" | "):"");
+      $("seasonH360Status").textContent=summary+seasonLogoStatus(logos)+(errors.length?" "+errors.slice(0,3).join(" | "):"");
       toast(summary);
     }finally{seasonH360SetBusy(false)}
   };

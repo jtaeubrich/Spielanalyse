@@ -98,7 +98,9 @@ export function buildHandball360SeasonGame(raw, matchId, teamId, scheduleMatch =
     officialSource: {
       provider: "handball.net", matchId: id, matchDate: x.matchDate || null,
       venue: x.venue || null, competition: x.competition || null,
-      rosterSource: x.rosterSource, importedAt: new Date().toISOString()
+      rosterSource: x.rosterSource, importedAt: new Date().toISOString(),
+      // Keep only lightweight official club metadata; images stay in the team collection.
+      clubLogos: x.clubLogos
     }
   };
   const filename = "handball360_" + id + ".json";
@@ -106,6 +108,30 @@ export function buildHandball360SeasonGame(raw, matchId, teamId, scheduleMatch =
   game.ownTeam = ownTeam;
   game.opponentTeam = ownTeam === "home" ? "away" : "home";
   return game;
+}
+
+// The season import stores official logo references, while actual image data
+// belongs in the persistent team collection (shared by matchday and other games).
+export function officialSeasonLogoEntries(game) {
+  const logos=game?.state?.officialSource?.clubLogos||{};
+  return ["home","away"].flatMap(side=>{
+    const team=game?.state?.[side]||{};
+    const info=logos?.[side]||{};
+    const teamName=String(team.name||"").trim();
+    const logoUrl=String(info.logoUrl||"").trim();
+    if(!teamName||!/^https:\/\//i.test(logoUrl))return [];
+    return [{teamName,players:team.players||[],logoUrl,
+      teamId:String(info.teamId||""),clubId:String(info.clubId||"")}];
+  });
+}
+
+export function mergeOfficialSeasonLogoRecord(record,entry) {
+  const updated={...record};
+  // Never overwrite a manually uploaded or previously stored image.
+  if(!updated.handball360TeamId&&entry.teamId)updated.handball360TeamId=entry.teamId;
+  if(!updated.handball360ClubId&&entry.clubId)updated.handball360ClubId=entry.clubId;
+  if(!updated.logoDataUrl&&entry.logoUrl)updated.logoUrl=entry.logoUrl;
+  return updated;
 }
 
 // No automatic replacement, even if handball.net gains events later.
