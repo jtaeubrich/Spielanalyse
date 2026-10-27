@@ -11,6 +11,22 @@ Die Spielanalyse unterstützt zwei organisatorische Einstiege. Die eigentliche E
 | Nachanalyse einer Saisonbegegnung | **Setup → Spiel aus Saison laden → Für Analyse öffnen** | Dieselbe Saisonbegegnung, keine zusätzliche Kopie |
 | Dateien zur Archivierung/Übertragung | **Setup → Saison → Saison exportieren** oder **Team-Archiv (ZIP) exportieren** | Exportierte Momentaufnahme; kein automatischer Abgleich mit früher heruntergeladenen Dateien |
 
+## Fehlende Schützen mit dem nuLiga-Spielbericht ergänzen
+
+Ist ein bereits live gescoutetes Spiel Teil der Saison, lässt sich der offizielle Bericht direkt am vorhandenen Saisonspiel abgleichen:
+
+1. Das Live-Spiel zunächst **speichern**, danach unter **Setup → Saison → Saison exportieren** eine JSON-Sicherung erstellen.
+2. Unter **Setup → Saison** die richtige Saison aktivieren und **Saisonspiele** aufklappen.
+3. Bei der betreffenden Begegnung **Protokollabgleich** wählen. Das funktioniert für manuell erstellte und Handball360-verknüpfte Spiele ebenso wie für nuLiga-Spiele.
+4. Die vollständige nuLiga-**Spielbericht-URL** eingeben oder die HTML-Datei auswählen, dann **Offizielles Protokoll laden und vergleichen**.
+5. Die Vorschau vergleicht eigene unzugeordnete Tore und Strafereignisse mit der offiziellen Liste nach Mannschaft, Ereignistyp, Spielstand und Spielzeit. Eindeutige Treffer sind vorausgewählt; Vorschläge nur nach Zeitnähe müssen ausdrücklich geprüft werden.
+6. Nicht passende Vorschläge abwählen oder pro Ereignis einen anderen passenden offiziellen Eintrag auswählen. Es darf niemals derselbe offizielle Eintrag mehreren eigenen Ereignissen zugeordnet werden.
+7. **Kader, Protokoll und ausgewählte Schützen übernehmen** tippen und den Bestätigungsdialog akzeptieren.
+
+Die Übernahme ergänzt **ausschließlich Spieler-ID, Nummer und Namen** an ausgewählten bereits vorhandenen Scouting-Ereignissen. Eigene Wurfpositionen, Wurfziele, Kommentare, Ereignisanzahl, Spielstand und ursprüngliche Zeit-/Videoangaben bleiben erhalten. Offizielle Ereignisse werden zur späteren Kontrolle **separat** gespeichert und nicht als zusätzliche Tore gezählt. Wenn kein Spieler eindeutig aus dem offiziellen Kader hervorgeht, wird keine Spielerzuordnung vorgenommen. Ein erneuter Import zeigt nur noch Ereignisse ohne Spielerzuordnung.
+
+**Wichtig:** Vor dem Bestätigen Spielnummer, Heim-/Gastseite und Mannschaften prüfen. Bei einem manuell bzw. über Handball360 angelegten Spiel fragt die App ausdrücklich nach, ob die nuLiga-Spielnummer dieser Begegnung zugeordnet werden darf. Es erfolgt keine automatische Korrektur von Ereignistypen, Zeiten, Toren oder bereits eingetragenen Schützen.
+
 ## Eine Saison erstmals einrichten
 
 ![Saisonspielplan in der echten PWA – anonymisierte Demodaten](images/generated/season-import-preview-desktop.jpg)
