@@ -475,7 +475,15 @@
       .setup-card .roster-tools>label[for="importKnownTeams"]{flex:1 1 100%;width:100%}
       .setup-card label:has(> #knownRosterLogoInput){display:block;min-width:0;margin:12px 0}
       .setup-card details>summary{overflow-wrap:anywhere;white-space:normal}
-      .season-games-details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+      .protocol-rows{display:grid;gap:9px;max-height:52vh;overflow:auto;margin:12px 0 16px}
+    .protocol-row{display:grid;grid-template-columns:auto minmax(120px,1fr) minmax(170px,1.4fr);gap:10px;align-items:center;background:#0b2531;border:1px solid var(--line);padding:10px;border-radius:10px}
+    .protocol-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--cyan)}
+    .protocol-row select{width:100%;min-width:0}
+    .protocol-local{font-weight:750}.protocol-local small{display:block;color:var(--muted);font-weight:400}
+    .protocol-row.suggested{border-color:#246474}
+    .protocol-row.manual{border-color:#796a3d}
+    @media(max-width:620px){.protocol-row{grid-template-columns:auto minmax(0,1fr)}.protocol-row select{grid-column:2}}
+    .season-games-details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
       .season-games-details>summary{cursor:pointer;font-weight:700;padding:6px 0}
       .season-games-details>summary .badge{margin-left:8px;font-weight:400}
     }
@@ -1374,6 +1382,24 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
   <button class="btn" id="seasonNuLigaApplyReport" type="button">Bericht online laden und abgleichen</button>
   <p role="status" class="number-help" id="seasonNuLigaReportStatus">Noch kein Bericht zugeordnet.</p>
 </dialog>
+<dialog id="seasonProtocolDialog" class="season-h360-dialog" aria-labelledby="seasonProtocolTitle">
+  <div class="clockhead"><h2 id="seasonProtocolTitle">Scouting mit offiziellem Spielbericht abgleichen</h2><button class="btn" id="seasonProtocolClose" type="button">Schließen</button></div>
+  <p id="seasonProtocolGame" class="editor-help"></p>
+  <p class="editor-help">Der Spielbericht wird nur auf Klick geladen. Bestehende Tore, Spielzeiten, Wurfpositionen, Videos und Kommentare bleiben erhalten. Es werden ausschließlich ausdrücklich bestätigte Schützen-/Spielerzuordnungen ergänzt.</p>
+  <label>nuLiga-Spielbericht-URL<input class="field" type="url" id="seasonProtocolUrl" placeholder="https://hvnb-handball.liga.nu/.../groupMeetingReport?meeting=..."></label>
+  <details><summary>Optional: Spielbericht als HTML-Datei</summary><input class="field" type="file" accept=".html,.htm,text/html" id="seasonProtocolFile"></details>
+  <div class="season-tools"><button class="btn primary" id="seasonProtocolLoad" type="button">Offizielles Protokoll laden und vergleichen</button></div>
+  <p role="status" id="seasonProtocolStatus" class="number-help">Noch kein Spielbericht geladen.</p>
+  <div id="seasonProtocolPreview" hidden>
+    <div class="season-tools">
+      <button type="button" class="btn" id="seasonProtocolSafe">Eindeutige Treffer auswählen</button>
+      <button type="button" class="btn" id="seasonProtocolNone">Alle Zuordnungen abwählen</button>
+    </div>
+    <p class="editor-help" id="seasonProtocolSummary"></p>
+    <div id="seasonProtocolRows" class="protocol-rows"></div>
+    <button class="btn primary" id="seasonProtocolApply" type="button">Kader, Protokoll und ausgewählte Schützen übernehmen</button>
+  </div>
+</dialog>
 <dialog id="seasonHandball360Dialog" class="season-h360-dialog">
   <div class="clockhead"><h2>Saison über Handball360 importieren</h2><button class="btn" id="seasonH360Close" type="button">Schließen</button></div>
   <p class="editor-help">Zuerst bestehende manuelle Spiele ihren Match-IDs zuordnen. Danach neue Spiele übernehmen. Zukünftige Spiele enthalten nur die verfügbaren Daten und bleiben aus der Statistik abgewählt. Über „Offizielle Daten aktualisieren“ können sie später ergänzt werden, ohne manuelle Ereignisse zu überschreiben. Die Schnittstelle nutzt nicht offiziell dokumentierte handball.net-Web-Endpunkte.</p>
@@ -1560,7 +1586,8 @@ import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterSta
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial } from "./src/season-handball360.js?v=2";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
-import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport } from "./src/nuliga-html.js?v=2";
+import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
+import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
 import { previewOfficialSeasonRosters, applyOfficialSeasonRosters } from "./src/season-roster-refresh.js?v=1";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver, createAliasedSeasonPlayerKeyResolver as coreCreateAliasedSeasonPlayerKeyResolver, setSeasonPlayerAlias as coreSetSeasonPlayerAlias, resolveSeasonPlayerAliasKey as coreResolveSeasonPlayerAliasKey } from "./src/season-core.js";
@@ -2307,6 +2334,157 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("seasonArchiveTeam").onchange=e=>{seasonArchiveTeam=e.target.value.trim();e.target.value=seasonArchiveTeam;persistSeasonSoon()};
   // The nuLiga HTML demo imports user-provided files. Existing season and
   // Handball360 records are never overwritten simply by re-importing fixtures.
+
+  // Reconcile any existing season match, including manually scouted and H360
+  // games. Only a user-confirmed patch can change scouting attribution.
+  let seasonProtocolGameId=null,seasonProtocolReport=null,seasonProtocolDraft=null;
+  function openSeasonProtocol(id){
+    const game=seasonGames.find(g=>g.id===id);if(!game)return;
+    seasonProtocolGameId=id;seasonProtocolReport=null;seasonProtocolDraft=null;
+    $("seasonProtocolGame").textContent=(game.state?.gameName||game.fileName)+" · "+
+      (game.state?.events||[]).length+" eigene Ereignisse";
+    $("seasonProtocolUrl").value=game.state?.officialData?.nuLigaReport?.reportUrl ||
+      (game.state?.officialSource?.provider==="nuliga"?game.state.officialSource.reportUrl:"")||"";
+    $("seasonProtocolFile").value="";
+    $("seasonProtocolStatus").textContent="Zuerst den vollständigen nuLiga-Spielbericht laden.";
+    $("seasonProtocolPreview").hidden=true;
+    $("seasonProtocolDialog").showModal();
+  }
+  $("seasonProtocolClose").onclick=()=>$("seasonProtocolDialog").close();
+  function renderSeasonProtocolRows(){
+    const host=$("seasonProtocolRows");host.replaceChildren();
+    if(!seasonProtocolDraft || !seasonProtocolReport)return;
+    const game=seasonProtocolDraft.game,report=seasonProtocolReport;
+    const rows=seasonProtocolDraft.preview.rows;
+    let included=0;
+    for(const row of rows){
+      const local=game.state.events[row.localIndex],wrap=document.createElement("div");
+      wrap.className="protocol-row"+(row.safe?" suggested":row.suggestedIndex!==null?" manual":"");
+      const check=document.createElement("input");check.type="checkbox";check.className="protocol-check";
+      check.dataset.localIndex=String(row.localIndex);check.checked=row.safe;
+      check.disabled=!row.candidates.length;
+      const label=document.createElement("div");label.className="protocol-local";
+      label.textContent=(local.displayTime||fmt(local.time||0))+" · "+(eventLabels[local.type]||local.type)+" · "+
+        (local.team==="home"?game.state.home.name:game.state.away.name);
+      const sub=document.createElement("small");
+      sub.textContent=(row.localScore?"Stand "+row.localScore+" · ":"")+(row.reason||"Ohne eindeutigen Vorschlag");
+      label.append(sub);
+      const select=document.createElement("select");select.className="field protocol-official";select.dataset.localIndex=String(row.localIndex);
+      select.add(new Option("Nicht zuordnen",""));
+      for(const c of row.candidates){
+        const event=report.events[c.officialIndex];
+        const player=game.state[event.team].players.find(p=>String(p.id)===String(c.playerId));
+        const text=(event.displayTime||fmt(event.time||0))+" · "+
+          (event.pNr!=null?"#"+event.pNr+" ":"")+
+          (player?[player.vorname,player.nachname].filter(Boolean).join(" "):event.pName||"Spieler")+
+          (event.scoreH!=null&&event.scoreA!=null?" · "+event.scoreH+":"+event.scoreA:"");
+        select.add(new Option(text,String(c.officialIndex)));
+      }
+      select.value=row.suggestedIndex===null?"":String(row.suggestedIndex);
+      select.onchange=()=>{check.checked=select.value!==""};
+      check.onchange=()=>{if(check.checked&&!select.value&&row.candidates.length)select.value=String(row.candidates[0].officialIndex)};
+      wrap.append(check,label,select);host.append(wrap);
+      if(check.checked)included++;
+    }
+    if(!rows.length)host.textContent="Keine unzugeordneten Tore oder Strafen gefunden. Kader und Protokoll können trotzdem übernommen werden.";
+    const unknown=report.events.filter(event=>event.type==="goal").length;
+    $("seasonProtocolSummary").textContent=report.rosters.home.length+" Heim- und "+report.rosters.away.length+
+      " Gastspieler · "+report.events.length+" offizielle Ereignisse (davon "+unknown+" Tore). "+
+      rows.length+" eigene Ereignisse ohne Spieler, "+seasonProtocolDraft.preview.safeCount+
+      " eindeutige Vorschläge. Bitte jeden Vorschlag und die Spielzuordnung prüfen.";
+  }
+  $("seasonProtocolSafe").onclick=()=>{
+    if(!seasonProtocolDraft)return;
+    const safe=new Map(seasonProtocolDraft.preview.rows.filter(r=>r.safe).map(r=>[r.localIndex,r]));
+    for(const check of $("seasonProtocolRows").querySelectorAll(".protocol-check")){
+      const row=safe.get(Number(check.dataset.localIndex));
+      check.checked=Boolean(row);
+      const select=check.closest(".protocol-row").querySelector("select");
+      select.value=row?String(row.suggestedIndex):"";
+    }
+  };
+  $("seasonProtocolNone").onclick=()=>{
+    for(const check of $("seasonProtocolRows").querySelectorAll(".protocol-check"))check.checked=false;
+  };
+  $("seasonProtocolLoad").onclick=async()=>{
+    const game=seasonGames.find(g=>g.id===seasonProtocolGameId);
+    if(!game)return;
+    const file=$("seasonProtocolFile").files?.[0],url=$("seasonProtocolUrl").value.trim();
+    if(!file&&!url){$("seasonProtocolStatus").textContent="Spielbericht-URL oder HTML-Datei angeben.";return}
+    const button=$("seasonProtocolLoad");button.disabled=true;
+    $("seasonProtocolStatus").textContent="Spielbericht wird geladen und verglichen …";
+    $("seasonProtocolPreview").hidden=true;seasonProtocolDraft=null;seasonProtocolReport=null;
+    try{
+      if(!file){
+        const actual=new URL(nuLigaUrlInfo(url).url);
+        if(!["groupMeetingReport","clubMeetingReport"].includes(actual.pathname.split("/").at(-1)))
+          throw new Error("Bitte einen direkten nuLiga-Spielbericht verlinken.");
+      }
+      if(activeSeasonGameId===game.id)persistSession();
+      const report=parseNuLigaReportHtml(file?await file.text():await getNuLigaOnlineHtml(url));
+      if(!report.gameNumber)throw new Error("Spielnummer konnte nicht erkannt werden. Bitte den vollständigen Spielbericht verwenden.");
+      const source=game.state.officialSource||{};
+      if(source.provider==="nuliga"&&source.gameNumber&&String(source.gameNumber)!==String(report.gameNumber))
+        throw new Error("Spielnummer gehört zu einem anderen nuLiga-Spiel.");
+      const expected=source.provider==="nuliga"?source.reportUrl:game.state.officialData?.nuLigaReport?.reportUrl;
+      if(expected&&url && new URL(expected).searchParams.get("meeting")!==new URL(url).searchParams.get("meeting"))
+        throw new Error("Bericht-URL stimmt nicht mit dem zugeordneten Spiel überein.");
+      if(source.provider!=="nuliga"&&!confirm(
+        "Offizielles Protokoll Nr. "+report.gameNumber+" zu folgendem Spiel zuordnen?\n\n"+
+        (game.state.gameName||game.fileName)+"\n\nBitte Heim-/Gastmannschaft und Spieltag vorher mit dem Bericht vergleichen."))return;
+      const fresh=seasonGames.find(g=>g.id===seasonProtocolGameId);
+      const candidate=attachNuLigaReportForComparison(fresh,report,{reportUrl:url});
+      const preview=previewNuLigaEventMatches(candidate,candidate.state.officialData.nuLigaEvents);
+      seasonProtocolReport={...report,events:candidate.state.officialData.nuLigaEvents};
+      seasonProtocolDraft={game:candidate,preview,gameId:fresh.id};
+      renderSeasonProtocolRows();
+      $("seasonProtocolPreview").hidden=false;
+      $("seasonProtocolStatus").textContent="Vorschau geladen. Noch nichts an deinem Scouting verändert.";
+    }catch(error){$("seasonProtocolStatus").textContent="Abgleich fehlgeschlagen: "+(error?.message||String(error))}
+    finally{button.disabled=false}
+  };
+  $("seasonProtocolApply").onclick=async()=>{
+    const proposal=seasonProtocolDraft,report=seasonProtocolReport;
+    if(!proposal||!report)return;
+    const button=$("seasonProtocolApply");button.disabled=true;
+    const status=$("seasonProtocolStatus");
+    try{
+      if(activeSeasonGameId===proposal.gameId)persistSession();
+      const current=seasonGames.find(g=>g.id===proposal.gameId);
+      if(!current)throw new Error("Saisonspiel nicht mehr vorhanden.");
+      // Never apply a stale preview after new live events or a roster change.
+      if(JSON.stringify(current.state.events)!==JSON.stringify(
+        seasonProtocolDraft.game.state.events))throw new Error("Scouting hat sich seit der Vorschau verändert. Bitte den Bericht erneut abgleichen.");
+      const used=new Set(),selections=[];
+      for(const input of $("seasonProtocolRows").querySelectorAll(".protocol-check:checked")){
+        const select=input.closest(".protocol-row").querySelector("select");
+        if(!select.value)throw new Error("Für eine markierte Zeile fehlt die offizielle Zuordnung.");
+        if(used.has(select.value))throw new Error("Ein offizielles Ereignis darf nur einmal zugeordnet werden.");
+        used.add(select.value);
+        const localIndex=Number(input.dataset.localIndex);
+        selections.push({localIndex,localId:current.state.events[localIndex]?.id,officialIndex:Number(select.value)});
+      }
+      const result=applyNuLigaEventSelections(seasonProtocolDraft.game,report.events,selections);
+      const confirmed=confirm("Kader und offizielles Protokoll zu diesem Saisonspiel übernehmen und "+
+        result.applied+" Spielerzuordnung(en) ergänzen?\n\nKeine neuen Tore werden erzeugt.");
+      if(!confirmed)return;
+      const index=seasonGames.findIndex(g=>g.id===proposal.gameId);
+      seasonGames[index]=result.game;
+      if(activeSeasonGameId===proposal.gameId){
+        for(const side of ["home","away"])state[side].players=structuredClone(result.game.state[side].players);
+        state.events=structuredClone(result.game.state.events);
+        state.officialData=structuredClone(result.game.state.officialData);
+        state.officialSource=structuredClone(result.game.state.officialSource||{});
+        update();persistSession();
+      }
+      renderSeason();await storeInternalSeason();
+      status.textContent=result.applied+" Spielerzuordnung(en) übernommen. Scouting-Ereignisse, Spielzeiten und Tore unverändert.";
+      $("seasonProtocolPreview").hidden=true;seasonProtocolDraft=null;
+      toast(result.applied+" Spielerzuordnungen übernommen");
+    }catch(error){status.textContent="Nicht übernommen: "+(error?.message||String(error))}
+    finally{button.disabled=false}
+  };
+
   let nuLigaMatches=[];
   function nuLigaGameKey(game){const source=game?.state?.officialSource;return source?.provider==="nuliga"
     ?[String(source.group||""),String(source.championship||""),String(source.gameNumber||"")].join(":"):null}
@@ -2660,8 +2838,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const wrap=document.createElement("div"),strong=document.createElement("strong"),meta=document.createElement("div");strong.textContent=game.state.gameName||game.fileName;meta.className="season-game-meta";meta.textContent=seasonPreferredTeam?`${game.state[game.ownTeam]?.name||"Mannschaft"} · gegen ${game.state[game.opponentTeam]?.name||"Gegner"} · ${(game.state.events||[]).length} Events`:`Heim: ${game.state.home?.name||"Heim"} · Gast: ${game.state.away?.name||"Gast"} · ${(game.state.events||[]).length} Events`;wrap.append(strong,meta);main.append(check,wrap);
       const actions=document.createElement("div");actions.className="season-game-item-actions";
       const updateButton=document.createElement("button");updateButton.type="button";updateButton.className="tiny";updateButton.textContent="Aktualisieren";updateButton.onclick=()=>{seasonUpdateTargetId=game.id;$("seasonUpdateInput").click()};
+      const protocolButton=document.createElement("button");protocolButton.type="button";protocolButton.className="tiny";protocolButton.textContent="Protokollabgleich";protocolButton.onclick=()=>openSeasonProtocol(game.id);
       const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="tiny danger";deleteButton.textContent="Löschen";deleteButton.onclick=()=>deleteSeasonGame(game.id);
-      actions.append(updateButton,deleteButton);item.append(main,actions);host.append(item)
+      actions.append(protocolButton,updateButton,deleteButton);item.append(main,actions);host.append(item)
     }
   }
 
