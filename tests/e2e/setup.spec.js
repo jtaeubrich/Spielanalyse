@@ -1,5 +1,6 @@
 test("separates game roster editing from persistent team collection in Setup",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator("#setupRosterPanel > summary").click();
  await expect(page.locator("#rosterTeam")).toBeVisible();
  await expect(page.locator("#addPlayer")).toHaveText(/Spieler hinzufügen/);
@@ -32,6 +33,7 @@ async function loadVideoScoutingFixture(page){
 
 test("loads legacy game with symmetric home and away labels",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator("#continueGameInput").setInputFiles(hknFixture);
  await expect(page.locator("#homeName")).toContainText("Heim ·");
  await expect(page.locator("#setupHomeName")).toHaveValue("HSG Herzhorn/Kollmar/Neuendorf");
@@ -67,6 +69,7 @@ test("imports the Handball360 reference payload without using the live proxy", a
   });
 
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator("#newGame").click();
   await page.locator("#newGameHandball360").click();
   await page.locator("#handballNetUrl").fill("https://www.handball.net/match/378107");
@@ -124,6 +127,7 @@ test("imports the Handball360 reference payload without using the live proxy", a
 test("setup stays usable on a mobile viewport", async ({ page, isMobile }) => {
   test.skip(!isMobile, "mobile-only smoke test");
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await expect(page.locator("#setupTab")).toBeVisible();
   await expect(page.locator("#newGame")).toBeVisible();
   await expect(page.locator("#setupHomeName")).toBeVisible();
@@ -131,6 +135,7 @@ test("setup stays usable on a mobile viewport", async ({ page, isMobile }) => {
 
 test("Video Scouting places selectors before video and capture below without game clock buttons",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("body")).toHaveClass(/video-scouting-layout/);
@@ -156,6 +161,7 @@ test("Video Scouting places selectors before video and capture below without gam
 
 test("nearby events use a horizontal strip in Match video scouting",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#matchNearbyEvents")).toBeVisible();
@@ -173,6 +179,7 @@ test("nearby events use a horizontal strip in Match video scouting",async({page}
 
 test("symmetric capture and season-only preferred team selector",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await expect(page.locator("#setupOwnTeamSide")).toHaveCount(0);
  await page.locator('[data-tab="match"]').click();
  await expect(page.locator("#homePoss")).toContainText("Ballbesitz");
@@ -187,6 +194,7 @@ test("symmetric capture and season-only preferred team selector",async({page})=>
 test("season preferred team maps imported home and away matches",async({page})=>{
  await page.goto("/");
  await page.locator('[data-tab="setup"]').click();
+ await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
  await page.locator("#seasonGameInput").setInputFiles(hknFixture);
  const team=page.locator("#seasonPreferredTeam");
@@ -198,6 +206,7 @@ test("season preferred team maps imported home and away matches",async({page})=>
 
 test("key moment opens defender choices for neutral home and away possession",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator('[data-flow="key"]').click();
  await expect(page.locator("#keyTagList")).toBeVisible();
@@ -207,6 +216,7 @@ test("key moment opens defender choices for neutral home and away possession",as
 test("tablet landscape displays video and nearby events side by side",async({page})=>{
  await page.setViewportSize({width:1024,height:768});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await page.locator("#videoSize").fill("64");
@@ -222,6 +232,7 @@ test("tablet landscape displays video and nearby events side by side",async({pag
 test("tablet Match video events list aligns beside video without hosting details",async({page})=>{
  await page.setViewportSize({width:1024,height:768});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  const layout=await page.evaluate(()=>{
@@ -237,6 +248,7 @@ test("tablet Match video events list aligns beside video without hosting details
 
 test("video tab exposes set current video or real time for selected event",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="video"]').click();
  await expect(page.locator("#videoTabSetCurrentTime")).toBeVisible();
  await expect(page.locator("#videoTabSetCurrentTime")).toBeDisabled();
@@ -247,6 +259,7 @@ test("video tab exposes set current video or real time for selected event",async
 test("video Match keeps list visible when editor is toggled",async({page})=>{
  await page.setViewportSize({width:1024,height:768});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  const list=page.locator("#matchNearbyList");
@@ -261,6 +274,7 @@ test("new game action still opens dialog after video-sync module load",async({pa
  const pageErrors=[];
  page.on("pageerror",error=>pageErrors.push(error.message));
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator("#newGame").click();
  await expect(page.locator("#newGameDialog")).toBeVisible();
  expect(pageErrors).toEqual([]);
@@ -269,6 +283,7 @@ test("new game action still opens dialog after video-sync module load",async({pa
 test("landscape smartphone shows adjustable video width and compact control groups",async({page})=>{
  await page.setViewportSize({width:844,height:390});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#videoSize")).toBeVisible();
@@ -290,6 +305,7 @@ test("landscape smartphone shows adjustable video width and compact control grou
 test("landscape Match and Video share 85 percent width limit",async({page})=>{
  await page.setViewportSize({width:844,height:390});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="video"]').click();
  await expect(page.locator("#videoSize")).toHaveAttribute("max","85");
  await page.locator('[data-tab="match"]').click();
@@ -305,6 +321,7 @@ test("landscape Match and Video share 85 percent width limit",async({page})=>{
 test("landscape Match video has 16:9 geometry and event position shortcut",async({page})=>{
  await page.setViewportSize({width:844,height:390});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#matchJumpToCurrentEvent")).toBeVisible();
@@ -319,6 +336,7 @@ test("landscape Match video has 16:9 geometry and event position shortcut",async
 
 test("Match video editor provides a close button",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#matchEditorClose")).toHaveCount(1);
@@ -333,6 +351,7 @@ test("Match video editor provides a close button",async({page})=>{
 test("landscape phone attack capture actions fit in one compact row",async({page})=>{
  await page.setViewportSize({width:844,height:390});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  const layout=await page.locator("#idleStep .actions").evaluate(el=>{
@@ -346,6 +365,7 @@ test("landscape phone attack capture actions fit in one compact row",async({page
 
 test("video review clock controls are available with compact half markers",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#reviewClock")).toBeVisible();
@@ -360,6 +380,7 @@ test("video review clock controls are available with compact half markers",async
 test("automatic event scrolling dismisses details once selected event leaves view",async({page})=>{
  await page.setViewportSize({width:844,height:390});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
@@ -368,6 +389,7 @@ test("automatic event scrolling dismisses details once selected event leaves vie
 
 test("long press event menu can open details without video seek",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#matchEventHoldMenu")).toBeHidden();
@@ -377,6 +399,7 @@ test("long press event menu can open details without video seek",async({page})=>
 test("tablet video scouting shows four capture outcomes in one row and hides recent events",async({page})=>{
  await page.setViewportSize({width:1024,height:768});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  const result=await page.evaluate(()=>{
@@ -389,6 +412,7 @@ test("tablet video scouting shows four capture outcomes in one row and hides rec
 
 test("review match clock includes editable synchronization dialog",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#reviewGameTime")).toBeVisible();
@@ -400,6 +424,7 @@ test("review match clock includes editable synchronization dialog",async({page})
 test("iPad video scouting displays editable event details below video and before capture, closable with X",async({page})=>{
  await page.setViewportSize({width:1024,height:768});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await loadVideoScoutingFixture(page);
  await page.locator('[data-tab="match"]').click();
  await expect(page.locator("#matchNearbyList .match-nearby-item").first()).toBeVisible();
@@ -437,6 +462,7 @@ test("iPad video scouting displays editable event details below video and before
 
 test("neutral event editor uses defense label and defending team for defender choices",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await loadVideoScoutingFixture(page);
  await page.locator('[data-tab="match"]').click();
  const shots=page.locator("#matchNearbyList .match-nearby-item");
@@ -459,6 +485,7 @@ test("neutral event editor uses defense label and defending team for defender ch
 test("video scouting aligns Sync H1 H2 with playback controls and hides jump status",async({page})=>{
  await page.setViewportSize({width:1180,height:820});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  const controls=page.locator("#matchTab .video-control-groups");
@@ -481,6 +508,7 @@ test("video scouting aligns Sync H1 H2 with playback controls and hides jump sta
 
 test("key moment defender roster refreshes on possession switch and keeps defender team",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator("#continueGameInput").setInputFiles(hknFixture);
  await page.locator('[data-tab="match"]').click();
  await page.locator("#homePoss").click();
@@ -502,6 +530,7 @@ test("key moment defender roster refreshes on possession switch and keeps defend
 
 test("sync dialog switches between half-relative and continuous match time",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  const dialog=page.locator("#reviewClockDialog");
@@ -524,6 +553,7 @@ test("sync dialog switches between half-relative and continuous match time",asyn
 test("video clock row orders video game controls and right aligned score",async({page})=>{
  await page.setViewportSize({width:1280,height:800});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#reviewClock")).toBeVisible();
@@ -540,6 +570,7 @@ test("video clock row orders video game controls and right aligned score",async(
 test("mobile video scouting keeps clocks and playback controls in one row and possession below video",async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  await expect(page.locator("#reviewClock")).toBeVisible();
@@ -564,6 +595,7 @@ test("mobile video scouting keeps clocks and playback controls in one row and po
 test("video timestamp editor accepts colon and dot on mobile keyboards",async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
  const input=page.locator("#reviewClockInput");
@@ -579,6 +611,7 @@ test("video timestamp editor accepts colon and dot on mobile keyboards",async({p
 
 test("official event time changes require confirmation and preserve original",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  const fs=await import("node:fs/promises");
  const game=JSON.parse(await fs.readFile(hknFixture,"utf8"));
  game.isVideoscoutingFile=true;
@@ -609,6 +642,7 @@ test("official event time changes require confirmation and preserve original",as
 
 test("event details can delete a video event after confirmation",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await loadVideoScoutingFixture(page);
  await page.locator('[data-tab="match"]').click();
  await page.locator("#matchNearbyList .match-nearby-item").first().click();
@@ -627,6 +661,7 @@ test("video scouting places possession below controls at phone tablet and deskto
  for(const width of [390,820,1280]){
   await page.setViewportSize({width,height:900});
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="match"]').click();
   await page.locator("#modeSelect").selectOption("video");
   const order=await page.evaluate(()=>{
@@ -642,6 +677,7 @@ test("video scouting places possession below controls at phone tablet and deskto
 
 test("unified Match workspace keeps controls and capture ordered across modes",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  for(const mode of ["live","video"]){
   await page.locator("#modeSelect").selectOption(mode);
@@ -672,6 +708,7 @@ test("unified Match workspace keeps controls and capture ordered across modes",a
 
 test("season game list starts collapsed and remains user-toggleable after data refresh",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
  const details=page.locator("#seasonGamesDetails");
