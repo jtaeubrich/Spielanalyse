@@ -27,6 +27,7 @@ async function openImport(page){
 test.beforeEach(async ({page})=>{
  await page.route("**/handball360-proxy-235703972531.europe-west1.run.app/**",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(response)}));
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
 });
 test("import options have independent defaults and cancel preserves the current game",async({page})=>{
  const before=await page.locator("#setupCompetition").inputValue();
