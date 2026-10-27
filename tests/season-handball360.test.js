@@ -81,7 +81,7 @@ describe("Handball360 team season import", () => {
     expect(entries.map(e=>e.teamName)).toEqual([m.local.name,m.visitor.name]);
     expect(entries[0].logoUrl).toContain("square_home.jpg");
     expect(entries[1].teamId).toBe("85814");
-    expect(game.state.officialSource.clubLogos.visitor.clubId).toBe("club-85814");
+    expect(game.state.officialSource.clubLogos.away.clubId).toBe("club-85814");
     expect(game.state.officialData).toBeUndefined();
     const manual={id:"custom",teamName:m.local.name,players:[{id:"p1",isTW:true}],
       logoDataUrl:"data:image/png;base64,bWFudWFs",logoUrl:"https://my.example/logo.png"};

@@ -85,6 +85,47 @@ test("imports past season games once and leaves future fixtures unchecked", asyn
   expect(future.selected).toBe(false);
 });
 
+test("season import saves both official club logos for matchday without modifying rosters",async({page})=>{
+  const official=structuredClone(games[0]);
+  official.match.data[0].local.club={
+    id:"club-home",
+    logo:"https://handball360.isquad.de/images/afiliacion_clubs/5512/square_home.jpg"
+  };
+  official.match.data[0].visitor.club={
+    id:"club-away",
+    logo:"https://handball360.isquad.de/images/afiliacion_clubs/5512/square_away.jpg"
+  };
+  const tinyPng=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO/a2iwAAAAASUVORK5CYII=","base64");
+  let requested=0;
+  await page.route(/\/logo\?url=/,route=>{
+    requested++;
+    return route.fulfill({status:200,contentType:"image/png",body:tinyPng});
+  });
+  await page.route("**/match/378107",route=>route.fulfill({
+    status:200,contentType:"application/json",body:JSON.stringify(official)
+  }));
+  await preview(page);
+  await page.locator('input[data-match-id="378112"]').uncheck();
+  await page.locator("#seasonH360Import").click();
+  await expect(page.locator("#seasonH360Status")).toContainText("1 neu importiert");
+  await expect(page.locator("#seasonH360Status")).toContainText("2 Vereinslogos übernommen");
+  expect(requested).toBe(2);
+  const stored=await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const request=indexedDB.open("handball-spielanalyse",3);
+    request.onerror=()=>reject(request.error);
+    request.onsuccess=()=>{
+      const db=request.result,tx=db.transaction("rosters","readonly");
+      const get=tx.objectStore("rosters").getAll();
+      get.onerror=()=>reject(get.error);
+      get.onsuccess=()=>{db.close();resolve(get.result)};
+    };
+  }));
+  expect(stored).toHaveLength(2);
+  expect(stored.every(record=>record.logoDataUrl.startsWith("data:image/png;base64,"))).toBe(true);
+  expect(stored.map(record=>record.handball360ClubId).sort()).toEqual(["club-away","club-home"]);
+  expect(stored.every(record=>record.players.length===0)).toBe(true);
+});
+
 test("never replaces an existing manually enriched match",async({page})=>{
   const oldGame=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
   oldGame.state.events[0].comment="Eigenes Scouting bleibt";
