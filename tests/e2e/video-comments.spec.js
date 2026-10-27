@@ -6,6 +6,7 @@ const fixture = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../f
 
 test("video event comment belongs to selected event and survives reload", async ({ page }) => {
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator("#continueGameInput").setInputFiles(fixture);
   await page.locator('[data-tab="video"]').click();
   const entries = page.locator("#videoPlaylist [data-event-index]");
