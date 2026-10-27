@@ -4,6 +4,35 @@ import { normalizeSeasonPlayerAliases } from "./season-core.js";
 
 export const LEGACY_SEASON_FORMAT = "handball-match-flow-season";
 
+// Only suggest a team label for an otherwise generic season title.
+export function suggestedSeasonName(name,preferredTeam="",games=[]) {
+  const current=String(name||"").trim();
+  const match=/^Saison (20\d{2}\/\d{2})$/i.exec(current);
+  if(!match)return current||"Saison";
+  const pairs=(Array.isArray(games)?games:[]).map(game=>{
+    const state=game?.state??game?.data??{};
+    return [String(state.home?.name||"").trim(),String(state.away?.name||"").trim()].filter(Boolean);
+  }).filter(row=>row.length===2);
+  if(!pairs.length)return current;
+  const norm=value=>value.toLocaleLowerCase("de").replace(/\s+/g," ").trim();
+  const prefer=String(preferredTeam||"").trim();
+  const preferredMatches=prefer?pairs.filter(row=>row.some(team=>norm(team)===norm(prefer))).length:0;
+  if(prefer&&preferredMatches>=Math.ceil(pairs.length*0.75)){
+    return (pairs.flat().find(team=>norm(team)===norm(prefer))||prefer)+" · Saison "+match[1];
+  }
+  if(pairs.length<3)return current;
+  const count=new Map();
+  for(const pair of pairs)for(const key of new Set(pair.map(norm))){
+    const item=count.get(key)||{name:pair.find(v=>norm(v)===key),total:0};
+    item.total++;count.set(key,item);
+  }
+  const sorted=[...count.values()].sort((a,b)=>b.total-a.total);
+  return sorted[0]?.total>=Math.ceil(pairs.length*0.75)&&sorted[0].total>(sorted[1]?.total||0)
+    ?sorted[0].name+" · Saison "+match[1]:current;
+}
+
+
+
 export function seasonIdentityText(value) {
   return String(value ?? "")
     .trim()

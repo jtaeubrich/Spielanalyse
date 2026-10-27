@@ -1,3 +1,4 @@
+import {suggestedSeasonName} from "../src/season-files.js";
 import { describe, expect, test } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
@@ -141,5 +142,22 @@ describe("season file helpers", () => {
     expect(result.loaded).toHaveLength(1);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].fileName).toBe("defekt.json");
+  });
+});
+
+describe("suggested season names",()=>{
+  test("renames only the generic title for a consistent team",()=>{
+    const games=Array.from({length:5},(_,i)=>({state:{
+      home:{name:i%2?"Gast "+i:"TSV Kronshagen"},
+      away:{name:i%2?"TSV Kronshagen":"Gast "+i}
+    }}));
+    expect(suggestedSeasonName("Saison 2026/27","TSV Kronshagen",games))
+      .toBe("TSV Kronshagen · Saison 2026/27");
+    expect(suggestedSeasonName("Saison 2026/27","",games))
+      .toBe("TSV Kronshagen · Saison 2026/27");
+    expect(suggestedSeasonName("Eigener Name","TSV Kronshagen",games)).toBe("Eigener Name");
+    expect(suggestedSeasonName("Saison 2026/27","",[])).toBe("Saison 2026/27");
+    expect(suggestedSeasonName("Saison 2026/27","",[{state:{home:{name:"A"},away:{name:"B"}}}]))
+      .toBe("Saison 2026/27");
   });
 });
