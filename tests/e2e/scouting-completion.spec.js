@@ -27,6 +27,8 @@ test("video-only archived scouting can resume editing in Video Scouting without 
   await importSeasonGame(page,game);
   await expect(page.locator("#homeSeasonGames")).toContainText("Fortsetzen");
   await page.locator("#homeSeasonGames").getByRole("button",{name:"Fortsetzen"}).click();
+  await expect(page.locator("#setupPreflight")).toBeVisible();
+  await page.locator("#preflightStart").click();
   await expect(page.locator("#matchTab")).toBeVisible();
   await expect(page.locator("#modeSelect")).toHaveValue("video");
   await expect(page.locator("body")).toHaveClass(/video-scouting-layout/);
@@ -50,6 +52,8 @@ test("finishing a live match permanently opens Video-Nachanalyse without deletin
   delete game.liveScoutingCompleted;
   await importSeasonGame(page,game);
   await page.locator("#homeSeasonGames").getByRole("button",{name:"Fortsetzen"}).click();
+  await expect(page.locator("#setupPreflight")).toBeVisible();
+  await page.locator("#preflightStart").click();
   await expect(page.locator("#modeSelect")).toHaveValue("live");
   const count=game.events.length;
   await expect(page.locator("#eventCount")).toContainText(String(count));
@@ -80,6 +84,8 @@ test("finishing a live match permanently opens Video-Nachanalyse without deletin
   await page.locator("#homeOpen").click();
   await page.locator("#homeLibraryList").getByRole("button",{name:"Öffnen",exact:true}).click();
   await page.locator("#homeSeasonGames").getByRole("button",{name:"Fortsetzen"}).click();
+  await expect(page.locator("#setupPreflight")).toBeVisible();
+  await page.locator("#preflightStart").click();
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
   await expect(page.locator("#modeSelect")).toBeDisabled();
 });
@@ -94,6 +100,8 @@ test("an empty upcoming fixture remains eligible for live scouting",async({page}
   await importSeasonGame(page,fixtureGame);
   await expect(page.locator("#homeSeasonGames")).toContainText("Fortsetzen");
   await page.locator("#homeSeasonGames").getByRole("button",{name:"Fortsetzen"}).click();
+  await expect(page.locator("#setupPreflight")).toBeVisible();
+  await page.locator("#preflightStart").click();
   await expect(page.locator("#modeSelect")).toHaveValue("live");
   await expect(page.locator("body")).toHaveClass(/live-scouting-layout/);
   await expect(page.locator("#finishLiveScouting")).toBeHidden();
