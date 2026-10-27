@@ -4745,16 +4745,14 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     const meta=Array.isArray(payload?.match?.data)?payload.match.data[0]:null;
     const source=state.officialSource||{};
     const additional=payload.additional_info??payload["additional-info"]??payload.additionalInfo??null;
-    const venue=source.venue||hbVenue(meta,additional)||"";
-    const rawDate=source.matchDate||meta?.date||"";
+    const kickoff=preflightKickoff();
+    const venue=kickoff.venue||source.venue||hbVenue(meta,additional)||"";
     let matchDate="",matchTime="";
-    if(rawDate){
-      const d=new Date(rawDate);
-      if(!Number.isNaN(d.getTime())){
-        matchDate=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric",timeZone:"Europe/Berlin"}).format(d);
-        if(/[T ]\d{2}:\d{2}/.test(String(rawDate)))matchTime=new Intl.DateTimeFormat("de-DE",{hour:"2-digit",minute:"2-digit",timeZone:"Europe/Berlin"}).format(d)+" Uhr";
-      }
+    if(kickoff.date){
+      const d=new Date(kickoff.date+"T12:00:00");
+      if(!Number.isNaN(d.getTime()))matchDate=new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"2-digit",year:"numeric",timeZone:"Europe/Berlin"}).format(d);
     }
+    if(kickoff.time)matchTime=kickoff.time+" Uhr";
     return{matchDate,matchTime,venue};
   }
   $("setupMatchdayPng").onclick=async()=>{
