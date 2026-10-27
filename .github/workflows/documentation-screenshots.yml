@@ -67,4 +67,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh workflow run pages.yml --ref main -f deploy_only=true
+        run: gh workflow run pages.yml --ref main -f deploy_only=true -f tested_sha="$GITHUB_SHA"

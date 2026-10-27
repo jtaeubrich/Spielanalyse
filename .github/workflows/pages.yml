@@ -12,9 +12,14 @@ on:
         required: false
         type: boolean
         default: false
+      tested_sha:
+        description: "Commit whose push CI must succeed before screenshot deployment"
+        required: false
+        type: string
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -45,13 +50,71 @@ jobs:
       - name: Browser-Tests
         run: npm run test:e2e
 
+  screenshot_gate:
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy_only == true
+    runs-on: ubuntu-latest
+    outputs:
+      eligible: ${{ steps.verify.outputs.eligible }}
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check that screenshot-only updates follow successfully tested code
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TESTED_SHA: ${{ inputs.tested_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$TESTED_SHA" ]; then
+            echo "tested_sha is required for screenshot-only deployment" >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$TESTED_SHA" HEAD; then
+            echo "Source commit is no longer in the deployment history."
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if git diff --name-only "$TESTED_SHA" HEAD | grep -v '^docs/handbuch/images/generated/' | grep -q .; then
+            echo "New code or non-screenshot changes need regular push CI."
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          for attempt in $(seq 1 45); do
+            response="$(gh api "repos/$REPOSITORY/actions/workflows/pages.yml/runs?event=push&head_sha=$TESTED_SHA&per_page=10")"
+            if jq -e '.workflow_runs[] | select(.status == "completed" and .conclusion == "success")' <<< "$response" > /dev/null; then
+              git fetch origin main
+              if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+                echo "Newer main revision exists; leave deployment to its CI."
+                echo "eligible=false" >> "$GITHUB_OUTPUT"
+              else
+                echo "eligible=true" >> "$GITHUB_OUTPUT"
+              fi
+              exit 0
+            fi
+            if jq -e '.workflow_runs[] | select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out"))' <<< "$response" > /dev/null; then
+              echo "Source CI did not succeed; skip screenshot deployment."
+              echo "eligible=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "No successful source CI found; skip screenshot deployment."
+          echo "eligible=false" >> "$GITHUB_OUTPUT"
+
   deploy:
-    needs: test
+    needs: [test, screenshot_gate]
     if: >-
       ${{ always() &&
           github.event_name != 'pull_request' &&
           (needs.test.result == 'success' ||
-           (github.event_name == 'workflow_dispatch' && inputs.deploy_only == true)) }}
+           (github.event_name == 'workflow_dispatch' &&
+            inputs.deploy_only == true &&
+            needs.screenshot_gate.result == 'success' &&
+            needs.screenshot_gate.outputs.eligible == 'true')) }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
