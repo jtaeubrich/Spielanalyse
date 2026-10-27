@@ -161,3 +161,22 @@ describe("pregame Handball360 lineup refresh",()=>{
     expect(again.totalChanges).toBe(0);
   });
 });
+
+describe("keeper corrections during official roster reconciliation",()=>{
+  test("a manually marked game goalkeeper survives an official false",()=>{
+    const game=makeGame();
+    game.state.home.players[0].isTW=true;
+    game.state.home.players[0].isTWOverride=true;
+    const plan=previewOfficialSeasonRosters(game,makeOfficial());
+    expect(plan.sides.home.players.find(p=>p.handballNetId==="11")).toMatchObject({isTW:true,isTWOverride:true});
+  });
+  test("manual false survives official true; saved goalkeeper knowledge is reused for newcomers",()=>{
+    const game=makeGame();
+    game.state.away.players[0].isTW=false;
+    game.state.away.players[0].isTWOverride=false;
+    const known={home:[{id:"known-13",handballNetId:"13",vorname:"Neuer",nachname:"Spieler",isTW:true,isTWOverride:true}]};
+    const plan=previewOfficialSeasonRosters(game,makeOfficial(),known);
+    expect(plan.sides.away.players[0]).toMatchObject({isTW:false,isTWOverride:false});
+    expect(plan.sides.home.players.find(p=>p.handballNetId==="13")).toMatchObject({isTW:true,isTWOverride:true});
+  });
+});

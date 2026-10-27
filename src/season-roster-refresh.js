@@ -1,4 +1,5 @@
 import { hbPrepare, hbLineupSides, hbRosterFromLineup, hbNameKey } from "./handball360.js";
+import { applyStoredGoalkeeperMarkings } from "./roster.js";
 import { seasonMatchIdentity } from "./season-handball360.js";
 
 const idOf = player => String(player?.handballNetId ?? "").trim();
@@ -73,6 +74,9 @@ function playerChanges(before, after) {
 }
 function mergedOfficialPlayer(existing, incoming) {
   if (!existing) return structuredClone(incoming);
+  const override = typeof existing.isTWOverride === "boolean"
+    ? existing.isTWOverride
+    : typeof incoming.isTWOverride === "boolean" ? incoming.isTWOverride : undefined;
   return {
     ...structuredClone(existing),
     ...structuredClone(incoming),
@@ -81,11 +85,13 @@ function mergedOfficialPlayer(existing, incoming) {
     handballNetId: idOf(incoming) || idOf(existing),
     // A missing shirt number from Handball360 should not erase a manually
     // assigned number; confirmed nonempty official numbers take precedence.
-    nr: numberOf(incoming) ? incoming.nr : existing.nr ?? ""
+    nr: numberOf(incoming) ? incoming.nr : existing.nr ?? "",
+    isTW: typeof override === "boolean" ? override : Boolean(existing.isTW || incoming.isTW),
+    ...(typeof override === "boolean" ? { isTWOverride: override } : {})
   };
 }
 
-export function previewOfficialSeasonRosters(game, raw) {
+export function previewOfficialSeasonRosters(game, raw, knownRosters = {}) {
   const matchId = seasonMatchIdentity(game);
   if (!matchId) throw new Error("Für dieses Saisonspiel ist keine Handball360-Match-ID hinterlegt.");
   const prepared = hbPrepare(raw, { fallbackMatchId: matchId });
@@ -109,7 +115,7 @@ export function previewOfficialSeasonRosters(game, raw) {
   };
   for (const side of ["home", "away"]) {
     const oldPlayers = game.state?.[side]?.players || [];
-    const incomingPlayers = officialMatchRoster(raw, side);
+    const incomingPlayers = applyStoredGoalkeeperMarkings(officialMatchRoster(raw, side), knownRosters?.[side]);
     const available = incomingPlayers.length > 0;
     const paired = available
       ? (hasScoutingEvents ? pairedHistoricalPlayers(oldPlayers, incomingPlayers) : pairedPlayers(oldPlayers, incomingPlayers))

@@ -64,12 +64,16 @@ export function normalizeRosterPlayer(raw = {}, index = 0, existingPlayers = [])
     );
   }
 
+  const isTWOverride = typeof raw.isTWOverride === "boolean"
+    ? raw.isTWOverride
+    : typeof match?.isTWOverride === "boolean" ? match.isTWOverride : undefined;
   return {
     id: raw.id ?? match?.id ?? Date.now() + index,
     nr: nr === "" ? match?.nr ?? "" : Number.isNaN(Number(nr)) ? nr : Number(nr),
     nachname,
     vorname,
-    isTW: Boolean(raw.isTW ?? raw.TW ?? match?.isTW ?? false),
+    isTW: typeof isTWOverride === "boolean" ? isTWOverride : Boolean(raw.isTW ?? raw.TW ?? match?.isTW ?? false),
+    ...(typeof isTWOverride === "boolean" ? { isTWOverride } : {}),
     handballNetId: handballNetId || normalizeHandballNetId(match?.handballNetId)
   };
 }
@@ -306,7 +310,16 @@ export function mergeRosterCollection(existingPlayers = [], incomingPlayers = []
       ) {
         existing.nr = incoming.nr;
       }
-      if (!existing.isTW && incoming.isTW) existing.isTW = true;
+      // Explicit goalkeeper corrections, including "not a goalkeeper",
+      // take precedence over later imports.
+      if (typeof incoming.isTWOverride === "boolean") {
+        existing.isTWOverride = incoming.isTWOverride;
+        existing.isTW = incoming.isTWOverride;
+      } else if (typeof existing.isTWOverride === "boolean") {
+        existing.isTW = existing.isTWOverride;
+      } else if (!existing.isTW && incoming.isTW) {
+        existing.isTW = true;
+      }
       if (!existing.handballNetId && hbId) {
         existing.handballNetId = hbId;
         enrichedIds += 1;
@@ -320,4 +333,28 @@ export function mergeRosterCollection(existingPlayers = [], incomingPlayers = []
   }
 
   return { players, added, updated, enrichedIds, conflicts };
+}
+
+export function applyStoredGoalkeeperMarkings(players = [], knownPlayers = []) {
+  const known = Array.isArray(knownPlayers) ? knownPlayers : [];
+  return players.map(player => {
+    if (typeof player.isTWOverride === "boolean") {
+      return { ...player, isTW: player.isTWOverride };
+    }
+    const id = normalizeHandballNetId(player.handballNetId).toLowerCase();
+    let matches = id ? known.filter(other =>
+      normalizeHandballNetId(other.handballNetId).toLowerCase() === id) : [];
+    if (!matches.length) {
+      const name = rosterPlayerNameKey(player);
+      if (name) matches = known.filter(other => rosterPlayerNameKey(other) === name &&
+        (!id || !normalizeHandballNetId(other.handballNetId)));
+    }
+    if (matches.length !== 1) return { ...player };
+    const stored = matches[0];
+    if (typeof stored.isTWOverride === "boolean") {
+      return { ...player, isTW: stored.isTWOverride, isTWOverride: stored.isTWOverride };
+    }
+    // Legacy records may contain a positive TW flag without a provenance marker.
+    return stored.isTW ? { ...player, isTW: true } : { ...player };
+  });
 }

@@ -1185,7 +1185,9 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
           <button class="btn" id="addPlayer" type="button">+ Spieler hinzufügen</button>
           <label class="btn" for="rosterInput">Kader importieren (Excel / JSON)</label><input id="rosterInput" type="file" accept=".xlsx,.xls,.csv,.json" hidden>
           <button class="btn" id="editNumbers" type="button">Nur Nummern</button>
+          <button class="btn" id="setupRosterH360Refresh" type="button" disabled>Kader mit Handball360 abgleichen</button>
         </div>
+        <p class="number-help" id="setupRosterH360Status" role="status">Bei einem verknüpften Saisonspiel kannst du die offizielle Aufstellung abrufen.</p>
         <div id="rosterEditor"></div>
       </details>
       <details class="panel setup-card" id="setupTeamCollectionPanel">
@@ -1686,7 +1688,7 @@ import { scoreEvents } from "./src/game-model.js";
 import { GAME_FORMAT, CURRENT_GAME_VERSION, migrateGameData, stampCurrentGameFormat } from "./src/game-format.js";
 import { GAME_FILE_TYPES, parseGameText, defaultGameFileName as coreDefaultGameFileName, gameOpenPickerOptions, gameSavePickerOptions, writeTextFileHandle } from "./src/game-files.js";
 import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeSeasonGame, normalizeSeasonArchive, parseSeasonText, mergeSeasonGames, readSeasonGameFiles } from "./src/season-files.js";
-import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection } from "./src/roster.js";
+import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection, applyStoredGoalkeeperMarkings } from "./src/roster.js";
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial } from "./src/season-handball360.js?v=2";
@@ -2244,6 +2246,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(activeSeasonGameId){try{await storeInternalSeason()}catch(error){return toast("Vorheriges Saisonspiel konnte nicht gesichert werden: "+(error?.message||"Speicherfehler"))}}
     const stateCopy=structuredClone(game.state);
     if(!historical){
+      for(const side of ["home","away"]){
+        const team=stateCopy[side];
+        const known=await readRosterCollection(team?.name,team?.players||[]);
+        if(known?.players?.length)team.players=applyStoredGoalkeeperMarkings(team.players||[],known.players);
+      }
       // Future Handball360 fixtures often carry the historical flag even
       // without events. Those must still be available for new live scouting.
       // Any archived game with video/official events resumes in video capture.
@@ -2341,7 +2348,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const raw=await response.json();
       const candidate=seasonGames.find(game=>game.id===gameId);
       if(!candidate)throw Error("Das Saisonspiel wurde inzwischen entfernt.");
-      const plan=previewOfficialSeasonRosters(candidate,raw);
+      const knownRosters={};
+      for(const side of ["home","away"]){
+        const team=candidate.state?.[side];
+        const saved=await readRosterCollection(team?.name,team?.players||[]);
+        knownRosters[side]=saved?.players||[];
+      }
+      const plan=previewOfficialSeasonRosters(candidate,raw,knownRosters);
       const accepted=await confirmOfficialRosterRefresh(plan);
       if(!accepted){status.textContent="Kaderübernahme abgebrochen. Nichts verändert.";return}
       if(activeSeasonGameId===gameId)persistSession();
@@ -2370,7 +2383,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       toast("Offizielle Spielkader übernommen");
     }catch(error){
       status.textContent="Kaderaktualisierung nicht durchgeführt: "+(error?.message||String(error));
-    }finally{setupRosterRefreshBusy=false;renderSetupSeasonPicker()}
+    }finally{
+      setupRosterRefreshBusy=false;
+      $("setupRosterH360Status").textContent=status.textContent;
+      renderSetupSeasonPicker();
+      renderPreflight();
+    }
   };
   $("setupSeasonGameSelect").onchange=renderSetupSeasonPicker;
   $("setupSeasonContinue").onclick=()=>openSetupSeasonGame(false);
@@ -3455,6 +3473,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("preflightProgress").style.width=(100*count/3)+"%";
     $("preflightSubtitle").textContent=(state.home?.name||"Heim")+" – "+(state.away?.name||"Gast");
     $("preflightConfirmRoster").disabled=!s.rosterReady;
+    const active=seasonGames.find(game=>game.id===activeSeasonGameId);
+    const available=Boolean(active&&seasonMatchIdentity(active));
+    $("setupRosterH360Refresh").disabled=!available||setupRosterRefreshBusy;
+    $("setupRosterH360Refresh").title=available?"Offizielle Aufstellung mit Änderungsübersicht abrufen":"Erfordert ein verknüpftes Handball360-Saisonspiel";
     $("preflightConfirmRoster").textContent=s.roster?"✓ Kader geprüft":"Kader geprüft";
     $("preflightConfirmCapture").textContent=s.capture?"✓ Erfassung bestätigt":"Erfassung bestätigt";
     $("preflightHint").textContent=count===3?"Pflichtschritte bestätigt. Du kannst das Scouting starten.":"Offene Schritte bleiben sichtbar. Scouting ist bei Bedarf trotzdem möglich.";
@@ -3467,13 +3489,60 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   $("preflightOpenInfo").onclick=()=>preflightOpen("setupGameDetails");
   $("preflightOpenRoster").onclick=()=>{$("rosterTeam").value=ownTeam;renderRosterEditor();preflightOpen("setupRosterPanel")};
+  $("setupRosterH360Refresh").onclick=()=>{
+    const game=seasonGames.find(item=>item.id===activeSeasonGameId);
+    if(!game||!seasonMatchIdentity(game))return toast("Bitte ein mit Handball360 verknüpftes Saisonspiel öffnen.");
+    $("setupSeasonGameSelect").value=activeSeasonGameId;
+    renderSetupSeasonPicker();
+    $("setupRosterH360Status").textContent="Lade offizielle Aufstellung …";
+    $("setupSeasonRosterRefresh").click();
+  };
   $("preflightOpenCapture").onclick=()=>preflightOpen("setupCapturePanel");
   $("preflightOpenMatchday").onclick=()=>preflightOpen("setupMatchdayPanel");
-  $("preflightConfirmRoster").onclick=()=>{if(!preflightStatus().rosterReady)return;state.preflight.rosterFingerprint=preflightRosterFingerprint();update()};
+  $("preflightConfirmRoster").onclick=async()=>{
+    if(!preflightStatus().rosterReady)return;
+    state.preflight.rosterFingerprint=preflightRosterFingerprint();
+    update();
+    try{
+      const key=String(state[ownTeam]?.name||"").trim();
+      if(keeperOverrideWrites.has(key))await keeperOverrideWrites.get(key);
+      await updateRosterCollectionForTeam(ownTeam,{silent:true});
+    }catch(error){toast("Kader wurde im Spiel bestätigt, konnte aber nicht dauerhaft in die Mannschaftssammlung geschrieben werden: "+error.message)}
+  };
   $("preflightConfirmCapture").onclick=()=>{state.preflight.captureFingerprint=preflightCaptureFingerprint();update()};
   $("preflightStart").onclick=()=>showTab("match");
   function renderSetup(){renderSetupSeasonPicker();setInputUnlessActive("setupGameName",state.gameName);setInputUnlessActive("setupCompetition",state.competition??state.officialSource?.competition??"Freundschaftsspiel");setInputUnlessActive("setupHomeName",state.home?.name);setInputUnlessActive("setupAwayName",state.away?.name);const kickoff=preflightKickoff();setInputUnlessActive("setupGameDate",kickoff.date);setInputUnlessActive("setupGameTime",kickoff.time);setInputUnlessActive("setupGameVenue",kickoff.venue);renderPreflight();if(document.activeElement!==$("setupDuration"))$("setupDuration").value=String(state.timer.duration);document.querySelectorAll("[data-shot-setting]").forEach(input=>input.checked=Boolean(state.shotCapture[input.dataset.shotSetting]));$("shotAttackerOrder").value=state.shotCapture.attackerOrder==="last"?"last":"first";renderRosterEditor();renderTagLibrary();renderGlobalSettingsSummary();renderDefenseSelectors();renderTagFileStatus()}
-  function renderRosterEditor(){const team=$("rosterTeam").value,players=state[team]?.players||[],host=$("rosterEditor");if(!players.length){host.innerHTML='<div class="empty" style="margin-top:14px">Noch keine Spieler in diesem Kader.</div>';return}const table=document.createElement("table");table.className="roster-table";table.innerHTML='<thead><tr><th class="nr">Nr.</th><th>Vorname</th><th>Nachname</th><th>H360-ID</th><th class="tw">TW</th><th class="tw">Aktiv</th><th class="remove"></th></tr></thead>';const body=document.createElement("tbody");for(const p of players){const row=document.createElement("tr");for(const [key,type] of [["nr","number"],["vorname","text"],["nachname","text"],["handballNetId","text"]]){const td=document.createElement("td");if(key==="nr")td.className="nr";const input=document.createElement("input");input.type=type;input.value=p[key]??"";if(type==="number"){input.min="0";input.max="99"}if(key==="handballNetId"){input.placeholder="Handball360-ID";input.title="Stabile Spieler-ID aus Handball360 / handball.net"}input.onchange=()=>{p[key]=key==="nr"?(input.value===""?"":Number(input.value)):input.value.trim();update()};td.append(input);row.append(td)}const tw=document.createElement("td");tw.className="tw";const check=document.createElement("input");check.type="checkbox";check.checked=Boolean(p.isTW);check.onchange=()=>{p.isTW=check.checked;if(!p.isTW&&String(state.activeTw[team])===String(p.id))state.activeTw[team]=null;update()};tw.append(check);const active=document.createElement("td");active.className="tw";const radio=document.createElement("input");radio.type="radio";radio.name="activeKeeper-"+team;radio.checked=String(state.activeTw[team])===String(p.id);radio.disabled=!p.isTW;radio.title="Als aktiven Standard-Torwart setzen";radio.onchange=()=>{if(radio.checked){state.activeTw[team]=p.id;update()}};active.append(radio);const remove=document.createElement("td");remove.className="remove";const del=document.createElement("button");del.className="delete";del.type="button";del.textContent="×";del.title="Spieler entfernen";del.onclick=()=>{state[team].players=state[team].players.filter(x=>String(x.id)!==String(p.id));if(String(state.activeTw[team])===String(p.id))state.activeTw[team]=null;update()};remove.append(del);row.append(tw,active,remove);body.append(row)}table.append(body);host.replaceChildren(table)}
+  const keeperOverrideWrites=new Map();
+  async function rememberKeeperOverride(team,player){
+    const teamName=String(state[team]?.name||"").trim();
+    if(!teamName)return;
+    const snapshot=structuredClone(player);
+    const previous=keeperOverrideWrites.get(teamName)||Promise.resolve();
+    const next=previous.catch(()=>{}).then(async()=>{
+      const saved=await readRosterCollection(teamName,[snapshot]);
+      const merged=mergeRosterCollection(saved?.players||[],[snapshot]);
+      const record=buildRosterRecord({
+        id:saved?.id||rosterTeamKey(teamName),
+        teamName:saved?.teamName||teamName,
+        aliases:saved?mergeAliases(saved,teamName):[],
+        players:merged.players,conflicts:merged.conflicts,
+        createdAt:saved?.createdAt||saved?.updatedAt||null
+      });
+      if(saved)Object.assign(record,{...saved,...record});
+      await writeInternalRecord(INTERNAL_ROSTER_STORE,record);
+      await refreshKnownRosterOptions();
+    });
+    keeperOverrideWrites.set(teamName,next);
+    try{await next}finally{if(keeperOverrideWrites.get(teamName)===next)keeperOverrideWrites.delete(teamName)}
+  }
+  function renderRosterEditor(){const team=$("rosterTeam").value,players=state[team]?.players||[],host=$("rosterEditor");if(!players.length){host.innerHTML='<div class="empty" style="margin-top:14px">Noch keine Spieler in diesem Kader.</div>';return}const table=document.createElement("table");table.className="roster-table";table.innerHTML='<thead><tr><th class="nr">Nr.</th><th>Vorname</th><th>Nachname</th><th>H360-ID</th><th class="tw">TW</th><th class="tw">Aktiv</th><th class="remove"></th></tr></thead>';const body=document.createElement("tbody");for(const p of players){const row=document.createElement("tr");for(const [key,type] of [["nr","number"],["vorname","text"],["nachname","text"],["handballNetId","text"]]){const td=document.createElement("td");if(key==="nr")td.className="nr";const input=document.createElement("input");input.type=type;input.value=p[key]??"";if(type==="number"){input.min="0";input.max="99"}if(key==="handballNetId"){input.placeholder="Handball360-ID";input.title="Stabile Spieler-ID aus Handball360 / handball.net"}input.onchange=()=>{p[key]=key==="nr"?(input.value===""?"":Number(input.value)):input.value.trim();update()};td.append(input);row.append(td)}const tw=document.createElement("td");tw.className="tw";const check=document.createElement("input");check.type="checkbox";check.checked=Boolean(p.isTW);check.onchange=()=>{
+      p.isTW=check.checked;
+      p.isTWOverride=check.checked;
+      if(!p.isTW&&String(state.activeTw[team])===String(p.id))state.activeTw[team]=null;
+      const snapshot=structuredClone(p);
+      update();
+      rememberKeeperOverride(team,snapshot).catch(error=>toast("Torhüter-Kennzeichnung nicht gespeichert: "+error.message));
+    };tw.append(check);const active=document.createElement("td");active.className="tw";const radio=document.createElement("input");radio.type="radio";radio.name="activeKeeper-"+team;radio.checked=String(state.activeTw[team])===String(p.id);radio.disabled=!p.isTW;radio.title="Als aktiven Standard-Torwart setzen";radio.onchange=()=>{if(radio.checked){state.activeTw[team]=p.id;update()}};active.append(radio);const remove=document.createElement("td");remove.className="remove";const del=document.createElement("button");del.className="delete";del.type="button";del.textContent="×";del.title="Spieler entfernen";del.onclick=()=>{state[team].players=state[team].players.filter(x=>String(x.id)!==String(p.id));if(String(state.activeTw[team])===String(p.id))state.activeTw[team]=null;update()};remove.append(del);row.append(tw,active,remove);body.append(row)}table.append(body);host.replaceChildren(table)}
   let knownRosterRecords=[];
   function renderKnownRosterDetails(){
     const record=selectedKnownRoster(),host=$("knownRosterDetails");if(!host)return;

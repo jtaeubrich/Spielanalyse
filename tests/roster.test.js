@@ -6,7 +6,7 @@ import {
   parseRosterJson,
   mergeRosterByHandballId,
   rosterTeamKey,
-  mergeRosterCollection
+  mergeRosterCollection, applyStoredGoalkeeperMarkings
 } from "../src/roster.js";
 
 describe("roster import core", () => {
@@ -241,5 +241,31 @@ describe("persistent roster collection", () => {
 
     expect(result.players).toHaveLength(1);
     expect(result.players[0].handballNetId).toBe("hb-stable");
+  });
+});
+
+describe("remembered goalkeeper identity",()=>{
+  const player=(id,isTW,override)=>({id:"local-"+id,handballNetId:id,
+    vorname:"Test",nachname:"Keeper"+id,nr:1,isTW,
+    ...(typeof override==="boolean"?{isTWOverride:override}:{})});
+  test("manual false survives later official true",()=>{
+    const saved=mergeRosterCollection([player("22",true,true)],[player("22",false,false)]);
+    expect(saved.players[0]).toMatchObject({isTW:false,isTWOverride:false});
+    expect(mergeRosterCollection(saved.players,[player("22",true)]).players[0]).toMatchObject({isTW:false,isTWOverride:false});
+  });
+  test("manual true overrides an official false",()=>{
+    expect(applyStoredGoalkeeperMarkings([player("31",false)],[player("31",true,true)])[0])
+      .toMatchObject({isTW:true,isTWOverride:true});
+  });
+  test("legacy true restored by ID but conflicting IDs not matched by name",()=>{
+    const original={...player("12",true),vorname:"Anna",nachname:"Beispiel"};
+    const lineup=[{...player("12",false),vorname:"Anna",nachname:"Beispiel"},
+      {...player("99",false),vorname:"Anna",nachname:"Beispiel"}];
+    const result=applyStoredGoalkeeperMarkings(lineup,[original]);
+    expect(result[0].isTW).toBe(true);
+    expect(result[1].isTW).toBe(false);
+  });
+  test("local manual false beats an older stored manual true",()=>{
+    expect(applyStoredGoalkeeperMarkings([player("41",false,false)],[player("41",true,true)])[0].isTW).toBe(false);
   });
 });
