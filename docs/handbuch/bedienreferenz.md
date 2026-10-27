@@ -7,7 +7,7 @@ Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz erg
 Die PWA öffnet standardmäßig die Registerkarte **Start**, ohne die zuletzt gespeicherte Spielsession oder eine gespeicherte Saison zu verändern.
 
 1. **Saison** oder **Einzelspiel** mit einer der beiden großen Kacheln auswählen.
-2. Anschließend **Öffnen** (bereits lokal in dieser PWA gespeichert), **Importieren** (JSON-Datei von einem anderen Gerät) oder **Neu anlegen** wählen.
+2. Anschließend **Saison laden** bzw. **Spiel laden** (bereits lokal in dieser PWA gespeichert), **Importieren** (Saison- bzw. Spiel-JSON von einem anderen Gerät) oder **Neu anlegen** wählen.
 3. Beim Öffnen einer Saison wird die lokal gespeicherte Saisonbibliothek angezeigt. Nach der Auswahl erscheint die **Saisonübersicht** mit allen Spielen; dort **Fortsetzen** für Live-Scouting bzw. **Analysieren** für die Einzelspielanalyse antippen. **Saisonanalyse öffnen** zeigt die gemeinsame Statistik. Über **Saison verwalten** gelangst du zu den erweiterten Verwaltungsfunktionen in Setup.
 4. Beim Öffnen eines Einzelspiels werden die zuletzt bearbeitete Session und die Saisonspiele aus der lokalen Bibliothek angeboten. Auch Spiele anderer gespeicherter Saisons lassen sich öffnen; die dazugehörige Saison wird zuvor ausgewählt.
 5. **Einzelspiel → Neu anlegen** verwendet weiterhin die vorhandene Auswahl **Manuell anlegen / Handball360**. **Saison → Neu anlegen** erstellt einen neuen, unabhängigen Saisoneintrag. **Importieren** verwendet weiterhin die bekannten JSON-Importer.
