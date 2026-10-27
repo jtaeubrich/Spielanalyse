@@ -19,6 +19,7 @@ const htmlFile=(name,text)=>({name,mimeType:"text/html",buffer:Buffer.from(text)
 
 async function openDemo(page){
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
   await page.locator("#seasonNuLigaOpen").click();
@@ -105,6 +106,7 @@ test("nuLiga online link retrieves public group schedule and match report withou
     })});
   });
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
   await page.locator("#seasonNuLigaOpen").click();
@@ -136,6 +138,7 @@ test("nuLiga online error is displayed and does not add incomplete games",async(
     body:JSON.stringify({error:{message:"nuLiga momentan nicht erreichbar."}})
   }));
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
   await page.locator("#seasonNuLigaOpen").click();
@@ -163,6 +166,7 @@ test("real nuLiga schedule table: Ort is not Nr, and games spanning the full sea
     body:JSON.stringify({source:"nuliga",url,html})
   }));
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
   await page.locator("#seasonNuLigaOpen").click();
