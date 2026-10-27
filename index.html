@@ -2213,10 +2213,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(activeSeasonGameId){try{await storeInternalSeason()}catch(error){return toast("Vorheriges Saisonspiel konnte nicht gesichert werden: "+(error?.message||"Speicherfehler"))}}
     const stateCopy=structuredClone(game.state);
     if(!historical){
-      // A historical source is a *viewer classification*, not a prohibition
-      // on editing. A video-scouted game must never resume as live capture.
-      if(stateCopy.isHistorical&&!stateCopy.liveScoutingCompleted)stateCopy.isVideoscoutingFile=true;
-      stateCopy.isHistorical=false;
+      // Future Handball360 fixtures often carry the historical flag even
+      // without events. Those must still be available for new live scouting.
+      // Any archived game with video/official events resumes in video capture.
+      if(!(stateCopy.events||[]).length&&!stateCopy.liveScoutingCompleted){
+        stateCopy.isHistorical=false;
+        stateCopy.isVideoscoutingFile=false;
+      }else{
+        if(stateCopy.isHistorical&&!stateCopy.liveScoutingCompleted)stateCopy.isVideoscoutingFile=true;
+        stateCopy.isHistorical=false;
+      }
     }
     applyLoadedGameText(JSON.stringify(stateCopy),historical,game.fileName,null,game.id);
     renderSetupSeasonPicker();
