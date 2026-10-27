@@ -13,6 +13,9 @@ test("Home is the default entry and reveals the two-stage Saison/Einzelspiel act
   await expect(page.locator("#homeChooseGame")).toBeVisible();
   await expect(page.locator("#homeActions")).toBeHidden();
   await page.locator("#homeChooseGame").click();
+  await expect(page.locator("#homeOpenLabel")).toHaveText("Spiel laden");
+  await expect(page.locator("#homeImportHint")).toContainText("Spiel-JSON");
+  await expect(page.locator("#homeNewHint")).toContainText("Handball360");
   await expect(page.locator("#homeActions")).toBeVisible();
   await expect(page.locator("#homeOpen")).toBeVisible();
   await expect(page.locator("#homeImport")).toBeVisible();
@@ -20,6 +23,9 @@ test("Home is the default entry and reveals the two-stage Saison/Einzelspiel act
   await page.locator("#homeBack").click();
   await expect(page.locator("#homeChooseSeason")).toBeVisible();
   await page.locator("#homeChooseSeason").click();
+  await expect(page.locator("#homeOpenLabel")).toHaveText("Saison laden");
+  await expect(page.locator("#homeImportHint")).toContainText("Saison-JSON");
+  await expect(page.locator("#homeNewHint")).toContainText("Unabhängige Saison");
   await expect(page.locator("#homeBreadcrumb")).toContainText("Saison");
   await page.locator("#homeOpen").click();
   await expect(page.locator("#homeLibrary")).toBeVisible();
