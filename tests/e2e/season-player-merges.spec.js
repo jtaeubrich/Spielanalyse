@@ -21,6 +21,7 @@ function upload(name, json) {
 
 test("season merges only user-selected name variants and can undo the mapping", async ({ page }) => {
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
   await page.locator("#seasonGameInput").setInputFiles([
@@ -82,6 +83,7 @@ test("exact names are aggregated regardless of shirt number", async ({ page }) =
   a[a.ownTeam].players[0].nr = "";
   b[b.ownTeam].players[0].nr = 17;
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
   await page.locator("#seasonGameInput").setInputFiles([
