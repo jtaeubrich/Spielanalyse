@@ -1057,6 +1057,24 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
   #videoTab #videoEventsCard .clip-content{min-width:0!important;white-space:normal!important;padding-right:23px!important}
   #videoTab #videoEventsCard .clip-head,#videoTab #videoEventsCard .clip-player,#videoTab #videoEventsCard .clip-video{line-height:1.3!important;overflow-wrap:anywhere}
 }
+
+    .setup-preflight{padding:16px;margin:0 0 15px}
+    .setup-preflight h2{margin:0 0 4px;font-size:22px}
+    .preflight-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+    .preflight-head p,.preflight-hint{margin:4px 0;color:var(--muted);font-size:13px}
+    #preflightCount{font-weight:800;color:var(--green)}
+    .preflight-progress{height:5px;margin:12px 0;background:var(--panel2);border-radius:9px;overflow:hidden}
+    #preflightProgress{display:block;background:var(--green);height:100%;width:0}
+    .preflight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .preflight-item{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;min-width:0}
+    .preflight-item[data-status="done"]{border-color:#308456}
+    .preflight-item button{display:flex;gap:8px;align-items:center;text-align:left;border:0;background:transparent;color:var(--text);font-weight:750;padding:0;width:100%;cursor:pointer}
+    .preflight-item p{font-size:12px;color:var(--muted);margin:6px 0 0 31px;overflow-wrap:anywhere}
+    .preflight-icon{flex:0 0 22px;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--muted);color:var(--muted)}
+    .preflight-item[data-status="done"] .preflight-icon{background:var(--green);border-color:var(--green);color:#071018}
+    .preflight-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .preflight-actions #preflightStart{margin-left:auto}
+    @media(max-width:600px){.preflight-grid{grid-template-columns:1fr}.preflight-actions{display:grid;grid-template-columns:1fr 1fr}.preflight-actions #preflightStart{grid-column:1/-1;margin:0}}
 </style>
 </head>
 <body>
@@ -1114,6 +1132,19 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
       <button class="btn" id="setupModeSeason" type="button" role="tab" aria-selected="false" aria-controls="setupSeasonPanel">Saison</button>
     </div>
     <div id="setupSinglePanel" class="setup-subpane">
+
+    <section class="panel setup-preflight" id="setupPreflight" aria-label="Schritte zur Spielvorbereitung">
+      <div class="preflight-head"><div><h2>Spielvorbereitung</h2><p id="preflightSubtitle">Aktuelles Spiel prüfen</p></div><span id="preflightCount">0 von 3 Pflichtschritten</span></div>
+      <div class="preflight-progress" aria-hidden="true"><span id="preflightProgress"></span></div>
+      <div class="preflight-grid">
+        <div class="preflight-item" id="preflightInfoStep" data-status="open"><button id="preflightOpenInfo" type="button"><span class="preflight-icon" id="preflightInfoIcon">○</span>1. Spielinformationen</button><p id="preflightInfoStatus">Datum, Zeit, Halle und Mannschaften</p></div>
+        <div class="preflight-item" id="preflightRosterStep" data-status="open"><button id="preflightOpenRoster" type="button"><span class="preflight-icon" id="preflightRosterIcon">○</span>2. Kader und Torhüter</button><p id="preflightRosterStatus">Kader und aktiven Torhüter prüfen</p></div>
+        <div class="preflight-item" id="preflightCaptureStep" data-status="open"><button id="preflightOpenCapture" type="button"><span class="preflight-icon" id="preflightCaptureIcon">○</span>3. Scouting-Einstellungen</button><p id="preflightCaptureStatus">Erfassungsoptionen prüfen</p></div>
+        <div class="preflight-item" id="preflightMatchdayStep" data-status="open"><button id="preflightOpenMatchday" type="button"><span class="preflight-icon" id="preflightMatchdayIcon">○</span>4. Matchday-Post · optional</button><p id="preflightMatchdayStatus">Bei Bedarf PNG erstellen</p></div>
+      </div>
+      <div class="preflight-actions"><button class="btn" id="preflightConfirmRoster" type="button" disabled>Kader geprüft</button><button class="btn" id="preflightConfirmCapture" type="button">Erfassung bestätigt</button><button class="btn primary" id="preflightStart" type="button">Zum Match-Tab</button></div>
+      <p class="preflight-hint" id="preflightHint">Offene Punkte bleiben sichtbar. Scouting ist trotzdem möglich.</p>
+    </section>
     <div class="setup-grid">
       <div class="panel setup-card">
         <h2>Spielverwaltung</h2>
@@ -1134,7 +1165,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
             <button class="btn primary" type="button" id="setupOfficialRosterConfirm">Offizielle Kader übernehmen</button>
           </div>
         </dialog>
-        <div class="form-grid"><label>Spielname<input class="field" id="setupGameName" placeholder="Spielname"></label><label>Wettbewerb / Spielklasse<input class="field" id="setupCompetition" placeholder="Freundschaftsspiel"></label><label>Spielzeit pro Halbzeit<select class="field" id="setupDuration"><option value="20">20 Minuten</option><option value="25" selected>25 Minuten</option><option value="30">30 Minuten</option></select></label><label>Heim<input class="field" id="setupHomeName" placeholder="Heimmannschaft"></label><label>Gast<input class="field" id="setupAwayName" placeholder="Gastmannschaft"></label></div>
+        <div class="form-grid" id="setupGameDetails"><label>Spielname<input class="field" id="setupGameName" placeholder="Spielname"></label><label>Wettbewerb / Spielklasse<input class="field" id="setupCompetition" placeholder="Freundschaftsspiel"></label><label>Spielzeit pro Halbzeit<select class="field" id="setupDuration"><option value="20">20 Minuten</option><option value="25" selected>25 Minuten</option><option value="30">30 Minuten</option></select></label><label>Heim<input class="field" id="setupHomeName" placeholder="Heimmannschaft"></label><label>Gast<input class="field" id="setupAwayName" placeholder="Gastmannschaft"></label><label>Spieldatum<input class="field" type="date" id="setupGameDate"></label><label>Anwurfzeit<input class="field" type="time" id="setupGameTime"></label><label>Spielort / Sporthalle<input class="field" id="setupGameVenue" placeholder="Sporthalle"></label></div>
         <p class="number-help">Heim und Gast werden gleichberechtigt erfasst. Die bevorzugte Mannschaft für die Saisonanalyse wählst du im Saison-Tab.</p><details><summary>Spieldaten übernehmen</summary><p class="number-help">Wähle beim Import, ob Vereinsdaten, Wettbewerb, Spieler-IDs und Kader in die Mannschaftssammlung und/oder ins aktuelle Spiel übernommen werden sollen. Spielereignisse, Spielzeit und Videos bleiben unverändert.</p><label>Handball360-Spiel-Link<input class="field" id="existingH360Url" inputmode="url" placeholder="https://www.handball.net/match/378110"></label><button class="btn primary" type="button" id="existingH360Enrich">Spieldaten übernehmen</button><p class="number-help" id="existingH360Status" role="status"></p></details>
       </div>
       <details class="panel setup-card wide" id="setupMatchdayPanel">
@@ -1179,7 +1210,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
           <p class="number-help" id="teamCollectionTransferStatus" role="status">Sammlung zwischen Safari und installierter App übertragen; vorhandene Einträge bleiben erhalten.</p>
         </details>
       </details>
-      <details class="panel setup-card wide">
+      <details class="panel setup-card wide" id="setupCapturePanel">
         <summary>Torwurf-Erfassung</summary>
         <p class="number-help">Lege fest, welche Angaben erfasst werden. Die Option „Spieler“ gilt auch für technische Fehler und Strafen. Ohne Spielererfassung wird bei Strafen weiterhin die betroffene Mannschaft ausgewählt. Assist wird nur für Tore der eigenen Mannschaft mit dem HandballMetrics-Feld assistPId gespeichert.</p>
         <label class="shot-attacker-order" for="shotAttackerOrder">Reihenfolge der Schützenauswahl <select class="field" id="shotAttackerOrder"><option value="first">Schütze zuerst (Standard)</option><option value="last">Schütze zuletzt (z. B. nach Hallensprecher)</option></select></label>
@@ -1684,7 +1715,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
 
 (async()=>{
   const shotSettingDefaults={attacker:true,attackerOrder:"first",location:true,target:true,phase:true,result:true,assist:false,tag:false,defense:true,trigger:true};
-  const baseState={format:GAME_FORMAT,version:CURRENT_GAME_VERSION,gameName:"Handball Spielanalyse",competition:"Freundschaftsspiel",analysisPerspective:"away",home:{name:"Gegner",players:[]},away:{name:"Mein Team",players:[]},events:[],gameTime:0,timer:{secondsElapsed:0,half:1,duration:25,active:false},timeouts:{home:[false,false],away:[false,false]},timeoutRule:"3_per_game",activeTw:{home:null,away:null},activeDefense:{home:null,away:null},theme:"dark",possession:"home",attackPhase:"Position",shotCapture:{...shotSettingDefaults},isHistorical:false,isVideoscoutingFile:false,liveScoutingCompleted:false,videoFileName:null,video:{h1SyncRealTime:null,h2SyncRealTime:null,h1LiveStartMs:null,h2LiveStartMs:null,preRoll:4,postRoll:2,playbackRate:1,autoplay:false,kickoff:null}};
+  const baseState={format:GAME_FORMAT,version:CURRENT_GAME_VERSION,gameName:"Handball Spielanalyse",competition:"Freundschaftsspiel",analysisPerspective:"away",home:{name:"Gegner",players:[]},away:{name:"Mein Team",players:[]},events:[],gameTime:0,timer:{secondsElapsed:0,half:1,duration:25,active:false},timeouts:{home:[false,false],away:[false,false]},timeoutRule:"3_per_game",activeTw:{home:null,away:null},activeDefense:{home:null,away:null},theme:"dark",possession:"home",attackPhase:"Position",shotCapture:{...shotSettingDefaults},isHistorical:false,isVideoscoutingFile:false,liveScoutingCompleted:false,gameTimeOfDay:"",gameVenue:"",preflight:{rosterFingerprint:"",captureFingerprint:"",matchdayFingerprint:""},videoFileName:null,video:{h1SyncRealTime:null,h2SyncRealTime:null,h1LiveStartMs:null,h2LiveStartMs:null,preRoll:4,postRoll:2,playbackRate:1,autoplay:false,kickoff:null}};
   let state=structuredClone(baseState), draft=null, ownTeam="away",myTeamLeft=true,analysisMode="live",matchReviewMode=false,activeTab="setup",persistenceReady=false;
   const builtInClipPresets=[
     {id:"standard-goals-by-player",name:"Alle Tore je Spieler",builtIn:true,filters:{team:"own",player:"all",type:"goal",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"player",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Tore_{Spieler}"}},
@@ -1746,7 +1777,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   const currentGameSeconds=()=>{advanceGame();return analysisMode==="video"&&mediaReady()?gameBase:gameRunning?gameBase+(performance.now()-gameStarted)/1000:gameBase;};
   const currentLiveMs=()=>Math.round(liveClockRunning?liveClockBase+(performance.now()-liveClockStarted):liveClockBase);
   const currentVideoMs=()=>analysisMode==="live"?currentLiveMs():mediaReady()?Math.round(mediaSeconds()*1000):Math.round(videoRunning?videoBase+(performance.now()-videoStarted):videoBase);
-  function normalize(){const historical=Boolean(state.isHistorical),legacyMillisecondSync=state.video?.syncUnit==null&&(state.video?.analysisClockMs!==undefined||state.video?.analysisTimeBasis!==undefined);const originalPerspective=state.analysisPerspective;state={...structuredClone(baseState),...state};state.analysisPerspective=["home","away","neutral"].includes(originalPerspective)?originalPerspective:(["home","away"].includes(state.ownTeam)?state.ownTeam:"away");state.home={...baseState.home,...state.home};state.away={...baseState.away,...state.away};for(const team of ["home","away"]){state[team].players=Array.isArray(state[team].players)?state[team].players:[];for(const player of state[team].players)if(player.handballNetId===undefined)player.handballNetId=""}state.timer={...baseState.timer,...state.timer,active:false};state.video={...baseState.video,...state.video,syncUnit:state.video?.syncUnit||(legacyMillisecondSync?"ms":"seconds")};state.activeTw={...baseState.activeTw,...state.activeTw};state.activeDefense={...baseState.activeDefense,...state.activeDefense};activeDefense={...state.activeDefense};state.shotCapture={...shotSettingDefaults,...state.shotCapture};state.events=Array.isArray(state.events)?state.events:[];state.isHistorical=historical;gameBase=Number(state.timer.secondsElapsed||0);gameRunning=false;state.timer.active=false;ownTeam=["home","away"].includes(state.ownTeam)?state.ownTeam:"away";state.ownTeam=ownTeam;}
+  function normalize(){const historical=Boolean(state.isHistorical),legacyMillisecondSync=state.video?.syncUnit==null&&(state.video?.analysisClockMs!==undefined||state.video?.analysisTimeBasis!==undefined);const originalPerspective=state.analysisPerspective;state={...structuredClone(baseState),...state};state.analysisPerspective=["home","away","neutral"].includes(originalPerspective)?originalPerspective:(["home","away"].includes(state.ownTeam)?state.ownTeam:"away");state.home={...baseState.home,...state.home};state.away={...baseState.away,...state.away};for(const team of ["home","away"]){state[team].players=Array.isArray(state[team].players)?state[team].players:[];for(const player of state[team].players)if(player.handballNetId===undefined)player.handballNetId=""}state.timer={...baseState.timer,...state.timer,active:false};state.video={...baseState.video,...state.video,syncUnit:state.video?.syncUnit||(legacyMillisecondSync?"ms":"seconds")};state.activeTw={...baseState.activeTw,...state.activeTw};state.activeDefense={...baseState.activeDefense,...state.activeDefense};activeDefense={...state.activeDefense};state.shotCapture={...shotSettingDefaults,...state.shotCapture};state.preflight={...baseState.preflight,...state.preflight};state.events=Array.isArray(state.events)?state.events:[];state.isHistorical=historical;gameBase=Number(state.timer.secondsElapsed||0);gameRunning=false;state.timer.active=false;ownTeam=["home","away"].includes(state.ownTeam)?state.ownTeam:"away";state.ownTeam=ownTeam;}
   function score(){return scoreEvents(state.events)}
   function update(){
     for(const id of ["analysisTeamFilter","videoTeamFilter","editorTeamFilter","seasonTeamFilter"]){
@@ -2224,7 +2255,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         stateCopy.isHistorical=false;
       }
     }
-    applyLoadedGameText(JSON.stringify(stateCopy),historical,game.fileName,null,game.id);
+    applyLoadedGameText(JSON.stringify(stateCopy),historical,game.fileName,null,game.id,!historical);
     renderSetupSeasonPicker();
   }
   function appendRosterPreviewDetails(container,heading,items){
@@ -3098,7 +3129,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         (state.events?.length||0)+" Ereignisse · "+homeGameStatus({state});
       host.append(homeRow(state.gameName||"Zuletzt geöffnetes Spiel",subtitle,[{
         title:state.isHistorical?"Analyse öffnen":"Spiel fortsetzen",primary:true,
-        action:()=>showTab(state.isHistorical?"analysis":"match")
+        action:()=>{if(!state.isHistorical)showSetupMode("single");showTab(state.isHistorical?"analysis":"setup")}
       }]));
     }
     if(homeSeasonRecords().length){
@@ -3137,7 +3168,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(homeHasSession){
         host.append(homeRow(state.gameName||"Letztes Spiel",
           "Zuletzt bearbeitet · "+(state.events?.length||0)+" Ereignisse",
-          [{title:state.isHistorical?"Analyse öffnen":"Fortsetzen",primary:true,action:()=>showTab(state.isHistorical?"analysis":"match")}]));
+          [{title:state.isHistorical?"Analyse öffnen":"Fortsetzen",primary:true,action:()=>{if(!state.isHistorical)showSetupMode("single");showTab(state.isHistorical?"analysis":"setup")}}]));
       }
       for(const entry of homeSeasonRecords()){
         for(const game of entry.games||[]){
@@ -3384,7 +3415,64 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function renderTagLibrary(){const host=$("setupTagList");if(!host)return;host.replaceChildren();if(!tagLibrary.length){const empty=document.createElement("span");empty.className="number-help";empty.textContent="Noch keine Tags angelegt oder geladen.";host.append(empty);return}for(const tag of tagLibrary){const button=document.createElement("button");button.className="tag-chip";button.type="button";button.title="Tag aus der Bibliothek entfernen";button.textContent=tag+" ×";button.onclick=()=>{tagLibrary=tagLibrary.filter(item=>item!==tag);saveTagLibrary();toast("Tag aus der Bibliothek entfernt")};host.append(button)}}
   function renderGlobalSettingsSummary(){for(const [id,kind,values] of [["setupDefenseFormationList","defense",defenseFormations],["setupTriggerActionList","trigger",triggerActions]]){const host=$(id);if(!host)continue;host.replaceChildren();for(const value of values){const chip=document.createElement("button");chip.type="button";chip.className="tag-chip";chip.title="Eintrag entfernen";chip.textContent=value+" ×";chip.onclick=()=>{if(kind==="defense"){defenseFormations=defenseFormations.filter(item=>item!==value);for(const team of ["home","away"])if(activeDefense[team]===value){activeDefense[team]=null;state.activeDefense={...state.activeDefense,[team]:null}}}else triggerActions=triggerActions.filter(item=>item!==value);saveTagLibrary();toast("Eintrag entfernt")};host.append(chip)}}}
   function renderTagFileStatus(){const status=$("tagFileStatus");if(status)status.textContent=currentTagFileName||"Keine Einstellungsdatei ausgewählt"}
-  function renderSetup(){renderSetupSeasonPicker();setInputUnlessActive("setupGameName",state.gameName);setInputUnlessActive("setupCompetition",state.competition??state.officialSource?.competition??"Freundschaftsspiel");setInputUnlessActive("setupHomeName",state.home?.name);setInputUnlessActive("setupAwayName",state.away?.name);if(document.activeElement!==$("setupDuration"))$("setupDuration").value=String(state.timer.duration);document.querySelectorAll("[data-shot-setting]").forEach(input=>input.checked=Boolean(state.shotCapture[input.dataset.shotSetting]));$("shotAttackerOrder").value=state.shotCapture.attackerOrder==="last"?"last":"first";renderRosterEditor();renderTagLibrary();renderGlobalSettingsSummary();renderDefenseSelectors();renderTagFileStatus()}
+
+  function preflightKickoff(){
+    const source=String(state.officialSource?.matchDate||state.gameDate||"").trim();
+    let date=String(state.gameDate||"").slice(0,10),time=String(state.gameTimeOfDay||"");
+    if(source){
+      const parsed=new Date(source);
+      if(!Number.isNaN(parsed.getTime())&&source.includes("T")){
+        const parts=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Berlin",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(parsed).filter(part=>part.type!=="literal").map(part=>[part.type,part.value]));
+        if(!date)date=parts.year+"-"+parts.month+"-"+parts.day;
+        if(!time)time=parts.hour+":"+parts.minute;
+      }else if(!date&&source.length>=10)date=source.slice(0,10);
+    }
+    return {date,time,venue:String(state.gameVenue||state.officialSource?.venue||"").trim()};
+  }
+  function preflightRosterFingerprint(){return JSON.stringify(["home","away"].map(team=>[team,state.activeTw?.[team]??null,(state[team]?.players||[]).map(player=>[player.id,player.nr,player.vorname,player.nachname,Boolean(player.isTW)])]))}
+  function preflightCaptureFingerprint(){return JSON.stringify(state.shotCapture)}
+  function preflightMatchdayFingerprint(){const k=preflightKickoff();return JSON.stringify([state.home?.name,state.away?.name,state.gameName,state.competition,k.date,k.time,k.venue])}
+  function preflightStatus(){
+    const k=preflightKickoff(),own=state[ownTeam]?.players||[];
+    const hasActiveKeeper=own.some(player=>player.isTW&&String(player.id)===String(state.activeTw?.[ownTeam]));
+    const information=Boolean(k.date&&k.time&&k.venue&&state.competition?.trim()&&state.home?.name?.trim()&&state.away?.name?.trim()&&state.home.name!=="Gegner"&&state.away.name!=="Mein Team");
+    const rosterReady=Boolean(own.length&&hasActiveKeeper);
+    return {k,information,rosterReady,ownCount:own.length,
+      roster:rosterReady&&state.preflight.rosterFingerprint===preflightRosterFingerprint(),
+      capture:state.preflight.captureFingerprint===preflightCaptureFingerprint(),
+      matchday:Boolean(state.preflight.matchdayFingerprint)&&state.preflight.matchdayFingerprint===preflightMatchdayFingerprint()};
+  }
+  function renderPreflight(){
+    const s=preflightStatus(),steps=[
+      ["Info",s.information,s.information?s.k.date+" · "+s.k.time+" · "+s.k.venue:"Datum, Anwurfzeit, Halle und Teams vervollständigen"],
+      ["Roster",s.roster,s.roster?s.ownCount+" eigene Spieler · Kader bestätigt":s.rosterReady?"Kader vorhanden · bitte bestätigen":s.ownCount+" eigene Spieler · aktiven Torhüter festlegen"],
+      ["Capture",s.capture,s.capture?"Erfassungsoptionen bestätigt":"Einstellungen prüfen und bestätigen"],
+      ["Matchday",s.matchday,s.matchday?"Matchday-PNG erstellt":"Optional · PNG bei Bedarf erstellen"]
+    ];
+    for(const [key,done,label] of steps){$("preflight"+key+"Step").dataset.status=done?"done":"open";$("preflight"+key+"Icon").textContent=done?"✓":"○";$("preflight"+key+"Status").textContent=label}
+    const count=[s.information,s.roster,s.capture].filter(Boolean).length;
+    $("preflightCount").textContent=count+" von 3 Pflichtschritten";
+    $("preflightProgress").style.width=(100*count/3)+"%";
+    $("preflightSubtitle").textContent=(state.home?.name||"Heim")+" – "+(state.away?.name||"Gast");
+    $("preflightConfirmRoster").disabled=!s.rosterReady;
+    $("preflightConfirmRoster").textContent=s.roster?"✓ Kader geprüft":"Kader geprüft";
+    $("preflightConfirmCapture").textContent=s.capture?"✓ Erfassung bestätigt":"Erfassung bestätigt";
+    $("preflightHint").textContent=count===3?"Pflichtschritte bestätigt. Du kannst das Scouting starten.":"Offene Schritte bleiben sichtbar. Scouting ist bei Bedarf trotzdem möglich.";
+  }
+  function preflightOpen(id){
+    showSetupMode("single");
+    const target=$(id);
+    if(target.tagName==="DETAILS")target.open=true;
+    target.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  $("preflightOpenInfo").onclick=()=>preflightOpen("setupGameDetails");
+  $("preflightOpenRoster").onclick=()=>{$("rosterTeam").value=ownTeam;renderRosterEditor();preflightOpen("setupRosterPanel")};
+  $("preflightOpenCapture").onclick=()=>preflightOpen("setupCapturePanel");
+  $("preflightOpenMatchday").onclick=()=>preflightOpen("setupMatchdayPanel");
+  $("preflightConfirmRoster").onclick=()=>{if(!preflightStatus().rosterReady)return;state.preflight.rosterFingerprint=preflightRosterFingerprint();update()};
+  $("preflightConfirmCapture").onclick=()=>{state.preflight.captureFingerprint=preflightCaptureFingerprint();update()};
+  $("preflightStart").onclick=()=>showTab("match");
+  function renderSetup(){renderSetupSeasonPicker();setInputUnlessActive("setupGameName",state.gameName);setInputUnlessActive("setupCompetition",state.competition??state.officialSource?.competition??"Freundschaftsspiel");setInputUnlessActive("setupHomeName",state.home?.name);setInputUnlessActive("setupAwayName",state.away?.name);const kickoff=preflightKickoff();setInputUnlessActive("setupGameDate",kickoff.date);setInputUnlessActive("setupGameTime",kickoff.time);setInputUnlessActive("setupGameVenue",kickoff.venue);renderPreflight();if(document.activeElement!==$("setupDuration"))$("setupDuration").value=String(state.timer.duration);document.querySelectorAll("[data-shot-setting]").forEach(input=>input.checked=Boolean(state.shotCapture[input.dataset.shotSetting]));$("shotAttackerOrder").value=state.shotCapture.attackerOrder==="last"?"last":"first";renderRosterEditor();renderTagLibrary();renderGlobalSettingsSummary();renderDefenseSelectors();renderTagFileStatus()}
   function renderRosterEditor(){const team=$("rosterTeam").value,players=state[team]?.players||[],host=$("rosterEditor");if(!players.length){host.innerHTML='<div class="empty" style="margin-top:14px">Noch keine Spieler in diesem Kader.</div>';return}const table=document.createElement("table");table.className="roster-table";table.innerHTML='<thead><tr><th class="nr">Nr.</th><th>Vorname</th><th>Nachname</th><th>H360-ID</th><th class="tw">TW</th><th class="tw">Aktiv</th><th class="remove"></th></tr></thead>';const body=document.createElement("tbody");for(const p of players){const row=document.createElement("tr");for(const [key,type] of [["nr","number"],["vorname","text"],["nachname","text"],["handballNetId","text"]]){const td=document.createElement("td");if(key==="nr")td.className="nr";const input=document.createElement("input");input.type=type;input.value=p[key]??"";if(type==="number"){input.min="0";input.max="99"}if(key==="handballNetId"){input.placeholder="Handball360-ID";input.title="Stabile Spieler-ID aus Handball360 / handball.net"}input.onchange=()=>{p[key]=key==="nr"?(input.value===""?"":Number(input.value)):input.value.trim();update()};td.append(input);row.append(td)}const tw=document.createElement("td");tw.className="tw";const check=document.createElement("input");check.type="checkbox";check.checked=Boolean(p.isTW);check.onchange=()=>{p.isTW=check.checked;if(!p.isTW&&String(state.activeTw[team])===String(p.id))state.activeTw[team]=null;update()};tw.append(check);const active=document.createElement("td");active.className="tw";const radio=document.createElement("input");radio.type="radio";radio.name="activeKeeper-"+team;radio.checked=String(state.activeTw[team])===String(p.id);radio.disabled=!p.isTW;radio.title="Als aktiven Standard-Torwart setzen";radio.onchange=()=>{if(radio.checked){state.activeTw[team]=p.id;update()}};active.append(radio);const remove=document.createElement("td");remove.className="remove";const del=document.createElement("button");del.className="delete";del.type="button";del.textContent="×";del.title="Spieler entfernen";del.onclick=()=>{state[team].players=state[team].players.filter(x=>String(x.id)!==String(p.id));if(String(state.activeTw[team])===String(p.id))state.activeTw[team]=null;update()};remove.append(del);row.append(tw,active,remove);body.append(row)}table.append(body);host.replaceChildren(table)}
   let knownRosterRecords=[];
   function renderKnownRosterDetails(){
@@ -3482,6 +3570,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("setupDuration").onchange=e=>{state.timer.duration=Number(e.target.value);update()};
   $("setupHomeName").onchange=e=>{state.home.name=e.target.value.trim()||"Heim";update()};
   $("setupAwayName").onchange=e=>{state.away.name=e.target.value.trim()||"Gast";update()};
+  $("setupGameDate").onchange=e=>{state.gameDate=e.target.value;update()};
+  $("setupGameTime").onchange=e=>{state.gameTimeOfDay=e.target.value;update()};
+  $("setupGameVenue").onchange=e=>{state.gameVenue=e.target.value.trim();update()};
   document.querySelectorAll("[data-shot-setting]").forEach(input=>input.onchange=()=>{state.shotCapture[input.dataset.shotSetting]=input.checked;update()});
   $("shotAttackerOrder").onchange=event=>{state.shotCapture.attackerOrder=event.target.value==="last"?"last":"first";update()};
   function updateSetupEntryUi(){const kind=$("setupSettingType").value,input=$("setupTagInput"),button=$("addSetupTag"),labels={tag:["Neuen Tag eingeben","+ Tag"],trigger:["Neue Auslösehandlung eingeben","+ Auslöser"],defense:["Neue Deckungsformation eingeben","+ Deckung"]};[input.placeholder,button.textContent]=labels[kind]||labels.tag}
@@ -4210,7 +4301,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function savedYoutubeReference(){return resolveYoutubeReference(state.video)}
   function restoreSavedVideoReference(){const youtube=savedYoutubeReference();$("youtubeUrl").value=youtube;if(youtube)$("videoMessage").textContent='YouTube-Link aus der Spieldatei übernommen. Zum Öffnen „YouTube laden“ wählen.';else if(state.video?.localFileName)$("videoMessage").textContent=`Gespeichertes lokales Video „${state.video.localFileName}“ bitte erneut auswählen.`}
   const gameFileTypes=GAME_FILE_TYPES;
-  function applyLoadedGameText(text,historical,fileName,handle=null,linkedSeasonGameId=null){try{persistSession();analysisSelectedGameId="";setMatchReviewMode(false,{announce:false});const loaded=parseGameText(text);resetLoadedVideo();activeSeasonGameId=linkedSeasonGameId;state=loaded;ownTeam=["home","away"].includes(loaded.ownTeam)?loaded.ownTeam:"away";state.ownTeam=ownTeam;state.isHistorical=historical;currentGameFileHandle=handle;currentGameFileName=fileName||null;gameBase=Number(state.timer?.secondsElapsed||0);liveClockBase=Number(state.video?.analysisClockMs||0);liveClockInitialized=false;gameRunning=videoRunning=liveClockRunning=false;normalize();restoreSavedVideoReference();videoBase=Number(state.video?.analysisClockMs||0);analysisMode=historical?"video":(state.liveScoutingCompleted?"live":state.isVideoscoutingFile?"video":"live");setAnalysisMode(analysisMode);update();showTab(historical?"analysis":"match");if(!historical&&state.liveScoutingCompleted)setMatchReviewMode(true,{announce:false});if(savedYoutubeReference())$("youtubeForm").requestSubmit();homeHasSession=true;toast(linkedSeasonGameId?(historical?"Saisonspiel zur Analyse geöffnet":"Saisonspiel zum Fortsetzen geladen"):(historical?"Spiel für Analyse geladen":"Spiel zum Fortsetzen geladen"))}catch(error){toast(error?.message||"JSON konnte nicht geladen werden")}}
+  function applyLoadedGameText(text,historical,fileName,handle=null,linkedSeasonGameId=null,openPreparation=false){try{persistSession();analysisSelectedGameId="";setMatchReviewMode(false,{announce:false});const loaded=parseGameText(text);resetLoadedVideo();activeSeasonGameId=linkedSeasonGameId;state=loaded;ownTeam=["home","away"].includes(loaded.ownTeam)?loaded.ownTeam:"away";state.ownTeam=ownTeam;state.isHistorical=historical;currentGameFileHandle=handle;currentGameFileName=fileName||null;gameBase=Number(state.timer?.secondsElapsed||0);liveClockBase=Number(state.video?.analysisClockMs||0);liveClockInitialized=false;gameRunning=videoRunning=liveClockRunning=false;normalize();restoreSavedVideoReference();videoBase=Number(state.video?.analysisClockMs||0);analysisMode=historical?"video":(state.liveScoutingCompleted?"live":state.isVideoscoutingFile?"video":"live");setAnalysisMode(analysisMode);update();if(openPreparation)showSetupMode("single");showTab(openPreparation?"setup":historical?"analysis":"match");if(!historical&&state.liveScoutingCompleted)setMatchReviewMode(true,{announce:false});if(savedYoutubeReference())$("youtubeForm").requestSubmit();homeHasSession=true;toast(linkedSeasonGameId?(historical?"Saisonspiel zur Analyse geöffnet":"Saisonspiel zum Fortsetzen geladen"):(historical?"Spiel für Analyse geladen":"Spiel zum Fortsetzen geladen"))}catch(error){toast(error?.message||"JSON konnte nicht geladen werden")}}
   async function pickGameFile(historical){if(typeof window.showOpenFilePicker!=="function")return $(historical?"fileInput":"continueGameInput").click();try{const [handle]=await window.showOpenFilePicker(gameOpenPickerOptions());const file=await handle.getFile();applyLoadedGameText(await file.text(),historical,file.name,handle)}catch(error){if(error?.name!=="AbortError")toast(error?.message||"Spiel konnte nicht geöffnet werden")}}
   function loadGameFromInput(e,historical){const f=e.target.files[0];e.target.value="";if(!f)return;const r=new FileReader();r.onload=()=>applyLoadedGameText(r.result,historical,f.name,null);r.onerror=()=>toast("JSON konnte nicht geladen werden");r.readAsText(f)}
   $("continueGameInput").onchange=e=>loadGameFromInput(e,false);$("fileInput").onchange=e=>loadGameFromInput(e,true);
@@ -4681,7 +4772,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
         blob=await instagramCard("MATCHDAY",{color:"#07131b"});
       }
       readyMatchdayPng=blob;$("setupMatchdayDownload").disabled=false;$("setupMatchdayPreview").disabled=false;
-      status.textContent="✓ Matchday-PNG bereit (1080 × 1350). Jetzt „PNG herunterladen“ wählen."+(logoWarnings.length?" Hinweis: "+logoWarnings.join(" "):"");
+      state.preflight.matchdayFingerprint=preflightMatchdayFingerprint();update();status.textContent="✓ Matchday-PNG bereit (1080 × 1350). Jetzt „PNG herunterladen“ wählen."+(logoWarnings.length?" Hinweis: "+logoWarnings.join(" "):"");
     }catch(error){status.textContent="Export fehlgeschlagen: "+(error?.message||"Unbekannter Fehler");}
     finally{button.disabled=false;}
   };

@@ -178,6 +178,9 @@ test("opens a future season game in Setup and saves edits to the same archived r
   await picker.selectOption({index:1});
   await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
   await page.locator("#setupSeasonContinue").click();
+  await expect(page.locator('[data-tab="setup"]')).toHaveClass(/active/);
+  await expect(page.locator("#setupPreflight")).toBeVisible();
+  await page.locator("#preflightStart").click();
   await expect(page.locator('[data-tab="match"]')).toHaveClass(/active/);
   await expect(page.locator("#modeSelect")).toHaveValue("live");
   await page.locator('[data-tab="setup"]').click();
@@ -233,6 +236,9 @@ test("opens an imported already-scouted match for video editing or analysis and 
   await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
   await expect(page.locator("#setupSeasonAnalysis")).toBeEnabled();
   await page.locator("#setupSeasonContinue").click();
+  await expect(page.locator('[data-tab="setup"]')).toHaveClass(/active/);
+  await expect(page.locator("#setupPreflight")).toBeVisible();
+  await page.locator("#preflightStart").click();
   await expect(page.locator('[data-tab="match"]')).toHaveClass(/active/);
   await expect(page.locator("#modeSelect")).toHaveValue("video");
   await page.locator('[data-tab="setup"]').click();
@@ -270,6 +276,9 @@ test("temporarily viewing a live-scouted season game does not disable later cont
   await page.locator('[data-tab="setup"]').click();
   await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
   await page.locator("#setupSeasonContinue").click();
+  await expect(page.locator('[data-tab="setup"]')).toHaveClass(/active/);
+  await expect(page.locator("#setupPreflight")).toBeVisible();
+  await page.locator("#preflightStart").click();
   await expect(page.locator('[data-tab="match"]')).toHaveClass(/active/);
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
