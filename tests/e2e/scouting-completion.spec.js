@@ -84,6 +84,21 @@ test("finishing a live match permanently opens Video-Nachanalyse without deletin
   await expect(page.locator("#modeSelect")).toBeDisabled();
 });
 
+test("an empty upcoming fixture remains eligible for live scouting",async({page})=>{
+  const fixtureGame=structuredClone(fixture);
+  fixtureGame.gameName="Kommendes Saisonspiel";
+  fixtureGame.events=[];
+  fixtureGame.isHistorical=true;
+  fixtureGame.isVideoscoutingFile=true;
+  fixtureGame.officialSource={provider:"handball.net",matchId:"20261107"};
+  await importSeasonGame(page,fixtureGame);
+  await expect(page.locator("#homeSeasonGames")).toContainText("Fortsetzen");
+  await page.locator("#homeSeasonGames").getByRole("button",{name:"Fortsetzen"}).click();
+  await expect(page.locator("#modeSelect")).toHaveValue("live");
+  await expect(page.locator("body")).toHaveClass(/live-scouting-layout/);
+  await expect(page.locator("#finishLiveScouting")).toBeHidden();
+});
+
 test("live events without finalization retain the reversible video review switch",async({page})=>{
   const game=structuredClone(fixture);
   game.isHistorical=false;
