@@ -20,6 +20,8 @@ jobs:
       - name: Check proxy syntax
         run: |
           node --check cloud-run-proxy/index.js
+          node --check cloud-run-proxy/client-token.js
+          node --test cloud-run-proxy/client-token.test.js
           node --check cloud-run-proxy/schedule.js
           node --check cloud-run-proxy/nuliga-fetch.js
           node --test cloud-run-proxy/nuliga-fetch.test.js

@@ -2,6 +2,7 @@ import express from "express";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { fetchHandball360TeamSchedule, validateTeamScheduleRequest } from "./schedule.js";
 import { validateNuLigaUrl, fetchNuLigaHtml } from "./nuliga-fetch.js";
+import { fetchClientToken, ClientTokenError } from "./client-token.js";
 
 const BASE_URL = "https://www.handball.net";
 const TIMEOUT_MS = 30_000;
@@ -181,6 +182,21 @@ function requireAuthorization(req) {
   }
 }
 
+async function siteClientToken(pageUrl, signal) {
+  try {
+    return await fetchClientToken(pageUrl, { signal });
+  } catch (error) {
+    if (signal.aborted) {
+      throw new ApiError(504, "UPSTREAM_TIMEOUT", "Die handball.net-Seite hat das Zeitlimit ueberschritten.");
+    }
+    if (error instanceof ClientTokenError) {
+      throw new ApiError(502, error.code, error.message,
+        error.upstreamStatus === null ? {} : { upstream_status: error.upstreamStatus });
+    }
+    throw new ApiError(502, "CLIENT_TOKEN_FETCH_FAILED", "Die handball.net-Seite konnte nicht abgerufen werden.");
+  }
+}
+
 async function getJson(path, headers, signal, optional = false) {
   const details = { endpoint: path };
 
@@ -271,6 +287,7 @@ async function fetchMatchDocuments(matchId) {
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
+    headers["x-client-token"] = await siteClientToken(matchUrl, controller.signal);
     const [match, events, lineups, additionalInfo] = await Promise.all([
       getJson(`/api/new/matches?match_id=${matchId}`, headers, controller.signal),
       getJson(`/api/new/matches/${matchId}/events`, headers, controller.signal),
@@ -376,6 +393,7 @@ app.get("/team/:id/matches", async (req, res) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
+      headers["x-client-token"] = await siteClientToken(BASE_URL + "/team/" + params.teamId, controller.signal);
       const schedule = await fetchHandball360TeamSchedule(
         params.teamId, params.from, params.to,
         path => getJson(path, headers, controller.signal)
