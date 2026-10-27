@@ -222,7 +222,7 @@ test("opens a future season game in Setup and saves edits to the same archived r
   expect(unchanged.games[0].data.gameName).toBe("Vorbereitetes Spiel - überarbeitet");
 });
 
-test("opens an imported already-scouted match only for analysis and retains custom events",async({page})=>{
+test("opens an imported already-scouted match for video editing or analysis and retains custom events",async({page})=>{
   const scouted=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
   scouted.state.events[0].comment="Mein manuelles Scouting";
   scouted.state.video.youtubeUrl="https://www.youtube.com/watch?v=custom";
@@ -230,8 +230,13 @@ test("opens an imported already-scouted match only for analysis and retains cust
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSingle").click();
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
-  await expect(page.locator("#setupSeasonContinue")).toBeDisabled();
+  await expect(page.locator("#setupSeasonContinue")).toBeEnabled();
   await expect(page.locator("#setupSeasonAnalysis")).toBeEnabled();
+  await page.locator("#setupSeasonContinue").click();
+  await expect(page.locator('[data-tab="match"]')).toHaveClass(/active/);
+  await expect(page.locator("#modeSelect")).toHaveValue("video");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await page.locator("#setupSeasonAnalysis").click();
   await expect(page.locator('[data-tab="analysis"]')).toHaveClass(/active/);
   await page.locator('[data-tab="setup"]').click();

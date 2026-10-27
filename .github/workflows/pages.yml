@@ -96,14 +96,13 @@ jobs:
               exit 0
             fi
             if jq -e '.workflow_runs[] | select(.status == "completed" and (.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out"))' <<< "$response" > /dev/null; then
-              echo "Source CI did not succeed; skip screenshot deployment."
-              echo "eligible=false" >> "$GITHUB_OUTPUT"
-              exit 0
+              echo "Source CI failed; screenshot deployment is blocked." >&2
+              exit 1
             fi
             sleep 15
           done
-          echo "No successful source CI found; skip screenshot deployment."
-          echo "eligible=false" >> "$GITHUB_OUTPUT"
+          echo "No successful source CI found; screenshot deployment is blocked." >&2
+          exit 1
 
   deploy:
     needs: [test, screenshot_gate]
