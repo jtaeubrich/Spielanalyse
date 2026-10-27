@@ -54,7 +54,8 @@ describe("Matchday Importregression 378110",()=>{
  });
  it("verwendet denselben Hallenparser beim Matchday-Export und erkennt ISO-Uhrzeiten",()=>{
   expect(html).toContain("source.venue||hbVenue(meta,additional)");
-  expect(html).toContain("if(/[T ]\\d{2}:\\d{2}/.test(String(rawDate)))");
-  expect(html).not.toContain("if(/[T ]\\\\d{2}:\\\\d{2}/.test(String(rawDate)))");
+  expect(html).toContain("const kickoff=preflightKickoff();");
+  expect(html).toContain("const venue=kickoff.venue||source.venue||hbVenue(meta,additional)||");
+  expect(html).toContain('if(kickoff.time)matchTime=kickoff.time+" Uhr";');
  });
 });
