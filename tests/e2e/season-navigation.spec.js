@@ -27,6 +27,7 @@ async function newSeason(page,name){
 
 test("Setup separates individual games and season administration from Saisonanalyse",async({page})=>{
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await expect(page.locator("#setupSinglePanel")).toBeVisible();
   await expect(page.locator("#setupSeasonPanel")).toBeHidden();
   await openSeasonSetup(page);
@@ -42,6 +43,7 @@ test("Setup separates individual games and season administration from Saisonanal
 
 test("two separate seasons survive reload and never merge their match collections",async({page})=>{
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await openSeasonSetup(page);
   const first=game("Kronshagen Saisonspiel",{home:"TSV Kronshagen",away:"VfL"});
   await page.locator("#seasonGameInput").setInputFiles(upload("kronshagen.json",first));
@@ -73,6 +75,7 @@ test("two separate seasons survive reload and never merge their match collection
 
 test("analysis dropdown previews a season fixture without changing active scouting game",async({page})=>{
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   const active=game("Aktives Scouting",{events:[],home:"Mein Live-Team",away:"Gegner"});
   await page.locator("#continueGameInput").setInputFiles(upload("aktives-match.json",active));
   await expect(page.locator("#setupHomeName")).toHaveValue("Mein Live-Team");
