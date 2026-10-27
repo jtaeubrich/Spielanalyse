@@ -3021,7 +3021,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
 
   function syncVideoPortraitPlaylist(){const host=$("videoPortraitPlaylistHost"),list=$("videoPlaylist"),card=$("videoEventsCard"),portrait=activeTab==="video"&&window.matchMedia("(max-width:700px) and (orientation:portrait)").matches;if(!host||!list||!card)return;if(portrait){if(list.parentElement!==host)host.append(list);card.style.height=""}else if(list.parentElement!==card){card.insertBefore(list,card.querySelector(".video-event-comment"))}host.classList.toggle("active",portrait)}
   window.addEventListener("resize",()=>{syncVideoPortraitPlaylist();syncVideoReviewHeight()});
-  function showTab(name){if(name==="match"&&state.isHistorical)name="analysis";activeTab=name;document.body.classList.toggle("video-tab-mode",name==="video");document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));document.querySelectorAll(".tab-pane").forEach(p=>p.classList.toggle("active",p.id===name+"Tab"));const module=$("videoModule"),host=name==="video"?$("videoPlayerHost"):name==="match"?$("matchVideoHost"):null;if(host&&module.parentElement!==host)host.append(module);module.classList.toggle("match-context",name==="match");setVideoSize($("videoSize").value);if(name!=="video"&&drawingFullscreen)closeDrawingFullscreen();if(name==="match"){drawingEnabled=false;drawingDraft=null;$("annotationCanvas").classList.remove("drawing");$("drawToggle").classList.remove("selected");$("drawToggle").textContent="Zeichnen"}updateMatchReviewLayout();if(name==="analysis"){renderAnalysisGamePicker();renderAnalysis()}if(name==="season")renderSeasonAnalysis();if(name==="video"){syncVideoPortraitPlaylist();syncSceneWindowInputs();renderAnnotation();renderVideoPlaylist();syncVideoReviewHeight()}if(name==="data")renderDataEditor()}
+  function showTab(name){if(name==="home")homeShow("choose",null);if(name==="match"&&state.isHistorical)name="analysis";activeTab=name;document.body.classList.toggle("video-tab-mode",name==="video");document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));document.querySelectorAll(".tab-pane").forEach(p=>p.classList.toggle("active",p.id===name+"Tab"));const module=$("videoModule"),host=name==="video"?$("videoPlayerHost"):name==="match"?$("matchVideoHost"):null;if(host&&module.parentElement!==host)host.append(module);module.classList.toggle("match-context",name==="match");setVideoSize($("videoSize").value);if(name!=="video"&&drawingFullscreen)closeDrawingFullscreen();if(name==="match"){drawingEnabled=false;drawingDraft=null;$("annotationCanvas").classList.remove("drawing");$("drawToggle").classList.remove("selected");$("drawToggle").textContent="Zeichnen"}updateMatchReviewLayout();if(name==="analysis"){renderAnalysisGamePicker();renderAnalysis()}if(name==="season")renderSeasonAnalysis();if(name==="video"){syncVideoPortraitPlaylist();syncSceneWindowInputs();renderAnnotation();renderVideoPlaylist();syncVideoReviewHeight()}if(name==="data")renderDataEditor()}
   document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 
   // Home entry is navigation only. It never resets state, season storage or
@@ -3045,7 +3045,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     row.append(copy,controls);return row;
   }
   function homeSeasonRecords(){
-    const entries=new Map(seasonLibraryRecords.map(record=>[record.id,record]));
+    // IndexedDB stores compact season archives with games[].data, while the
+    // active in-memory library uses games[].state. Normalize before listing
+    // games of *another* season; never mutate the original stored records.
+    const entries=new Map(seasonLibraryRecords.map(record=>{
+      const loaded=normalizeSeasonArchive(record,record.preferredTeam||"");
+      return [record.id,{id:record.id,name:loaded.name,games:loaded.games}];
+    }));
     if(seasonLibraryId)entries.set(seasonLibraryId,{id:seasonLibraryId,name:seasonName,games:seasonGames});
     return [...entries.values()].sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"de"));
   }
@@ -3100,7 +3106,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
             const button=$("homeAdvanced");button.disabled=true;
             try{
               if(entry.id!==seasonLibraryId)await switchSeasonLibrary(entry.id);
-              homeShow("dashboard","season");
+              $("homeGameSearch").value="";homeShow("dashboard","season");
             }catch(error){toast(error?.message||"Saison konnte nicht geöffnet werden")}
             finally{button.disabled=false}
           }}];
