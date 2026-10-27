@@ -1,0 +1,124 @@
+import {test,expect} from "@playwright/test";
+import {readFile} from "node:fs/promises";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+
+const fixture=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../fixtures/hkn_reference.json");
+
+test("Home is the default entry and reveals the two-stage Saison/Einzelspiel actions",async({page})=>{
+  await page.goto("/");
+  await expect(page.locator("#homeTab")).toBeVisible();
+  await expect(page.locator("#setupTab")).toBeHidden();
+  await expect(page.locator("#homeChooseSeason")).toBeVisible();
+  await expect(page.locator("#homeChooseGame")).toBeVisible();
+  await expect(page.locator("#homeActions")).toBeHidden();
+  await page.locator("#homeChooseGame").click();
+  await expect(page.locator("#homeActions")).toBeVisible();
+  await expect(page.locator("#homeOpen")).toBeVisible();
+  await expect(page.locator("#homeImport")).toBeVisible();
+  await expect(page.locator("#homeNew")).toBeVisible();
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeChooseSeason")).toBeVisible();
+  await page.locator("#homeChooseSeason").click();
+  await expect(page.locator("#homeBreadcrumb")).toContainText("Saison");
+  await page.locator("#homeOpen").click();
+  await expect(page.locator("#homeLibrary")).toBeVisible();
+  await expect(page.locator("#homeLibraryTitle")).toHaveText("Gespeicherte Saisons");
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeActions")).toBeVisible();
+  // The expert Setup remains directly accessible at any time.
+  await page.locator('[data-tab="setup"]').click();
+  await expect(page.locator("#setupTab")).toBeVisible();
+  await page.locator('[data-tab="home"]').click();
+  await expect(page.locator("#homeChooseSeason")).toBeVisible();
+});
+
+test("Home > Einzelspiel > Neu anlegen offers the existing manual/H360 dialog without destroying active match",async({page})=>{
+  await page.goto("/");
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeNew").click();
+  await expect(page.locator("#newGameDialog")).toBeVisible();
+  await expect(page.locator("#newGameManual")).toBeVisible();
+  await expect(page.locator("#newGameHandball360")).toBeVisible();
+  await page.locator("#newGameCancel").click();
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeNew").click();
+  await page.locator("#newGameManual").click();
+  await expect(page.locator("#setupTab")).toBeVisible();
+  await expect(page.locator("#setupSinglePanel")).toBeVisible();
+  await page.locator('[data-tab="home"]').click();
+  await expect(page.locator("#homeRecent")).toBeVisible();
+  await page.locator("#homeRecentOptions").getByRole("button",{name:"Spiel fortsetzen"}).click();
+  await expect(page.locator("#matchTab")).toBeVisible();
+});
+
+test("Home > Einzelspiel > Importieren loads JSON and can resume the saved game after reload",async({page})=>{
+  await page.goto("/");
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeImport").click();
+  await page.locator("#continueGameInput").setInputFiles(fixture);
+  await expect(page.locator("#matchTab")).toBeVisible();
+  const before=await page.locator("#homeName").textContent();
+  await page.reload();
+  await expect(page.locator("#homeTab")).toBeVisible();
+  await expect(page.locator("#homeRecentOptions")).toContainText(/Ereignisse/);
+  await page.locator("#homeRecentOptions").getByRole("button",{name:"Spiel fortsetzen"}).click();
+  await expect(page.locator("#matchTab")).toBeVisible();
+  await expect(page.locator("#homeName")).toHaveText(before);
+});
+
+test("Home > Saison > Neu > dashboard retains existing current Match and enables season management",async({page})=>{
+  await page.goto("/");
+  await page.locator("#homeChooseSeason").click();
+  page.once("dialog",dialog=>dialog.accept("Neue Saison Demo 2026"));
+  await page.locator("#homeNew").click();
+  await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
+  await expect(page.locator("#homeSeasonName")).toHaveText("Neue Saison Demo 2026");
+  await expect(page.locator("#homeSeasonGames")).toContainText("noch keine Spiele");
+  await page.locator("#homeSeasonManage").click();
+  await expect(page.locator("#setupTab")).toBeVisible();
+  await expect(page.locator("#setupSeasonPanel")).toBeVisible();
+  await page.locator("#seasonGameInput").setInputFiles(fixture);
+  await expect(page.locator("#seasonGameCount")).toContainText("1 Spiel");
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeLibraryList").getByRole("button",{name:"Öffnen",exact:true}).click();
+  await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
+  await expect(page.locator("#homeSeasonGames .home-list-row")).toHaveCount(1);
+  await expect(page.locator("#homeSeasonGames")).toContainText("Analysieren");
+  await page.locator("#homeSeasonGames").getByRole("button",{name:"Analysieren"}).click();
+  await expect(page.locator("#analysisTab")).toBeVisible();
+  await expect(page.locator("#score")).toBeVisible();
+});
+
+test("Home can switch between locally saved seasons without replacing the open scouting game",async({page})=>{
+  await page.goto("/");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#continueGameInput").setInputFiles(fixture);
+  await expect(page.locator("#matchTab")).toBeVisible();
+  const game=await page.locator("#homeName").textContent();
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseSeason").click();
+  page.once("dialog",dialog=>dialog.accept("Saison A"));
+  await page.locator("#homeNew").click();
+  await expect(page.locator("#homeSeasonName")).toHaveText("Saison A");
+  await page.locator("#homeSeasonManage").click();
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseSeason").click();
+  page.once("dialog",dialog=>dialog.accept("Saison B"));
+  await page.locator("#homeNew").click();
+  await expect(page.locator("#homeSeasonName")).toHaveText("Saison B");
+  await page.reload();
+  await expect(page.locator("#homeTab")).toBeVisible();
+  await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeOpen").click();
+  await expect(page.locator("#homeLibraryList")).toContainText("Saison A");
+  await expect(page.locator("#homeLibraryList")).toContainText("Saison B");
+  const row=page.locator("#homeLibraryList .home-list-row").filter({hasText:"Saison A"});
+  await row.getByRole("button",{name:"Saison wählen"}).click();
+  await expect(page.locator("#homeSeasonName")).toHaveText("Saison A");
+  await page.locator('[data-tab="match"]').click();
+  await expect(page.locator("#homeName")).toHaveText(game);
+});
