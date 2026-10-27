@@ -1088,9 +1088,9 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
       </div>
       <div id="homeActions" class="home-view" hidden>
         <div class="home-action-grid">
-          <button class="home-action-choice" type="button" id="homeOpen"><span class="home-action-icon" aria-hidden="true">▣</span><strong>Öffnen</strong><small>Bereits in der PWA gespeichert</small></button>
-          <button class="home-action-choice" type="button" id="homeImport"><span class="home-action-icon" aria-hidden="true">⇧</span><strong>Importieren</strong><small>JSON-Datei von einem anderen Gerät</small></button>
-          <button class="home-action-choice" type="button" id="homeNew"><span class="home-action-icon" aria-hidden="true">＋</span><strong>Neu anlegen</strong><small>Neue Saison oder neues Spiel vorbereiten</small></button>
+          <button class="home-action-choice" type="button" id="homeOpen"><span class="home-action-icon" aria-hidden="true">▣</span><strong id="homeOpenLabel">Laden</strong><small id="homeOpenHint">Bereits auf diesem Gerät gespeichert</small></button>
+          <button class="home-action-choice" type="button" id="homeImport"><span class="home-action-icon" aria-hidden="true">⇧</span><strong>Importieren</strong><small id="homeImportHint">JSON-Datei von einem anderen Gerät</small></button>
+          <button class="home-action-choice" type="button" id="homeNew"><span class="home-action-icon" aria-hidden="true">＋</span><strong>Neu anlegen</strong><small id="homeNewHint">Neue Saison oder neues Spiel vorbereiten</small></button>
         </div>
       </div>
       <div id="homeLibrary" class="home-view panel home-library" hidden>
@@ -3066,6 +3066,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const [key,id] of Object.entries(homePanels))$(id).hidden=key!==view;
     $("homeBack").hidden=view==="choose";
     const area=homeKinds[kind]||"";
+    $("homeOpenLabel").textContent=kind==="season"?"Saison laden":"Spiel laden";
+    $("homeOpenHint").textContent=kind==="season"?"Gespeicherte Saisons auf diesem Gerät":"Letztes Spiel oder Spiel aus einer Saison";
+    $("homeImportHint").textContent=kind==="season"?"Saison-JSON von einem anderen Gerät":"Spiel-JSON von einem anderen Gerät";
+    $("homeNewHint").textContent=kind==="season"?"Unabhängige Saison mit eigenem Spielplan":"Spiel manuell oder über Handball360 anlegen";
     $("homeBreadcrumb").textContent=view==="choose"?"":area+
       (view==="library"?" › Gespeichert":view==="dashboard"?" › Saisonübersicht":" › Aktion wählen");
     $("homeTitle").textContent=view==="choose"?"Was möchtest du heute machen?":
@@ -3094,6 +3098,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
     $("homeRecent").hidden=!host.childElementCount;
   }
+  let homeLibrarySwitchBusy=false;
   function homeRenderLibrary(){
     const host=$("homeLibraryList");host.replaceChildren();
     $("homeLibraryTitle").textContent=homeKind==="season"?"Gespeicherte Saisons":"Gespeicherte Spiele";
@@ -3103,12 +3108,18 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       for(const entry of homeSeasonRecords()){
         const actions=[{title:entry.id===seasonLibraryId?"Öffnen":"Saison wählen",
           primary:true,action:async()=>{
-            const button=$("homeAdvanced");button.disabled=true;
+            if(homeLibrarySwitchBusy)return;
+            homeLibrarySwitchBusy=true;
+            const buttons=[...host.querySelectorAll("button")];
+            for(const button of buttons)button.disabled=true;
             try{
               if(entry.id!==seasonLibraryId)await switchSeasonLibrary(entry.id);
               $("homeGameSearch").value="";homeShow("dashboard","season");
             }catch(error){toast(error?.message||"Saison konnte nicht geöffnet werden")}
-            finally{button.disabled=false}
+            finally{
+              homeLibrarySwitchBusy=false;
+              for(const button of buttons)button.disabled=false;
+            }
           }}];
         host.append(homeRow(entry.name||"Saison",(entry.games||[]).length+" Spiele"+(entry.id===seasonLibraryId?" · Aktuell ausgewählt":""),actions));
       }
