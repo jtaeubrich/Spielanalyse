@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test("Instagram HTML template import validates required fields and previews", async ({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="video"]').click();
  await page.locator("details.video-production-card > summary").click();
  await expect(page.locator("details.video-production-card")).toHaveAttribute("open", "");
@@ -24,6 +25,7 @@ test("Instagram HTML template import validates required fields and previews", as
 
 test("Setup Matchday accepts embedded CSS images but rejects remote URLs",async ({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator("#setupMatchdayPanel > summary").click();
  const slots=["homeLogo","awayLogo","home","away"].map(name=>'<div data-field="'+name+'"></div>').join("");
  const upload=async css=>page.locator("#setupMatchdayTemplateFile").setInputFiles({name:"matchday.html",mimeType:"text/html",buffer:Buffer.from('<html><head><style>'+css+'</style></head><body>'+slots+'</body></html>')});
@@ -36,6 +38,7 @@ test("Setup Matchday accepts embedded CSS images but rejects remote URLs",async 
 });
 test("stores Matchday, result, and highlight templates independently across reloads",async ({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="video"]').click();
  await page.locator("details.video-production-card > summary").click();
  const kinds={matchday:["homeLogo","awayLogo","home","away"],endstand:["homeLogo","awayLogo","home","away","score"],highlight:["homeLogo","awayLogo","home","away","score","matchTime","playerName","eventType","comment","videoArea"]};
@@ -60,6 +63,7 @@ test("stores Matchday, result, and highlight templates independently across relo
 
 test("three independent controls show accepted templates after reload and reset",async ({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="video"]').click();
  await page.locator("details.video-production-card > summary").click();
  const cases=[["matchday","Matchday",["homeLogo","awayLogo","home","away"]],["endstand","Endstand",["homeLogo","awayLogo","home","away","score"]],["highlight","Highlight",["homeLogo","awayLogo","home","away","score","matchTime","playerName","eventType","comment","videoArea"]]];
@@ -82,6 +86,7 @@ test("three independent controls show accepted templates after reload and reset"
 
 test("Setup creates standalone Matchday PNG without a video",async ({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  await page.locator("#setupMatchdayPanel > summary").click();
  const html='<!doctype html><html><head><style>body{margin:0;background:#ad172e}</style></head><body><div data-field="homeLogo"></div><div data-field="awayLogo"></div><div data-field="home"></div><div data-field="away"></div></body></html>';
  await page.locator("#setupMatchdayTemplateFile").setInputFiles({name:"matchday.html",mimeType:"text/html",buffer:Buffer.from(html)});
@@ -101,6 +106,7 @@ test("Setup creates standalone Matchday PNG without a video",async ({page})=>{
 
 test("Setup groups Matchday below game management and collapses subsequent settings",async({page})=>{
  await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
  const setup=page.locator("#setupTab");
  const cards=setup.locator(".setup-grid > .setup-card");
  await expect(cards.nth(0).locator("h2")).toHaveText("Spielverwaltung");
