@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 async function setPlayerCapture(page, enabled) {
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupTab details").filter({
     has: page.locator("summary", { hasText: "Torwurf-Erfassung" })
   }).locator("summary").click();
