@@ -29,6 +29,7 @@ async function openScoutingGame(page,{provider}={}){
     {id:"own-3",type:"goal",team:"away",time:735,displayTime:"12:15",scoreH:1,scoreA:2,pId:null,pName:"Unbekannt",is7:true,z:"7M"}
   ];
   await page.goto("/");
+ await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
   await page.locator("#seasonGameInput").setInputFiles(file("hc-bremen-scouting.json",JSON.stringify(game)));
