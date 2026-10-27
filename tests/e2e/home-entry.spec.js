@@ -123,7 +123,7 @@ test("Home can switch between locally saved seasons without replacing the open s
   await expect(page.locator("#homeLibraryList")).toContainText("Saison A");
   await expect(page.locator("#homeLibraryList")).toContainText("Saison B");
   const row=page.locator("#homeLibraryList .home-list-row").filter({hasText:"Saison A"});
-  await row.getByRole("button",{name:"Saison wählen"}).click();
+  await row.getByRole("button",{name:"Öffnen",exact:true}).click();
   await expect(page.locator("#homeSeasonName")).toHaveText("Saison A");
   await page.locator('[data-tab="match"]').click();
   await expect(page.locator("#homeName")).toHaveText(game);

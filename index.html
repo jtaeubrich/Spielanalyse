@@ -3251,7 +3251,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       "Jede Saison bleibt unabhängig im lokalen PWA-Speicher.":"Zuletzt geöffnetes Einzelspiel sowie Spiele der lokal gespeicherten Saisons.";
     if(homeKind==="season"){
       for(const entry of homeSeasonRecords()){
-        const actions=[{title:entry.id===seasonLibraryId?"Öffnen":"Saison wählen",
+        const actions=[{title:"Öffnen",
           primary:true,action:async()=>{
             if(homeLibrarySwitchBusy)return;
             homeLibrarySwitchBusy=true;
