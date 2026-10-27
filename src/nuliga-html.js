@@ -236,6 +236,37 @@ function joinPlayers(existing,incoming,side){
   }
   return result;
 }
+// Import a nuLiga protocol next to an existing scouting match, including
+// matches first created manually or through handball.net. Never add protocol
+// events to the scouting timeline, where they would count as duplicate goals.
+export function attachNuLigaReportForComparison(game,report,{reportUrl=""}={}) {
+  if(!game?.state || !Array.isArray(report?.events))throw new Error("Kein gültiger Spielbericht.");
+  const source=game.state.officialSource||{};
+  if(source.provider==="nuliga" && source.gameNumber &&
+    String(source.gameNumber)!==String(report.gameNumber))
+    throw new Error("Spielnummer stimmt nicht mit dem bestehenden nuLiga-Spiel überein.");
+  const updated=structuredClone(game);
+  for(const side of ["home","away"]){
+    updated.state[side].players=joinPlayers(updated.state[side].players,report.rosters?.[side]||[],side);
+  }
+  const officialEvents=report.events.map(event=>{
+    const side=event.team,number=event.pNr;
+    const player=side&&["home","away"].includes(side)
+      ?updated.state[side].players.find(p=>number!==null&&number!==undefined &&
+        String(p.nr)===String(number)&&norm(p.nachname)===norm(splitName(event.pName).nachname))
+      :null;
+    return {...event,pId:player?.id||null};
+  });
+  updated.state.officialData={...(updated.state.officialData||{}),
+    nuLigaEvents:officialEvents,
+    nuLigaReport:{gameNumber:String(report.gameNumber||""),status:report.reportStatus||"ungeprüft",
+      importedAt:new Date().toISOString(),reportUrl:reportUrl||source.reportUrl||""}};
+  if(source.provider==="nuliga")updated.state.officialSource={
+    ...source,rosterSource:"report",reportStatus:report.reportStatus,
+    reportEventCount:officialEvents.length,reportImportedAt:new Date().toISOString()};
+  return updated;
+}
+
 export function applyNuLigaReport(game,report){
   const source=game?.state?.officialSource||{};
   if(source.provider!=="nuliga"||String(source.gameNumber)!==String(report.gameNumber))
