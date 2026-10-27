@@ -93,6 +93,10 @@
     .home-big-choice strong{font-size:clamp(22px,3vw,31px)}
     .home-big-choice small,.home-action-choice small{color:var(--muted);font-size:13px;max-width:250px;line-height:1.4}
     .home-choice-icon{display:grid;place-items:center;width:65px;height:65px;border:1px solid #367182;background:#0a2a37;border-radius:18px;color:var(--cyan);font-size:42px;font-weight:700}
+    .home-choice-icon svg{width:47px;height:47px;display:block}
+    .home-list-copy{flex:1 1 165px;min-width:0}
+    .home-list-icon{display:grid;place-items:center;flex:0 0 45px;width:45px;height:45px;border:1px solid #315f6c;background:#0b2d3a;border-radius:12px;color:var(--cyan)}
+    .home-list-icon svg{width:31px;height:31px;display:block}
     .home-action-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
     .home-action-choice{min-height:188px;padding:17px 12px}
     .home-action-choice strong{font-size:clamp(17px,2.4vw,23px)}
@@ -1097,8 +1101,8 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
       <div class="home-toolbar"><button class="btn" type="button" id="homeBack" hidden>← Zurück</button><span id="homeBreadcrumb" aria-live="polite"></span></div>
       <div id="homeChoose" class="home-view">
         <div class="home-main-choices">
-          <button class="home-big-choice" type="button" id="homeChooseSeason"><span class="home-choice-icon" aria-hidden="true">▦</span><strong>Saison</strong><small>Spiele verwalten, fortsetzen und gemeinsam auswerten</small></button>
-          <button class="home-big-choice" type="button" id="homeChooseGame"><span class="home-choice-icon" aria-hidden="true">▤</span><strong>Einzelspiel</strong><small>Ein Spiel erfassen, fortsetzen oder analysieren</small></button>
+          <button class="home-big-choice" type="button" id="homeChooseSeason"><span class="home-choice-icon" data-entry-icon="season" aria-hidden="true"></span><strong>Saison</strong><small>Spiele verwalten, fortsetzen und gemeinsam auswerten</small></button>
+          <button class="home-big-choice" type="button" id="homeChooseGame"><span class="home-choice-icon" data-entry-icon="game" aria-hidden="true"></span><strong>Einzelspiel</strong><small>Ein Spiel erfassen, fortsetzen oder analysieren</small></button>
         </div>
         <div class="home-recent panel" id="homeRecent" hidden>
           <h2>Schneller Wiedereinstieg</h2>
@@ -3156,9 +3160,23 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     button.className="btn"+(primary?" primary":"");
     button.type="button";button.textContent=label;button.onclick=callback;return button;
   };
-  function homeRow(title,subtitle,actions){
+  // Distinct handball icons, used consistently for seasons and games.
+  function homeIconSvg(kind){
+    const season='<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="6" y="12" width="52" height="46" rx="8"/><path d="M6 25h52M20 7v11M44 7v11"/><circle cx="23" cy="40" r="7"/><path d="M17 37l11 6M17 43l11-6M39 36h10M39 44h10"/></svg>';
+    const game='<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="5" y="13" width="54" height="38" rx="6"/><path d="M32 13v38"/><circle cx="32" cy="32" r="7"/><path d="M5 23h5c7 0 12 4 12 9s-5 9-12 9H5M59 23h-5c-7 0-12 4-12 9s5 9 12 9h5"/></svg>';
+    return kind==="season"?season:game;
+  }
+  for(const tile of document.querySelectorAll("[data-entry-icon]")){
+    tile.innerHTML=homeIconSvg(tile.dataset.entryIcon);
+  }
+  function homeRow(title,subtitle,actions,kind=null){
     const row=document.createElement("div");row.className="home-list-row";
-    const copy=document.createElement("div");
+    const copy=document.createElement("div");copy.className="home-list-copy";
+    if(kind){
+      const icon=document.createElement("span");
+      icon.className="home-list-icon";icon.setAttribute("aria-hidden","true");
+      icon.innerHTML=homeIconSvg(kind);row.append(icon);
+    }
     const strong=document.createElement("strong");strong.textContent=title;
     const small=document.createElement("small");small.textContent=subtitle;
     copy.append(strong,small);
@@ -3216,12 +3234,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       host.append(homeRow(state.gameName||"Zuletzt geöffnetes Spiel",subtitle,[{
         title:state.isHistorical?"Analyse öffnen":"Spiel fortsetzen",primary:true,
         action:()=>showTab(state.isHistorical?"analysis":"match")
-      }]));
+      }],"game"));
     }
     if(homeSeasonRecords().length){
       host.append(homeRow(seasonName||"Aktive Saison",seasonGames.length+" Spiele",[
         {title:"Saison öffnen",action:()=>homeShow("dashboard","season")}
-      ]));
+      ],"season"));
     }
     $("homeRecent").hidden=!host.childElementCount;
   }
@@ -3253,13 +3271,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const duplicates=homeSeasonRecords().filter(other=>other.name===entry.name&&other.games.length===entry.games.length).length>1;
         const date=entry.updatedAt?new Date(entry.updatedAt).toLocaleString("de-DE"):"unbekannt";
         const distinction=duplicates?" · Stand: "+date+" · Kennung: "+entry.id.slice(-7):"";
-        host.append(homeRow(entry.name||"Saison",(entry.games||[]).length+" Spiele"+(entry.id===seasonLibraryId?" · Aktuell ausgewählt":"")+distinction,actions));
+        host.append(homeRow(entry.name||"Saison",(entry.games||[]).length+" Spiele"+(entry.id===seasonLibraryId?" · Aktuell ausgewählt":"")+distinction,actions,"season"));
       }
     }else{
       if(homeHasSession){
         host.append(homeRow(state.gameName||"Letztes Spiel",
           "Zuletzt bearbeitet · "+(state.events?.length||0)+" Ereignisse",
-          [{title:state.isHistorical?"Analyse öffnen":"Fortsetzen",primary:true,action:()=>showTab(state.isHistorical?"analysis":"match")}]));
+          [{title:state.isHistorical?"Analyse öffnen":"Fortsetzen",primary:true,action:()=>showTab(state.isHistorical?"analysis":"match")}],"game"));
       }
       for(const entry of homeSeasonRecords()){
         for(const game of entry.games||[]){
@@ -3269,7 +3287,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
             action:()=>homeOpenSeasonGame(entry.id,game.id,false)});
           actions.push({title:"Analysieren",primary:!possible,
             action:()=>homeOpenSeasonGame(entry.id,game.id,true)});
-          host.append(homeRow(homeGameTitle(game),entry.name+" · "+(game.state?.events?.length||0)+" Ereignisse · "+homeGameStatus(game),actions));
+          host.append(homeRow(homeGameTitle(game),entry.name+" · "+(game.state?.events?.length||0)+" Ereignisse · "+homeGameStatus(game),actions,"game"));
         }
       }
     }
@@ -3362,7 +3380,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         action:()=>homeOpenSeasonGame(seasonLibraryId,game.id,false)});
       actions.push({title:"Analysieren",primary:!canContinue,
         action:()=>homeOpenSeasonGame(seasonLibraryId,game.id,true)});
-      host.append(homeRow(title,(game.state?.events?.length||0)+" Ereignisse · "+homeGameStatus(game),actions));
+      host.append(homeRow(title,(game.state?.events?.length||0)+" Ereignisse · "+homeGameStatus(game),actions,"game"));
     }
     if(!count){
       const empty=document.createElement("div");empty.className="empty";
