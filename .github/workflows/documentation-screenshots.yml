@@ -15,6 +15,7 @@ on:
       - '.github/workflows/documentation-screenshots.yml'
 permissions:
   contents: write
+  actions: write
 concurrency:
   group: documentation-screenshots-main
   cancel-in-progress: true
@@ -48,6 +49,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
       - name: Commit the selected screenshots permanently
+        id: screenshot_commit
         if: github.ref == 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
@@ -58,4 +60,11 @@ jobs:
             git fetch origin main
             git rebase origin/main
             git push origin HEAD:main
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: Deploy updated screenshots without rerunning tests
+        if: steps.screenshot_commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run pages.yml --ref main -f deploy_only=true

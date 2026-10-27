@@ -6,12 +6,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-  # Screenshot uploads use GITHUB_TOKEN and do not cause a new push workflow.
-  # Deploy once more after the screenshots have been committed to main.
-  workflow_run:
-    workflows: ["Documentation screenshots"]
-    types: [completed]
-    branches: [main]
+    inputs:
+      deploy_only:
+        description: "Only deploy already tested code after screenshot updates"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,13 +19,13 @@ permissions:
   id-token: write
 
 concurrency:
-  # A cancelled screenshot run must not cancel the push test/deploy for main.
+  # Screenshot-only deployments must not cancel full push CI.
   group: pages-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
   test:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name != 'workflow_dispatch' || inputs.deploy_only != true
     runs-on: ubuntu-latest
     steps:
       - name: Kurze Sammelwartezeit für Folge-Commits
@@ -46,8 +46,12 @@ jobs:
         run: npm run test:e2e
 
   deploy:
-    if: github.event_name != 'pull_request'
     needs: test
+    if: >-
+      ${{ always() &&
+          github.event_name != 'pull_request' &&
+          (needs.test.result == 'success' ||
+           (github.event_name == 'workflow_dispatch' && inputs.deploy_only == true)) }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
