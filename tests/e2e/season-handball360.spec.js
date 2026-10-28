@@ -83,6 +83,7 @@ test("imports past season games once and leaves future fixtures unchecked", asyn
   expect(exported.games).toHaveLength(3);
   const future=exported.games.find(x=>x.data.officialSource.matchId==="378122");
   expect(future.selected).toBe(false);
+  expect(future.data.shotCapture.attackerOrder).toBe("last");
 });
 
 test("season import saves both official club logos for matchday without modifying rosters",async({page})=>{
