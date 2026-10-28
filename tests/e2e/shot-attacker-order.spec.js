@@ -6,11 +6,12 @@ import { fileURLToPath } from "node:url";
 const fixture=path.resolve(path.dirname(fileURLToPath(import.meta.url)),
   "../../docs/handbuch/demo/fixtures/00-setup.json");
 
-async function openDemo(page,{assist=false,defense=false}={}){
+async function openDemo(page,{assist=false,defense=false,own="away"}={}){
   await page.goto("/");
  await page.locator('[data-tab="setup"]').click();
   const source=JSON.parse(await readFile(fixture,"utf8"));
   source.shotCapture={...source.shotCapture,assist,defense};
+  source.ownTeam=own;
   await page.locator("#continueGameInput").setInputFiles({
     name:"demo_schuss.json",mimeType:"application/json",
     buffer:Buffer.from(JSON.stringify(source))
@@ -125,6 +126,52 @@ test("shot: scorer-last preserves the opponent defensive assignment before selec
   const e=await latestEvent(page);
   expect(e).toMatchObject({type:"goal",team:"home",pId:shooter.id,scoreH:1});
   expect(e.playerTags).toEqual(expect.arrayContaining([expect.objectContaining({pId:ownDefender.id})]));
+});
+
+
+test("own shot never asks for a defender (Kronshagen away, scorer last)",async({page})=>{
+  const original=await openDemo(page,{defense:true});
+  await configureOrder(page,"last");
+  await startShot(page,"away");
+  await selectGoalDetails(page);
+  await expect(page.locator("#tagsStep")).toBeHidden();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#idleStep")).toBeVisible();
+  const event=await latestEvent(page);
+  expect(event).toMatchObject({type:"goal",team:"away",scoreA:1,
+    pId:original.away.players.find(p=>p.nr===7).id});
+  expect(event.playerTags).toEqual([]);
+});
+
+test("own shot skips defender assignment with Kronshagen at home",async({page})=>{
+  const original=await openDemo(page,{defense:true,own:"home"});
+  await configureOrder(page,"last");
+  await startShot(page,"home");
+  await selectGoalDetails(page);
+  await expect(page.locator("#tagsStep")).toBeHidden();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",4);
+  const event=await latestEvent(page);
+  expect(event).toMatchObject({type:"goal",team:"home",scoreH:1,
+    pId:original.home.players.find(p=>p.nr===4).id});
+  expect(event.playerTags).toEqual([]);
+});
+
+test("opponent shot still requests our defender when Kronshagen plays at home",async({page})=>{
+  const original=await openDemo(page,{defense:true,own:"home"});
+  await configureOrder(page,"last");
+  await startShot(page,"away");
+  await selectGoalDetails(page);
+  await expect(page.locator("#tagsStep")).toBeVisible();
+  await page.locator("#tagList .option").filter({hasText:"Spieler 02"}).click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",7);
+  const event=await latestEvent(page);
+  expect(event).toMatchObject({type:"goal",team:"away",scoreA:1});
+  expect(event.playerTags).toEqual(expect.arrayContaining([
+    expect.objectContaining({pId:original.home.players.find(p=>p.nr===4).id})
+  ]));
 });
 
 test("shot: shooter-last clears assist when the announced shooter is also assist provider",async({page})=>{

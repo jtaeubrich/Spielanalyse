@@ -1771,7 +1771,8 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
   const opponentTeam=()=>ownTeam==="home"?"away":"home";
   const neutralAnalysis=()=>true;
   const captureAssistFor=team=>team==="home"||team==="away";
-  const captureDefenseFor=team=>team==="home"||team==="away";
+  // Ask for a defender only when our team is defending an opponent shot.
+  const captureDefenseFor=team=>(team==="home"||team==="away")&&team!==ownTeam;
   function renderDefenseSelectors(){
     const labels=[["activeOwnKeeper","Aktiver Torwart · Heim"],["activeOpponentKeeper","Aktiver Torwart · Gast"],["activeOwnDefense","Deckung · Heim"],["activeOpponentDefense","Deckung · Gast"]];
     for(const [id,name] of labels){const select=$(id);if(select?.parentElement?.tagName==="LABEL")select.parentElement.firstChild.textContent=name;}
