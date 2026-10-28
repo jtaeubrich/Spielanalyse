@@ -2147,7 +2147,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   function enterSevenMeter(fromShot=true){
     if(!draft||draft.flow!=="shot")return;
-    if(!draft.sevenMeter)draft.preSevenMeterStamp=draft.stamp;
+    if(!draft.sevenMeter&&fromShot){
+      // Keep the ordinary shot draft intact if the operator navigates back.
+      draft.preSevenMeter={
+        stamp:draft.stamp,attacker:draft.attacker,attackerChosen:draft.attackerChosen,
+        z:draft.z,gz:draft.gz,result:draft.result,keeper:draft.keeper,
+        shotDistance:draft.shotDistance,shotLane:draft.shotLane,
+        attackPhase:draft.attackPhase,assistPId:draft.assistPId,
+        assistChosen:draft.assistChosen
+      };
+    }
     draft.sevenMeter=true;draft.sevenMeterFromShot=fromShot;
     draft.stamp=null;draft.z="7M";draft.shotDistance=7;draft.shotLane="M";
     draft.gz=null;draft.result=null;draft.keeper=null;
@@ -5556,9 +5565,10 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     if(draft?.sevenMeter&&currentStep==="player"){
       if(previous==="idle")draft=null;
       else if(previous==="location"){
-        draft.sevenMeter=false;draft.stamp=draft.preSevenMeterStamp;
-        draft.z=null;draft.gz=null;draft.result=null;
-        draft.attackPhase=state.shotCapture.phase?"Position":null;
+        const prior=draft.preSevenMeter||{};
+        Object.assign(draft,prior);
+        draft.sevenMeter=false;draft.sevenMeterFromShot=false;
+        draft.preSevenMeter=null;
       }
     }
     showStep(previous);
