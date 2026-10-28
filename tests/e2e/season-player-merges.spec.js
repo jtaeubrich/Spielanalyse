@@ -30,7 +30,8 @@ test("season merges only user-selected name variants and can undo the mapping", 
   ]);
   await expect(page.locator("#seasonPlayerRows")).toContainText("Laurids Pohl");
   await expect(page.locator("#seasonPlayerRows")).toContainText("Laurids Pöhl");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="analysis"]').click();
+  await page.locator("#analysisSeasonSubtab").click();
   await page.locator("#seasonMergePlayers").click();
   await expect(page.locator("#seasonMergeDialog")).toBeVisible();
   const options = await page.locator("#seasonMergeFrom option").evaluateAll(
@@ -62,7 +63,8 @@ test("season merges only user-selected name variants and can undo the mapping", 
   expect(exported.games[0].data[exported.games[0].data.ownTeam].players[0].nachname).toBe("Pohl");
   expect(exported.games[1].data[exported.games[1].data.ownTeam].players[0].nachname).toBe("Pöhl");
 
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="analysis"]').click();
+  await page.locator("#analysisSeasonSubtab").click();
   await page.locator("#seasonMergePlayers").click();
   await page.locator("#seasonMergeMappings button").first().click();
   await expect(page.locator("#seasonPlayerRows")).toContainText("Laurids Pohl");
