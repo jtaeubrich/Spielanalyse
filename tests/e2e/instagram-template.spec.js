@@ -109,7 +109,8 @@ test("Setup groups Matchday below game management and collapses subsequent setti
  await page.locator('[data-tab="setup"]').click();
  const setup=page.locator("#setupTab");
  const cards=setup.locator(".setup-grid > .setup-card");
- await expect(cards.nth(0).locator("h2")).toHaveText("Spielverwaltung");
+ // The first Setup card is labeled "Spieldaten" in the current navigation.
+ await expect(cards.nth(0).locator("h2")).toHaveText("Spieldaten");
  await expect(cards.nth(1)).toHaveAttribute("id","setupMatchdayPanel");
  for(const [index,title] of [[1,"Instagram Matchday"],[2,"Spielkader bearbeiten"],[3,"Mannschaftssammlung"],[4,"Torwurf-Erfassung"],[5,"Globale Einstellungen"]]){
   const card=cards.nth(index);
