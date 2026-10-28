@@ -103,3 +103,24 @@ test("analysis dropdown previews a season fixture without changing active scouti
   await expect(page.locator("#analysisToVideo")).toBeEnabled();
   await expect(page.locator("#analysisStats")).toContainText("0");
 });
+
+test("an imported season fixture displays its official match URL and pre-fills the setup link",async({page})=>{
+  await page.goto("/");
+  await openSeasonSetup(page);
+  const fixture=game("Kronshagen vs Flensburg",{home:"TSV Kronshagen",away:"SG Flensburg-Handewitt II"});
+  fixture.officialSource={provider:"handball.net",matchId:"378112",matchDate:"2026-11-07"};
+  await page.locator("#seasonGameInput").setInputFiles(upload("spiel_378112.json",fixture));
+  await expect(page.locator("#seasonGameList")).toContainText("Handball.net");
+  await expect(page.locator('#seasonGameList a[href="https://www.handball.net/match/378112"]')).toHaveCount(1);
+  await page.locator("#setupModeSingle").click();
+  await page.locator("#setupSeasonGameSelect").selectOption({label:/TSV Kronshagen/});
+  await expect(page.locator("#setupSeasonRosterRefresh")).toBeEnabled();
+  await expect(page.locator("#setupSeasonMatchLink")).toHaveAttribute("href","https://www.handball.net/match/378112");
+  await page.locator("#setupSeasonContinue").click();
+  await expect(page.locator("#existingH360Url")).toHaveValue("https://www.handball.net/match/378112");
+  await page.reload();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
+  await page.locator("#setupSeasonGameSelect").selectOption({label:/TSV Kronshagen/});
+  await expect(page.locator("#setupSeasonMatchLink")).toHaveAttribute("href","https://www.handball.net/match/378112");
+});

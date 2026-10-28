@@ -40,6 +40,12 @@ export function seasonMatchIdentity(game) {
   return /^handball360_(\d+)\.json$/i.exec(String(game?.fileName ?? ""))?.[1] ?? null;
 }
 
+// Stable, canonical match URL; older stored seasons can derive this from matchId.
+export function seasonMatchUrl(game) {
+  const id=seasonMatchIdentity(game);
+  return id ? "https://www.handball.net/match/"+id : "";
+}
+
 function sameDate(a, b) {
   return String(a ?? "").slice(0, 10) === String(b ?? "").slice(0, 10) && Boolean(a && b);
 }
@@ -96,7 +102,7 @@ export function buildHandball360SeasonGame(raw, matchId, teamId, scheduleMatch =
     isVideoscoutingFile: true, isHistorical: true,
     video: { h1SyncRealTime: null, h2SyncRealTime: null },
     officialSource: {
-      provider: "handball.net", matchId: id, matchDate: x.matchDate || null,
+      provider: "handball.net", matchId: id, matchUrl: seasonMatchUrl({state:{officialSource:{matchId:id}}}), matchDate: x.matchDate || null,
       venue: x.venue || null, competition: x.competition || null,
       rosterSource: x.rosterSource, importedAt: new Date().toISOString(),
       // Keep only lightweight official club metadata; images stay in the team collection.
@@ -178,6 +184,7 @@ export function assignHandball360Match(existingGames, gameId, match, teamId) {
         ...(game.state.officialSource || {}),
         provider: "handball.net",
         matchId,
+        matchUrl: seasonMatchUrl({state:{officialSource:{matchId}}}),
         teamId: String(teamId),
         matchDate: match.date || null,
         associatedAt: new Date().toISOString()
@@ -253,6 +260,7 @@ export function enrichSeasonGameFromOfficial(existing, fetched) {
   state.officialSource = {
     ...(state.officialSource || {}),
     ...(fresh.officialSource || {}),
+    matchUrl: seasonMatchUrl(existing),
     associatedAt: state.officialSource?.associatedAt,
     refreshedAt: new Date().toISOString()
   };

@@ -6,6 +6,7 @@ import {
   parseHandball360TeamId,
   validateHandball360SeasonSchedule,
   seasonMatchIdentity,
+  seasonMatchUrl,
   seasonScheduleStatus,
   buildHandball360SeasonGame,
   appendNewHandball360SeasonGames,
@@ -66,10 +67,24 @@ describe("Handball360 team season import", () => {
     expect(game.state.officialData).toBeUndefined(); // no huge raw payload
     expect(game.state.events.some(e => e.type === "goal")).toBe(true);
     expect(seasonMatchIdentity(game)).toBe("378107");
+    expect(seasonMatchUrl(game)).toBe("https://www.handball.net/match/378107");
+    expect(game.state.officialSource.matchUrl).toBe(seasonMatchUrl(game));
     expect(() => buildHandball360SeasonGame(raw, "378107", "99999", summary)).toThrow();
     expect(() => buildHandball360SeasonGame(raw, "999999", "85814", summary)).toThrow();
   });
 
+
+  test("constructs links for previously imported seasons without persisting a second copy",()=>{
+    const legacy={
+      fileName:"handball360_378112.json",
+      state:{officialSource:{provider:"handball.net",matchId:"378112"}}
+    };
+    expect(seasonMatchUrl(legacy)).toBe("https://www.handball.net/match/378112");
+    expect(seasonMatchUrl({fileName:"handball360_378114.json",state:{home:{},away:{}}}))
+      .toBe("https://www.handball.net/match/378114");
+    expect(seasonMatchUrl({fileName:"manual.json",state:{home:{},away:{}}})).toBe("");
+    expect(seasonMatchUrl({state:{officialSource:{matchId:"https://bad.example/"}}})).toBe("");
+  });
 
   test("keeps official club logos on season game without copying image data into games", () => {
     const fixture=structuredClone(raw);

@@ -1157,7 +1157,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
         <div class="setup-season-loader">
           <label for="setupSeasonGameSelect">Spiel aus Saison laden</label>
           <select class="field" id="setupSeasonGameSelect" aria-label="Spiel aus Saison auswählen"><option value="">Keine Saisonspiele verfügbar</option></select>
-          <div class="setup-actions"><button class="btn primary" type="button" id="setupSeasonContinue" disabled>Vorbereiten / fortsetzen</button><button class="btn" type="button" id="setupSeasonAnalysis" disabled>Für Analyse öffnen</button><button class="btn" type="button" id="setupSeasonRosterRefresh" disabled>Kader aus Handball360 aktualisieren</button></div>
+          <div class="setup-actions"><button class="btn primary" type="button" id="setupSeasonContinue" disabled>Vorbereiten / fortsetzen</button><button class="btn" type="button" id="setupSeasonAnalysis" disabled>Für Analyse öffnen</button><button class="btn" type="button" id="setupSeasonRosterRefresh" disabled>Kader aus Handball360 aktualisieren</button><a class="btn" id="setupSeasonMatchLink" href="#" target="_blank" rel="noopener noreferrer" hidden>Spiel auf handball.net öffnen</a></div>
           <p class="number-help" id="setupSeasonRosterStatus" role="status">Für den Kaderabruf wird eine offizielle Match-ID benötigt.</p>
           <p class="number-help" id="setupSeasonGameStatus" role="status">Saisonspiele stehen nach dem Import im Saison-Tab hier zur Verfügung.</p>
         </div>
@@ -1696,7 +1696,7 @@ import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeS
 import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection, applyStoredGoalkeeperMarkings } from "./src/roster.js";
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
-import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
+import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
@@ -2221,6 +2221,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("setupSeasonContinue").disabled=!selected||!seasonGameCanContinue(selected);
     $("setupSeasonAnalysis").disabled=!selected;
     $("setupSeasonRosterRefresh").disabled=!selected||!seasonMatchIdentity(selected)||setupRosterRefreshBusy;
+    const matchUrl=seasonMatchUrl(selected);
+    const matchLink=$("setupSeasonMatchLink");
+    matchLink.hidden=!matchUrl;
+    matchLink.style.display=matchUrl?"":"none";
+    if(matchUrl)matchLink.href=matchUrl;
+    else matchLink.removeAttribute("href");
     const active=seasonGames.find(game=>game.id===activeSeasonGameId);
     const status=$("setupSeasonGameStatus");
     if(active)status.textContent="Aktiv mit Saison verknüpft: "+(active.state?.gameName||active.fileName)+" · Änderungen werden automatisch in der Saison gespeichert.";
@@ -3040,6 +3046,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const updateButton=document.createElement("button");updateButton.type="button";updateButton.className="tiny";updateButton.textContent="Aktualisieren";updateButton.onclick=()=>{seasonUpdateTargetId=game.id;$("seasonUpdateInput").click()};
       const protocolButton=document.createElement("button");protocolButton.type="button";protocolButton.className="tiny";protocolButton.textContent="Protokollabgleich";protocolButton.onclick=()=>openSeasonProtocol(game.id);
       const deleteButton=document.createElement("button");deleteButton.type="button";deleteButton.className="tiny danger";deleteButton.textContent="Löschen";deleteButton.onclick=()=>deleteSeasonGame(game.id);
+      const officialUrl=seasonMatchUrl(game);
+      if(officialUrl){
+        const link=document.createElement("a");
+        link.className="tiny";link.textContent="Handball.net";
+        link.href=officialUrl;link.target="_blank";link.rel="noopener noreferrer";
+        link.title="Offizielle Match-Seite öffnen";
+        actions.append(link);
+      }
       actions.append(protocolButton,updateButton,deleteButton);item.append(main,actions);host.append(item)
     }
   }
@@ -3653,7 +3667,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   };
   $("preflightConfirmCapture").onclick=()=>{state.preflight.captureFingerprint=preflightCaptureFingerprint();update()};
   $("preflightStart").onclick=()=>showTab("match");
-  function renderSetup(){renderSetupSeasonPicker();setInputUnlessActive("setupGameName",state.gameName);setInputUnlessActive("setupCompetition",state.competition??state.officialSource?.competition??"Freundschaftsspiel");setInputUnlessActive("setupHomeName",state.home?.name);setInputUnlessActive("setupAwayName",state.away?.name);const kickoff=preflightKickoff();setInputUnlessActive("setupGameDate",kickoff.date);setInputUnlessActive("setupGameTime",kickoff.time);setInputUnlessActive("setupGameVenue",kickoff.venue);renderPreflight();if(document.activeElement!==$("setupDuration"))$("setupDuration").value=String(state.timer.duration);document.querySelectorAll("[data-shot-setting]").forEach(input=>input.checked=Boolean(state.shotCapture[input.dataset.shotSetting]));$("shotAttackerOrder").value=state.shotCapture.attackerOrder==="last"?"last":"first";renderRosterEditor();renderTagLibrary();renderGlobalSettingsSummary();renderDefenseSelectors();renderTagFileStatus()}
+  function renderSetup(){
+    renderSetupSeasonPicker();
+    const input=$("existingH360Url");
+    const url=seasonMatchUrl({state,fileName:currentGameFileName});
+    // Only reset the input when a different game is opened; do not erase manual edits.
+    if(input&&input.dataset.linkedMatchUrl!==url){
+      input.dataset.linkedMatchUrl=url;
+      input.value=url;
+    }
+    setInputUnlessActive("setupGameName",state.gameName);setInputUnlessActive("setupCompetition",state.competition??state.officialSource?.competition??"Freundschaftsspiel");setInputUnlessActive("setupHomeName",state.home?.name);setInputUnlessActive("setupAwayName",state.away?.name);const kickoff=preflightKickoff();setInputUnlessActive("setupGameDate",kickoff.date);setInputUnlessActive("setupGameTime",kickoff.time);setInputUnlessActive("setupGameVenue",kickoff.venue);renderPreflight();if(document.activeElement!==$("setupDuration"))$("setupDuration").value=String(state.timer.duration);document.querySelectorAll("[data-shot-setting]").forEach(input=>input.checked=Boolean(state.shotCapture[input.dataset.shotSetting]));$("shotAttackerOrder").value=state.shotCapture.attackerOrder==="last"?"last":"first";renderRosterEditor();renderTagLibrary();renderGlobalSettingsSummary();renderDefenseSelectors();renderTagFileStatus()}
   const keeperOverrideWrites=new Map();
   async function rememberKeeperOverride(team,player){
     const teamName=String(state[team]?.name||"").trim();
