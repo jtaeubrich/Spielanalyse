@@ -8,7 +8,14 @@ async function newSeason(page,name){
   await page.locator("#homeChooseSeason").click();
   page.once("dialog",dialog=>dialog.accept(name));
   await page.locator("#homeNew").click();
-  await expect(page.locator("#homeSeasonName")).toHaveText(name);
+  // The season overview deliberately separates the team from the season label.
+  const identity=/^(.+?)\s*[·|]\s*(Saison\s+20\d{2}\/\d{2})$/i.exec(name);
+  if(identity){
+    await expect(page.locator("#homeSeasonTeam")).toHaveText(identity[1].trim());
+    await expect(page.locator("#homeSeasonName")).toHaveText(identity[2]);
+  }else{
+    await expect(page.locator("#homeSeasonName")).toHaveText(name);
+  }
   await page.locator("#homeSeasonManage").click();
 }
 function sample(name,opponent){
