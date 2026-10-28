@@ -3295,20 +3295,48 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           (percent?value+"%":String(value))+'</text>';
       }).join("");
       const drawing=lines.map((line,seriesIndex)=>{
-        let path="",started=false,dots="";
+        // A missing game is not a measured zero. Bridge available measurements
+        // with a visibly dashed segment and mark missing positions with hollow circles.
+        const valid=line.rows.flatMap((row,i)=>Number.isFinite(row[line.side])
+          ?[{index:i,value:row[line.side]}]:[]);
+        let path="",bridges="",dots="";
+        valid.forEach((point,j)=>{
+          const xx=x(point.index).toFixed(1),yy=y(point.value).toFixed(1);
+          if(j===0){path+=" M "+xx+" "+yy;return}
+          const prev=valid[j-1];
+          if(point.index-prev.index>1){
+            bridges+='<path data-trend-gap="'+seriesIndex+'" fill="none" stroke="'+line.color+
+              '" stroke-width="3" stroke-dasharray="2 6" d="M '+x(prev.index).toFixed(1)+
+              ' '+y(prev.value).toFixed(1)+' L '+xx+' '+yy+'"/>';
+            path+=" M "+xx+" "+yy;
+          }else path+=" L "+xx+" "+yy;
+        });
         line.rows.forEach((row,i)=>{
-          const value=row[line.side];
-          if(!Number.isFinite(value)){started=false;return}
-          const xx=x(i),yy=y(value);
-          path+=(started?" L ":" M ")+xx.toFixed(1)+" "+yy.toFixed(1);started=true;
-          const extra=row[line.side+"Detail"]||"";
-          const tooltip="Spiel "+(i+1)+" · gegen "+(row.opponent||"unbekannt")+" · "+line.label+": "+fmt(value,result.metric)+(extra?" · "+extra:"");
-          dots+='<circle cx="'+xx+'" cy="'+yy+'" r="5" fill="'+line.color+'" role="button" tabindex="0"'+
-            ' aria-label="'+escapeHtml(tooltip)+'" data-trend-index="'+i+'" data-trend-series="'+seriesIndex+'">'+
-            '<title>'+escapeHtml(tooltip)+'</title></circle>';
+          const value=row[line.side],xx=x(i);
+          const titleBase="Spiel "+(i+1)+" · gegen "+(row.opponent||"unbekannt")+" · "+line.label;
+          if(Number.isFinite(value)){
+            const yy=y(value),extra=row[line.side+"Detail"]||"";
+            const tooltip=titleBase+": "+fmt(value,result.metric)+(extra?" · "+extra:"");
+            dots+='<circle cx="'+xx+'" cy="'+yy+'" r="5" fill="'+line.color+'" role="button" tabindex="0"'+
+              ' aria-label="'+escapeHtml(tooltip)+'" data-trend-index="'+i+'" data-trend-series="'+seriesIndex+'">'+
+              '<title>'+escapeHtml(tooltip)+'</title></circle>';
+          }else if(valid.length){
+            const before=valid.filter(p=>p.index<i).at(-1);
+            const after=valid.find(p=>p.index>i);
+            // The circle's position is schematic, never an interpolated statistic.
+            // For inner gaps it sits on the dashed bridge; for edge gaps below the plot.
+            const yy=before&&after
+              ?y(before.value+(after.value-before.value)*(i-before.index)/(after.index-before.index))
+              :limits.bottom+12;
+            const tooltip=titleBase+": keine auswertbaren Daten (kein Messwert)";
+            dots+='<circle cx="'+xx+'" cy="'+yy+'" r="5" fill="#0b1d28" stroke="'+line.color+
+              '" stroke-width="2" role="button" tabindex="0" data-trend-missing="true"'+
+              ' data-trend-index="'+i+'" data-trend-series="'+seriesIndex+'"'+
+              ' aria-label="'+escapeHtml(tooltip)+'"><title>'+escapeHtml(tooltip)+'</title></circle>';
+          }
         });
         return '<path fill="none" stroke="'+line.color+'" stroke-width="3"'+
-          (seriesIndex%2?' stroke-dasharray="7 5"':'')+' d="'+path+'"/>'+dots;
+          (seriesIndex%2?' stroke-dasharray="7 5"':'')+' d="'+path+'"/>'+bridges+dots;
       }).join("");
       const gameLabels=rows.map((row,i)=>{
         const full=String(row.opponent||"Spiel "+(i+1)),xx=x(i),abbreviated=shortOpponent(full);
@@ -3324,11 +3352,18 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const text=document.createElement("span"),color=document.createElement("i");
         color.style.background=line.color;text.append(color,document.createTextNode(line.label));legend.append(text);
       }
+      if(lines.some(line=>line.rows.some(row=>!Number.isFinite(row[line.side])))){
+        const missing=document.createElement("span");
+        missing.className="season-trend-missing-legend";
+        missing.textContent="○ kein Messwert · Lücke gestrichelt";
+        legend.append(missing);
+      }
       const show=(index,seriesIndex)=>{
         const line=lines[seriesIndex],row=line?.rows[index],value=row?.[line.side],extra=row?.[line.side+"Detail"]||"";
         detail.textContent=Number.isFinite(value)?"Spiel "+(index+1)+" · gegen "+(row.opponent||"unbekannt")+" · "+line.label+": "+
           fmt(value,result.metric)+(extra?" · "+extra:""):
-          rows.length?"Keine auswertbaren Werte für diese Auswahl.":"";
+          row?"Spiel "+(index+1)+" · gegen "+(row.opponent||"unbekannt")+" · "+line.label+": kein Messwert":
+          "Keine auswertbaren Werte für diese Auswahl.";
       };
       let last=null;
       for(let i=rows.length-1;i>=0&&!last;i--)
