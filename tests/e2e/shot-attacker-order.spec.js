@@ -53,6 +53,21 @@ async function latestEvent(page){
   });
 }
 
+test("new manual games default to shooter-last with compact labels",async({page})=>{
+  await page.goto("/");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#newGame").click();
+  await page.locator("#newGameManual").click();
+  await expect(page.locator("#shotAttackerOrder")).toHaveValue("last");
+  await expect(page.locator('label[for="shotAttackerOrder"]')).toContainText("Schütze wählen");
+  await expect(page.locator('#shotAttackerOrder option[value="last"]')).toHaveText("Zuletzt (Standard)");
+  await expect(page.locator('#shotAttackerOrder option[value="first"]')).toHaveText("Zuerst");
+  await page.locator('[data-tab="match"]').click();
+  await startShot(page,"away");
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await expect(page.locator("#playerStep")).toBeHidden();
+});
+
 test("shot: scorer-last waits for hall speaker while preserving original event stamp and scoring",async({page})=>{
   const original=await openDemo(page);
   await configureOrder(page,"last");
@@ -61,7 +76,7 @@ test("shot: scorer-last waits for hall speaker while preserving original event s
   await expect(page.locator("#playerStep")).toBeHidden();
   await selectGoalDetails(page);
   await expect(page.locator("#playerStep")).toBeVisible();
-  await expect(page.locator("#playerTeamText")).toContainText("Schütze nach Durchsage");
+  await expect(page.locator("#playerStep h2")).toHaveText("Schütze wählen");
   await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
   await expect(page.locator("#flowBack")).toBeEnabled();
   await page.locator("#flowBack").click();
@@ -84,7 +99,7 @@ test("shot: scorer-last waits for hall speaker while preserving original event s
   await expect(page.locator("#shotAttackerOrder")).toHaveValue("last");
 });
 
-test("shot: default shooter-first sequence remains unchanged",async({page})=>{
+test("shot: legacy game without stored order keeps shooter-first flow",async({page})=>{
   const original=await openDemo(page);
   await startShot(page,"away");
   await expect(page.locator("#playerStep")).toBeVisible();
