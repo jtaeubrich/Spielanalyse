@@ -290,6 +290,7 @@
 .season-trend-chart{padding:12px;min-width:0;border:1px solid var(--line);border-radius:13px;background:#0b1d28}
 .season-trend-chart>label{font-size:13px;font-weight:650;display:block}
 .season-trend-chart>label .field{width:100%;margin:4px 0 5px;font-weight:500}
+.season-trend-scroll{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}
 .season-trend-chart .chart-svg{display:block;width:100%;height:auto;min-height:0}
 .season-trend-chart .legend{margin:6px 0 5px;gap:12px;min-height:18px}
 .season-trend-chart .legend span{white-space:nowrap}
@@ -1421,22 +1422,22 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
   <div class="season-trend-grid"><section class="season-trend-chart"><label for="seasonTrendMetric">Kennzahl
   <select class="field" id="seasonTrendMetric"><option value="goals" selected>Tore</option><option value="penalties">Zeitstrafen</option><option value="shotRate">Wurfeffizienz</option><option value="errors">Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option><option value="assists">Assists</option><option value="saveRate">Paradenquote</option></select></label>
   <div class="legend" id="seasonTrendLegend"></div>
-  <svg class="chart-svg" id="seasonTrend" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg>
+  <div class="season-trend-scroll"><svg class="chart-svg" id="seasonTrend" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg></div>
   <p class="season-trend-detail" id="seasonTrendDetail" aria-live="polite"></p></section>
 <section class="season-trend-chart season-trend-extra"><label for="seasonTrendMetric2">Kennzahl
   <select class="field" id="seasonTrendMetric2"><option value="goals">Tore</option><option value="penalties" selected>Zeitstrafen</option><option value="shotRate">Wurfeffizienz</option><option value="errors">Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option><option value="assists">Assists</option><option value="saveRate">Paradenquote</option></select></label>
   <div class="legend" id="seasonTrendLegend2"></div>
-  <svg class="chart-svg" id="seasonTrend2" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg>
+  <div class="season-trend-scroll"><svg class="chart-svg" id="seasonTrend2" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg></div>
   <p class="season-trend-detail" id="seasonTrendDetail2" aria-live="polite"></p></section>
 <section class="season-trend-chart season-trend-extra"><label for="seasonTrendMetric3">Kennzahl
   <select class="field" id="seasonTrendMetric3"><option value="goals">Tore</option><option value="penalties">Zeitstrafen</option><option value="shotRate" selected>Wurfeffizienz</option><option value="errors">Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option><option value="assists">Assists</option><option value="saveRate">Paradenquote</option></select></label>
   <div class="legend" id="seasonTrendLegend3"></div>
-  <svg class="chart-svg" id="seasonTrend3" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg>
+  <div class="season-trend-scroll"><svg class="chart-svg" id="seasonTrend3" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg></div>
   <p class="season-trend-detail" id="seasonTrendDetail3" aria-live="polite"></p></section>
 <section class="season-trend-chart season-trend-extra"><label for="seasonTrendMetric4">Kennzahl
   <select class="field" id="seasonTrendMetric4"><option value="goals">Tore</option><option value="penalties">Zeitstrafen</option><option value="shotRate">Wurfeffizienz</option><option value="errors" selected>Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option><option value="assists">Assists</option><option value="saveRate">Paradenquote</option></select></label>
   <div class="legend" id="seasonTrendLegend4"></div>
-  <svg class="chart-svg" id="seasonTrend4" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg>
+  <div class="season-trend-scroll"><svg class="chart-svg" id="seasonTrend4" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg></div>
   <p class="season-trend-detail" id="seasonTrendDetail4" aria-live="polite"></p></section></div>
 </section>
         <section class="team-compare-section season-compare-section"><div class="season-compare-head"><h2>Team-Vergleich · Saison</h2><div class="season-compare-toggle" role="group" aria-label="Darstellung Team-Vergleich"><button class="tiny selected" id="seasonCompareAbsolute" type="button">Absolut</button><button class="tiny" id="seasonCompareAverage" type="button">Ø pro Spiel</button></div></div><div class="legend" id="seasonCompareLegend"></div><div class="comparison" id="seasonCompare"></div></section>
@@ -3266,7 +3267,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const names=new Map(options.map(p=>[p.key,p.label]));
     const colors=["#35cfe0","#f5a000","#90d57a","#b59cff"];
     const fmt=(value,metric)=>!Number.isFinite(value)?"–":metric.unit==="percent"?Math.round(value)+" %":String(value);
-    const limits={left:45,right:498,top:23,bottom:216};
+    const shortOpponent=name=>{const text=String(name||"").trim();return Array.from(text).length>14?Array.from(text).slice(0,13).join("").trimEnd()+"…":text};
     for(const suffix of ["","2","3","4"]){
       const metric=$("seasonTrendMetric"+suffix).value;
       const svg=$("seasonTrend"+suffix),legend=$("seasonTrendLegend"+suffix),detail=$("seasonTrendDetail"+suffix);
@@ -3275,6 +3276,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         :[coreSeasonTrendSeries(games,{metric,scope:"team",venue,view})];
       const result=plots[0]||coreSeasonTrendSeries(games,{metric,scope:"player",venue,view});
       const rows=result.rows,percent=result.metric.unit==="percent";
+      const chartWidth=Math.max(520,rows.length*70+100);
+      const limits={left:85,right:chartWidth-25,top:23,bottom:208};
+      svg.setAttribute("viewBox","0 0 "+chartWidth+" 322");
+      svg.style.minWidth=rows.length>4?chartWidth+"px":"";
       const lines=scope==="player"
         ?plots.map((p,i)=>({label:names.get(p.key)||"Spieler",rows:p.rows,side:"first",color:colors[i]}))
         :[{label:result.labels[0],rows,side:"first",color:colors[0]},
@@ -3297,7 +3302,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           const xx=x(i),yy=y(value);
           path+=(started?" L ":" M ")+xx.toFixed(1)+" "+yy.toFixed(1);started=true;
           const extra=row[line.side+"Detail"]||"";
-          const tooltip="Spiel "+(i+1)+" · "+line.label+": "+fmt(value,result.metric)+(extra?" · "+extra:"");
+          const tooltip="Spiel "+(i+1)+" · gegen "+(row.opponent||"unbekannt")+" · "+line.label+": "+fmt(value,result.metric)+(extra?" · "+extra:"");
           dots+='<circle cx="'+xx+'" cy="'+yy+'" r="5" fill="'+line.color+'" role="button" tabindex="0"'+
             ' aria-label="'+escapeHtml(tooltip)+'" data-trend-index="'+i+'" data-trend-series="'+seriesIndex+'">'+
             '<title>'+escapeHtml(tooltip)+'</title></circle>';
@@ -3305,10 +3310,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         return '<path fill="none" stroke="'+line.color+'" stroke-width="3"'+
           (seriesIndex%2?' stroke-dasharray="7 5"':'')+' d="'+path+'"/>'+dots;
       }).join("");
-      svg.innerHTML=rows.length?grid+drawing+
-        '<text class="chart-axis" x="'+limits.left+'" y="245">Spiel 1</text>'+
-        '<text class="chart-axis" x="'+limits.right+'" y="245" text-anchor="end">Spiel '+rows.length+'</text>'
-        :'<text class="chart-axis" x="260" y="133" text-anchor="middle">Keine Spiele ausgewählt</text>';
+      const gameLabels=rows.map((row,i)=>{
+        const full=String(row.opponent||"Spiel "+(i+1)),xx=x(i),abbreviated=shortOpponent(full);
+        return '<text class="chart-axis" data-trend-opponent="'+i+'" x="'+xx+'" y="241" '+
+          'text-anchor="end" transform="rotate(-45 '+xx+' 241)" aria-label="Gegner: '+escapeHtml(full)+'">'+
+          escapeHtml(abbreviated)+'<title>'+escapeHtml(full)+'</title></text>';
+      }).join("");
+      svg.innerHTML=rows.length?grid+drawing+gameLabels
+        :'<text class="chart-axis" x="'+(chartWidth/2)+'" y="133" text-anchor="middle">Keine Spiele ausgewählt</text>';
       svg.setAttribute("aria-label",result.metric.label+" – "+lines.map(line=>line.label).join(", "));
       legend.replaceChildren();
       for(const line of lines){
@@ -3317,7 +3326,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       }
       const show=(index,seriesIndex)=>{
         const line=lines[seriesIndex],row=line?.rows[index],value=row?.[line.side],extra=row?.[line.side+"Detail"]||"";
-        detail.textContent=Number.isFinite(value)?"Spiel "+(index+1)+" · "+line.label+": "+
+        detail.textContent=Number.isFinite(value)?"Spiel "+(index+1)+" · gegen "+(row.opponent||"unbekannt")+" · "+line.label+": "+
           fmt(value,result.metric)+(extra?" · "+extra:""):
           rows.length?"Keine auswertbaren Werte für diese Auswahl.":"";
       };
