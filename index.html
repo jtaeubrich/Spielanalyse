@@ -1784,7 +1784,7 @@ import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuL
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
 import { previewOfficialSeasonRosters, applyOfficialSeasonRosters } from "./src/season-roster-refresh.js?v=1";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
-import { seasonTrendSeries as coreSeasonTrendSeries, seasonPlayerComparison as coreSeasonPlayerComparison } from "./src/season-trends.js?v=2";
+import { seasonTrendSeries as coreSeasonTrendSeries, seasonPlayerComparison as coreSeasonPlayerComparison, seasonTrendYAxisTicks as coreSeasonTrendYAxisTicks } from "./src/season-trends.js?v=3";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver, createAliasedSeasonPlayerKeyResolver as coreCreateAliasedSeasonPlayerKeyResolver, setSeasonPlayerAlias as coreSetSeasonPlayerAlias, resolveSeasonPlayerAliasKey as coreResolveSeasonPlayerAliasKey } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
 import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition, videoScoutingEventStamp as coreVideoScoutingEventStamp, reconstructedGameClock as coreReconstructedGameClock, scoreAtVideoPosition as coreScoreAtVideoPosition } from "./src/video-sync.js?v=151";
@@ -3280,14 +3280,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         :[{label:result.labels[0],rows,side:"first",color:colors[0]},
           ...(result.labels.length>1?[{label:result.labels[1],rows,side:"second",color:colors[1]}]:[])];
       const numbers=lines.flatMap(line=>line.rows.map(row=>row[line.side])).filter(Number.isFinite);
-      const max=percent?100:Math.max(1,...numbers);
+      const axis=coreSeasonTrendYAxisTicks(numbers,result.metric.unit);
       const x=i=>limits.left+(rows.length===1?0.5:i/(rows.length-1))*(limits.right-limits.left);
-      const y=value=>limits.bottom-value/max*(limits.bottom-limits.top);
-      const grid=[0,1,2,3,4].map(tick=>{
-        const value=max*tick/4,yy=y(value);
+      const y=value=>limits.bottom-value/axis.max*(limits.bottom-limits.top);
+      const grid=axis.ticks.map(value=>{
+        const yy=y(value);
         return '<line class="chart-grid" x1="'+limits.left+'" y1="'+yy+'" x2="'+limits.right+'" y2="'+yy+'"/>'+
           '<text class="chart-axis" x="38" y="'+(yy+4)+'" text-anchor="end">'+
-          (percent?Math.round(value)+"%":Math.round(value))+'</text>';
+          (percent?value+"%":String(value))+'</text>';
       }).join("");
       const drawing=lines.map((line,seriesIndex)=>{
         let path="",started=false,dots="";

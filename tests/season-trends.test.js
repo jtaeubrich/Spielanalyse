@@ -1,5 +1,5 @@
 import {describe,it,expect} from "vitest";
-import {seasonTrendSeries,seasonPlayerComparison,seasonTrendGames,trendMetric} from "../src/season-trends.js";
+import {seasonTrendSeries,seasonPlayerComparison,seasonTrendGames,trendMetric,seasonTrendYAxisTicks} from "../src/season-trends.js";
 
 const roster=[
   {id:"p1",nr:7,vorname:"Lena",nachname:"Beispiel",isTW:false},
@@ -108,5 +108,23 @@ describe("Phase 2: venue, cumulative and player comparison",()=>{
     expect(goalie.rows[0].first).toBe(50);
     const team=seasonTrendSeries([game1],{metric:"assists"});
     expect(team.rows[0].first).toBe(0);
+  });
+});
+
+describe("integer and percentage axis labels",()=>{
+  it("does not duplicate labels when the highest count is zero or one",()=>{
+    expect(seasonTrendYAxisTicks([0,0,1])).toEqual({max:1,ticks:[0,1]});
+    expect(seasonTrendYAxisTicks([0,0])).toEqual({max:1,ticks:[0,1]});
+    expect(seasonTrendYAxisTicks([0,2])).toEqual({max:2,ticks:[0,1,2]});
+  });
+  it("uses evenly spaced whole-number ticks for larger event counts",()=>{
+    const scale=seasonTrendYAxisTicks([0,7]);
+    expect(scale).toEqual({max:8,ticks:[0,2,4,6,8]});
+    expect(new Set(scale.ticks).size).toBe(scale.ticks.length);
+    expect(seasonTrendYAxisTicks([11]).ticks).toEqual([0,5,10,15]);
+  });
+  it("keeps the fixed 0 to 100 percent scale",()=>{
+    expect(seasonTrendYAxisTicks([0,33,92],"percent"))
+      .toEqual({max:100,ticks:[0,25,50,75,100]});
   });
 });

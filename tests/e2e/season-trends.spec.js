@@ -80,3 +80,24 @@ test("Phase 2 trend charts filter venue, aggregate season and compare multiple p
   await page.locator("#seasonTrendMetric").selectOption("shotRate");
   await expect(page.locator("#seasonTrend")).toHaveAttribute("aria-label",/Wurfeffizienz/);
 });
+
+test("low count statistics have unique integer y-axis labels on mobile and desktop",async({page})=>{
+  await page.goto("/");
+  const game=structuredClone(fixture);
+  game.gameName="Einzelne Zeitstrafe";
+  game.gameDate="2026-10-01";
+  game.events=[{type:"2min",team:game.ownTeam,pId:game[game.ownTeam].players[0].id}];
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
+  await page.locator("#seasonGameInput").setInputFiles({
+    name:"axis-one-penalty.json",mimeType:"application/json",
+    buffer:Buffer.from(JSON.stringify(game))
+  });
+  await page.locator('[data-tab="season"]').click();
+  await page.locator("#seasonTrendMetric").selectOption("penalties");
+  const yLabels=await page.locator('#seasonTrend .chart-axis[x="38"]').allTextContents();
+  expect(yLabels).toEqual(["0","1"]);
+  expect(new Set(yLabels).size).toBe(yLabels.length);
+  await page.locator("#seasonTrendMetric").selectOption("shotRate");
+  await expect(page.locator('#seasonTrend .chart-axis[x="38"]')).toHaveText(["0%","25%","50%","75%","100%"]);
+});

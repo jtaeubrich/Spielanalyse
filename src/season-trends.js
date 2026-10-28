@@ -115,3 +115,18 @@ export function seasonPlayerComparison(games=[],{
     ...seasonTrendSeries(games,{metric,scope:"player",playerKey:key,resolvePlayer,venue,view})
   }));
 }
+
+// Choose actual integer grid values. Rounding fractional tick positions would
+// label e.g. 0, .25, .5, .75, 1 as 0, 0, 1, 1, 1.
+export function seasonTrendYAxisTicks(values=[],unit="count"){
+  if(unit==="percent")return {max:100,ticks:[0,25,50,75,100]};
+  const highest=Math.max(0,...values.filter(Number.isFinite));
+  let step=1;
+  if(highest>4){
+    const wanted=highest/4;
+    const magnitude=10**Math.floor(Math.log10(wanted));
+    step=([1,2,5,10].find(factor=>factor*magnitude>=wanted)??10)*magnitude;
+  }
+  const intervals=Math.max(1,Math.ceil(highest/step));
+  return {max:step*intervals,ticks:Array.from({length:intervals+1},(_,i)=>i*step)};
+}
