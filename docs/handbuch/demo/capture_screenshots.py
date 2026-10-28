@@ -146,9 +146,7 @@ def main():
             page.locator("#seasonStats").scroll_into_view_if_needed()
             page.screenshot(path=str(folder/"season-analytics.png"),full_page=False)
             page.locator('[data-tab="home"]').click()
-            page.locator("#homeChooseSeason").click()
-            page.locator("#homeOpen").click()
-            page.locator("#homeLibraryList .home-list-row").first.get_by_role("button",name="Öffnen").click()
+            page.locator("#homeRecentOptions").get_by_role("button",name="Saison öffnen").click()
             upcoming=page.locator("#homeSeasonGames .home-list-row").filter(has_text="SG Flensburg-Handewitt II")
             upcoming.get_by_role("button",name="Fortsetzen").click()
             page.locator("#setupTab.tab-pane.active").wait_for(timeout=10000)
@@ -159,9 +157,8 @@ def main():
             page.screenshot(path=str(folder/"setup-lineup-review.png"),full_page=False)
             page.locator("#setupOfficialRosterCancel").click()
             page.locator('[data-tab="home"]').click()
-            page.locator("#homeChooseSeason").click()
-            page.locator("#homeOpen").click()
-            page.locator("#homeAdvanced").click()
+            page.locator("#homeRecentOptions").get_by_role("button",name="Saison öffnen").click()
+            page.locator("#homeSeasonManage").click()
             # One manual game is deliberately left without its official match ID
             # to illustrate the reassociation UI without using private data.
             manual=season_demo()
