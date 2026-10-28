@@ -145,3 +145,47 @@ test("missing season statistics use a hollow marker and dashed bridge, not a zer
   await expect(chart.locator('circle[data-trend-missing="true"]')).toHaveCount(0);
   await expect(chart.locator('path[data-trend-gap]')).toHaveCount(0);
 });
+
+
+test("season player trend treats an unverified roster-only appearance as a missing game",async({page})=>{
+  await page.goto("/");
+  const first=structuredClone(fixture);
+  first.gameName="Gegen HSG";first.gameDate="2026-09-05";
+  const middle=structuredClone(fixture);
+  middle.gameName="Gegen MTV Lübeck II";middle.gameDate="2026-09-12";
+  middle.home.name="MTV Lübeck II";
+  const teammate=middle[middle.ownTeam].players.find(player=>Number(player.nr)===25);
+  middle.events=[{type:"goal",team:middle.ownTeam,pId:teammate.id}];
+  const third=structuredClone(fixture);
+  third.gameName="Gegen HSG 2";third.gameDate="2026-09-19";
+  const validZero=structuredClone(fixture);
+  validZero.gameName="Gegen HSG 3";validZero.gameDate="2026-09-26";
+  const jespe=validZero[validZero.ownTeam].players.find(player=>Number(player.nr)===17);
+  validZero.events=[{type:"error",team:validZero.ownTeam,pId:jespe.id}];
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
+  await page.locator("#seasonGameInput").setInputFiles([
+    {name:"presence-first.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(first))},
+    {name:"presence-luebeck.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(middle))},
+    {name:"presence-third.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(third))},
+    {name:"presence-zero.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(validZero))}
+  ]);
+  await expect(page.locator("#seasonGameCount")).toContainText("4 Spiele");
+  await page.locator('[data-tab="season"]').click();
+  await page.locator("#seasonTrendScope").selectOption("player");
+  const option=page.locator("#seasonTrendPlayer option").filter({hasText:"Jespe Mats Täubrich"});
+  await expect(option).toHaveCount(1);
+  const playerKey=await option.getAttribute("value");
+  await page.locator("#seasonTrendPlayer").selectOption(playerKey);
+  await page.locator("#seasonTrendMetric").selectOption("goals");
+  const plot=page.locator("#seasonTrend");
+  await expect(plot.locator('circle[data-trend-index="1"][data-trend-missing="true"]')).toHaveCount(1);
+  await expect(plot.locator('path[data-trend-gap]')).toHaveCount(1);
+  await expect(plot.locator('circle[data-trend-index="3"]:not([data-trend-missing])')).toHaveCount(1);
+  const marker=plot.locator('circle[data-trend-index="1"][data-trend-missing="true"]');
+  await expect(marker).toHaveAttribute("aria-label",/Einsatz nicht bestätigt/);
+  await marker.click();
+  await expect(page.locator("#seasonTrendDetail")).toContainText("Einsatz nicht bestätigt");
+  await plot.locator('circle[data-trend-index="3"]').click();
+  await expect(page.locator("#seasonTrendDetail")).toContainText("Jespe Mats Täubrich: 0");
+});
