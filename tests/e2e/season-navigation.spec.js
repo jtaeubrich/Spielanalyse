@@ -81,7 +81,7 @@ test("two separate seasons survive reload and never merge their match collection
   await expect(page.locator("#seasonGameList")).toContainText("Kronshagen Saisonspiel");
 });
 
-test("analysis dropdown previews a season fixture without changing active scouting game",async({page})=>{
+test("season fixture preview never leaks into independent match analysis",async({page})=>{
   await page.goto("/");
  await page.locator('[data-tab="setup"]').click();
   const active=game("Aktives Scouting",{events:[],home:"Mein Live-Team",away:"Gegner"});
@@ -109,9 +109,15 @@ test("analysis dropdown previews a season fixture without changing active scouti
   await page.locator('[data-tab="match"]').click();
   await expect(page.locator("#eventCount")).toContainText("0 Ereignisse");
   await page.locator('[data-tab="analysis"]').click();
-  await select.selectOption("");
+  // Returning to an independent match intentionally hides season selection.
+  // The archived season is retained, but it is no longer the active context.
+  await expect(select).toBeHidden();
+  await expect(page.locator("#analysisSeasonSubtab")).toBeHidden();
+  await expect(page.locator("#analysisPerspectiveControl")).toBeVisible();
+  await expect(page.locator("#analysisPerspectiveSelect")).toHaveValue("neutral");
   await expect(page.locator("#analysisToVideo")).toBeEnabled();
-  await expect(page.locator("#analysisStats")).toContainText("0");
+  await expect(page.locator("#analysisStats .metric").first().locator("strong")).toHaveText("0");
+  await expect(page.locator("#score")).toHaveText("0 : 0");
 });
 
 test("an imported season fixture displays its official match URL and pre-fills the setup link",async({page})=>{
