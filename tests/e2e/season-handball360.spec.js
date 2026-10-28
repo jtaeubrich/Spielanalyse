@@ -126,6 +126,59 @@ test("season import saves both official club logos for matchday without modifyin
   expect(stored.every(record=>record.players.length===0)).toBe(true);
 });
 
+
+test("season-wide sync updates postponed fixtures and fills missing logos without touching scouting",async({page})=>{
+  const archived=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
+  archived.state.events[0].comment="Meine Videoanalyse bleibt";
+  archived.state.video.youtubeUrl="https://www.youtube.com/watch?v=owned";
+  archived.state.home.players=[{id:"local-goalie",nr:1,vorname:"Theo",nachname:"Test",isTW:true,isTWOverride:true}];
+  await page.locator("#seasonGameInput").setInputFiles(upload("tracked.json",archived.state));
+  await preview(page);
+  await expect(page.locator("#seasonH360Sync")).toBeEnabled();
+  const rescheduled={...schedule,matches:schedule.matches.map(item=>item.id==="378107"
+    ?{...item,date:"2026-11-07T15:00:00Z"}:item)};
+  const official=payload("378107","2026-11-07T15:00:00Z");
+  official.match.data[0].local.club={
+    id:"home-club",logo:"https://handball360.isquad.de/images/afiliacion_clubs/5512/club1.jpg"
+  };
+  official.match.data[0].visitor.club={
+    id:"away-club",logo:"https://handball360.isquad.de/images/afiliacion_clubs/5512/club2.jpg"
+  };
+  const tinyPng=Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO/a2iwAAAAASUVORK5CYII=",
+    "base64");
+  await page.route("**/team/85814/matches*",route=>route.fulfill({
+    status:200,contentType:"application/json",body:JSON.stringify(rescheduled)
+  }));
+  await page.route("**/match/378107",route=>route.fulfill({
+    status:200,contentType:"application/json",body:JSON.stringify(official)
+  }));
+  await page.route(/\/logo\?url=/,route=>route.fulfill({status:200,contentType:"image/png",body:tinyPng}));
+  await page.locator("#seasonH360Preview").click();
+  page.once("dialog",dialog=>dialog.accept());
+  await page.locator("#seasonH360Sync").click();
+  await expect(page.locator("#seasonH360Status")).toContainText("1 Spiele geprüft");
+  await expect(page.locator("#seasonH360Status")).toContainText("1 Terminänderungen");
+  await expect(page.locator("#seasonH360Status")).toContainText("2 Vereinslogos geladen");
+  await page.locator("#seasonH360Close").click();
+  const [download]=await Promise.all([
+    page.waitForEvent("download"),page.locator("#seasonExport").click()
+  ]);
+  const exported=JSON.parse(await readFile(await download.path(),"utf8"));
+  const result=exported.games.find(item=>item.data.officialSource?.matchId==="378107");
+  expect(result.data.gameDate).toBe("2026-11-07");
+  expect(result.data.gameTimeOfDay).toBe("16:00");
+  expect(result.data.officialSource.matchDate).toBe("2026-11-07T15:00:00Z");
+  expect(result.data.events[0].comment).toBe("Meine Videoanalyse bleibt");
+  expect(result.data.video.youtubeUrl).toContain("owned");
+  expect(result.data.home.players[0].isTWOverride).toBe(true);
+  expect(result.data.officialSource.clubLogos.home.logoUrl).toContain("club1.jpg");
+  await page.reload();
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
+  await expect(page.locator("#seasonGameList")).toContainText("tracked");
+});
+
 test("never replaces an existing manually enriched match",async({page})=>{
   const oldGame=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
   oldGame.state.events[0].comment="Eigenes Scouting bleibt";
