@@ -398,6 +398,8 @@ test("season list keeps Handball360 roster sync distinct from nuLiga protocol re
     contentType:"application/json",body:JSON.stringify(official)
   }));
   await page.locator("#seasonGameInput").setInputFiles(upload("archived-roster.json",archived.state));
+  await expect(page.locator("#seasonGameList .season-game-item")).toHaveCount(1);
+  await page.locator("#seasonGamesDetails > summary").click();
   const item=page.locator("#seasonGameList .season-game-item").first();
   await expect(item.getByRole("button",{name:"Handball360-Kader"})).toBeVisible();
   await expect(item.getByRole("button",{name:"nuLiga-Protokoll"})).toBeVisible();

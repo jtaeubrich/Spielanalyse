@@ -35,7 +35,7 @@ async function openScoutingGame(page,{provider}={}){
   await page.locator("#seasonGameInput").setInputFiles(file("hc-bremen-scouting.json",JSON.stringify(game)));
   await expect(page.locator("#seasonGameCount")).toContainText("1 Spiel");
   await page.locator("#seasonGamesDetails > summary").click();
-  await page.locator("#seasonGameList").getByRole("button",{name:"Protokollabgleich"}).click();
+  await page.locator("#seasonGameList").getByRole("button",{name:"nuLiga-Protokoll"}).click();
   await expect(page.locator("#seasonProtocolDialog")).toBeVisible();
   return game;
 }
@@ -98,7 +98,7 @@ test("repeated protocol import leaves attributed events intact and allows the re
   await page.locator("#seasonProtocolApply").click();
   await expect(page.locator("#seasonProtocolStatus")).toContainText("1 Spielerzuordnung(en)");
   await page.locator("#seasonProtocolClose").click();
-  await page.locator("#seasonGameList").getByRole("button",{name:"Protokollabgleich"}).click();
+  await page.locator("#seasonGameList").getByRole("button",{name:"nuLiga-Protokoll"}).click();
   await loadProtocol(page);
   await expect(page.locator("#seasonProtocolRows .protocol-row")).toHaveCount(2);
   page.once("dialog",dialog=>dialog.accept());
