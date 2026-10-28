@@ -149,18 +149,29 @@ export function createSeasonPlayerKeyResolver(games = []) {
     // Do not associate a namesake from the opponent roster with our own player.
     const teams = ["home", "away"].includes(game?.ownTeam)
       ? [game.ownTeam] : ["home", "away"];
-    const namesInGame = new Set();
+    const namesInGame = new Map();
     for (const team of teams) {
       for (const player of game?.state?.[team]?.players || []) {
         const nameKey = seasonPlayerNameKey(player);
         if (!nameKey) continue;
-        if (namesInGame.has(nameKey)) ambiguousNames.add(nameKey);
-        namesInGame.add(nameKey);
         const handballNetId = String(player.handballNetId || "").trim().toLowerCase();
+        const jersey = String(player.nr ?? "").trim();
+        const seen = namesInGame.get(nameKey) || { ids: new Set(), numbered: new Set() };
+        if (handballNetId) seen.ids.add(handballNetId);
+        if (jersey) seen.numbered.add(jersey);
+        namesInGame.set(nameKey, seen);
         if (!handballNetId) continue;
         if (!idsByName.has(nameKey)) idsByName.set(nameKey, new Set());
         idsByName.get(nameKey).add(handballNetId);
       }
+    }
+    // Numberless duplicates of a uniquely named, numbered player are common
+    // when old scouting files and official rosters coexist. Only treat a
+    // repeated name as ambiguous when IDs conflict or two numbered players
+    // share the full name in the same game.
+    for (const [nameKey,seen] of namesInGame) {
+      if (seen.ids.size > 1 || (seen.ids.size === 0 && seen.numbered.size > 1))
+        ambiguousNames.add(nameKey);
     }
   }
 

@@ -49,6 +49,30 @@ describe("safe season player merge", () => {
     expect(rows.find(p => p.key === resolve(playerOne)).games.size).toBe(2);
   });
 
+  test("collapses an unnamed-number duplicate with the same full name in one match", () => {
+    const first = match("same", (p,state) => {
+      p.vorname="Jan-Mika";p.nachname="Langhein";p.nr=null;p.handballNetId="";
+      state[state.ownTeam].players.push({...p,id:"known-number",nr:1});
+    });
+    const players=first.state[first.ownTeam].players;
+    const resolve=createSeasonPlayerKeyResolver([first]);
+    expect(resolve(players[0])).toEqual(resolve(players.at(-1)));
+    const rows=seasonPlayerAggregate([first],{playerKey:resolve,playerLabel:label});
+    expect(rows.filter(row=>row.key===resolve(players[0]))).toHaveLength(1);
+    expect(first.state[first.ownTeam].players).toHaveLength(fixture[fixture.ownTeam].players.length+1);
+  });
+
+  test("preserves distinct official identities even with one numberless duplicate", () => {
+    const first=match("same",(p,state)=>{
+      p.vorname="Mia";p.nachname="Beispiel";p.nr=null;p.handballNetId="A";
+      state[state.ownTeam].players.push({...p,id:"other",nr:17,handballNetId:"B"});
+    });
+    const players=first.state[first.ownTeam].players;
+    const resolve=createSeasonPlayerKeyResolver([first]);
+    expect(resolve(players[0])).toBe("h360:a");
+    expect(resolve(players.at(-1))).toBe("h360:b");
+  });
+
   test("ambiguous repeated names inside a game are never silently merged", () => {
     const first = match("one", (p, state) => {
       p.vorname = "Mia"; p.nachname = "Beispiel"; p.nr = 6; p.handballNetId = "";
