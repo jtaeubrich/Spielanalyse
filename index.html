@@ -1895,6 +1895,16 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
   }
   function showSetupMode(mode,{focused=setupFocused}={}){
     const isSeason=mode==="season";
+    // A season-only analysis viewpoint must not carry over to an independent
+    // game when returning from season management. Keep this view-only: never
+    // modify recorded team assignments, events or imported season data.
+    if(!isSeason&&setupWorkingMode==="season"&&!activeSeasonGameId){
+      $("analysisPerspectiveSelect").value="neutral";
+      $("analysisTeamFilter").value="all";
+      $("analysisPlayerFilter").value="all";
+      analysisSelectedGameId="";
+      analysisLastSubtab="analysis";
+    }
     setupWorkingMode=isSeason?"season":"single";setupFocused=Boolean(focused);
     $("setupSinglePanel").hidden=isSeason;
     $("setupSeasonPanel").hidden=!isSeason;
@@ -3758,7 +3768,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         (state.events?.length||0)+" Ereignisse · "+homeGameStatus({state});
       host.append(homeRow(state.gameName||"Zuletzt geöffnetes Spiel",subtitle,[{
         title:state.isHistorical?"Analyse öffnen":"Spiel fortsetzen",primary:true,
-        action:()=>showTab(state.isHistorical?"analysis":"match")
+        action:()=>{
+          if(!activeSeasonGameId)showSetupMode("single",{focused:true});
+          showTab(state.isHistorical?"analysis":"match");
+        }
       }],"game"));
     }
     if(homeSeasonRecords().length){
