@@ -3214,11 +3214,79 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function seasonShotEntries(role="all"){const filters=seasonFilterValues();delete filters.type;return coreFilterSeasonShots(selectedSeasonGames(),role,filters)}
     function seasonTeamAggregate(role){return coreSeasonTeamAggregate(selectedSeasonGames(),role)}
   function renderSeasonTrend(){
-    const games=selectedSeasonGames(),svg=$("seasonTrend"),maxScore=Math.max(1,...games.flatMap(game=>{const x=seasonGameSummary(game);return[x.goals,x.against]})),count=Math.max(1,games.length-1),own=[],opp=[];
-    games.forEach((game,index)=>{const x=55+(games.length===1?.5:index/count)*910,m=seasonGameSummary(game);own.push([x,245-m.goals/maxScore*190]);opp.push([x,245-m.against/maxScore*190])});
-    const grid=[0,1,2,3,4].map(i=>`<line class="chart-grid" x1="55" y1="${245-i*47.5}" x2="965" y2="${245-i*47.5}"/>`).join(""),path=pts=>pts.map((p,i)=>(i?"L":"M")+p.join(" ")).join(" "),dots=(pts,cls)=>pts.map(p=>`<circle class="${cls}" cx="${p[0]}" cy="${p[1]}" r="4"/>`).join("");
-    svg.innerHTML=games.length?`${grid}<path class="chart-home" d="${path(own)}"/><path class="chart-away" d="${path(opp)}"/>${dots(own,"chart-dot-home")}${dots(opp,"chart-dot-away")}<text class="chart-axis" x="55" y="268">Spiel 1</text><text class="chart-axis" x="900" y="268">Spiel ${games.length}</text>`:'<text class="chart-axis" x="410" y="145">Keine Spiele ausgewählt</text>';
-    $("seasonTrendLegend").innerHTML='<span><i style="background:var(--cyan)"></i>Eigene Tore</span><span><i style="background:#f5a000"></i>Gegentore</span>';
+    const games=selectedSeasonGames();
+    const scope=$("seasonTrendScope").value;
+    const selectPlayer=$("seasonTrendPlayer"),label=$("seasonTrendPlayerLabel");
+    const options=seasonMergedPlayers(games).sort((a,b)=>a.label.localeCompare(b.label,"de"));
+    const previous=selectPlayer.value;
+    selectPlayer.replaceChildren(new Option("Spieler auswählen",""));
+    for(const option of options)selectPlayer.add(new Option(option.label,option.key));
+    selectPlayer.value=options.some(option=>option.key===previous)?previous:(options[0]?.key||"");
+    label.hidden=scope!=="player";
+    const key=scope==="player"?selectPlayer.value:"";
+    const resolvePlayer=scope==="player"?seasonPlayerResolver(games):null;
+    const format=(value,metric)=>!Number.isFinite(value)?"–":metric.unit==="percent"
+      ?Math.round(value)+" %":String(value);
+    for(const suffix of ["","2","3","4"]){
+      const metric=$("seasonTrendMetric"+suffix).value;
+      const svg=$("seasonTrend"+suffix),legend=$("seasonTrendLegend"+suffix),detail=$("seasonTrendDetail"+suffix);
+      const result=coreSeasonTrendSeries(games,{metric,scope,playerKey:key,resolvePlayer});
+      const rows=result.rows,percentage=result.metric.unit==="percent";
+      const all=rows.flatMap(row=>[row.first,row.second]).filter(Number.isFinite);
+      const max=percentage?100:Math.max(1,...all);
+      const bounds={left:45,right:498,top:23,bottom:216};
+      const x=i=>bounds.left+(rows.length===1?0.5:i/(rows.length-1))*(bounds.right-bounds.left);
+      const y=value=>bounds.bottom-value/max*(bounds.bottom-bounds.top);
+      const grid=[0,1,2,3,4].map(tick=>{
+        const value=max*tick/4,yy=y(value);
+        return '<line class="chart-grid" x1="'+bounds.left+'" y1="'+yy+'" x2="'+bounds.right+'" y2="'+yy+'"/>'+
+          '<text class="chart-axis" x="38" y="'+(yy+4)+'" text-anchor="end">'+
+          (percentage?Math.round(value)+"%":Math.round(value))+'</text>';
+      }).join("");
+      const series=[{key:"first",css:"home",label:scope==="player"?(options.find(option=>option.key===key)?.label||"Spieler"):result.labels[0]}];
+      if(scope==="team"&&result.labels.length>1)series.push({key:"second",css:"away",label:result.labels[1]});
+      const drawing=series.map(serie=>{
+        let path="",open=false,circles="";
+        rows.forEach((row,i)=>{
+          const value=row[serie.key];
+          if(!Number.isFinite(value)){open=false;return}
+          const xx=x(i),yy=y(value);
+          path+=(open?" L ":" M ")+xx.toFixed(1)+" "+yy.toFixed(1);
+          open=true;
+          const tooltip="Spiel "+(i+1)+" · "+serie.label+": "+format(value,result.metric)+
+            ((row[serie.key+"Detail"]||row.detail)?" · "+(row[serie.key+"Detail"]||row.detail):"");
+          circles+='<circle class="chart-dot-'+serie.css+'" cx="'+xx+'" cy="'+yy+'" r="5"'+
+            ' role="button" tabindex="0" aria-label="'+escapeHtml(tooltip)+'"'+
+            ' data-trend-index="'+i+'" data-trend-series="'+serie.key+'"><title>'+escapeHtml(tooltip)+'</title></circle>';
+        });
+        return '<path class="chart-'+serie.css+'" d="'+path+'"/>'+circles;
+      }).join("");
+      svg.innerHTML=rows.length
+        ?grid+drawing+
+          '<text class="chart-axis" x="'+bounds.left+'" y="245">Spiel 1</text>'+
+          '<text class="chart-axis" x="'+bounds.right+'" y="245" text-anchor="end">Spiel '+rows.length+'</text>'
+        :'<text class="chart-axis" x="260" y="133" text-anchor="middle">Keine Spiele ausgewählt</text>';
+      svg.setAttribute("aria-label",result.metric.label+" – "+series.map(item=>item.label).join(" und "));
+      legend.innerHTML=series.map((item,i)=>
+        '<span><i style="background:'+(i?"#f5a000":"var(--cyan)")+'"></i>'+escapeHtml(item.label)+'</span>').join("");
+      const show=(position,side)=>{
+        const row=rows[position],value=row?.[side];
+        const name=series.find(item=>item.key===side)?.label||"";
+        const more=row?.[side+"Detail"]||row?.detail||"";
+        detail.textContent=Number.isFinite(value)
+          ?"Spiel "+(position+1)+" · "+name+": "+format(value,result.metric)+(more?" · "+more:"")
+          :rows.length?"Keine auswertbaren Werte für diese Auswahl.":"";
+      };
+      const last=rows.map((row,i)=>({row,i})).reverse().find(({row})=>Number.isFinite(row.first)||Number.isFinite(row.second));
+      show(last?.i??-1,last&&!Number.isFinite(last.row.first)?"second":"first");
+      for(const circle of svg.querySelectorAll("[data-trend-index]")){
+        const activate=()=>show(Number(circle.dataset.trendIndex),circle.dataset.trendSeries);
+        circle.addEventListener("click",activate);
+        circle.addEventListener("keydown",event=>{
+          if(event.key==="Enter"||event.key===" "){event.preventDefault();activate()}
+        });
+      }
+    }
   }
   function renderSeasonComparison(){
     const own=seasonTeamAggregate("own"),opp=seasonTeamAggregate("opponent"),games=Math.max(1,selectedSeasonGames().length),average=seasonCompareMode==="average";
@@ -3309,6 +3377,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     catch(error){toast("Saison konnte nicht gespeichert werden: "+error.message)}
   };
   for(const id of ["seasonTeamFilter","seasonPlayerFilter","seasonTypeFilter","seasonZoneFilter","seasonTargetFilter","seasonPhaseFilter","seasonTagFilter"])$(id).onchange=renderSeasonAnalysis;
+  for(const id of ["seasonTrendScope","seasonTrendPlayer","seasonTrendMetric","seasonTrendMetric2","seasonTrendMetric3","seasonTrendMetric4"])
+    $(id).onchange=renderSeasonTrend;
   $("seasonCompareAbsolute").onclick=()=>{seasonCompareMode="absolute";renderSeasonComparison()};
   $("seasonCompareAverage").onclick=()=>{seasonCompareMode="average";renderSeasonComparison()};
 
