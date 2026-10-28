@@ -2162,6 +2162,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     draft.gz=null;draft.result=null;draft.keeper=null;
     draft.assistPId=null;draft.assistChosen=false;
     draft.attackPhase="7-Meter";
+    $("sevenMeterStep").querySelector(".seven-meter-target").open=false;
+    $("sevenMeterTargetList").querySelectorAll(".selected").forEach(el=>el.classList.remove("selected"));
     if(draft.attackerChosen){showStep("sevenMeter");return}
     renderPlayers();showStep("player");
   }
