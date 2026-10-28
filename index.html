@@ -3320,7 +3320,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
             dots+='<circle cx="'+xx+'" cy="'+yy+'" r="5" fill="'+line.color+'" role="button" tabindex="0"'+
               ' aria-label="'+escapeHtml(tooltip)+'" data-trend-index="'+i+'" data-trend-series="'+seriesIndex+'">'+
               '<title>'+escapeHtml(tooltip)+'</title></circle>';
-          }else if(valid.length){
+          }else{
             const before=valid.filter(p=>p.index<i).at(-1);
             const after=valid.find(p=>p.index>i);
             // The circle's position is schematic, never an interpolated statistic.
