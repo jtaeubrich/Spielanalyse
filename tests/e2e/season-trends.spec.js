@@ -24,7 +24,7 @@ test("season charts work on mobile as one plot and desktop as four configurable 
   await page.locator('[data-tab="season"]').click();
   await expect(page.locator("#seasonTrendScope")).toBeVisible();
   await expect(page.locator("#seasonTrendMetric")).toHaveValue("goals");
-  await expect(page.locator("#seasonTrend path.chart-home")).toHaveCount(1);
+  await expect(page.locator("#seasonTrend path[stroke]")).toHaveCount(2);
   await expect(page.locator("#seasonTrend circle[data-trend-index]")).not.toHaveCount(0);
   const mobile=(page.viewportSize()?.width||0)<768;
   if(mobile){
@@ -46,4 +46,37 @@ test("season charts work on mobile as one plot and desktop as four configurable 
   await page.locator("#seasonTrendMetric").selectOption("penalties");
   await expect(page.locator("#seasonTrend")).toHaveAttribute("aria-label",/Zeitstrafen/);
   await expect(page.locator("#seasonTrend")).toBeVisible();
+});
+
+test("Phase 2 trend charts filter venue, aggregate season and compare multiple players",async({page})=>{
+  await page.goto("/");
+  const first=structuredClone(fixture);first.gameName="Heimspiel";first.gameDate="2026-09-05";
+  const second=structuredClone(fixture);second.gameName="Auswärtsspiel";second.gameDate="2026-09-12";
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
+  await page.locator("#seasonGameInput").setInputFiles([
+    {name:"phase2-first.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(first))},
+    {name:"phase2-second.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(second))}
+  ]);
+  await expect(page.locator("#seasonGameCount")).toContainText("2 Spiele");
+  await page.locator('[data-tab="season"]').click();
+  await page.locator("#seasonTrendView").selectOption("cumulative");
+  await expect(page.locator("#seasonTrend")).toHaveAttribute("aria-label",/Tore/);
+  await page.locator("#seasonTrendVenue").selectOption(fixture.ownTeam);
+  await expect(page.locator("#seasonTrend circle[data-trend-index]")).not.toHaveCount(0);
+  await page.locator("#seasonTrendVenue").selectOption(fixture.ownTeam==="home"?"away":"home");
+  await expect(page.locator("#seasonTrend circle[data-trend-index]")).toHaveCount(0);
+  await page.locator("#seasonTrendVenue").selectOption("all");
+  await page.locator("#seasonTrendScope").selectOption("player");
+  await expect(page.locator("#seasonTrendComparison")).toBeVisible();
+  await page.locator("#seasonTrendComparison summary").click();
+  const options=page.locator("#seasonTrendCompareOptions input[type=checkbox]");
+  await expect(options.first()).toBeVisible();
+  await options.first().check();
+  await expect(page.locator("#seasonTrendCompareCount")).toContainText("2 von 4");
+  await expect(page.locator("#seasonTrend path[stroke]")).toHaveCount(2);
+  await page.locator("#seasonTrendMetric").selectOption("assists");
+  await expect(page.locator("#seasonTrend")).toHaveAttribute("aria-label",/Assists/);
+  await page.locator("#seasonTrendMetric").selectOption("shotRate");
+  await expect(page.locator("#seasonTrend")).toHaveAttribute("aria-label",/Wurfeffizienz/);
 });
