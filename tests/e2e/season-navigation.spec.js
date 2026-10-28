@@ -40,7 +40,8 @@ test("Setup separates individual games and season administration from Saisonanal
   await openSeasonSetup(page);
   await expect(page.locator("#seasonHandball360Open")).toBeVisible();
   await expect(page.locator("#newGame")).toBeHidden();
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="analysis"]').click();
+  await page.locator("#analysisSeasonSubtab").click();
   await expect(page.locator("#seasonStats")).toBeVisible();
   await expect(page.locator("#seasonHandball360Open")).toBeHidden();
   await page.locator('[data-tab="setup"]').click();
