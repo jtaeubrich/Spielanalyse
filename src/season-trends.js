@@ -7,44 +7,111 @@ export const TREND_METRICS = [
   {id:"shotRate",label:"Wurfeffizienz",unit:"percent"},
   {id:"errors",label:"Technische Fehler",unit:"count"},
   {id:"against",label:"Gegentore",unit:"count"},
-  {id:"saves",label:"Paraden",unit:"count"}
+  {id:"saves",label:"Paraden",unit:"count"},
+  {id:"assists",label:"Assists",unit:"count"},
+  {id:"saveRate",label:"Paradenquote",unit:"percent"}
 ];
-export function trendMetric(id){return TREND_METRICS.find(m=>m.id===id)||TREND_METRICS[0]}
+export function trendMetric(id){return TREND_METRICS.find(item=>item.id===id)||TREND_METRICS[0]}
 
-/* One series per team or player, ordered by fixture date. Missing games and
-   undefined percentages are null rather than misleading zero values. */
-export function seasonTrendSeries(games=[],{metric="goals",scope="team",playerKey="",resolvePlayer}={}) {
+// Dates are always sorted before applying venue filters or cumulative values.
+export function seasonTrendGames(games=[],venue="all"){
+  return [...games].filter(game=>venue==="all"||game?.ownTeam===venue)
+    .sort((a,b)=>String(a?.state?.officialSource?.matchDate||a?.state?.gameDate||"")
+      .localeCompare(String(b?.state?.officialSource?.matchDate||b?.state?.gameDate||"")));
+}
+function decidedShots(events=[],team){
+  return events.filter(event=>["goal","save","miss","block"].includes(event?.type)&&seasonAttackTeam(event)===team).length;
+}
+function assists(events=[],team){
+  return events.filter(event=>event?.team===team&&event.type==="goal"&&event.assistPId!=null).length;
+}
+function playerMetric(player,metric){
+  if(metric==="shotRate")return {
+    value:player.isTW||!player.decidedShots?null:percentage(player.goals,player.decidedShots),
+    numerator:player.goals,denominator:player.decidedShots,detail:player.goals+" Tore / "+player.decidedShots+" Würfe"
+  };
+  if(metric==="saveRate")return {
+    value:!player.isTW||!(player.saves+player.against)?null:percentage(player.saves,player.saves+player.against),
+    numerator:player.saves,denominator:player.saves+player.against,detail:player.saves+" Paraden / "+(player.saves+player.against)+" Würfe"
+  };
+  if(metric==="goals"&&player.isTW)return {value:null};
+  if(metric==="against"&&!player.isTW)return {value:null};
+  return {value:Number(player[metric]||0)};
+}
+function teamMetric(game,teamRole,metric){
+  const events=game.state.events||[];
+  const team=teamRole==="own"?game.ownTeam:game.opponentTeam;
+  const data=seasonTeamAggregate([game],teamRole);
+  if(metric==="against")return {value:seasonTeamAggregate([game],teamRole==="own"?"opponent":"own").goals};
+  if(metric==="assists")return {value:assists(events,team)};
+  if(metric==="shotRate"){
+    const count=decidedShots(events,team);
+    return {value:count?data.shotRate:null,numerator:data.goals,denominator:count,
+      detail:data.goals+" Tore / "+count+" Würfe"};
+  }
+  if(metric==="saveRate"){
+    const count=data.saves+data.against;
+    return {value:count?percentage(data.saves,count):null,numerator:data.saves,denominator:count,
+      detail:data.saves+" Paraden / "+count+" Würfe"};
+  }
+  return {value:Number(data[metric]||0)};
+}
+export function seasonTrendSeries(games=[],{
+  metric="goals",scope="team",playerKey="",resolvePlayer,venue="all",view="perGame"
+}={}){
   const definition=trendMetric(metric);
-  const ordered=[...games].sort((a,b)=>String(a?.state?.officialSource?.matchDate||a?.state?.gameDate||"")
-    .localeCompare(String(b?.state?.officialSource?.matchDate||b?.state?.gameDate||"")));
+  const ordered=seasonTrendGames(games,venue);
+  const totals={first:0,second:0},numerators={first:0,second:0},denominators={first:0,second:0};
+  const cumulative=view==="cumulative";
   const rows=ordered.map((game,index)=>{
     const events=game?.state?.events||[];
     const base={index:index+1,id:game?.id,date:String(game?.state?.gameDate||"").slice(0,10),
       name:game?.state?.gameName||game?.fileName||"Spiel "+(index+1)};
     if(!events.length||!["home","away"].includes(game?.ownTeam))
       return {...base,first:null,second:null};
+    let values;
     if(scope==="player"){
       if(!playerKey||typeof resolvePlayer!=="function")return {...base,first:null,second:null};
-      const player=seasonPlayerAggregate([game],{playerKey:resolvePlayer}).find(row=>row.key===playerKey);
+      const player=seasonPlayerAggregate([game],{playerKey:resolvePlayer})
+        .find(row=>row.key===playerKey);
       if(!player)return {...base,first:null,second:null};
-      const value=metric==="shotRate"?(player.isTW||!player.decidedShots?null:percentage(player.goals,player.decidedShots)):
-        metric==="against"?(player.isTW?player.against:null):
-        metric==="goals"?(player.isTW?null:player.goals):Number(player[metric]||0);
-      return {...base,first:value,second:null,
-        firstDetail:metric==="shotRate"&&value!==null?player.goals+" Tore / "+player.decidedShots+" Würfe":""};
+      values={first:playerMetric(player,metric)};
+    }else{
+      values={first:teamMetric(game,"own",metric)};
+      if(metric!=="against")values.second=teamMetric(game,"opponent",metric);
     }
-    const own=seasonTeamAggregate([game],"own"),opp=seasonTeamAggregate([game],"opponent");
-    if(metric==="against")return {...base,first:opp.goals,second:null};
-    if(metric==="shotRate"){
-      const decided=team=>events.filter(event=>
-        ["shot","goal","save","miss","block"].includes(event?.type)&&
-        event.type!=="shot"&&seasonAttackTeam(event)===team).length;
-      const ownCount=decided(game.ownTeam),oppCount=decided(game.opponentTeam);
-      return {...base,first:ownCount?own.shotRate:null,second:oppCount?opp.shotRate:null,
-        firstDetail:ownCount?own.goals+" Tore / "+ownCount+" Würfe":"",
-        secondDetail:oppCount?opp.goals+" Tore / "+oppCount+" Würfe":""};
+    const result={...base,first:null,second:null};
+    for(const side of ["first","second"]){
+      const data=values[side];
+      if(!data||!Number.isFinite(data.value))continue;
+      if(cumulative){
+        if(definition.unit==="percent"){
+          numerators[side]+=data.numerator;
+          denominators[side]+=data.denominator;
+          result[side]=denominators[side]?percentage(numerators[side],denominators[side]):null;
+          result[side+"Detail"]=numerators[side]+" / "+denominators[side]+" Würfe";
+        }else{
+          totals[side]+=data.value;
+          result[side]=totals[side];
+        }
+      }else{
+        result[side]=data.value;
+        if(data.detail)result[side+"Detail"]=data.detail;
+      }
     }
-    return {...base,first:own[metric],second:opp[metric]};
+    return result;
   });
-  return {metric:definition,scope,rows,labels:scope==="player"?["Spieler"]:metric==="against"?["Gegentore"]:["Mein Team","Gegner"]};
+  return {metric:definition,scope,view,venue,rows,
+    labels:scope==="player"?["Spieler"]:metric==="against"?["Gegentore"]:["Mein Team","Gegner"]};
+}
+
+// Shared date positions for comparing multiple players, including non-appearances.
+export function seasonPlayerComparison(games=[],{
+  metric="goals",playerKeys=[],resolvePlayer,venue="all",view="perGame"
+}={}){
+  const unique=[...new Set(playerKeys.filter(Boolean))].slice(0,4);
+  return unique.map(key=>({
+    key,
+    ...seasonTrendSeries(games,{metric,scope:"player",playerKey:key,resolvePlayer,venue,view})
+  }));
 }

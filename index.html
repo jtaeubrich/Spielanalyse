@@ -277,6 +277,15 @@
 .season-trend-controls label{flex:1 1 170px;min-width:0;font-size:13px;font-weight:650}
 .season-trend-controls .field{margin:3px 0 0}
 .season-trend-controls [hidden]{display:none!important}
+.season-trend-compare{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:11px}
+.season-trend-compare[hidden]{display:none!important}
+.season-trend-compare summary{cursor:pointer;font-size:13px;font-weight:650}
+.season-trend-compare summary span{color:var(--muted);font-weight:400}
+.season-trend-compare p{margin:8px 0;color:var(--muted);font-size:12px}
+.season-trend-compare-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));max-height:170px;overflow:auto;gap:5px;padding:3px}
+.season-trend-compare-options label{display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line);border-radius:8px;font-size:12px}
+.season-trend-compare-options input{accent-color:var(--cyan)}
+.season-trend-compare-options label[data-selected="true"]{border-color:var(--cyan);background:#123742}
 .season-trend-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .season-trend-chart{padding:12px;min-width:0;border:1px solid var(--line);border-radius:13px;background:#0b1d28}
 .season-trend-chart>label{font-size:13px;font-weight:650;display:block}
@@ -1401,24 +1410,31 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
   <div class="season-trend-controls">
     <label for="seasonTrendScope">Auswertung<select class="field" id="seasonTrendScope"><option value="team">Mannschaft</option><option value="player">Spieler</option></select></label>
     <label for="seasonTrendPlayer" id="seasonTrendPlayerLabel" hidden>Spieler<select class="field" id="seasonTrendPlayer"><option value="">Spieler auswählen</option></select></label>
+    <label for="seasonTrendVenue">Spielort<select class="field" id="seasonTrendVenue"><option value="all">Alle Spiele</option><option value="home">Heimspiele</option><option value="away">Auswärtsspiele</option></select></label>
+    <label for="seasonTrendView">Darstellung<select class="field" id="seasonTrendView"><option value="perGame">Pro Spiel</option><option value="cumulative">Kumuliert</option></select></label>
   </div>
+  <details id="seasonTrendComparison" class="season-trend-compare" hidden>
+    <summary>Spieler vergleichen <span id="seasonTrendCompareCount">(1 von 4)</span></summary>
+    <p>Zusätzlich zum ausgewählten Spieler bis zu drei weitere Spieler auswählen.</p>
+    <div id="seasonTrendCompareOptions" class="season-trend-compare-options" role="group" aria-label="Weitere Spieler vergleichen"></div>
+  </details>
   <div class="season-trend-grid"><section class="season-trend-chart"><label for="seasonTrendMetric">Kennzahl
-  <select class="field" id="seasonTrendMetric"><option value="goals" selected>Tore</option><option value="penalties">Zeitstrafen</option><option value="shotRate">Wurfeffizienz</option><option value="errors">Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option></select></label>
+  <select class="field" id="seasonTrendMetric"><option value="goals" selected>Tore</option><option value="penalties">Zeitstrafen</option><option value="shotRate">Wurfeffizienz</option><option value="errors">Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option><option value="assists">Assists</option><option value="saveRate">Paradenquote</option></select></label>
   <div class="legend" id="seasonTrendLegend"></div>
   <svg class="chart-svg" id="seasonTrend" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg>
   <p class="season-trend-detail" id="seasonTrendDetail" aria-live="polite"></p></section>
 <section class="season-trend-chart season-trend-extra"><label for="seasonTrendMetric2">Kennzahl
-  <select class="field" id="seasonTrendMetric2"><option value="goals">Tore</option><option value="penalties" selected>Zeitstrafen</option><option value="shotRate">Wurfeffizienz</option><option value="errors">Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option></select></label>
+  <select class="field" id="seasonTrendMetric2"><option value="goals">Tore</option><option value="penalties" selected>Zeitstrafen</option><option value="shotRate">Wurfeffizienz</option><option value="errors">Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option><option value="assists">Assists</option><option value="saveRate">Paradenquote</option></select></label>
   <div class="legend" id="seasonTrendLegend2"></div>
   <svg class="chart-svg" id="seasonTrend2" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg>
   <p class="season-trend-detail" id="seasonTrendDetail2" aria-live="polite"></p></section>
 <section class="season-trend-chart season-trend-extra"><label for="seasonTrendMetric3">Kennzahl
-  <select class="field" id="seasonTrendMetric3"><option value="goals">Tore</option><option value="penalties">Zeitstrafen</option><option value="shotRate" selected>Wurfeffizienz</option><option value="errors">Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option></select></label>
+  <select class="field" id="seasonTrendMetric3"><option value="goals">Tore</option><option value="penalties">Zeitstrafen</option><option value="shotRate" selected>Wurfeffizienz</option><option value="errors">Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option><option value="assists">Assists</option><option value="saveRate">Paradenquote</option></select></label>
   <div class="legend" id="seasonTrendLegend3"></div>
   <svg class="chart-svg" id="seasonTrend3" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg>
   <p class="season-trend-detail" id="seasonTrendDetail3" aria-live="polite"></p></section>
 <section class="season-trend-chart season-trend-extra"><label for="seasonTrendMetric4">Kennzahl
-  <select class="field" id="seasonTrendMetric4"><option value="goals">Tore</option><option value="penalties">Zeitstrafen</option><option value="shotRate">Wurfeffizienz</option><option value="errors" selected>Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option></select></label>
+  <select class="field" id="seasonTrendMetric4"><option value="goals">Tore</option><option value="penalties">Zeitstrafen</option><option value="shotRate">Wurfeffizienz</option><option value="errors" selected>Technische Fehler</option><option value="against">Gegentore</option><option value="saves">Paraden</option><option value="assists">Assists</option><option value="saveRate">Paradenquote</option></select></label>
   <div class="legend" id="seasonTrendLegend4"></div>
   <svg class="chart-svg" id="seasonTrend4" viewBox="0 0 520 260" role="img" aria-label="Statistik pro Saisonspiel"></svg>
   <p class="season-trend-detail" id="seasonTrendDetail4" aria-live="polite"></p></section></div>
@@ -1768,7 +1784,7 @@ import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuL
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
 import { previewOfficialSeasonRosters, applyOfficialSeasonRosters } from "./src/season-roster-refresh.js?v=1";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
-import { seasonTrendSeries as coreSeasonTrendSeries } from "./src/season-trends.js?v=1";
+import { seasonTrendSeries as coreSeasonTrendSeries, seasonPlayerComparison as coreSeasonPlayerComparison } from "./src/season-trends.js?v=2";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver, createAliasedSeasonPlayerKeyResolver as coreCreateAliasedSeasonPlayerKeyResolver, setSeasonPlayerAlias as coreSetSeasonPlayerAlias, resolveSeasonPlayerAliasKey as coreResolveSeasonPlayerAliasKey } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
 import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition, videoScoutingEventStamp as coreVideoScoutingEventStamp, reconstructedGameClock as coreReconstructedGameClock, scoreAtVideoPosition as coreScoreAtVideoPosition } from "./src/video-sync.js?v=151";
@@ -3377,7 +3393,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     catch(error){toast("Saison konnte nicht gespeichert werden: "+error.message)}
   };
   for(const id of ["seasonTeamFilter","seasonPlayerFilter","seasonTypeFilter","seasonZoneFilter","seasonTargetFilter","seasonPhaseFilter","seasonTagFilter"])$(id).onchange=renderSeasonAnalysis;
-  for(const id of ["seasonTrendScope","seasonTrendPlayer","seasonTrendMetric","seasonTrendMetric2","seasonTrendMetric3","seasonTrendMetric4"])
+  for(const id of ["seasonTrendScope","seasonTrendPlayer","seasonTrendVenue","seasonTrendView","seasonTrendMetric","seasonTrendMetric2","seasonTrendMetric3","seasonTrendMetric4"])
     $(id).onchange=renderSeasonTrend;
   $("seasonCompareAbsolute").onclick=()=>{seasonCompareMode="absolute";renderSeasonComparison()};
   $("seasonCompareAverage").onclick=()=>{seasonCompareMode="average";renderSeasonComparison()};
