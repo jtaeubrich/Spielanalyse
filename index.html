@@ -3328,7 +3328,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
             const yy=before&&after
               ?y(before.value+(after.value-before.value)*(i-before.index)/(after.index-before.index))
               :limits.bottom+12;
-            const tooltip=titleBase+": keine auswertbaren Daten (kein Messwert)";
+            const tooltip=titleBase+": "+(row[line.side+"MissingReason"]||"kein Messwert");
             dots+='<circle cx="'+xx+'" cy="'+yy+'" r="5" fill="#0b1d28" stroke="'+line.color+
               '" stroke-width="2" role="button" tabindex="0" data-trend-missing="true"'+
               ' data-trend-index="'+i+'" data-trend-series="'+seriesIndex+'"'+
@@ -3362,7 +3362,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const line=lines[seriesIndex],row=line?.rows[index],value=row?.[line.side],extra=row?.[line.side+"Detail"]||"";
         detail.textContent=Number.isFinite(value)?"Spiel "+(index+1)+" · gegen "+(row.opponent||"unbekannt")+" · "+line.label+": "+
           fmt(value,result.metric)+(extra?" · "+extra:""):
-          row?"Spiel "+(index+1)+" · gegen "+(row.opponent||"unbekannt")+" · "+line.label+": kein Messwert":
+          row?"Spiel "+(index+1)+" · gegen "+(row.opponent||"unbekannt")+" · "+line.label+": "+(row[line.side+"MissingReason"]||"kein Messwert"):
           "Keine auswertbaren Werte für diese Auswahl.";
       };
       let last=null;
