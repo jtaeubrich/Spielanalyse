@@ -377,7 +377,7 @@ test("seven-meter back and cancel navigate without recording events or changing 
   await expect(page.locator("#playerStep")).toBeVisible();
   await page.locator("#flowBack").click();
   await expect(page.locator("#locationStep")).toBeVisible();
-  await page.locator("#flowCancel").click({force:true});
+  await page.locator("#flowBack").click();
   await expect(page.locator("#idleStep")).toBeVisible();
   await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
   await page.locator('[data-tab="setup"]').click();
