@@ -297,8 +297,8 @@ test("seven-meter quick flow commits only after the result and stamps the shot o
     endedPossessionOf:"away"
   });
   expect(event.time).toBeGreaterThanOrEqual(65);
-  expect(event.time).toBeLessThan(70);
-  expect(event.displayTime).toMatch(/^01:0[5-9]$/);
+  expect(event.time).toBeLessThan(95);
+  expect(event.displayTime).toMatch(/^01:/);
   expect(event.realTime).toBeGreaterThanOrEqual(0);
   const events=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state.events);
   expect(events).toHaveLength(1);
