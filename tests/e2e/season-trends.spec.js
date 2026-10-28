@@ -111,3 +111,37 @@ test("low count statistics have unique integer y-axis labels on mobile and deskt
   await page.locator("#seasonTrendMetric").selectOption("shotRate");
   await expect(page.locator('#seasonTrend .chart-axis[x="38"]')).toHaveText(["0%","25%","50%","75%","100%"]);
 });
+
+
+test("missing season statistics use a hollow marker and dashed bridge, not a zero",async({page})=>{
+  await page.goto("/");
+  const first=structuredClone(fixture);
+  first.gameName="Mit Wurfstatistik 1";first.gameDate="2026-09-01";
+  const middle=structuredClone(fixture);
+  middle.gameName="Ohne Wurfstatistik";middle.gameDate="2026-09-08";
+  middle.events=[{type:"2min",team:middle.ownTeam,pId:middle[middle.ownTeam].players[0].id}];
+  const last=structuredClone(fixture);
+  last.gameName="Mit Wurfstatistik 2";last.gameDate="2026-09-15";
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
+  await page.locator("#seasonGameInput").setInputFiles([
+    {name:"trend-gap-1.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(first))},
+    {name:"trend-gap-2.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(middle))},
+    {name:"trend-gap-3.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(last))}
+  ]);
+  await expect(page.locator("#seasonGameCount")).toContainText("3 Spiele");
+  await page.locator('[data-tab="season"]').click();
+  await page.locator("#seasonTrendMetric").selectOption("shotRate");
+  const chart=page.locator("#seasonTrend");
+  await expect(chart.locator('circle[data-trend-index="0"]:not([data-trend-missing])').first()).toBeAttached();
+  await expect(chart.locator('circle[data-trend-index="1"][data-trend-missing="true"]')).toHaveCount(2);
+  await expect(chart.locator('circle[data-trend-index="2"]:not([data-trend-missing])').first()).toBeAttached();
+  await expect(chart.locator('path[data-trend-gap]')).toHaveCount(2);
+  await expect(chart.locator('path[data-trend-gap]').first()).toHaveAttribute("stroke-dasharray","2 6");
+  await expect(page.locator("#seasonTrendLegend")).toContainText("kein Messwert");
+  await chart.locator('circle[data-trend-index="1"][data-trend-missing="true"]').first().click();
+  await expect(page.locator("#seasonTrendDetail")).toContainText("kein Messwert");
+  await page.locator("#seasonTrendMetric").selectOption("goals");
+  await expect(chart.locator('circle[data-trend-missing="true"]')).toHaveCount(0);
+  await expect(chart.locator('path[data-trend-gap]')).toHaveCount(0);
+});
