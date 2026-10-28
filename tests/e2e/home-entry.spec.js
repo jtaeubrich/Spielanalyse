@@ -141,7 +141,8 @@ test("Home uses distinct self-contained SVG icons for seasons and games",async({
   await page.locator("#homeChooseSeason").click();
   page.once("dialog",dialog=>dialog.accept("Grafik Test"));
   await page.locator("#homeNew").click();
-  await page.locator("#homeSeasonOther").click();
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeLibrary")).toBeVisible();
   await expect(page.locator("#homeLibraryList .home-list-icon svg")).toHaveCount(2);
 });
 
@@ -153,6 +154,7 @@ test("season overview replaces the generic hero with team, season and stored clu
   await expect(page.locator("#homeSeasonTeam")).toHaveText("TSV Kronshagen");
   await expect(page.locator("#homeSeasonName")).toHaveText("Saison 2026/27");
   await expect(page.locator("#homeSeasonInfo")).toContainText("0 Saisonspiele");
+  await expect(page.locator("#homeSeasonDashboard #homeSeasonOther")).toHaveCount(0);
   await expect(page.locator("#homeTitle")).toBeHidden();
   await expect(page.locator("#homeSeasonLogoFallback svg")).toBeVisible();
   await expect(page.locator("#homeSeasonDashboard #homeSeasonName")).toHaveCount(0);
@@ -170,7 +172,8 @@ test("season overview replaces the generic hero with team, season and stored clu
       transaction.onerror=()=>reject(transaction.error);
     };
   }),png);
-  await page.locator("#homeSeasonOther").click();
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeLibrary")).toBeVisible();
   await page.locator("#homeLibraryList .home-list-row")
     .filter({hasText:"TSV Kronshagen"}).getByRole("button",{name:"Öffnen",exact:true}).click();
   await expect(page.locator("#homeSeasonLogoImage")).toBeVisible();

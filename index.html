@@ -1145,7 +1145,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
         <div id="homeLibraryList" class="home-list"></div>
       </div>
       <div id="homeSeasonDashboard" class="home-view panel home-library" hidden>
-        <div class="home-dashboard-actions"><button type="button" class="btn" id="homeSeasonManage">Saison verwalten</button><button type="button" class="btn primary" id="homeSeasonAnalyze">Saisonanalyse öffnen</button><button type="button" class="btn" id="homeSeasonOther">Andere Saison öffnen</button></div>
+        <div class="home-dashboard-actions"><button type="button" class="btn" id="homeSeasonManage">Saison verwalten</button><button type="button" class="btn primary" id="homeSeasonAnalyze">Saisonanalyse öffnen</button></div>
         <h3>Spiele dieser Saison</h3>
         <div class="home-search-row"><label for="homeGameSearch">Spiel suchen</label><input class="field" type="search" id="homeGameSearch" placeholder="Mannschaft oder Datum" autocomplete="off"></div>
         <div id="homeSeasonGames" class="home-list"></div>
@@ -3600,7 +3600,6 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("homeAdvanced").onclick=()=>homeAdvancedSetup();
   $("homeSeasonManage").onclick=()=>homeAdvancedSetup("season");
   $("homeSeasonAnalyze").onclick=()=>showTab("season");
-  $("homeSeasonOther").onclick=()=>homeShow("library","season");
   $("homeGameSearch").oninput=homeRenderSeasonDashboard;
 
 
