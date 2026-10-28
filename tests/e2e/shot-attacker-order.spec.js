@@ -32,7 +32,7 @@ async function startShot(page,team="away"){
   await page.locator('[data-flow="shot"]').click();
 }
 async function selectGoalDetails(page){
-  await page.locator('#locationList button[data-zone="7M"]').click();
+  await page.locator('#locationList [data-zone="K"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   // If enabled for this test, the optional assist step must be completed.
   if(await page.locator("#assistList").isVisible())
@@ -88,7 +88,7 @@ test("shot: scorer-last waits for hall speaker while preserving original event s
   await expect(page.locator("#idleStep")).toBeVisible();
   await expect(page.locator("#eventCount")).toHaveText("1 Ereignisse");
   const e=await latestEvent(page);
-  expect(e).toMatchObject({type:"goal",team:"away",pId:shooter.id,pNr:7,z:"7M",scoreA:1,scoreChanged:true});
+  expect(e).toMatchObject({type:"goal",team:"away",pId:shooter.id,pNr:7,z:"K",scoreA:1,scoreChanged:true});
   expect(e.realTime).toBeDefined();
   expect(e.time).toBeDefined();
   expect(e.endedPossessionOf).toBe("away");
@@ -109,7 +109,7 @@ test("shot: legacy game without stored order keeps shooter-first flow",async({pa
   await selectGoalDetails(page);
   await expect(page.locator("#idleStep")).toBeVisible();
   const e=await latestEvent(page);
-  expect(e).toMatchObject({type:"goal",team:"away",pId:original.away.players.find(p=>p.nr===7).id,scoreA:1,z:"7M"});
+  expect(e).toMatchObject({type:"goal",team:"away",pId:original.away.players.find(p=>p.nr===7).id,scoreA:1,z:"K"});
 });
 
 test("shot: scorer-last accepts unknown shooter and still commits exactly once",async({page})=>{
@@ -130,7 +130,7 @@ test("shot: scorer-last preserves the opponent defensive assignment before selec
   await configureOrder(page,"last");
   await startShot(page,"home");
   await expect(page.locator("#locationStep")).toBeVisible();
-  await page.locator('#locationList button[data-zone="7M"]').click();
+  await page.locator('#locationList [data-zone="K"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   await expect(page.locator("#tagsStep")).toBeVisible();
   const ownDefender=original.away.players.find(p=>p.nr===7);
@@ -193,7 +193,7 @@ test("shot: shooter-last clears assist when the announced shooter is also assist
   const original=await openDemo(page,{assist:true});
   await configureOrder(page,"last");
   await startShot(page,"away");
-  await page.locator('#locationList button[data-zone="7M"]').click();
+  await page.locator('#locationList [data-zone="K"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   await pickJersey(page,"#assistList",7);
   await expect(page.locator("#playerStep")).toBeVisible();
@@ -220,7 +220,7 @@ test("miss outside the goal skips result confirmation and immediately opens shoo
   for(const [code,selector] of [["ML",".goal-left"],["MR",".goal-right"],["OTM",".goal-over"]]){
     await startShot(page,"away");
     await expect(page.locator("#locationStep")).toBeVisible();
-    await page.locator('#locationList button[data-zone="7M"]').click();
+    await page.locator('#locationList [data-zone="K"]').click();
     await page.locator("#targetList "+selector).click();
     await expect(page.locator("#playerStep")).toBeVisible();
     await expect(page.locator("#phaseStep")).toBeHidden();
@@ -230,7 +230,7 @@ test("miss outside the goal skips result confirmation and immediately opens shoo
     const event=await latestEvent(page);
     expect(event).toMatchObject({
       type:"miss",team:"away",pId:original.away.players.find(p=>p.nr===7).id,
-      z:"7M",gz:code,scoreChanged:false
+      z:"K",gz:code,scoreChanged:false
     });
   }
   await expect(page.locator("#eventCount")).toHaveText("3 Ereignisse");
@@ -240,7 +240,7 @@ test("miss target can be revised after backing out of the shooter picker",async(
   await openDemo(page,{target:true,phase:true});
   await configureOrder(page,"last");
   await startShot(page,"away");
-  await page.locator('#locationList button[data-zone="7M"]').click();
+  await page.locator('#locationList [data-zone="K"]').click();
   await page.locator("#targetList .goal-left").click();
   await expect(page.locator("#playerStep")).toBeVisible();
   await page.locator("#flowBack").click();
@@ -260,7 +260,7 @@ test("miss target with shooter-first saves immediately without a second result d
   await expect(page.locator("#playerStep")).toBeVisible();
   await pickJersey(page,"#playerList",7);
   await expect(page.locator("#locationStep")).toBeVisible();
-  await page.locator('#locationList button[data-zone="7M"]').click();
+  await page.locator('#locationList [data-zone="K"]').click();
   await page.locator("#targetList .goal-right").click();
   await expect(page.locator("#phaseStep")).toBeHidden();
   await expect(page.locator("#idleStep")).toBeVisible();
