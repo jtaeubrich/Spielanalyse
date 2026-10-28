@@ -147,7 +147,18 @@ def main():
             page.screenshot(path=str(folder/"season-analytics.png"),full_page=False)
             page.locator('[data-tab="home"]').click()
             page.locator("#homeRecentOptions").get_by_role("button",name="Saison öffnen").click()
-            upcoming=page.locator("#homeSeasonGames .home-list-row").filter(has_text="SG Flensburg-Handewitt II")
+            # Identify the official fixture, not the opponent name alone:
+            # Flensburg occurs twice in a home-and-away season.
+            target=next((game["data"] for game in season["games"]
+                         if game["data"].get("officialSource",{}).get("matchId")=="378112"),None)
+            if target is None:
+                raise RuntimeError("Demo fixture 378112 missing from season")
+            yy,mm,dd=target["gameDate"][:10].split("-")
+            title=f"{dd}.{mm}.{yy} · {target['home']['name']} – {target['away']['name']}"
+            upcoming=page.locator("#homeSeasonGames .home-list-row").filter(
+                has=page.get_by_text(title,exact=True))
+            if upcoming.count()!=1:
+                raise RuntimeError(f"Expected exactly one demo fixture {title!r}, got {upcoming.count()}")
             upcoming.get_by_role("button",name="Fortsetzen").click()
             page.locator("#setupTab.tab-pane.active").wait_for(timeout=10000)
             page.screenshot(path=str(folder/"setup-season-game.png"),full_page=False)
