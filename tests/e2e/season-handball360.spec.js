@@ -34,6 +34,18 @@ const schedule = {
 function upload(name,data) {
   return { name,mimeType:"application/json",buffer:Buffer.from(JSON.stringify(data)) };
 }
+async function openSeasonAdmin(page){
+  await page.locator('[data-tab="setup"]').click();
+  if(await page.locator("#setupModeSeason").isVisible())
+    await page.locator("#setupModeSeason").click();
+  else {
+    await page.locator('[data-tab="home"]').click();
+    await page.locator("#homeChooseSeason").click();
+    await page.locator("#homeOpen").click();
+    await page.locator("#homeAdvanced").click();
+  }
+  await expect(page.locator("#seasonName")).toBeVisible();
+}
 test.beforeEach(async({page})=>{
   await page.route("**/handball360-proxy-235703972531.europe-west1.run.app/**",async route=>{
     const request = route.request();
@@ -49,7 +61,7 @@ test.beforeEach(async({page})=>{
   });
   await page.goto("/");
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
 });
 
 async function preview(page) {
@@ -176,7 +188,7 @@ test("season-wide sync updates postponed fixtures and fills missing logos withou
   expect(result.data.officialSource.clubLogos.home.logoUrl).toContain("club1.jpg");
   await page.reload();
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   await expect(page.locator("#seasonGameList")).toContainText("HSG Herzhorn");
 });
 
@@ -287,7 +299,7 @@ test("opens a future season game in Setup and saves edits to the same archived r
   await expect(page.locator("#setupSeasonGameStatus")).toContainText("Aktiv mit Saison verknüpft");
 
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const archived=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(archived.games).toHaveLength(1);
@@ -300,7 +312,7 @@ test("opens a future season game in Setup and saves edits to the same archived r
   await page.reload();
   await expect(page.locator("#setupSeasonGameStatus")).toContainText("Aktiv mit Saison verknüpft");
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   const [next]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const restored=JSON.parse(await readFile(await next.path(),"utf8"));
   expect(restored.games).toHaveLength(1);
@@ -314,7 +326,7 @@ test("opens a future season game in Setup and saves edits to the same archived r
   await page.locator("#setupGameName").fill("Unabhängiges Spiel");
   await page.locator("#setupGameName").dispatchEvent("change");
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   const [last]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const unchanged=JSON.parse(await readFile(await last.path(),"utf8"));
   expect(unchanged.games[0].data.gameName).toBe("Vorbereitetes Spiel - überarbeitet");
@@ -345,7 +357,7 @@ test("opens an imported already-scouted match for video editing or analysis and 
   await page.locator("#setupCompetition").dispatchEvent("change");
   await page.locator("#saveBtn").click();
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const archived=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(archived.games).toHaveLength(1);
@@ -376,7 +388,7 @@ test("temporarily viewing a live-scouted season game does not disable later cont
   await page.locator("#preflightStart").click();
   await expect(page.locator('[data-tab="match"]')).toHaveClass(/active/);
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const season=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(season.games[0].data.isHistorical).toBe(false);
@@ -410,7 +422,7 @@ test("season list keeps Handball360 roster sync distinct from nuLiga protocol re
   await expect(page.locator("#setupOfficialRosterDialog")).toContainText("Handball360 Match 378107");
   await expect(page.locator("#seasonProtocolDialog")).not.toBeVisible();
   await page.locator("#setupOfficialRosterCancel").click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   await page.locator("#seasonGameList .season-game-item").first()
     .getByRole("button",{name:"nuLiga-Protokoll"}).click();
   await expect(page.locator("#seasonProtocolDialog")).toBeVisible();
@@ -468,7 +480,7 @@ test("pregame Setup lineup refresh previews and replaces only the active match r
   await page.locator("#saveBtn").click();
 
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const archive=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(archive.games).toHaveLength(1);
@@ -506,7 +518,7 @@ test("pregame Setup roster refresh refuses missing Handball360 lineup without ch
   await expect(page.locator("#setupSeasonRosterStatus")).toContainText("noch keine offizielle Aufstellung");
   await expect(page.locator("#setupOfficialRosterDialog")).not.toBeVisible();
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   const archive=JSON.parse(await readFile(await download.path(),"utf8"));
   expect(archive.games[0].data.home.players).toEqual(future.state.home.players);
@@ -551,7 +563,7 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   // Export the season snapshot: "Kopie exportieren" may use a native
   // file picker instead of emitting a Playwright download.
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   const [beforeDownload]=await Promise.all([
     page.waitForEvent("download"),page.locator("#seasonExport").click()
   ]);
@@ -570,7 +582,7 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   await expect(page.locator("#setupSeasonRosterStatus")).toContainText("Historischen Kader sicher abgeglichen");
   await page.locator("#saveBtn").click();
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  await openSeasonAdmin(page);
   const [download]=await Promise.all([
     page.waitForEvent("download"),page.locator("#seasonExport").click()
   ]);

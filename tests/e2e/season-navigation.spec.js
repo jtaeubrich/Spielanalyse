@@ -16,7 +16,14 @@ const game=(name,{events=[],home="HC Bremen",away="Gegner"}={})=>{
 };
 async function openSeasonSetup(page){
   await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  if(await page.locator("#setupModeSeason").isVisible())
+    await page.locator("#setupModeSeason").click();
+  else {
+    await page.locator('[data-tab="home"]').click();
+    await page.locator("#homeChooseSeason").click();
+    await page.locator("#homeOpen").click();
+    await page.locator("#homeAdvanced").click();
+  }
   await expect(page.locator("#seasonName")).toBeVisible();
 }
 async function newSeason(page,name){
@@ -93,8 +100,10 @@ test("analysis dropdown previews a season fixture without changing active scouti
   await expect(page.locator("#analysisStats")).toContainText("1");
   await expect(page.locator("#analysisToVideo")).toBeDisabled();
   await expect(page.locator("#score")).toHaveText("0 : 0");
-  await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSingle").click();
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeAdvanced").click();
   await expect(page.locator("#setupHomeName")).toHaveValue("Mein Live-Team");
   await page.locator('[data-tab="match"]').click();
   await expect(page.locator("#eventCount")).toContainText("0 Ereignisse");

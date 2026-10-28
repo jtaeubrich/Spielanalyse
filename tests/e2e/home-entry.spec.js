@@ -250,6 +250,7 @@ test("independent JSON hides all season controls even when a season is stored",a
   await expect(page.locator(".setup-season-loader")).toBeHidden();
   await page.locator("#setupContextReturn").click();
   await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeOpen").click();
   await page.locator("#homeAdvanced").click();
   await expect(page.locator("#setupSeasonPanel")).toBeVisible();
   await expect(page.locator("#setupSinglePanel")).toBeHidden();
