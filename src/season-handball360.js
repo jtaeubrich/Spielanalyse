@@ -46,6 +46,62 @@ export function seasonMatchUrl(game) {
   return id ? "https://www.handball.net/match/"+id : "";
 }
 
+// Synchronise fixture metadata only. Player lists, goalkeeper flags, events,
+// comments, videos and manual preparation fields are not re-imported.
+function berlinKickoff(value) {
+  const raw=String(value||"");
+  if(!/^\d{4}-\d{2}-\d{2}/.test(raw))return null;
+  if(!raw.includes("T"))return {date:raw.slice(0,10),time:""};
+  const timestamp=new Date(raw);
+  if(!Number.isFinite(timestamp.getTime()))return null;
+  const parts=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{
+    timeZone:"Europe/Berlin",year:"numeric",month:"2-digit",day:"2-digit",
+    hour:"2-digit",minute:"2-digit",hourCycle:"h23"
+  }).formatToParts(timestamp).filter(part=>part.type!=="literal")
+    .map(part=>[part.type,part.value]));
+  return {date:parts.year+"-"+parts.month+"-"+parts.day,time:parts.hour+":"+parts.minute};
+}
+
+export function syncSeasonFixtureSchedule(game,match,updatedAt=new Date().toISOString()) {
+  const id=seasonMatchIdentity(game);
+  if(!id||id!==String(match?.id??""))throw new Error("Match-ID passt nicht zum Saisonspiel.");
+  const incoming=String(match?.date||"").trim();
+  const next=berlinKickoff(incoming);
+  if(!next)throw new Error("Kein gültiger offizieller Spieltermin verfügbar.");
+  const result=structuredClone(game);
+  const state=result.state;
+  const oldOfficial=String(state.officialSource?.matchDate||"").trim();
+  const previous=berlinKickoff(oldOfficial);
+  const previousLocalDate=previous?.date||"";
+  const previousTime=previous?.time||"";
+  const currentGameDate=String(state.gameDate||"");
+  const currentDate=currentGameDate.slice(0,10);
+  const wasOfficialDate=!currentGameDate||
+    currentGameDate===oldOfficial||currentDate===oldOfficial.slice(0,10)||
+    currentDate===previousLocalDate;
+  const wasOfficialTime=!String(state.gameTimeOfDay||"")||
+    String(state.gameTimeOfDay)===previousTime;
+  if(wasOfficialDate)state.gameDate=next.date;
+  if(next.time&&wasOfficialTime)state.gameTimeOfDay=next.time;
+  // Preserve manually customised game names. Only replace the importer date prefix.
+  const oldLabel=previousLocalDate&&previousLocalDate.split("-").reverse().join(".")+" | ";
+  const currentLabel=String(state.gameName||"");
+  if(oldLabel&&currentLabel.startsWith(oldLabel)){
+    state.gameName=next.date.split("-").reverse().join(".")+" | "+currentLabel.slice(oldLabel.length);
+  }
+  state.officialSource={
+    ...(state.officialSource||{}),
+    provider:"handball.net",
+    matchId:id,
+    matchUrl:seasonMatchUrl(game),
+    matchDate:incoming,
+    competition:state.officialSource?.competition||match.phase?.competition?.name||null,
+    scheduleCheckedAt:updatedAt
+  };
+  return {game:result,changed:oldOfficial!==incoming,manualDatePreserved:!wasOfficialDate,
+    manualTimePreserved:!wasOfficialTime};
+}
+
 function sameDate(a, b) {
   return String(a ?? "").slice(0, 10) === String(b ?? "").slice(0, 10) && Boolean(a && b);
 }

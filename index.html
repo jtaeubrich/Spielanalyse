@@ -1522,9 +1522,11 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
   </div>
   <div class="season-tools">
     <button class="btn" id="seasonH360Preview" type="button">Spielplan laden</button>
+    <button class="btn" id="seasonH360Sync" type="button" disabled>Bestehende Saison abgleichen</button>
     <button class="btn" id="seasonH360SelectAll" type="button" disabled>Alle neuen auswählen (auch zukünftige)</button>
     <button class="btn" id="seasonH360SelectNone" type="button" disabled>Auswahl aufheben</button>
   </div>
+  <p class="number-help">Der Saisonabgleich prüft Termine und fehlende Vereinslogos aller bereits verknüpften Spiele. Scouting, Videos, Spieler, TW-Markierungen und manuelle Vorbereitung bleiben erhalten. Neue Spiele werden separat importiert.</p>
   <p id="seasonH360Status" role="status" class="number-help">Noch kein Spielplan geladen.</p>
   <div class="season-h360-list" id="seasonH360List"><div class="empty">Team-ID eingeben und Spielplan laden.</div></div>
   <div class="help-note"><strong>Umfang:</strong> Offizielle Tore, Verwarnungen, Zeitstrafen und Aufstellungen, soweit vorhanden. Aus den offiziellen Daten entstehen keine vollständigen Wurf- oder Torwartstatistiken. Zukünftige Spiele bleiben bei der Übernahme zunächst aus der Statistik abgewählt.</div>
@@ -1696,7 +1698,7 @@ import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeS
 import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection, applyStoredGoalkeeperMarkings } from "./src/roster.js";
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
-import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
+import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
@@ -2782,12 +2784,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   function seasonH360SetBusy(busy){
     seasonH360Busy=busy;
-    for(const id of ["seasonH360Team","seasonH360From","seasonH360To","seasonH360Preview","seasonH360SelectAll","seasonH360SelectNone","seasonH360Close"]){
+    for(const id of ["seasonH360Team","seasonH360From","seasonH360To","seasonH360Preview","seasonH360SelectAll","seasonH360SelectNone","seasonH360Sync","seasonH360Close"]){
       $(id).disabled=busy;
     }
     for(const input of $("seasonH360List").querySelectorAll("input[data-match-id]"))input.disabled=busy||input.dataset.locked==="1";
     for(const el of $("seasonH360List").querySelectorAll("[data-h360-refresh], .season-h360-associate button, .season-h360-associate select"))el.disabled=busy;
     seasonH360UpdateCount();
+    if(!busy)$("seasonH360Sync").disabled=!seasonH360TeamId||
+      !seasonH360Matches.some(m=>seasonGames.some(g=>seasonMatchIdentity(g)===String(m.id)));
   }
   // Season fixture import and "Offizielle Daten aktualisieren" share the same
   // non-destructive club-logo synchronisation. No player or goalkeeper changes.
@@ -2944,8 +2948,18 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("seasonH360SelectAll").disabled=seasonH360Busy||!matches.length;
     $("seasonH360SelectNone").disabled=seasonH360Busy||!matches.length;
     seasonH360UpdateCount();
+    $("seasonH360Sync").disabled=seasonH360Busy||!seasonH360TeamId||
+      !matches.some(m=>seasonGames.some(g=>seasonMatchIdentity(g)===String(m.id)));
   }
   $("seasonHandball360Open").onclick=()=>{
+    // Reuse the team ID from an imported fixture if this dialog was not used before.
+    if(!$("seasonH360Team").value.trim()){
+      const linked=seasonGames.find(game=>game.state?.officialSource?.teamId||
+        game.state?.officialSource?.clubLogos?.[game.ownTeam]?.teamId);
+      const teamId=linked?.state?.officialSource?.teamId||
+        linked?.state?.officialSource?.clubLogos?.[linked.ownTeam]?.teamId;
+      if(teamId)$("seasonH360Team").value=String(teamId);
+    }
     $("seasonHandball360Dialog").showModal();
     $("seasonH360Team").focus();
   };
@@ -2985,6 +2999,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       seasonH360TeamId=teamId;
       renderSeasonH360Preview();
       const existing=seasonH360Matches.filter(m=>seasonScheduleStatus(m,seasonGames)==="existing").length;
+      $("seasonH360Sync").disabled=!existing;
       $("seasonH360Status").textContent=seasonH360Matches.length+" Spiele gefunden · "+existing+
         " bereits vorhanden. Künftige Spiele zunächst abgewählt. Mögliche Dubletten sind gesperrt.";
     }catch(error){
@@ -2992,6 +3007,78 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         ". Prüfe bei neuer Proxy-Funktion auch den Cloud-Run-Deploy.";
     }finally{seasonH360SetBusy(false)}
   };
+  // Explicit season-wide metadata refresh. Importing lineups/events is deliberately
+  // excluded: match rosters are updated only in the dedicated pregame workflow.
+  $("seasonH360Sync").onclick=async()=>{
+    if(seasonH360Busy||!seasonH360TeamId)return;
+    const matches=seasonH360Matches.filter(match=>
+      seasonGames.some(game=>seasonMatchIdentity(game)===String(match.id)));
+    if(!matches.length)return toast("Keine verknüpften Saisonspiele gefunden.");
+    if(!confirm(matches.length+" vorhandene Saisonspiele mit Handball360 abgleichen?\n\n"+
+      "Offizielle Spieltermine und fehlende Vereinslogos werden aktualisiert. "+
+      "Manuelle Vorbereitungsdaten, Spieler, Torhütermarkierungen, Scouting-Ereignisse und Videos bleiben erhalten. "+
+      "Neue Spiele müssen separat importiert werden."))return;
+    seasonH360SetBusy(true);
+    let dates=0,checked=0,manual=0;
+    const failures=[],logos=[];
+    try{
+      // Persist pending edits of the open game before touching the season archive.
+      persistSession();
+      for(let i=0;i<matches.length;i++){
+        const match=matches[i],index=seasonGames.findIndex(game=>seasonMatchIdentity(game)===String(match.id));
+        if(index<0)continue;
+        $("seasonH360Status").textContent="Saisonabgleich "+(i+1)+"/"+matches.length+
+          " · Match "+match.id+" · Termine und Vereinslogos …";
+        try{
+          const result=syncSeasonFixtureSchedule(seasonGames[index],match);
+          seasonGames[index]=result.game;
+          if(result.changed)dates++;
+          if(result.manualDatePreserved||result.manualTimePreserved)manual++;
+          checked++;
+          // This match endpoint may fail independently of the valid schedule.
+          // A failed logo request must not revert confirmed schedule changes.
+          try{
+            const response=await fetch(HANDBALL_NET_WORKER+"/match/"+encodeURIComponent(match.id),{
+              headers:{Authorization:"Bearer "+HANDBALL_NET_WORKER_TOKEN,Accept:"application/json"},
+              cache:"no-store"
+            });
+            const raw=await response.json();
+            if(!response.ok)throw Error(raw?.error?.message||"HTTP "+response.status);
+            const official=hbPrepare(raw,{fallbackMatchId:String(match.id)});
+            if(String(official.matchId)!==String(match.id))throw Error("Abweichende Match-ID");
+            const logosBySide=official.clubLogos||{};
+            const old=seasonGames[index].state.officialSource;
+            old.clubLogos={...(old.clubLogos||{}),...logosBySide};
+            logos.push(seasonGames[index]);
+          }catch(error){
+            failures.push("Logo Match "+match.id+": "+(error?.message||String(error)));
+          }
+        }catch(error){failures.push("Termin Match "+match.id+": "+(error?.message||String(error)))}
+      }
+      // Keep the active session in sync, or later autosave could undo a newly
+      // confirmed schedule date on its linked archived game.
+      const active=seasonGames.find(game=>game.id===activeSeasonGameId);
+      if(active){
+        state.officialSource=structuredClone(active.state.officialSource);
+        state.gameDate=active.state.gameDate;
+        state.gameTimeOfDay=active.state.gameTimeOfDay;
+        state.gameName=active.state.gameName;
+        update();
+      }
+      renderSeason();persistSeasonSoon();
+      await storeInternalSeason();
+      const logoResult=await syncOfficialSeasonClubLogos(logos);
+      renderSeasonH360Preview();
+      $("seasonH360Status").textContent=checked+" Spiele geprüft · "+dates+
+        " Terminänderungen · "+logoResult.downloaded+" Vereinslogos geladen"+
+        (manual?" · "+manual+" manuelle Terminangaben beibehalten":"")+
+        (failures.length?" · "+failures.length+" API-Fehler: "+failures.slice(0,2).join("; "):"")+
+        seasonLogoStatus({downloaded:0,failed:logoResult.failed});
+    }catch(error){
+      $("seasonH360Status").textContent="Saisonabgleich fehlgeschlagen: "+(error?.message||String(error));
+    }finally{seasonH360SetBusy(false)}
+  };
+
   $("seasonH360Import").onclick=async()=>{
     const selected=seasonH360SelectedRows();
     if(!selected.length||!seasonH360TeamId||seasonH360Busy)return;

@@ -7,6 +7,7 @@ import {
   validateHandball360SeasonSchedule,
   seasonMatchIdentity,
   seasonMatchUrl,
+  syncSeasonFixtureSchedule,
   seasonScheduleStatus,
   buildHandball360SeasonGame,
   appendNewHandball360SeasonGames,
@@ -84,6 +85,42 @@ describe("Handball360 team season import", () => {
       .toBe("https://www.handball.net/match/378114");
     expect(seasonMatchUrl({fileName:"manual.json",state:{home:{},away:{}}})).toBe("");
     expect(seasonMatchUrl({state:{officialSource:{matchId:"https://bad.example/"}}})).toBe("");
+  });
+
+
+  test("synchronises postponed matches without changing scouting, video or goalkeeper markings",()=>{
+    const game=buildHandball360SeasonGame(raw,"378107","85814",summary);
+    game.state.events[0].comment="Eigene Wurfanalyse";
+    game.state.home.players[0].isTW=true;
+    game.state.home.players[0].isTWOverride=true;
+    game.state.video.youtubeUrl="https://www.youtube.com/watch?v=personal";
+    game.state.gameTimeOfDay="18:00"; // previous official start: 18:00 Berlin
+    const changed={...summary,date:"2026-11-07T15:00:00Z"};
+    const result=syncSeasonFixtureSchedule(game,changed,"2026-10-28T00:00:00Z");
+    expect(result.changed).toBe(true);
+    expect(result.game.state.gameDate).toBe("2026-11-07");
+    expect(result.game.state.gameTimeOfDay).toBe("16:00");
+    expect(result.game.state.officialSource.matchDate).toBe(changed.date);
+    expect(result.game.state.events).toEqual(game.state.events);
+    expect(result.game.state.home.players).toEqual(game.state.home.players);
+    expect(result.game.state.video).toEqual(game.state.video);
+    expect(result.game.id).toBe(game.id);
+    expect(result.game.fileName).toBe(game.fileName);
+    expect(() => syncSeasonFixtureSchedule(game,{...changed,id:"999999"})).toThrow(/Match-ID/);
+  });
+
+  test("preserves manually set match preparation date/time when schedule changes",()=>{
+    const game=buildHandball360SeasonGame(raw,"378107","85814",summary);
+    game.state.gameDate="2026-11-12";
+    game.state.gameTimeOfDay="19:30";
+    game.state.gameName="Meine selbst benannte Partie";
+    const updated=syncSeasonFixtureSchedule(game,{...summary,date:"2026-11-07T15:00:00Z"});
+    expect(updated.manualDatePreserved).toBe(true);
+    expect(updated.manualTimePreserved).toBe(true);
+    expect(updated.game.state.gameDate).toBe("2026-11-12");
+    expect(updated.game.state.gameTimeOfDay).toBe("19:30");
+    expect(updated.game.state.gameName).toBe("Meine selbst benannte Partie");
+    expect(updated.game.state.officialSource.matchDate).toBe("2026-11-07T15:00:00Z");
   });
 
   test("keeps official club logos on season game without copying image data into games", () => {
