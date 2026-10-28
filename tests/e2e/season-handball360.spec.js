@@ -176,7 +176,7 @@ test("season-wide sync updates postponed fixtures and fills missing logos withou
   await page.reload();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
-  await expect(page.locator("#seasonGameList")).toContainText("tracked");
+  await expect(page.locator("#seasonGameList")).toContainText("HSG Herzhorn");
 });
 
 test("never replaces an existing manually enriched match",async({page})=>{
