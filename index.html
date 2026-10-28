@@ -3229,78 +3229,108 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
 
   function seasonShotEntries(role="all"){const filters=seasonFilterValues();delete filters.type;return coreFilterSeasonShots(selectedSeasonGames(),role,filters)}
     function seasonTeamAggregate(role){return coreSeasonTeamAggregate(selectedSeasonGames(),role)}
+  let seasonTrendCompareKeys=[];
   function renderSeasonTrend(){
-    const games=selectedSeasonGames();
-    const scope=$("seasonTrendScope").value;
-    const selectPlayer=$("seasonTrendPlayer"),label=$("seasonTrendPlayerLabel");
-    const options=seasonMergedPlayers(games).sort((a,b)=>a.label.localeCompare(b.label,"de"));
-    const previous=selectPlayer.value;
-    selectPlayer.replaceChildren(new Option("Spieler auswählen",""));
-    for(const option of options)selectPlayer.add(new Option(option.label,option.key));
-    selectPlayer.value=options.some(option=>option.key===previous)?previous:(options[0]?.key||"");
-    label.hidden=scope!=="player";
-    const key=scope==="player"?selectPlayer.value:"";
-    const resolvePlayer=scope==="player"?seasonPlayerResolver(games):null;
-    const format=(value,metric)=>!Number.isFinite(value)?"–":metric.unit==="percent"
-      ?Math.round(value)+" %":String(value);
+    const games=selectedSeasonGames(),scope=$("seasonTrendScope").value;
+    const venue=$("seasonTrendVenue").value,view=$("seasonTrendView").value;
+    const selector=$("seasonTrendPlayer"),options=seasonMergedPlayers(games)
+      .slice().sort((a,b)=>a.label.localeCompare(b.label,"de"));
+    const old=selector.value;
+    selector.replaceChildren(new Option("Spieler auswählen",""));
+    for(const p of options)selector.add(new Option(p.label,p.key));
+    selector.value=options.some(p=>p.key===old)?old:(options[0]?.key||"");
+    $("seasonTrendPlayerLabel").hidden=scope!=="player";
+    const key=scope==="player"?selector.value:"";
+    const comparison=$("seasonTrendComparison"),list=$("seasonTrendCompareOptions");
+    comparison.hidden=scope!=="player";
+    seasonTrendCompareKeys=seasonTrendCompareKeys.filter(k=>k!==key&&options.some(p=>p.key===k)).slice(0,3);
+    list.replaceChildren();
+    for(const p of options){
+      if(p.key===key)continue;
+      const item=document.createElement("label"),check=document.createElement("input");
+      check.type="checkbox";check.value=p.key;
+      check.checked=seasonTrendCompareKeys.includes(p.key);
+      check.disabled=!check.checked&&seasonTrendCompareKeys.length>=3;
+      check.onchange=()=>{
+        if(check.checked){if(seasonTrendCompareKeys.length>=3)return;seasonTrendCompareKeys.push(p.key)}
+        else seasonTrendCompareKeys=seasonTrendCompareKeys.filter(value=>value!==p.key);
+        renderSeasonTrend();
+      };
+      item.dataset.selected=String(check.checked);
+      const text=document.createElement("span");text.textContent=p.label;
+      item.append(check,text);list.append(item);
+    }
+    $("seasonTrendCompareCount").textContent="("+(key?1+seasonTrendCompareKeys.length:0)+" von 4)";
+    const resolver=scope==="player"?seasonPlayerResolver(games):null;
+    const playerKeys=[key,...seasonTrendCompareKeys].filter(Boolean);
+    const names=new Map(options.map(p=>[p.key,p.label]));
+    const colors=["#35cfe0","#f5a000","#90d57a","#b59cff"];
+    const fmt=(value,metric)=>!Number.isFinite(value)?"–":metric.unit==="percent"?Math.round(value)+" %":String(value);
+    const limits={left:45,right:498,top:23,bottom:216};
     for(const suffix of ["","2","3","4"]){
       const metric=$("seasonTrendMetric"+suffix).value;
       const svg=$("seasonTrend"+suffix),legend=$("seasonTrendLegend"+suffix),detail=$("seasonTrendDetail"+suffix);
-      const result=coreSeasonTrendSeries(games,{metric,scope,playerKey:key,resolvePlayer});
-      const rows=result.rows,percentage=result.metric.unit==="percent";
-      const all=rows.flatMap(row=>[row.first,row.second]).filter(Number.isFinite);
-      const max=percentage?100:Math.max(1,...all);
-      const bounds={left:45,right:498,top:23,bottom:216};
-      const x=i=>bounds.left+(rows.length===1?0.5:i/(rows.length-1))*(bounds.right-bounds.left);
-      const y=value=>bounds.bottom-value/max*(bounds.bottom-bounds.top);
+      const plots=scope==="player"
+        ?coreSeasonPlayerComparison(games,{metric,playerKeys,resolvePlayer:resolver,venue,view})
+        :[coreSeasonTrendSeries(games,{metric,scope:"team",venue,view})];
+      const result=plots[0]||coreSeasonTrendSeries(games,{metric,scope:"player",venue,view});
+      const rows=result.rows,percent=result.metric.unit==="percent";
+      const lines=scope==="player"
+        ?plots.map((p,i)=>({label:names.get(p.key)||"Spieler",rows:p.rows,side:"first",color:colors[i]}))
+        :[{label:result.labels[0],rows,side:"first",color:colors[0]},
+          ...(result.labels.length>1?[{label:result.labels[1],rows,side:"second",color:colors[1]}]:[])];
+      const numbers=lines.flatMap(line=>line.rows.map(row=>row[line.side])).filter(Number.isFinite);
+      const max=percent?100:Math.max(1,...numbers);
+      const x=i=>limits.left+(rows.length===1?0.5:i/(rows.length-1))*(limits.right-limits.left);
+      const y=value=>limits.bottom-value/max*(limits.bottom-limits.top);
       const grid=[0,1,2,3,4].map(tick=>{
         const value=max*tick/4,yy=y(value);
-        return '<line class="chart-grid" x1="'+bounds.left+'" y1="'+yy+'" x2="'+bounds.right+'" y2="'+yy+'"/>'+
+        return '<line class="chart-grid" x1="'+limits.left+'" y1="'+yy+'" x2="'+limits.right+'" y2="'+yy+'"/>'+
           '<text class="chart-axis" x="38" y="'+(yy+4)+'" text-anchor="end">'+
-          (percentage?Math.round(value)+"%":Math.round(value))+'</text>';
+          (percent?Math.round(value)+"%":Math.round(value))+'</text>';
       }).join("");
-      const series=[{key:"first",css:"home",label:scope==="player"?(options.find(option=>option.key===key)?.label||"Spieler"):result.labels[0]}];
-      if(scope==="team"&&result.labels.length>1)series.push({key:"second",css:"away",label:result.labels[1]});
-      const drawing=series.map(serie=>{
-        let path="",open=false,circles="";
-        rows.forEach((row,i)=>{
-          const value=row[serie.key];
-          if(!Number.isFinite(value)){open=false;return}
+      const drawing=lines.map((line,seriesIndex)=>{
+        let path="",started=false,dots="";
+        line.rows.forEach((row,i)=>{
+          const value=row[line.side];
+          if(!Number.isFinite(value)){started=false;return}
           const xx=x(i),yy=y(value);
-          path+=(open?" L ":" M ")+xx.toFixed(1)+" "+yy.toFixed(1);
-          open=true;
-          const tooltip="Spiel "+(i+1)+" · "+serie.label+": "+format(value,result.metric)+
-            ((row[serie.key+"Detail"]||row.detail)?" · "+(row[serie.key+"Detail"]||row.detail):"");
-          circles+='<circle class="chart-dot-'+serie.css+'" cx="'+xx+'" cy="'+yy+'" r="5"'+
-            ' role="button" tabindex="0" aria-label="'+escapeHtml(tooltip)+'"'+
-            ' data-trend-index="'+i+'" data-trend-series="'+serie.key+'"><title>'+escapeHtml(tooltip)+'</title></circle>';
+          path+=(started?" L ":" M ")+xx.toFixed(1)+" "+yy.toFixed(1);started=true;
+          const extra=row[line.side+"Detail"]||"";
+          const tooltip="Spiel "+(i+1)+" · "+line.label+": "+fmt(value,result.metric)+(extra?" · "+extra:"");
+          dots+='<circle cx="'+xx+'" cy="'+yy+'" r="5" fill="'+line.color+'" role="button" tabindex="0"'+
+            ' aria-label="'+escapeHtml(tooltip)+'" data-trend-index="'+i+'" data-trend-series="'+seriesIndex+'">'+
+            '<title>'+escapeHtml(tooltip)+'</title></circle>';
         });
-        return '<path class="chart-'+serie.css+'" d="'+path+'"/>'+circles;
+        return '<path fill="none" stroke="'+line.color+'" stroke-width="3"'+
+          (seriesIndex%2?' stroke-dasharray="7 5"':'')+' d="'+path+'"/>'+dots;
       }).join("");
-      svg.innerHTML=rows.length
-        ?grid+drawing+
-          '<text class="chart-axis" x="'+bounds.left+'" y="245">Spiel 1</text>'+
-          '<text class="chart-axis" x="'+bounds.right+'" y="245" text-anchor="end">Spiel '+rows.length+'</text>'
+      svg.innerHTML=rows.length?grid+drawing+
+        '<text class="chart-axis" x="'+limits.left+'" y="245">Spiel 1</text>'+
+        '<text class="chart-axis" x="'+limits.right+'" y="245" text-anchor="end">Spiel '+rows.length+'</text>'
         :'<text class="chart-axis" x="260" y="133" text-anchor="middle">Keine Spiele ausgewählt</text>';
-      svg.setAttribute("aria-label",result.metric.label+" – "+series.map(item=>item.label).join(" und "));
-      legend.innerHTML=series.map((item,i)=>
-        '<span><i style="background:'+(i?"#f5a000":"var(--cyan)")+'"></i>'+escapeHtml(item.label)+'</span>').join("");
-      const show=(position,side)=>{
-        const row=rows[position],value=row?.[side];
-        const name=series.find(item=>item.key===side)?.label||"";
-        const more=row?.[side+"Detail"]||row?.detail||"";
-        detail.textContent=Number.isFinite(value)
-          ?"Spiel "+(position+1)+" · "+name+": "+format(value,result.metric)+(more?" · "+more:"")
-          :rows.length?"Keine auswertbaren Werte für diese Auswahl.":"";
+      svg.setAttribute("aria-label",result.metric.label+" – "+lines.map(line=>line.label).join(", "));
+      legend.replaceChildren();
+      for(const line of lines){
+        const text=document.createElement("span"),color=document.createElement("i");
+        color.style.background=line.color;text.append(color,document.createTextNode(line.label));legend.append(text);
+      }
+      const show=(index,seriesIndex)=>{
+        const line=lines[seriesIndex],row=line?.rows[index],value=row?.[line.side],extra=row?.[line.side+"Detail"]||"";
+        detail.textContent=Number.isFinite(value)?"Spiel "+(index+1)+" · "+line.label+": "+
+          fmt(value,result.metric)+(extra?" · "+extra:""):
+          rows.length?"Keine auswertbaren Werte für diese Auswahl.":"";
       };
-      const last=rows.map((row,i)=>({row,i})).reverse().find(({row})=>Number.isFinite(row.first)||Number.isFinite(row.second));
-      show(last?.i??-1,last&&!Number.isFinite(last.row.first)?"second":"first");
+      let last=null;
+      for(let i=rows.length-1;i>=0&&!last;i--)
+        for(let j=0;j<lines.length&&!last;j++)
+          if(Number.isFinite(lines[j].rows[i]?.[lines[j].side]))last={i,j};
+      if(last)show(last.i,last.j);
+      else detail.textContent=rows.length?"Keine auswertbaren Werte für diese Auswahl.":"";
       for(const circle of svg.querySelectorAll("[data-trend-index]")){
-        const activate=()=>show(Number(circle.dataset.trendIndex),circle.dataset.trendSeries);
+        const activate=()=>show(Number(circle.dataset.trendIndex),Number(circle.dataset.trendSeries));
         circle.addEventListener("click",activate);
-        circle.addEventListener("keydown",event=>{
-          if(event.key==="Enter"||event.key===" "){event.preventDefault();activate()}
-        });
+        circle.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();activate()}});
       }
     }
   }
