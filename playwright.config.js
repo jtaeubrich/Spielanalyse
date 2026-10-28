@@ -6,6 +6,8 @@ export default defineConfig({
   expect: { timeout: 5000 },
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
+  // Stop early on widespread regressions instead of waiting through every timeout.
+  maxFailures: process.env.CI ? 3 : undefined,
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
   use: {
     baseURL: "http://127.0.0.1:4173",
