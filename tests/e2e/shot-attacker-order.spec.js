@@ -197,3 +197,59 @@ test("shot: technical errors still select offender first when scorer-last is ena
   await page.locator("#playerList .unknown-option").click();
   await expect(page.locator("#errorStep")).toBeVisible();
 });
+
+
+test("miss outside the goal skips result confirmation and immediately opens shooter selection",async({page})=>{
+  const original=await openDemo(page);
+  await configureOrder(page,"last");
+  for(const [code,selector] of [["ML",".goal-left"],["MR",".goal-right"],["OTM",".goal-over"]]){
+    await startShot(page,"away");
+    await expect(page.locator("#locationStep")).toBeVisible();
+    await page.locator('#locationList button[data-zone="7M"]').click();
+    await page.locator("#targetList "+selector).click();
+    await expect(page.locator("#playerStep")).toBeVisible();
+    await expect(page.locator("#phaseStep")).toBeHidden();
+    await expect(page.locator("#missResultHint")).toBeHidden();
+    await pickJersey(page,"#playerList",7);
+    await expect(page.locator("#idleStep")).toBeVisible();
+    const event=await latestEvent(page);
+    expect(event).toMatchObject({
+      type:"miss",team:"away",pId:original.away.players.find(p=>p.nr===7).id,
+      z:"7M",gz:code,scoreChanged:false
+    });
+  }
+  await expect(page.locator("#eventCount")).toHaveText("3 Ereignisse");
+});
+
+test("miss target can be revised after backing out of the shooter picker",async({page})=>{
+  await openDemo(page);
+  await configureOrder(page,"last");
+  await startShot(page,"away");
+  await page.locator('#locationList button[data-zone="7M"]').click();
+  await page.locator("#targetList .goal-left").click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await page.locator("#flowBack").click();
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator('#targetList button[data-target="OL"]').click();
+  await expect(page.locator("#phaseStep")).toBeVisible();
+  await page.locator('#shotResultList [data-result="goal"]').click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",7);
+  expect(await latestEvent(page)).toMatchObject({type:"goal",gz:"OL",scoreChanged:true});
+});
+
+test("miss target with shooter-first saves immediately without a second result dialog",async({page})=>{
+  const original=await openDemo(page);
+  await configureOrder(page,"first");
+  await startShot(page,"away");
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator('#locationList button[data-zone="7M"]').click();
+  await page.locator("#targetList .goal-right").click();
+  await expect(page.locator("#phaseStep")).toBeHidden();
+  await expect(page.locator("#idleStep")).toBeVisible();
+  expect(await latestEvent(page)).toMatchObject({
+    type:"miss",team:"away",pId:original.away.players.find(p=>p.nr===7).id,gz:"MR"
+  });
+});
