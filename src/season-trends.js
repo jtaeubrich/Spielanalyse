@@ -98,7 +98,9 @@ export function seasonTrendSeries(games=[],{
       if(!playerKey||typeof resolvePlayer!=="function")return {...base,first:null,second:null};
       const player=seasonPlayerAggregate([game],{playerKey:resolvePlayer})
         .find(row=>row.key===playerKey);
-      if(!player||!hasTrackedPlayerEvent(game,playerKey,resolvePlayer))
+      if(!player)return {...base,first:null,second:null,
+        firstMissingReason:"Nicht im gespeicherten Spielkader"};
+      if(!hasTrackedPlayerEvent(game,playerKey,resolvePlayer))
         return {...base,first:null,second:null,
           firstMissingReason:"Keine erfasste Spieleraktion – Einsatz nicht bestätigt"};
       values={first:playerMetric(player,metric)};
