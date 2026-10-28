@@ -228,3 +228,30 @@ test("Home > Einzelspiel > Neu keeps focused game preparation without season con
   await expect(page.locator("#setupGameName")).toBeVisible();
   await expect(page.locator("#setupCapturePanel")).toBeVisible();
 });
+
+test("independent JSON hides all season controls even when a season is stored",async({page})=>{
+  await page.goto("/");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
+  await page.locator("#seasonGameInput").setInputFiles(fixture);
+  await expect(page.locator("#seasonGameCount")).toContainText("1 Spiel");
+  await page.locator("#setupModeSingle").click();
+  await page.locator("#continueGameInput").setInputFiles(fixture);
+  await expect(page.locator("#matchTab")).toBeVisible();
+  await page.locator('[data-tab="setup"]').click();
+  await expect(page.locator("#setupContextBar")).toBeVisible();
+  await expect(page.locator("#setupContextTitle")).toContainText("Einzelspiel");
+  await expect(page.locator(".setup-season-loader")).toBeHidden();
+  await expect(page.locator("#setupModeSeason")).toBeHidden();
+  await expect(page.locator("#setupSeasonPanel")).toBeHidden();
+  await page.reload();
+  await page.locator('[data-tab="setup"]').click();
+  await expect(page.locator("#setupContextTitle")).toContainText("Einzelspiel");
+  await expect(page.locator(".setup-season-loader")).toBeHidden();
+  await page.locator("#setupContextReturn").click();
+  await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeAdvanced").click();
+  await expect(page.locator("#setupSeasonPanel")).toBeVisible();
+  await expect(page.locator("#setupSinglePanel")).toBeHidden();
+  await expect(page.locator("#seasonGameCount")).toContainText("1 Spiel");
+});
