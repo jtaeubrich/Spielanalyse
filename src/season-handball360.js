@@ -154,6 +154,8 @@ export function buildHandball360SeasonGame(raw, matchId, teamId, scheduleMatch =
     home: { name: x.teams.home, players: x.homePlayers },
     away: { name: x.teams.away, players: x.awayPlayers },
     events: x.normalized, gameTime: x.duration * 120,
+    // New Handball360 fixtures use the current capture order by default.
+    shotCapture: { attackerOrder: "last" },
     timer: { duration: x.duration, half: 1, secondsElapsed: 0, active: false },
     isVideoscoutingFile: true, isHistorical: true,
     video: { h1SyncRealTime: null, h2SyncRealTime: null },
