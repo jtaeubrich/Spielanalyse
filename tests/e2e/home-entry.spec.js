@@ -144,3 +144,42 @@ test("Home uses distinct self-contained SVG icons for seasons and games",async({
   await page.locator("#homeSeasonOther").click();
   await expect(page.locator("#homeLibraryList .home-list-icon svg")).toHaveCount(2);
 });
+
+test("season overview replaces the generic hero with team, season and stored club logo",async({page})=>{
+  await page.goto("/");
+  await page.locator("#homeChooseSeason").click();
+  page.once("dialog",dialog=>dialog.accept("TSV Kronshagen · Saison 2026/27"));
+  await page.locator("#homeNew").click();
+  await expect(page.locator("#homeSeasonTeam")).toHaveText("TSV Kronshagen");
+  await expect(page.locator("#homeSeasonName")).toHaveText("Saison 2026/27");
+  await expect(page.locator("#homeSeasonInfo")).toContainText("0 Saisonspiele");
+  await expect(page.locator("#homeTitle")).toBeHidden();
+  await expect(page.locator("#homeSeasonLogoFallback svg")).toBeVisible();
+  await expect(page.locator("#homeSeasonDashboard #homeSeasonName")).toHaveCount(0);
+  const png="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO/a2iwAAAAASUVORK5CYII=";
+  await page.evaluate(data=>new Promise((resolve,reject)=>{
+    const open=indexedDB.open("handball-spielanalyse",3);
+    open.onerror=()=>reject(open.error);
+    open.onsuccess=()=>{
+      const db=open.result,transaction=db.transaction("rosters","readwrite");
+      transaction.objectStore("rosters").put({
+        id:"kronshagen-logo-test",teamName:"TSV Kronshagen",players:[],
+        logoDataUrl:data
+      });
+      transaction.oncomplete=()=>{db.close();resolve()};
+      transaction.onerror=()=>reject(transaction.error);
+    };
+  }),png);
+  await page.locator("#homeSeasonOther").click();
+  await page.locator("#homeLibraryList .home-list-row")
+    .filter({hasText:"TSV Kronshagen"}).getByRole("button",{name:"Öffnen",exact:true}).click();
+  await expect(page.locator("#homeSeasonLogoImage")).toBeVisible();
+  await expect(page.locator("#homeSeasonLogoImage")).toHaveAttribute("src",png);
+  await page.reload();
+  await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeLibraryList .home-list-row")
+    .filter({hasText:"TSV Kronshagen"}).getByRole("button",{name:"Öffnen",exact:true}).click();
+  await expect(page.locator("#homeSeasonLogoImage")).toBeVisible();
+  await expect(page.locator("#homeSeasonName")).toHaveText("Saison 2026/27");
+});
