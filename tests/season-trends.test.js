@@ -48,6 +48,33 @@ describe("Saisonverlauf: responsive chart data",()=>{
     expect(rate.rows[0].firstDetail).toContain("1 Tore / 2 Würfe");
     expect(trendMetric("shotRate").unit).toBe("percent");
   });
+  it("does not turn a season-roster entry without tracked action into zero goals",()=>{
+    const bench=match("bench","2026-09-08","home",[
+      {type:"goal",team:"home",pId:"another-player"}
+    ]);
+    const withAction=match("active","2026-09-09","home",[
+      {type:"error",team:"home",pId:"p1"}
+    ]);
+    const goals=seasonTrendSeries([game1,bench,withAction,game2],{
+      scope:"player",metric:"goals",playerKey:"same-player",resolvePlayer:playerKey
+    });
+    expect(goals.rows.map(r=>r.first)).toEqual([1,null,0,1]);
+    expect(goals.rows[1].firstMissingReason).toContain("Einsatz nicht bestätigt");
+    const cumulative=seasonTrendSeries([game1,bench,withAction,game2],{
+      scope:"player",metric:"goals",view:"cumulative",
+      playerKey:"same-player",resolvePlayer:playerKey
+    });
+    expect(cumulative.rows.map(r=>r.first)).toEqual([1,null,1,2]);
+  });
+  it("counts a player's opponent-side shot involvement as tracked action",()=>{
+    const opponentSave=match("blocked","2026-09-19","home",[
+      {type:"save",team:"away",pId:"keeper-opponent",throwerId:"p1"}
+    ]);
+    const goals=seasonTrendSeries([opponentSave],{
+      scope:"player",metric:"goals",playerKey:"same-player",resolvePlayer:playerKey
+    });
+    expect(goals.rows[0].first).toBe(0);
+  });
   it("selects individual players across home/away assignments without opponent contamination",()=>{
     const trend=seasonTrendSeries([game1,game2,future],{
       metric:"goals",scope:"player",playerKey:"same-player",resolvePlayer:playerKey
