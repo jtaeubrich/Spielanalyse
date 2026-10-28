@@ -186,3 +186,45 @@ test("season overview replaces the generic hero with team, season and stored clu
   await expect(page.locator("#homeSeasonLogoImage")).toBeVisible();
   await expect(page.locator("#homeSeasonName")).toHaveText("Saison 2026/27");
 });
+
+test("Home > Einzelspiel import opens only game settings and returns via Start to season management",async({page})=>{
+  await page.goto("/");
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeImport").click();
+  await page.locator("#continueGameInput").setInputFiles(fixture);
+  await expect(page.locator("#matchTab")).toBeVisible();
+  await page.locator('[data-tab="setup"]').click();
+  await expect(page.locator("#setupSinglePanel")).toBeVisible();
+  await expect(page.locator("#setupContextBar")).toBeVisible();
+  await expect(page.locator("#setupContextTitle")).toContainText("Einzelspiel");
+  await expect(page.locator("#setupModeSeason")).toBeHidden();
+  await expect(page.locator(".setup-season-loader")).toBeHidden();
+  await expect(page.locator(".setup-game-file-actions")).toBeHidden();
+  await page.locator("#preflightOpenRoster").click();
+  await expect(page.locator("#setupModeSeason")).toBeHidden();
+  await expect(page.locator("#setupRosterPanel")).toBeVisible();
+  await page.locator("#setupContextReturn").click();
+  await expect(page.locator("#homeChooseSeason")).toBeVisible();
+  await page.locator("#homeChooseSeason").click();
+  page.once("dialog",dialog=>dialog.accept("Kontext-Saison 2026/27"));
+  await page.locator("#homeNew").click();
+  await page.locator("#homeSeasonManage").click();
+  await expect(page.locator("#setupSeasonPanel")).toBeVisible();
+  await expect(page.locator("#setupSinglePanel")).toBeHidden();
+  await expect(page.locator("#setupContextTitle")).toContainText("Saison");
+  await expect(page.locator("#setupModeSingle")).toBeHidden();
+  await page.locator("#setupContextReturn").click();
+  await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
+});
+
+test("Home > Einzelspiel > Neu keeps focused game preparation without season controls",async({page})=>{
+  await page.goto("/");
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeNew").click();
+  await page.locator("#newGameManual").click();
+  await expect(page.locator("#setupContextBar")).toBeVisible();
+  await expect(page.locator("#setupModeSeason")).toBeHidden();
+  await expect(page.locator(".setup-season-loader")).toBeHidden();
+  await expect(page.locator("#setupGameName")).toBeVisible();
+  await expect(page.locator("#setupCapturePanel")).toBeVisible();
+});
