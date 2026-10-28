@@ -31,6 +31,13 @@ describe("short, stable season download filenames",()=>{
     expect(seasonExportFileName({seasonName:"Test",preferredTeam:"HC Bremen"}))
       .toBe("HC_Bremen_Saison.json");
   });
+  it("uses the same JSON/ZIP stem when an archive folder is an unnamed fallback",()=>{
+    const meta={seasonName:"Saison 2026/27",archiveTeam:"",games};
+    const expected="TSV_Kronshagen_2026-27";
+    expect(seasonExportStem(meta)).toBe(expected);
+    expect(seasonExportFileName(meta,"zip")).toBe(expected+"_archiv.zip");
+    expect(seasonExportFileName(meta)).toBe(expected+".json");
+  });
   it("sanitizes illegal filename characters without affecting the stored title",()=>{
     const name="HSG Mölln / Büchen";
     expect(seasonExportFileName({seasonName:"Saison 2026/27",preferredTeam:name}))

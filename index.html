@@ -3461,7 +3461,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(!seasonGames.length)return toast("Keine Saisonspiele zum Exportieren geladen.");
     try{
       const archive=createTeamArchive({
-        teamName:archiveTeamName(),preferredTeam:seasonPreferredTeam,seasonName:seasonName,games:seasonGames
+        teamName:archiveTeamName(),preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,seasonName:seasonName,games:seasonGames
       });
       downloadBlob(archive.blob,archive.fileName);
       toast("ZIP mit "+archive.index.games.length+" Spielen exportiert");

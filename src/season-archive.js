@@ -140,7 +140,7 @@ export function createTeamArchive(options) {
   const { entries, team, index } = buildTeamArchiveEntries(options);
   return {
     blob: createStoredZip(entries),
-    fileName: seasonExportFileName({seasonName:options.seasonName,preferredTeam:options.preferredTeam,archiveTeam:options.teamName,games:options.games},"zip"),
+    fileName: seasonExportFileName({seasonName:options.seasonName,preferredTeam:options.preferredTeam,archiveTeam:options.archiveTeam ?? options.teamName,games:options.games},"zip"),
     index
   };
 }
