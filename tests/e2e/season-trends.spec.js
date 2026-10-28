@@ -14,6 +14,7 @@ test("season charts work on mobile as one plot and desktop as four configurable 
   const second=structuredClone(fixture);
   second.gameName="Zweites Spiel";
   second.gameDate="2026-09-12";
+  second.home.name="MTV Lübeck Jugend";
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
   await page.locator("#seasonGameInput").setInputFiles([
@@ -26,6 +27,15 @@ test("season charts work on mobile as one plot and desktop as four configurable 
   await expect(page.locator("#seasonTrendMetric")).toHaveValue("goals");
   await expect(page.locator("#seasonTrend path[stroke]")).toHaveCount(2);
   await expect(page.locator("#seasonTrend circle[data-trend-index]")).not.toHaveCount(0);
+  const opponents=page.locator("#seasonTrend text[data-trend-opponent]");
+  await expect(opponents).toHaveCount(2);
+  await expect(opponents.first().locator("title")).toHaveText("HSG Herzhorn/Kollmar/Neuendorf");
+  await expect(opponents.nth(1).locator("title")).toHaveText("MTV Lübeck Jugend");
+  const abbreviated=await opponents.first().evaluate(element=>element.firstChild.textContent);
+  expect([...abbreviated].length).toBeLessThanOrEqual(14);
+  expect(abbreviated).toContain("…");
+  await page.locator("#seasonTrend circle[data-trend-index='0']").first().click();
+  await expect(page.locator("#seasonTrendDetail")).toContainText("HSG Herzhorn/Kollmar/Neuendorf");
   const mobile=(page.viewportSize()?.width||0)<768;
   if(mobile){
     await expect(page.locator("#seasonTrend2")).toBeHidden();
