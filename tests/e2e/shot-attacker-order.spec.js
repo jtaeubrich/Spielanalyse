@@ -6,11 +6,11 @@ import { fileURLToPath } from "node:url";
 const fixture=path.resolve(path.dirname(fileURLToPath(import.meta.url)),
   "../../docs/handbuch/demo/fixtures/00-setup.json");
 
-async function openDemo(page,{assist=false,defense=false,own="away"}={}){
+async function openDemo(page,{assist=false,defense=false,own="away",target=false,phase=false}={}){
   await page.goto("/");
  await page.locator('[data-tab="setup"]').click();
   const source=JSON.parse(await readFile(fixture,"utf8"));
-  source.shotCapture={...source.shotCapture,assist,defense};
+  source.shotCapture={...source.shotCapture,assist,defense,target,phase};
   source.ownTeam=own;
   await page.locator("#continueGameInput").setInputFiles({
     name:"demo_schuss.json",mimeType:"application/json",
@@ -200,7 +200,7 @@ test("shot: technical errors still select offender first when scorer-last is ena
 
 
 test("miss outside the goal skips result confirmation and immediately opens shooter selection",async({page})=>{
-  const original=await openDemo(page);
+  const original=await openDemo(page,{target:true,phase:true});
   await configureOrder(page,"last");
   for(const [code,selector] of [["ML",".goal-left"],["MR",".goal-right"],["OTM",".goal-over"]]){
     await startShot(page,"away");
@@ -222,7 +222,7 @@ test("miss outside the goal skips result confirmation and immediately opens shoo
 });
 
 test("miss target can be revised after backing out of the shooter picker",async({page})=>{
-  await openDemo(page);
+  await openDemo(page,{target:true,phase:true});
   await configureOrder(page,"last");
   await startShot(page,"away");
   await page.locator('#locationList button[data-zone="7M"]').click();
@@ -239,7 +239,7 @@ test("miss target can be revised after backing out of the shooter picker",async(
 });
 
 test("miss target with shooter-first saves immediately without a second result dialog",async({page})=>{
-  const original=await openDemo(page);
+  const original=await openDemo(page,{target:true,phase:true});
   await configureOrder(page,"first");
   await startShot(page,"away");
   await expect(page.locator("#playerStep")).toBeVisible();
