@@ -32,6 +32,12 @@ jobs:
   test:
     if: github.event_name != 'workflow_dispatch' || inputs.deploy_only != true
     runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium-desktop, chromium-mobile]
+    name: Tests (${{ matrix.browser }})
     steps:
       - name: Kurze Sammelwartezeit für Folge-Commits
         run: sleep 10
@@ -47,8 +53,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Unit- und Regressionstests
         run: npm run test:unit
-      - name: Browser-Tests
-        run: npm run test:e2e
+      - name: Browser-Tests (${{ matrix.browser }})
+        run: npm run test:e2e -- --project=${{ matrix.browser }}
 
   screenshot_gate:
     if: github.event_name == 'workflow_dispatch' && inputs.deploy_only == true
