@@ -22,7 +22,8 @@ test("season charts work on mobile as one plot and desktop as four configurable 
     {name:"second.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(second))}
   ]);
   await expect(page.locator("#seasonGameCount")).toContainText("2 Spiele");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="analysis"]').click();
+  await page.locator("#analysisSeasonSubtab").click();
   await expect(page.locator("#seasonTrendScope")).toBeVisible();
   await expect(page.locator("#seasonTrendMetric")).toHaveValue("goals");
   await expect(page.locator("#seasonTrend path[stroke]")).toHaveCount(2);
@@ -69,7 +70,8 @@ test("Phase 2 trend charts filter venue, aggregate season and compare multiple p
     {name:"phase2-second.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(second))}
   ]);
   await expect(page.locator("#seasonGameCount")).toContainText("2 Spiele");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="analysis"]').click();
+  await page.locator("#analysisSeasonSubtab").click();
   await page.locator("#seasonTrendView").selectOption("cumulative");
   await expect(page.locator("#seasonTrend")).toHaveAttribute("aria-label",/Tore/);
   await page.locator("#seasonTrendVenue").selectOption(fixture.ownTeam);
@@ -103,7 +105,8 @@ test("low count statistics have unique integer y-axis labels on mobile and deskt
     name:"axis-one-penalty.json",mimeType:"application/json",
     buffer:Buffer.from(JSON.stringify(game))
   });
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="analysis"]').click();
+  await page.locator("#analysisSeasonSubtab").click();
   await page.locator("#seasonTrendMetric").selectOption("penalties");
   const yLabels=await page.locator('#seasonTrend .chart-axis[x="38"]').allTextContents();
   expect(yLabels).toEqual(["0","1"]);
@@ -130,7 +133,8 @@ test("missing season statistics use a hollow marker and dashed bridge, not a zer
     {name:"trend-gap-3.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(last))}
   ]);
   await expect(page.locator("#seasonGameCount")).toContainText("3 Spiele");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="analysis"]').click();
+  await page.locator("#analysisSeasonSubtab").click();
   await page.locator("#seasonTrendMetric").selectOption("shotRate");
   const chart=page.locator("#seasonTrend");
   await expect(chart.locator('circle[data-trend-index="0"]:not([data-trend-missing])').first()).toBeAttached();
@@ -171,7 +175,8 @@ test("season player trend treats an unverified roster-only appearance as a missi
     {name:"presence-zero.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(validZero))}
   ]);
   await expect(page.locator("#seasonGameCount")).toContainText("4 Spiele");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator('[data-tab="analysis"]').click();
+  await page.locator("#analysisSeasonSubtab").click();
   await page.locator("#seasonTrendScope").selectOption("player");
   const option=page.locator("#seasonTrendPlayer option").filter({hasText:"Jespe Mats Täubrich"});
   await expect(option).toHaveCount(1);
