@@ -113,7 +113,7 @@ test("an imported season fixture displays its official match URL and pre-fills t
   await expect(page.locator("#seasonGameList")).toContainText("Handball.net");
   await expect(page.locator('#seasonGameList a[href="https://www.handball.net/match/378112"]')).toHaveCount(1);
   await page.locator("#setupModeSingle").click();
-  await page.locator("#setupSeasonGameSelect").selectOption({label:/TSV Kronshagen/});
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await expect(page.locator("#setupSeasonRosterRefresh")).toBeEnabled();
   await expect(page.locator("#setupSeasonMatchLink")).toHaveAttribute("href","https://www.handball.net/match/378112");
   await page.locator("#setupSeasonContinue").click();
@@ -121,6 +121,6 @@ test("an imported season fixture displays its official match URL and pre-fills t
   await page.reload();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSingle").click();
-  await page.locator("#setupSeasonGameSelect").selectOption({label:/TSV Kronshagen/});
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await expect(page.locator("#setupSeasonMatchLink")).toHaveAttribute("href","https://www.handball.net/match/378112");
 });
