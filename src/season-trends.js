@@ -25,6 +25,26 @@ function decidedShots(events=[],team){
 function assists(events=[],team){
   return events.filter(event=>event?.team===team&&event.type==="goal"&&event.assistPId!=null).length;
 }
+// A season/player roster can contain the entire squad, not just match participants.
+// A recorded action is positive evidence for this specific game; a roster entry alone
+// does not establish that the player participated or that zero is a valid statistic.
+function hasTrackedPlayerEvent(game,playerKey,resolvePlayer){
+  const own=game?.ownTeam;
+  const roster=game?.state?.[own]?.players||[];
+  const ids=new Set(roster.filter(p=>resolvePlayer(p)===playerKey)
+    .map(p=>String(p?.id)).filter(id=>id&&id!=="undefined"&&id!=="null"));
+  if(!ids.size)return false;
+  const matches=id=>id!==null&&id!==undefined&&ids.has(String(id));
+  return (game?.state?.events||[]).some(event=>{
+    if(event.team===own&&[event.pId,event.assistPId,event.attackerId,event.defenderId].some(matches))
+      return true;
+    // An opponent save/block may identify our thrower, an opponent shot our keeper.
+    if(event.team&&event.team!==own&&
+       (((event.type==="save"||event.type==="block")&&matches(event.throwerId))||
+         matches(event.againstTwId)))return true;
+    return (event.playerTags||[]).some(tag=>tag?.team===own&&matches(tag.pId));
+  });
+}
 function playerMetric(player,metric){
   if(metric==="shotRate")return {
     value:player.isTW||!player.decidedShots?null:percentage(player.goals,player.decidedShots),
@@ -78,7 +98,9 @@ export function seasonTrendSeries(games=[],{
       if(!playerKey||typeof resolvePlayer!=="function")return {...base,first:null,second:null};
       const player=seasonPlayerAggregate([game],{playerKey:resolvePlayer})
         .find(row=>row.key===playerKey);
-      if(!player)return {...base,first:null,second:null};
+      if(!player||!hasTrackedPlayerEvent(game,playerKey,resolvePlayer))
+        return {...base,first:null,second:null,
+          firstMissingReason:"Keine erfasste Spieleraktion – Einsatz nicht bestätigt"};
       values={first:playerMetric(player,metric)};
     }else{
       values={first:teamMetric(game,"own",metric)};
