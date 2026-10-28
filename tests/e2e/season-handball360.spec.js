@@ -383,6 +383,38 @@ test("temporarily viewing a live-scouted season game does not disable later cont
 });
 
 
+test("season list keeps Handball360 roster sync distinct from nuLiga protocol reconciliation",async({page})=>{
+  const archived=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
+  archived.state.events=[{type:"goal",team:archived.ownTeam,pId:"scouted",comment:"Keep this event"}];
+  const official=payload("378107","2026-09-05T16:00:00Z");
+  official.events=[];
+  official.lineups={data:{
+    local:{players:[{player:{id:21,first_name:"Mia",last_name:"Test"},number:18,is_goalkeeper:false}]},
+    visitor:{players:[{player:{id:32,first_name:"Gina",last_name:"Gast"},number:1,is_goalkeeper:true}]}
+  }};
+  await page.route("**/match/378107",route=>route.fulfill({
+    status:200,headers:{"access-control-allow-origin":"*"},
+    contentType:"application/json",body:JSON.stringify(official)
+  }));
+  await page.locator("#seasonGameInput").setInputFiles(upload("archived-roster.json",archived.state));
+  const item=page.locator("#seasonGameList .season-game-item").first();
+  await expect(item.getByRole("button",{name:"Handball360-Kader"})).toBeVisible();
+  await expect(item.getByRole("button",{name:"nuLiga-Protokoll"})).toBeVisible();
+  await expect(item.getByRole("button",{name:"JSON ersetzen"})).toBeVisible();
+  await item.getByRole("button",{name:"Handball360-Kader"}).click();
+  await expect(page.locator("#setupModeSingle")).toHaveAttribute("aria-selected","true");
+  await expect(page.locator("#setupOfficialRosterDialog")).toBeVisible();
+  await expect(page.locator("#setupOfficialRosterDialog")).toContainText("Handball360 Match 378107");
+  await expect(page.locator("#seasonProtocolDialog")).not.toBeVisible();
+  await page.locator("#setupOfficialRosterCancel").click();
+  await page.locator("#setupModeSeason").click();
+  await page.locator("#seasonGameList .season-game-item").first()
+    .getByRole("button",{name:"nuLiga-Protokoll"}).click();
+  await expect(page.locator("#seasonProtocolDialog")).toBeVisible();
+  await expect(page.locator("#setupOfficialRosterDialog")).not.toBeVisible();
+  await page.locator("#seasonProtocolClose").click();
+});
+
 test("pregame Setup lineup refresh previews and replaces only the active match roster",async({page})=>{
   const future=buildHandball360SeasonGame(games[2],"378122",teamId,schedule.matches[2]);
   future.state.events=[];
