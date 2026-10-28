@@ -124,3 +124,17 @@ test("an imported season fixture displays its official match URL and pre-fills t
   await page.locator("#setupSeasonGameSelect").selectOption({index:1});
   await expect(page.locator("#setupSeasonMatchLink")).toHaveAttribute("href","https://www.handball.net/match/378112");
 });
+
+test("season exports use the same short team-and-year basename for JSON and ZIP",async({page})=>{
+  await page.goto("/");
+  await openSeasonSetup(page);
+  await page.locator("#seasonGameInput").setInputFiles(upload("kronshagen.json",
+    game("Kronshagen Saisonspiel",{home:"TSV Kronshagen",away:"VfL Bad Schwartau II"})));
+  await page.locator("#seasonName").fill("TSV Kronshagen · Saison 2026/27");
+  await page.locator("#seasonName").dispatchEvent("change");
+  await page.locator("#seasonPreferredTeam").selectOption({label:"TSV Kronshagen"});
+  const [json]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
+  expect(json.suggestedFilename()).toBe("TSV_Kronshagen_2026-27.json");
+  const [zip]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonArchiveExport").click()]);
+  expect(zip.suggestedFilename()).toBe("TSV_Kronshagen_2026-27_archiv.zip");
+});

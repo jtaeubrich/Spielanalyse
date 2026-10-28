@@ -47,6 +47,7 @@ describe("portable per-team game archive",()=>{
     expect(index.games[0].path).toBe("TSV_Kronshagen_vs_Gast_378112/spiel.json");
     expect(seasonMatchFolder(baseGame())).toBe("TSV_Kronshagen_vs_Gast_manuell_manuell-1");
     const zip=createTeamArchive({teamName:"TSV Kronshagen mB",seasonName:"2026-27",games:[game]});
+    expect(zip.fileName).toBe("TSV_Kronshagen_mB_2026-27_archiv.zip");
     const buffer=new Uint8Array(await zip.blob.arrayBuffer());
     const view=new DataView(buffer.buffer);
     expect(view.getUint32(0,true)).toBe(0x04034b50);

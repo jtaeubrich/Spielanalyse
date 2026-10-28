@@ -1,3 +1,4 @@
+import { seasonExportFileName } from "./season-export-names.js";
 // Portable, dependency-free ZIP export. The archive contains plain JSON and
 // directory entries so it works on mobile Safari without File System Access.
 function safePart(value, fallback = "Unbenannt") {
@@ -139,7 +140,7 @@ export function createTeamArchive(options) {
   const { entries, team, index } = buildTeamArchiveEntries(options);
   return {
     blob: createStoredZip(entries),
-    fileName: team + "_" + safePart(options.seasonName, "Saison") + "_archiv.zip",
+    fileName: seasonExportFileName({seasonName:options.seasonName,preferredTeam:options.preferredTeam,archiveTeam:options.teamName,games:options.games},"zip"),
     index
   };
 }

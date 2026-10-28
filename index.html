@@ -1776,6 +1776,7 @@ import { scoreEvents } from "./src/game-model.js";
 import { GAME_FORMAT, CURRENT_GAME_VERSION, migrateGameData, stampCurrentGameFormat } from "./src/game-format.js";
 import { GAME_FILE_TYPES, parseGameText, defaultGameFileName as coreDefaultGameFileName, gameOpenPickerOptions, gameSavePickerOptions, writeTextFileHandle } from "./src/game-files.js";
 import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeSeasonGame, normalizeSeasonArchive, parseSeasonText, mergeSeasonGames, readSeasonGameFiles, suggestedSeasonName } from "./src/season-files.js?v=2";
+import { seasonExportFileName } from "./src/season-export-names.js?v=1";
 import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection, applyStoredGoalkeeperMarkings } from "./src/roster.js";
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
@@ -3460,7 +3461,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(!seasonGames.length)return toast("Keine Saisonspiele zum Exportieren geladen.");
     try{
       const archive=createTeamArchive({
-        teamName:archiveTeamName(),seasonName:seasonName,games:seasonGames
+        teamName:archiveTeamName(),preferredTeam:seasonPreferredTeam,seasonName:seasonName,games:seasonGames
       });
       downloadBlob(archive.blob,archive.fileName);
       toast("ZIP mit "+archive.index.games.length+" Spielen exportiert");
@@ -3920,8 +3921,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function seasonExportObject(){return {...buildSeasonExport({name:seasonName||"Saison",games:seasonGames}),preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,playerAliases:seasonPlayerAliases}}
   function downloadSeasonExport(){
     if(!seasonGames.length)return toast("Keine Saisonspiele zum Exportieren geladen.");
-    const data=seasonExportObject(),safe=(seasonName||"Saison").replace(/[^a-z0-9äöüß_-]+/gi,"_");
-    downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),safe+"_spielanalyse_saison.json");
+    const data=seasonExportObject();
+    const fileName=seasonExportFileName({seasonName,preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,games:seasonGames});
+    downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),fileName);
     toast(`Saison mit ${seasonGames.length} Spielen exportiert`);
   }
   function applySeasonObject(data,{save=true}={}){
