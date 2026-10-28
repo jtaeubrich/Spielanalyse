@@ -43,7 +43,7 @@ test("phone uses the numeric keypad, filters jersey prefixes and never auto-sele
   await expect(host.locator('.fast-player-tile[data-jersey-number="17"]')).toBeVisible();
   await host.locator('.fast-player-tile[data-jersey-number="17"]').click();
   await expect(page.locator("#locationStep")).toBeVisible();
-  await page.locator('#locationList button[data-zone="7M"]').click();
+  await page.locator('#locationList [data-zone="K"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   await expect(page.locator("#idleStep")).toBeVisible();
   const event=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state.events.at(-1));
@@ -137,7 +137,7 @@ test("penalties and assists reuse the responsive player picker",async({page,isMo
   const attackers=page.locator("#playerList");
   if(isMobile)await attackers.getByRole("button",{name:"Ziffer 7",exact:true}).click();
   await attackers.locator('.fast-player-tile[data-jersey-number="7"]').click();
-  await page.locator('#locationList button[data-zone="7M"]').click();
+  await page.locator('#locationList [data-zone="K"]').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
   const assists=page.locator("#assistList");
   await expect(assists.locator(isMobile?".fast-picker-phone":".fast-picker-tablet")).toBeVisible();
