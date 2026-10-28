@@ -65,8 +65,12 @@ export function seasonTrendSeries(games=[],{
   const cumulative=view==="cumulative";
   const rows=ordered.map((game,index)=>{
     const events=game?.state?.events||[];
+    const opponentTeam=["home","away"].includes(game?.opponentTeam)?game.opponentTeam
+      :game?.ownTeam==="home"?"away":game?.ownTeam==="away"?"home":null;
+    const opponent=String(opponentTeam?game?.state?.[opponentTeam]?.name||"":"").trim();
     const base={index:index+1,id:game?.id,date:String(game?.state?.gameDate||"").slice(0,10),
-      name:game?.state?.gameName||game?.fileName||"Spiel "+(index+1)};
+      name:game?.state?.gameName||game?.fileName||"Spiel "+(index+1),
+      opponent:opponent||"Spiel "+(index+1)};
     if(!events.length||!["home","away"].includes(game?.ownTeam))
       return {...base,first:null,second:null};
     let values;
