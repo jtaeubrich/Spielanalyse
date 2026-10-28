@@ -90,7 +90,11 @@ test("Home > Saison > Neu > dashboard retains existing current Match and enables
   await page.locator('[data-tab="home"]').click();
   await page.locator("#homeChooseSeason").click();
   await page.locator("#homeOpen").click();
-  await page.locator("#homeLibraryList").getByRole("button",{name:"Öffnen",exact:true}).click();
+  // All seasons now use "Öffnen". Choose the intended row before clicking.
+  const selectedSeason=page.locator("#homeLibraryList .home-list-row")
+    .filter({hasText:"Neue Saison Demo 2026"});
+  await expect(selectedSeason).toHaveCount(1);
+  await selectedSeason.getByRole("button",{name:"Öffnen",exact:true}).click();
   await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
   await expect(page.locator("#homeSeasonGames .home-list-row")).toHaveCount(1);
   await expect(page.locator("#homeSeasonGames")).toContainText("Analysieren");
