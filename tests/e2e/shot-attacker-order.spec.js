@@ -268,3 +268,118 @@ test("miss target with shooter-first saves immediately without a second result d
     type:"miss",team:"away",pId:original.away.players.find(p=>p.nr===7).id,gz:"MR"
   });
 });
+
+
+test("seven-meter quick flow commits only after the result and stamps the shot outcome",async({page})=>{
+  const source=await openDemo(page,{assist:true,defense:true,target:true,phase:true});
+  await configureOrder(page,"last");
+  await page.locator("#videoToggle").click();
+  await page.locator("#runBtn").click();
+  await page.locator("#awayPoss").click();
+  await page.locator('[data-flow="7m"]').click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await expect(page.locator("#locationStep")).toBeHidden();
+  await expect(page.locator("#sevenMeterStep")).toBeHidden();
+  await expect(page.locator("#runBtn")).toContainText("STOPPEN");
+  await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#sevenMeterStep")).toBeVisible();
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+  await page.locator("#gameTimeInput").fill("01:05");
+  await page.locator("#gameTimeForm button[type=submit]").click();
+  await page.locator('[data-seven-meter-result="goal"]').click();
+  await expect(page.locator("#idleStep")).toBeVisible();
+  await expect(page.locator("#runBtn")).toContainText("STOPPEN");
+  const event=await latestEvent(page);
+  expect(event).toMatchObject({
+    type:"goal",team:"away",z:"7M",is7:true,
+    pId:source.away.players.find(p=>p.nr===7).id,
+    attackPhase:"7-Meter",scoreA:1,scoreChanged:true,
+    endedPossessionOf:"away"
+  });
+  expect(event.time).toBeGreaterThanOrEqual(65);
+  expect(event.time).toBeLessThan(70);
+  expect(event.displayTime).toMatch(/^01:0[5-9]$/);
+  expect(event.realTime).toBeGreaterThanOrEqual(0);
+  const events=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state.events);
+  expect(events).toHaveLength(1);
+});
+
+test("seven-meter parade credits the keeper, attributes the shooter, and has an is7 flag",async({page})=>{
+  const source=await openDemo(page);
+  await page.locator("#awayPoss").click();
+  await page.locator('[data-flow="7m"]').click();
+  await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#sevenMeterStep")).toBeVisible();
+  await page.locator('[data-seven-meter-result="save"]').click();
+  await expect(page.locator("#idleStep")).toBeVisible();
+  const event=await latestEvent(page);
+  expect(event).toMatchObject({
+    type:"save",team:"home",z:"7M",is7:true,endedPossessionOf:"away",
+    pId:source.home.players.find(p=>p.nr===1).id,
+    throwerId:source.away.players.find(p=>p.nr===7).id,
+    scoreChanged:false
+  });
+});
+
+test("seven-meter miss with optional outside target never records a goal",async({page})=>{
+  const source=await openDemo(page);
+  await page.locator("#awayPoss").click();
+  await page.locator('[data-flow="7m"]').click();
+  await pickJersey(page,"#playerList",7);
+  await page.locator(".seven-meter-target summary").click();
+  await page.locator('#sevenMeterTargetList [data-target="ML"]').click();
+  await page.locator('[data-seven-meter-result="goal"]').click();
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+  await expect(page.locator("#sevenMeterStep")).toBeVisible();
+  await page.locator('[data-seven-meter-result="miss"]').click();
+  expect(await latestEvent(page)).toMatchObject({
+    type:"miss",team:"away",pId:source.away.players.find(p=>p.nr===7).id,
+    z:"7M",is7:true,gz:"ML",scoreChanged:false
+  });
+});
+
+test("choosing 7m inside an already started regular shot switches to shooter-first and outcome timestamp",async({page})=>{
+  const source=await openDemo(page,{target:true,phase:true});
+  await configureOrder(page,"last");
+  await startShot(page,"away");
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator('#locationList button[data-zone="7M"]').click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#sevenMeterStep")).toBeVisible();
+  await page.locator("#gameTimeInput").fill("02:10");
+  await page.locator("#gameTimeForm button[type=submit]").click();
+  await page.locator('[data-seven-meter-result="goal"]').click();
+  const event=await latestEvent(page);
+  expect(event).toMatchObject({
+    type:"goal",z:"7M",is7:true,pId:source.away.players.find(p=>p.nr===7).id
+  });
+  expect(event.time).toBe(130);
+});
+
+test("seven-meter back and cancel navigate without recording events or changing shooter-last default",async({page})=>{
+  await openDemo(page);
+  await configureOrder(page,"last");
+  await page.locator("#awayPoss").click();
+  await page.locator('[data-flow="7m"]').click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#sevenMeterStep")).toBeVisible();
+  await page.locator("#flowBack").click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await page.locator("#flowBack").click();
+  await expect(page.locator("#idleStep")).toBeVisible();
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+
+  await startShot(page,"away");
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator('#locationList button[data-zone="7M"]').click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await page.locator("#flowBack").click();
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator("#flowCancel").click({force:true});
+  await expect(page.locator("#idleStep")).toBeVisible();
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+  await page.locator('[data-tab="setup"]').click();
+  await expect(page.locator("#shotAttackerOrder")).toHaveValue("last");
+});
