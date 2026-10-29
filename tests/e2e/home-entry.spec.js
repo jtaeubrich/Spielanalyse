@@ -129,7 +129,15 @@ test("Home can switch between locally saved seasons without replacing the open s
   const row=page.locator("#homeLibraryList .home-list-row").filter({hasText:"Saison A"});
   await row.getByRole("button",{name:"Öffnen",exact:true}).click();
   await expect(page.locator("#homeSeasonName")).toHaveText("Saison A");
-  await page.locator('[data-tab="match"]').click();
+  // Passive season viewers deliberately hide the Match tab.
+  await expect(page.locator('[data-tab="match"]')).toBeHidden();
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeOpen").click();
+  const saved=page.locator("#homeLibraryList .home-list-row").filter({hasText:"Zuletzt bearbeitet"});
+  await expect(saved).toHaveCount(1);
+  await saved.getByRole("button",{name:"Fortsetzen",exact:true}).click();
+  await expect(page.locator('[data-tab="match"]')).toBeVisible();
   await expect(page.locator("#homeName")).toHaveText(game);
 });
 

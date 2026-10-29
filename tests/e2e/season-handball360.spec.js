@@ -580,7 +580,9 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   await expect(dialog).toContainText("Nr. 7 → 18");
   await dialog.locator("#setupOfficialRosterConfirm").click();
   await expect(page.locator("#setupSeasonRosterStatus")).toContainText("Historischen Kader sicher abgeglichen");
-  await page.locator("#saveBtn").click();
+  // Roster refresh saves directly to the season archive. A passive analysis
+  // preview must not expose the independent Match save button.
+  await expect(page.locator("#saveBtn")).toBeHidden();
   await page.locator('[data-tab="setup"]').click();
   await openSeasonAdmin(page);
   const [download]=await Promise.all([

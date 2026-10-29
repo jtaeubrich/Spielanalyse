@@ -27,6 +27,7 @@ test("opening a season selects the most recent recorded fixture for analysis wit
   await expect(page.locator("#score")).toHaveText("3 : 0");
   await page.locator('[data-tab="home"]').click();
   await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeOpen").click();
   await page.locator("#homeAdvanced").click();
   await page.locator("#seasonGameInput").setInputFiles([
     upload("frueh.json",makeGame("Frühes Spiel","2026-09-05","TSV Kronshagen","Gegner A",1)),
@@ -53,6 +54,7 @@ test("opening a season selects the most recent recorded fixture for analysis wit
   await expect(page.locator("#seasonStats")).toBeVisible();
   await page.locator('[data-tab="home"]').click();
   await page.locator("#homeChooseGame").click();
+  await page.locator("#homeOpen").click();
   await page.locator("#homeAdvanced").click();
   await expect(page.locator("#setupHomeName")).toHaveValue("THW Kiel");
   await page.locator('[data-tab="analysis"]').click();
