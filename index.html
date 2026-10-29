@@ -147,8 +147,9 @@
     .seven-meter-outcomes .option{min-height:78px;font-size:18px;padding:10px 4px}
     .seven-meter-target{margin-top:14px}
     .seven-meter-target summary{cursor:pointer;color:var(--cyan);font-weight:650}
-    .seven-meter-target-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
-    .seven-meter-target-list .option{padding:9px 3px;font-size:12px;min-height:38px}
+    .seven-meter-target[hidden]{display:none!important}
+    .seven-meter-target-list{width:min(100%,360px);margin:8px auto 0}
+    .seven-meter-target-list .goal-map{width:100%;aspect-ratio:1}
     .court{width:100%;height:auto;display:block;background:#12383e;border-radius:12px}.court .zone{fill:#27616b;stroke:#97d9df;stroke-width:.045;cursor:pointer}.court .zone.alt{fill:#215660}.court .zone:hover,.court .zone:focus{fill:#3e95a5;outline:none}
     .court .zone.selected{fill:var(--cyan);stroke:#e9fdff;stroke-width:.1}.shot-placement .btn.selected{border-color:var(--cyan);background:#123d4c;color:#fff}.court text{fill:white;font:.52px system-ui;text-anchor:middle;dominant-baseline:middle}.court .line{fill:none;stroke:white;stroke-width:.07;pointer-events:none}.court .selected{fill:#18879c;stroke:#ffca55;stroke-width:.15}.court .sector-label{font-size:.52px;font-weight:850}.court .distance-label{font-size:.46px;fill:#cce5eb}
     #locationList,#targetList{display:block;max-height:none}.shot-placement{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}.shot-placement h3,.phase-result-grid h3{margin:0 0 6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.shot-placement .court{width:min(100%,360px);margin:auto}.shot-placement .label-position-tools{display:none}.shot-placement .goal-map{width:min(100%,360px);margin:auto;aspect-ratio:1}.goal-map{display:grid;grid-template-columns:46px 1fr 46px;grid-template-rows:46px minmax(0,1fr);gap:4px}.goal-map button{padding:3px;text-align:center;min-width:0;font-size:13px}.goal-left,.goal-right{writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.02em}.phase-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}.phase-result-grid p{margin:0 0 8px;color:var(--muted);font-size:13px}.phase-result-grid #phaseList{grid-template-columns:repeat(2,minmax(0,1fr))}.result-options{grid-template-columns:repeat(2,minmax(0,1fr))}.result-options .option{min-height:74px;text-align:center;font-size:18px}.result-auto{padding:18px;border:1px solid var(--amber);border-radius:12px;background:#3a3015;color:var(--amber);font-weight:800;text-align:center}.goal-over{grid-column:2;grid-row:1}.goal-left{grid-column:1;grid-row:2}.goal-right{grid-column:3;grid-row:2}.goal-inner{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px;border:5px solid white;border-bottom:0;padding:3px;background:repeating-linear-gradient(90deg,transparent 0 14px,#ffffff18 14px 15px)}.goal-inner button{border-radius:5px;background:#16414d;font-size:14px}.selected{border-color:var(--cyan)}#videoMessage{font-size:14px;color:var(--muted);margin:8px 0}.step-summary{color:var(--cyan);font-size:14px;margin-bottom:10px}
@@ -1610,7 +1611,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
           <button class="option" type="button" data-seven-meter-result="save">Parade</button>
           <button class="option" type="button" data-seven-meter-result="miss">Fehlwurf</button>
         </div>
-        <details class="seven-meter-target"><summary>Wurfziel (optional)</summary>
+        <details class="seven-meter-target" hidden><summary>Wurfziel (optional)</summary>
           <div class="seven-meter-target-list" id="sevenMeterTargetList"></div>
         </details>
       </div>
@@ -2454,13 +2455,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     draft.gz=null;draft.result=null;draft.keeper=null;
     draft.assistPId=null;draft.assistChosen=false;
     draft.attackPhase="7-Meter";
-    $("sevenMeterStep").querySelector(".seven-meter-target").open=false;
-    $("sevenMeterTargetList").querySelectorAll(".selected").forEach(el=>el.classList.remove("selected"));
+    const targetPanel=$("sevenMeterStep").querySelector(".seven-meter-target");
+    targetPanel.hidden=!state.shotCapture.target;
+    targetPanel.open=false;
+    refreshSevenMeterTarget();
     if(draft.attackerChosen){showStep("sevenMeter");return}
     renderPlayers();showStep("player");
   }
   function finishSevenMeter(result){
     if(!draft?.sevenMeter||currentStep!=="sevenMeter"||!["goal","save","miss"].includes(result)||!draft.attackerChosen)return;
+    if(!state.shotCapture.target)draft.gz=null;
     if(result==="goal"&&["ML","MR","OTL","OTM","OTR"].includes(draft.gz)){
       return toast("Wurfziel außerhalb des Tores: Ziel ändern oder Fehlwurf wählen.");
     }
@@ -2479,15 +2483,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   document.querySelectorAll("[data-seven-meter-result]").forEach(button=>{
     button.onclick=()=>finishSevenMeter(button.dataset.sevenMeterResult);
   });
-  for(const [code,label] of targets){
-    const button=document.createElement("button");button.type="button";button.className="option";
-    button.dataset.target=code;button.textContent=label;
-    button.onclick=()=>{
-      if(!draft?.sevenMeter)return;
-      draft.gz=draft.gz===code?null:code;
-      $("sevenMeterTargetList").querySelectorAll("[data-target]").forEach(el=>el.classList.toggle("selected",el.dataset.target===draft.gz));
-    };
-    $("sevenMeterTargetList").append(button);
+  function refreshSevenMeterTarget(){
+    $("sevenMeterTargetList").querySelectorAll("[data-target]").forEach(el=>
+      el.classList.toggle("selected",Boolean(draft?.sevenMeter&&draft.gz===el.dataset.target)));
+  }
+  function selectSevenMeterTarget(code){
+    if(!draft?.sevenMeter||!state.shotCapture.target)return;
+    draft.gz=draft.gz===code?null:code;
+    refreshSevenMeterTarget();
   }
   function nextAfterAttacker(){if(draft.flow==="shot"){if(draft.sevenMeter){showStep("sevenMeter");return}if(shotAttackerLast()&&draft.attackerChosen)return finalizeShotCapture();const first=shotStepIds()[0];first?showStep(first):openShotTagStep()}else showStep("error")}
   function chooseAttacker(id){draft.attacker=id;if(draft.flow==="shot")draft.attackerChosen=true;if(shotAttackerLast()){draft.attackerChosen=true;if(id!==null&&String(id)===String(draft.assistPId)){draft.assistPId=null;draft.assistChosen=true;toast("Assist entfernt: Schütze und Assistgeber dürfen nicht identisch sein.")}}nextAfterAttacker()}
@@ -6214,10 +6217,22 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function selectShotTarget(code){draft.quickMissToShooter=false;draft.gz=code;draft.result=['ML','MR','OTL','OTM','OTR'].includes(code)?'miss':null;draft.keeper=null;maybeAdvanceShotPage()}
   function createSectorCourt({shots=null,mode='offense',role=null}={}){const analysis=Array.isArray(shots),zoneActions={},uid='sectorCourt'+(++courtUid),svg=svgEl('svg',{viewBox:'0 0 20 20',class:analysis?'analysis-court':'court',role:'group','aria-label':'Abwurfzonen aus Sicht des Angreifers'}),defs=svgEl('defs'),fieldClip=svgEl('clipPath',{id:uid+'Field'});fieldClip.append(svgEl('rect',{x:0,y:0,width:20,height:20}));defs.append(fieldClip);const near=svgEl('clipPath',{id:uid+'Near'});near.append(svgEl('path',{d:boundary(9)+' Z '+boundary(6)+' Z','clip-rule':'evenodd'}));defs.append(near);const far=svgEl('clipPath',{id:uid+'Far'});far.append(svgEl('path',{d:'M 0 0 H 20 V 20 H 0 Z '+boundary(9)+' Z','clip-rule':'evenodd'}));defs.append(far);svg.append(defs);const zones=svgEl('g',{'clip-path':'url(#'+uid+'Field)'});svg.append(zones);const sectors=[['LA',150,180],['RL',117,150],['M',63,117],['RR',30,63],['RA',0,30]];for(let i=0;i<sectors.length;i++){const [lane,start,end]=sectors[i];for(const depth of [9,6]){const code=lane==='LA'||lane==='RA'?lane:lane+'-'+depth+'m',shape=svgEl('path',{d:sectorPath(start,end),class:'zone '+((i+depth)%2?'alt':''),'clip-path':'url(#'+uid+(depth===6?'Near':'Far')+')'}),label=code+' – '+(depth===6?'6 Meter':'9 Meter');if(analysis)bindAnalysisZone(shape,role,'zone',code,label);else{const action=()=>selectShotLocation(code,depth,lane);zoneActions[code]=action;activateZone(shape,code,label,action)}zones.append(shape)}}svg.append(svgEl('path',{d:boundary(6)+' Z',fill:'#091e29','pointer-events':'none'}),svgEl('path',{d:boundary(6),class:'line'}),svgEl('path',{d:boundary(9),class:'line','stroke-dasharray':'.35 .25'}),svgEl('rect',{x:0,y:0,width:20,height:20,fill:'none',stroke:'#97d9df','stroke-width':'.09','pointer-events':'none'}),svgEl('rect',{x:8.5,y:0,width:3,height:.5,fill:'none',stroke:'white','stroke-width':'.13','pointer-events':'none'}));const circle=svgEl('rect',{x:8.5,y:5.2,width:3,height:1.1,rx:.22,class:'zone'}),circleAction=analysis?()=>openVideoForMap(role,'zone','K'):()=>selectShotLocation('K',6,'K');if(!analysis)zoneActions.K=circleAction;activateZone(circle,'K','K – Kreis',circleAction);svg.append(circle);if(analysis){appendCourtStats(svg,3.2,4,shotCellStats(shots,'z','LA'),mode,'LA');appendCourtStats(svg,6.3,7.7,shotCellStats(shots,'z','RL-6m'),mode,'RL-6m');appendCourtStats(svg,5.1,11.8,shotCellStats(shots,'z','RL-9m'),mode,'RL-9m');appendCourtStats(svg,10,7.8,shotCellStats(shots,'z','M-6m'),mode,'M-6m');appendCourtStats(svg,10,13.4,shotCellStats(shots,'z','M-9m'),mode,'M-9m');appendCourtStats(svg,13.7,7.7,shotCellStats(shots,'z','RR-6m'),mode,'RR-6m');appendCourtStats(svg,14.9,11.8,shotCellStats(shots,'z','RR-9m'),mode,'RR-9m');appendCourtStats(svg,16.8,4,shotCellStats(shots,'z','RA'),mode,'RA');appendCourtStats(svg,10,5.75,shotCellStats(shots,'z','K'),mode,'K')}else{for(const [key,p] of Object.entries(courtLabelDefaults)){const group=draggableCourtLabel(key,p.x,p.y,zoneActions[key]);group.append(svgEl('text',{x:0,y:0,class:'sector-label'},key));svg.append(group)}}return svg}
   const court=createSectorCourt();$("locationList").append(court);const seven=document.createElement('button');seven.className='btn';seven.dataset.zone='7M';seven.style.marginTop='8px';seven.textContent='7M – 7 Meter';seven.onclick=()=>selectShotLocation('7M',7,'M');$("locationList").append(seven,labelPositionTools());
-  const goal=document.createElement('div');goal.className='goal-map';const inside=document.createElement('div');inside.className='goal-inner';goal.append(inside);
-  function targetButton(code,label,parent,cls,accessibleLabel=label){const b=document.createElement('button');b.className='option '+(cls||'');b.textContent=label;b.setAttribute('aria-label',accessibleLabel);b.dataset.target=code;b.onclick=()=>selectShotTarget(code);parent.append(b);}
-  [['OL','OL – Oben links'],['OM','OM – Oben Mitte'],['OR','OR – Oben rechts'],['MLI','MLI – Mitte links'],['MM','MM – Mitte'],['MRI','MRI – Mitte rechts'],['UL','UL – Unten links'],['UM','UM – Unten Mitte'],['UR','UR – Unten rechts']].forEach(([c,l])=>targetButton(c,c,inside,'',l));
-  targetButton('OTM','Über das Tor',goal,'goal-over');targetButton('ML','Links vorbei',goal,'goal-left');targetButton('MR','Rechts vorbei',goal,'goal-right');$("targetList").append(goal);
+  function createGoalTargetWidget(onSelect){
+    const goal=document.createElement('div');goal.className='goal-map';
+    const inside=document.createElement('div');inside.className='goal-inner';goal.append(inside);
+    function targetButton(code,label,parent,cls,accessibleLabel=label){
+      const b=document.createElement('button');b.type='button';b.className='option '+(cls||'');
+      b.textContent=label;b.setAttribute('aria-label',accessibleLabel);
+      b.dataset.target=code;b.onclick=()=>onSelect(code);parent.append(b);
+    }
+    [['OL','OL – Oben links'],['OM','OM – Oben Mitte'],['OR','OR – Oben rechts'],['MLI','MLI – Mitte links'],['MM','MM – Mitte'],['MRI','MRI – Mitte rechts'],['UL','UL – Unten links'],['UM','UM – Unten Mitte'],['UR','UR – Unten rechts']].forEach(([c,l])=>targetButton(c,c,inside,'',l));
+    targetButton('OTM','Über das Tor',goal,'goal-over');
+    targetButton('ML','Links vorbei',goal,'goal-left');
+    targetButton('MR','Rechts vorbei',goal,'goal-right');
+    return goal;
+  }
+  $("targetList").append(createGoalTargetWidget(selectShotTarget));
+  $("sevenMeterTargetList").append(createGoalTargetWidget(selectSevenMeterTarget));
   const oldCommit=$("commitEvent").onclick;
   $("commitEvent").onclick=()=>{if(draft?.flow==='shot'&&draft.result==='save'&&!draft.keeper)return toast('Bitte den Torwart auswählen, der den Ball gehalten hat.');const extra=draft.flow==='shot'?{shotDistance:draft.shotDistance,shotLane:draft.shotLane}:{};oldCommit();Object.assign(state.events[state.events.length-1],extra);persistSession();};
   function playerLabel(button,p){button.replaceChildren();const label=document.createElement('span');label.className='player-label';label.dataset.playerId=String(p.id);const badge=document.createElement('span');const has=p.nr!==null&&p.nr!==undefined&&String(p.nr).trim()!=='';badge.className='player-number'+(has?'':' missing');badge.textContent=has?'#'+p.nr:'Nr. ?';const name=document.createElement('span');name.textContent=[p.vorname,p.nachname].filter(Boolean).join(' ');label.append(badge,name);button.append(label);}
