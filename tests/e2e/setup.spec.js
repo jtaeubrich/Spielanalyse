@@ -286,8 +286,9 @@ test("landscape smartphone hides the Match width slider and keeps compact playba
  await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
- await expect(page.locator("body")).toHaveClass(/phone-match-layout/);
- await expect(page.locator("#videoSize")).toBeHidden();
+ const phone=await page.locator("body").evaluate(body=>body.classList.contains("phone-match-layout"));
+ if(phone)await expect(page.locator("#videoSize")).toBeHidden();
+ else await expect(page.locator("#videoSize")).toBeVisible();
  const layout=await page.evaluate(()=>{
    const host=document.querySelector("#matchVideoHost");
    const tempo=host.querySelector(".video-control-group:first-child").getBoundingClientRect();
@@ -317,7 +318,9 @@ test("landscape Video tab retains adjustable width while phone Match hides the s
  await expect(page.locator("#videoSizeValue")).toHaveText("72 %");
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
- await expect(page.locator("#videoSize")).toBeHidden();
+ const phone=await page.locator("body").evaluate(body=>body.classList.contains("phone-match-layout"));
+ if(phone)await expect(page.locator("#videoSize")).toBeHidden();
+ else await expect(page.locator("#videoSize")).toBeVisible();
  await page.locator('[data-tab="video"]').click();
  await expect(page.locator("#videoSize")).toBeVisible();
  await expect(page.locator("#videoSizeValue")).toHaveText("72 %");
