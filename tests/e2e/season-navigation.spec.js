@@ -100,7 +100,12 @@ test("season fixture preview never leaks into independent match analysis",async(
   await expect(page.locator("#analysisGamePickerStatus")).toContainText("Bremen Saisonspiel");
   await expect(page.locator("#analysisStats")).toContainText("1");
   await expect(page.locator("#analysisToVideo")).toBeDisabled();
-  await expect(page.locator("#score")).toHaveText("0 : 0");
+  // The visible header follows the selected season preview, but the independent
+  // scouting session remains preserved separately.
+  await expect(page.locator("#score")).toHaveText("1 : 0");
+  const standalone=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.independentSession")));
+  expect(standalone.state.gameName).toBe("Aktives Scouting");
+  expect(standalone.state.events).toHaveLength(0);
   await page.locator('[data-tab="home"]').click();
   await page.locator("#homeChooseGame").click();
   await page.locator("#homeOpen").click();
