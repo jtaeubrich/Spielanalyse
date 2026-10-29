@@ -1666,6 +1666,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
           <label for="analysisGamePicker"><strong>Einzelspiel auswählen</strong></label>
           <select class="field" id="analysisGamePicker"><option value="">Aktuelles Spiel (Match)</option></select>
           <p class="number-help" id="analysisGamePickerStatus">Diese Auswahl ändert nur die Analyse, nicht das laufende Scouting-Spiel.</p>
+          <div class="setup-actions"><button class="btn primary" id="analysisOpenSeasonGame" type="button" hidden>Ausgewähltes Spiel für Video / Bearbeitung öffnen</button></div>
         </div>
         <div id="analysisSeasonFocus" class="analysis-season-focus" hidden></div>
         <label for="analysisPerspectiveSelect" id="analysisPerspectiveControl" class="analysis-perspective-control"><strong>Analyseperspektive</strong>
@@ -5051,6 +5052,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
        " · Laufendes Match und Video bleiben unverändert."
       :"Statistik des aktuell geladenen Saisonspiels.";
     $("analysisToVideo").disabled=Boolean(selected&&selected.id!==activeSeasonGameId);
+    $("analysisOpenSeasonGame").hidden=!season||!selected||selected.id===activeSeasonGameId;
     if(season){
       const entry=selected||seasonGames.find(game=>game.id===activeSeasonGameId);
       const side=entry?seasonOwnTeam(entry):null;
@@ -5066,6 +5068,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("analysisTeamFilter").value=analysisSeasonActive()?"own":"all";
     $("analysisPlayerFilter").value="all";
     renderAnalysisGamePicker();renderAnalysis();
+  };
+  $("analysisOpenSeasonGame").onclick=async()=>{
+    const id=analysisSelectedGameId;
+    if(!analysisSeasonActive()||!seasonGames.some(game=>game.id===id))return;
+    $("setupSeasonGameSelect").value=id;
+    await openSetupSeasonGame(false);
   };
   $("analysisPerspectiveSelect").onchange=()=>{
     if(analysisSeasonActive())return;
