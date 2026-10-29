@@ -14,6 +14,10 @@ test("separates game roster editing from persistent team collection in Setup",as
 });
 
 import { test, expect } from "@playwright/test";
+
+test.beforeEach(async ({page}) => {
+ await page.addInitScript(() => localStorage.setItem("handballSpielanalyse.proxyToken", "playwright-fake-proxy-token"));
+});
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
