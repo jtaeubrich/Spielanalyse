@@ -341,7 +341,7 @@ test("seven-meter reuses the regular goal map when target capture is enabled",as
   await expect(panel).toBeVisible();
   await expect(page.locator("#sevenMeterTargetList .goal-map")).toHaveCount(1);
   await expect(page.locator("#targetList .goal-map")).toHaveCount(1);
-  await panel.locator("summary").click();
+  await expect(panel).toHaveAttribute("open", "");
   await expect(page.locator("#sevenMeterTargetList .goal-inner [data-target]")).toHaveCount(9);
   await page.locator('#sevenMeterTargetList [data-target="OL"]').click();
   await expect(page.locator('#sevenMeterTargetList [data-target="OL"]')).toHaveClass(/selected/);
@@ -355,7 +355,7 @@ test("seven-meter target can be deselected without an outcome timestamp",async({
   await page.locator("#awayPoss").click();
   await page.locator('[data-flow="7m"]').click();
   await pickJersey(page,"#playerList",7);
-  await page.locator(".seven-meter-target summary").click();
+  await expect(page.locator(".seven-meter-target")).toHaveAttribute("open", "");
   const button=page.locator('#sevenMeterTargetList [data-target="UM"]');
   await button.click();
   await expect(button).toHaveClass(/selected/);
@@ -371,7 +371,7 @@ test("seven-meter miss with optional outside target never records a goal",async(
   await page.locator("#awayPoss").click();
   await page.locator('[data-flow="7m"]').click();
   await pickJersey(page,"#playerList",7);
-  await page.locator(".seven-meter-target summary").click();
+  await expect(page.locator(".seven-meter-target")).toHaveAttribute("open", "");
   await page.locator('#sevenMeterTargetList [data-target="ML"]').click();
   await page.locator('[data-seven-meter-result="goal"]').click();
   await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
