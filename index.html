@@ -2457,7 +2457,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     draft.attackPhase="7-Meter";
     const targetPanel=$("sevenMeterStep").querySelector(".seven-meter-target");
     targetPanel.hidden=!state.shotCapture.target;
-    targetPanel.open=false;
+    targetPanel.open=Boolean(state.shotCapture.target);
     refreshSevenMeterTarget();
     if(draft.attackerChosen){showStep("sevenMeter");return}
     renderPlayers();showStep("player");
