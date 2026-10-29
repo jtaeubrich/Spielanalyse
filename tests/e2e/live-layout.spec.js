@@ -119,6 +119,7 @@ test("video review also keeps possession and event capture below the video/event
   await page.locator("#matchReviewToggle").click();
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
   await page.setViewportSize({width:820,height:900});
+  await expect(page.locator("body")).not.toHaveClass(/phone-match-layout/);
   const result=await page.evaluate(()=>{
     const b=id=>document.getElementById(id).getBoundingClientRect();
     const events=document.querySelector("#matchGrid>.events").getBoundingClientRect();
@@ -135,46 +136,56 @@ test("video review also keeps possession and event capture below the video/event
   expect(result).toEqual({eventsBesideVideo:true,possessionBelowEvents:true,captureBelowPossession:true,captureFullWidth:true,settingsAtBottom:true});
 });
 
-test("portrait mobile review shows ALL unsynced events as a horizontal strip under video",async({page,isMobile})=>{
-  const fixturePath=new URL("../fixtures/hkn_reference.json",import.meta.url);
-  const game=JSON.parse(await readFile(fixturePath,"utf8"));
-  game.isHistorical=false;game.isVideoscoutingFile=false;
-  delete game.liveScoutingCompleted;
-  // Intentionally leave events without video sync, matching older live scouting games.
-  for(const event of game.events){event.realTime=null;}
-  await page.setViewportSize({width:820,height:900});
-  await page.goto("/");
-  await page.locator("#homeChooseGame").click();
-  await page.locator("#homeImport").click();
-  await page.locator("#continueGameInput").setInputFiles({
-    name:"unsynced-review.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(game))
+// Keep screen size independent of the layout viewport. setViewportSize() would
+// reset both and turn the wide-viewport phone into an emulated tablet.
+for(const scenario of [
+  {name:"portrait phone review",viewport:{width:390,height:900},screen:{width:390,height:900}},
+  {name:"portrait phone review with wide layout viewport",viewport:{width:820,height:900},screen:{width:390,height:900}}
+]){
+  test.describe(scenario.name,()=>{
+    test.use({viewport:scenario.viewport,screen:scenario.screen});
+
+    test("shows all unsynced events as a horizontal strip under video",async({page,isMobile})=>{
+      test.skip(!isMobile,"Phone emulation is covered by the chromium-mobile project.");
+      const fixturePath=new URL("../fixtures/hkn_reference.json",import.meta.url);
+      const game=JSON.parse(await readFile(fixturePath,"utf8"));
+      game.isHistorical=false;game.isVideoscoutingFile=false;
+      delete game.liveScoutingCompleted;
+      // Intentionally leave events without video sync, matching older live scouting games.
+      for(const event of game.events){event.realTime=null;}
+      await page.goto("/");
+      await page.locator("#homeChooseGame").click();
+      await page.locator("#homeImport").click();
+      await page.locator("#continueGameInput").setInputFiles({
+        name:"unsynced-review.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(game))
+      });
+      await page.locator("#matchReviewToggle").click();
+      await expect(page.locator("body")).toHaveClass(/match-review-mode/);
+      await expect(page.locator("body")).toHaveClass(/phone-match-layout/);
+      expect(await page.evaluate(()=>({width:screen.width,height:screen.height}))).toEqual(scenario.screen);
+      await expect(page.locator("#matchGrid>.events .event")).toHaveCount(game.events.length);
+      const result=await page.evaluate(expectedEventCount=>{
+        const rect=id=>document.getElementById(id).getBoundingClientRect();
+        const eventList=document.getElementById("eventList"),
+          cards=[...eventList.querySelectorAll(".event")];
+        const first=cards[0]?.getBoundingClientRect(),second=cards[1]?.getBoundingClientRect();
+        const grid=rect("matchGrid"),side=document.querySelector("#matchGrid>.side").getBoundingClientRect();
+        return {
+          eventBelowVideo:rect("eventList").top>=rect("matchVideoHost").bottom-4,
+          possessionBelowEvents:rect("matchPossessionHost").top>=rect("eventList").bottom-4,
+          captureBelowPossession:side.top>=rect("matchPossessionHost").bottom-4,
+          settingsBelowActions:rect("matchSceneSettingsHost").top>=side.bottom-4,
+          fullWidth:side.width>=grid.width-4,
+          horizontalEvents:Boolean(first&&second)&&Math.abs(first.top-second.top)<5,
+          unsyncedAvailable:cards.length===expectedEventCount
+        };
+      },game.events.length);
+      expect(result).toEqual({
+        eventBelowVideo:true,possessionBelowEvents:true,captureBelowPossession:true,
+        settingsBelowActions:true,fullWidth:true,horizontalEvents:true,unsyncedAvailable:true
+      });
+      await page.locator("#matchGrid>.events .event").first().click();
+      await expect(page.locator("#videoEventEditor")).toBeVisible();
+    });
   });
-  await page.locator("#matchReviewToggle").click();
-  await expect(page.locator("body")).toHaveClass(/match-review-mode/);
-  // Desktop at tablet width retains a split display; a touch-phone does not.
-  const phone=await page.evaluate(()=>document.body.classList.contains("phone-match-layout"));
-  if(!phone&&!isMobile)return;
-  await expect(page.locator("#matchGrid>.events .event")).toHaveCount(game.events.length);
-  const result=await page.evaluate(expectedEventCount=>{
-    const rect=id=>document.getElementById(id).getBoundingClientRect();
-    const eventList=document.getElementById("eventList"),
-      cards=[...eventList.querySelectorAll(".event")];
-    const first=cards[0]?.getBoundingClientRect(),second=cards[1]?.getBoundingClientRect();
-    const grid=rect("matchGrid"),side=document.querySelector("#matchGrid>.side").getBoundingClientRect();
-    return {
-      eventBelowVideo:rect("eventList").top>=rect("matchVideoHost").bottom-4,
-      possessionBelowEvents:rect("matchPossessionHost").top>=rect("eventList").bottom-4,
-      captureBelowPossession:side.top>=rect("matchPossessionHost").bottom-4,
-      settingsBelowActions:rect("matchSceneSettingsHost").top>=side.bottom-4,
-      fullWidth:side.width>=grid.width-4,
-      horizontalEvents:!first||!second||Math.abs(first.top-second.top)<5,
-      unsyncedAvailable:cards.length===expectedEventCount
-    };
-  },game.events.length);
-  expect(result).toEqual({
-    eventBelowVideo:true,possessionBelowEvents:true,captureBelowPossession:true,
-    settingsBelowActions:true,fullWidth:true,horizontalEvents:true,unsyncedAvailable:true
-  });
-  await page.locator("#matchGrid>.events .event").first().click();
-  await expect(page.locator("#videoEventEditor")).toBeVisible();
-});
+}
