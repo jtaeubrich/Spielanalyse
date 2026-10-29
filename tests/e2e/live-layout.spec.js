@@ -155,7 +155,7 @@ test("portrait mobile review shows ALL unsynced events as a horizontal strip und
   const phone=await page.evaluate(()=>document.body.classList.contains("phone-match-layout"));
   if(!phone&&!isMobile)return;
   await expect(page.locator("#matchGrid>.events .event")).toHaveCount(game.events.length);
-  const result=await page.evaluate(()=>{
+  const result=await page.evaluate(expectedEventCount=>{
     const rect=id=>document.getElementById(id).getBoundingClientRect();
     const eventList=document.getElementById("eventList"),
       cards=[...eventList.querySelectorAll(".event")];
@@ -168,9 +168,9 @@ test("portrait mobile review shows ALL unsynced events as a horizontal strip und
       settingsBelowActions:rect("matchSceneSettingsHost").top>=side.bottom-4,
       fullWidth:side.width>=grid.width-4,
       horizontalEvents:!first||!second||Math.abs(first.top-second.top)<5,
-      unsyncedAvailable:cards.length===game.events.length
+      unsyncedAvailable:cards.length===expectedEventCount
     };
-  });
+  },game.events.length);
   expect(result).toEqual({
     eventBelowVideo:true,possessionBelowEvents:true,captureBelowPossession:true,
     settingsBelowActions:true,fullWidth:true,horizontalEvents:true,unsyncedAvailable:true
