@@ -5753,11 +5753,12 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function setMatchReviewMode(enabled,{announce=true,navigate=true}={}){enabled=Boolean((enabled||state.liveScoutingCompleted)&&analysisMode==="live"&&!state.isHistorical&&(state.events.length||state.liveScoutingCompleted));if(enabled===matchReviewMode){updateMatchReviewControls();refreshSecondaryClockControls();updateMatchReviewLayout();return}stopGame();if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}mediaPause();scenePlayback.cancel();matchReviewMode=enabled;mobileMatchEditorShown=false;mobileMatchEditorCollapsed=false;updateMatchReviewControls();refreshSecondaryClockControls();if(enabled){if(navigate)showTab("match");resizeAnnotationCanvas()}updateMatchReviewLayout();if(announce)toast(enabled?"Video-Nachanalyse aktiv – Events können am Video ergänzt und korrigiert werden":"Video-Nachanalyse beendet")}
   function setAnalysisMode(mode){if(state.liveScoutingCompleted&&!state.isHistorical)mode="live";const changed=mode!==analysisMode;if(mode!=="live"&&matchReviewMode)setMatchReviewMode(false,{announce:false});stopGame();if(mode==="live"){mediaPause();if(!liveClockInitialized){liveClockBase=0;liveClockInitialized=true}analysisMode="live";state.video.analysisTimeBasis="live-elapsed-ms"}else{if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}analysisMode="video";state.video.analysisTimeBasis="video-absolute-ms"}if(changed){mobileMatchEditorShown=false;mobileMatchEditorCollapsed=false}if(!state.isHistorical)state.isVideoscoutingFile=analysisMode==="video";document.body.classList.toggle("live-mode",analysisMode==="live");$("modeSelect").value=analysisMode;updateMatchReviewLayout();refreshSecondaryClockControls();mediaLast=analysisMode==="video"&&mediaReady()?mediaSeconds():null;updateMatchReviewControls();if(persistenceReady)persistSession();if(changed)toast(analysisMode==="live"?"Live Scouting aktiv – Realzeit separat starten":"Video Scouting aktiv")}
   $("modeSelect").onchange=e=>{
-    if(state.liveScoutingCompleted&&e.target.value!==analysisMode){
-      e.target.value=analysisMode;return toast("Live-Scouting wurde abgeschlossen. Bitte die Video-Nachanalyse verwenden.");
+    if(state.liveScoutingCompleted){
+      e.target.value="review";return toast("Live-Scouting wurde abgeschlossen. Die Video-Nachanalyse bleibt aktiv.");
     }
-    if(state.events.length&&e.target.value!==analysisMode){
-      e.target.value=analysisMode;return toast("Scouting-Modus nach dem ersten Ereignis nicht wechseln.");
+    if(matchReviewMode||state.events.length&&e.target.value!==analysisMode){
+      e.target.value=matchReviewMode?"review":analysisMode;
+      return toast("Scouting-Modus nach dem ersten Ereignis nicht wechseln.");
     }
     setAnalysisMode(e.target.value);
   };
