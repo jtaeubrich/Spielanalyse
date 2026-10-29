@@ -321,8 +321,53 @@ test("seven-meter parade credits the keeper, attributes the shooter, and has an 
   });
 });
 
+test("seven-meter hides the goal widget and records no target when disabled",async({page})=>{
+  await openDemo(page,{target:false});
+  await page.locator("#awayPoss").click();
+  await page.locator('[data-flow="7m"]').click();
+  await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#sevenMeterStep")).toBeVisible();
+  await expect(page.locator("#sevenMeterStep .seven-meter-target")).toBeHidden();
+  await page.locator('[data-seven-meter-result="goal"]').click();
+  expect(await latestEvent(page)).toMatchObject({type:"goal",z:"7M",is7:true,gz:null});
+});
+
+test("seven-meter reuses the regular goal map when target capture is enabled",async({page})=>{
+  await openDemo(page,{target:true});
+  await page.locator("#awayPoss").click();
+  await page.locator('[data-flow="7m"]').click();
+  await pickJersey(page,"#playerList",7);
+  const panel=page.locator("#sevenMeterStep .seven-meter-target");
+  await expect(panel).toBeVisible();
+  await expect(page.locator("#sevenMeterTargetList .goal-map")).toHaveCount(1);
+  await expect(page.locator("#targetList .goal-map")).toHaveCount(1);
+  await panel.locator("summary").click();
+  await expect(page.locator("#sevenMeterTargetList .goal-inner [data-target]")).toHaveCount(9);
+  await page.locator('#sevenMeterTargetList [data-target="OL"]').click();
+  await expect(page.locator('#sevenMeterTargetList [data-target="OL"]')).toHaveClass(/selected/);
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+  await page.locator('[data-seven-meter-result="goal"]').click();
+  expect(await latestEvent(page)).toMatchObject({type:"goal",z:"7M",is7:true,gz:"OL",scoreChanged:true});
+});
+
+test("seven-meter target can be deselected without an outcome timestamp",async({page})=>{
+  await openDemo(page,{target:true});
+  await page.locator("#awayPoss").click();
+  await page.locator('[data-flow="7m"]').click();
+  await pickJersey(page,"#playerList",7);
+  await page.locator(".seven-meter-target summary").click();
+  const button=page.locator('#sevenMeterTargetList [data-target="UM"]');
+  await button.click();
+  await expect(button).toHaveClass(/selected/);
+  await button.click();
+  await expect(button).not.toHaveClass(/selected/);
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+  await page.locator('[data-seven-meter-result="goal"]').click();
+  expect(await latestEvent(page)).toMatchObject({type:"goal",z:"7M",is7:true,gz:null});
+});
+
 test("seven-meter miss with optional outside target never records a goal",async({page})=>{
-  const source=await openDemo(page);
+  const source=await openDemo(page,{target:true});
   await page.locator("#awayPoss").click();
   await page.locator('[data-flow="7m"]').click();
   await pickJersey(page,"#playerList",7);
