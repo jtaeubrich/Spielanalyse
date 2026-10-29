@@ -3817,7 +3817,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       host.append(homeRow(state.gameName||"Zuletzt geöffnetes Spiel",subtitle,[{
         title:state.isHistorical?"Analyse öffnen":"Spiel fortsetzen",primary:true,
         action:()=>{
-          if(!activeSeasonGameId)showSetupMode("single",{focused:true});
+          if(!activeSeasonGameId){enterStandaloneWorkspace();showSetupMode("single",{focused:true})}
           showTab(state.isHistorical?"analysis":"match");
         }
       }],"game"));
@@ -3863,7 +3863,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(homeHasSession){
         host.append(homeRow(state.gameName||"Letztes Spiel",
           "Zuletzt bearbeitet · "+(state.events?.length||0)+" Ereignisse",
-          [{title:state.isHistorical?"Analyse öffnen":"Fortsetzen",primary:true,action:()=>{showSetupMode("single",{focused:true});showTab(state.isHistorical?"analysis":"match")}}],"game"));
+          [{title:state.isHistorical?"Analyse öffnen":"Fortsetzen",primary:true,action:()=>{enterStandaloneWorkspace();showSetupMode("single",{focused:true});showTab(state.isHistorical?"analysis":"match")}}],"game"));
       }
       for(const entry of homeSeasonRecords()){
         for(const game of entry.games||[]){
