@@ -1,3 +1,4 @@
+- **Video-Nachanalyse auf dem Smartphone:** Auch bei einem breiten Safari-Layoutviewport stehen Video und Ereignisse untereinander. Die Ereignisse werden horizontal gescrollt und bleiben auch ohne berechenbare Videozeit auswählbar und bearbeitbar; erst ein Video-Synchronisationspunkt ermöglicht den direkten Videosprung. Darunter folgen Ballbesitz, Erfassungsbuttons und eingeklappte Szenenwiedergabe.
 # Bedienreferenz der aktuellen PWA
 
 Die Bezeichnungen orientieren sich am aktuellen `index.html`. Diese Referenz ergänzt den [Saison-/Einzelspiel-Einstieg](saison-workflow.md) und die [Scouting-Workflows](workflows.md), statt sie zu ersetzen.
