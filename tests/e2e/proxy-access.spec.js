@@ -24,9 +24,18 @@ test("per-device proxy token is stored separately, used for calls, and removable
 
   let authorization=null;
   await page.route("**/handball360-proxy-235703972531.europe-west1.run.app/match/378107",async route=>{
-    authorization=route.request().headers()["authorization"]||null;
-    await route.fulfill({status:401,contentType:"application/json",
-      headers:{"access-control-allow-origin":"*"},
+    const request=route.request();
+    const headers={
+      "access-control-allow-origin":"*",
+      "access-control-allow-methods":"GET, OPTIONS",
+      "access-control-allow-headers":"Authorization"
+    };
+    if(request.method()==="OPTIONS"){
+      await route.fulfill({status:204,headers});
+      return;
+    }
+    authorization=request.headers()["authorization"]||null;
+    await route.fulfill({status:401,contentType:"application/json",headers,
       body:JSON.stringify({error:{message:"Mocked response"}})});
   });
   await page.locator("#newGame").click();
