@@ -296,10 +296,16 @@ test("landscape smartphone shows adjustable video width and compact control grou
    const seek=host.querySelector(".video-control-group:nth-child(2)").getBoundingClientRect();
    const list=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
    const video=host.getBoundingClientRect();
-   return {tempoY:tempo.top,seekY:seek.top,sideBySide:list.left>=video.right-3};
+   return {
+     tempoY:tempo.top,seekY:seek.top,
+     phone:document.body.classList.contains("phone-match-layout"),
+     sideBySide:list.left>=video.right-3,
+     eventsBelowVideo:list.top>=video.bottom-3
+   };
  });
  expect(Math.abs(layout.tempoY-layout.seekY)).toBeLessThan(5);
- expect(layout.sideBySide).toBe(true);
+ // Desktop/tablet keep two columns; physical phones use one row beneath video.
+ expect(layout.phone?layout.eventsBelowVideo:layout.sideBySide).toBe(true);
 });
 
 test("landscape Match and Video share 85 percent width limit",async({page})=>{
