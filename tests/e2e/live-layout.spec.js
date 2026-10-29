@@ -163,6 +163,7 @@ for(const scenario of [
       await page.locator("#matchReviewToggle").click();
       await expect(page.locator("body")).toHaveClass(/match-review-mode/);
       await expect(page.locator("body")).toHaveClass(/phone-match-layout/);
+      await expect(page.locator("#videoSize")).toBeHidden();
       expect(await page.evaluate(()=>({width:screen.width,height:screen.height}))).toEqual(scenario.screen);
       await expect(page.locator("#matchGrid>.events .event")).toHaveCount(game.events.length);
       const result=await page.evaluate(expectedEventCount=>{
@@ -255,6 +256,54 @@ test.describe("phone video scouting editor",()=>{
     await page.locator("#matchEditorCollapse").click();
     await expect(page.locator("#videoEventEditor")).toBeVisible();
     await page.locator("#matchEditorClose").click();
+    await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
+  });
+});
+
+test.describe("compact phone review event deletion",()=>{
+  test.use({viewport:{width:844,height:390},screen:{width:844,height:390}});
+
+  test("uses compact cards with top-right delete and confirms before removing exactly one event",async({page,isMobile})=>{
+    test.skip(!isMobile,"Phone layout is covered by the chromium-mobile project.");
+    const game=JSON.parse(await readFile(fixture,"utf8"));
+    game.isHistorical=false;
+    game.isVideoscoutingFile=false;
+    for(const event of game.events)event.realTime=null;
+    await page.goto("/");
+    await page.locator("#homeChooseGame").click();
+    await page.locator("#homeImport").click();
+    await page.locator("#continueGameInput").setInputFiles({
+      name:"compact-review-delete.json",mimeType:"application/json",
+      buffer:Buffer.from(JSON.stringify(game))
+    });
+    await page.locator("#matchReviewToggle").click();
+    await expect(page.locator("#videoSize")).toBeHidden();
+    const cards=page.locator("#matchGrid>.events .event");
+    await expect(cards).toHaveCount(game.events.length);
+    const geometry=await cards.first().evaluate(card=>{
+      const box=card.getBoundingClientRect(),cross=card.querySelector(".delete").getBoundingClientRect();
+      const meta=card.querySelector(".eventmeta").getBoundingClientRect();
+      const time=card.querySelector(".eventtime").getBoundingClientRect();
+      return {
+        compact:box.height<=78,
+        xTopRight:cross.top<=box.top+12&&cross.right>=box.right-10,
+        metaBelowTime:meta.top>=time.bottom-4,
+        xWithinCard:cross.right<=box.right+2
+      };
+    });
+    expect(geometry).toEqual({compact:true,xTopRight:true,metaBelowTime:true,xWithinCard:true});
+
+    // Cancel must leave all events and the active editor untouched.
+    let message="";
+    page.once("dialog",async dialog=>{message=dialog.message();await dialog.dismiss();});
+    await cards.first().locator(".delete").click();
+    expect(message).toMatch(/Ereignis.*wirklich löschen/);
+    await expect(cards).toHaveCount(game.events.length);
+
+    page.once("dialog",async dialog=>{message=dialog.message();await dialog.accept();});
+    await cards.first().locator(".delete").click();
+    expect(message).toMatch(/Ereignis.*wirklich löschen/);
+    await expect(cards).toHaveCount(game.events.length-1);
     await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
   });
 });

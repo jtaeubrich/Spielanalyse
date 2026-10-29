@@ -280,16 +280,14 @@ test("new game action still opens dialog after video-sync module load",async({pa
  expect(pageErrors).toEqual([]);
 });
 
-test("landscape smartphone shows adjustable video width and compact control groups",async({page})=>{
+test("landscape smartphone hides the Match width slider and keeps compact playback controls",async({page})=>{
  await page.setViewportSize({width:844,height:390});
  await page.goto("/");
  await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="match"]').click();
  await page.locator("#modeSelect").selectOption("video");
- await expect(page.locator("#videoSize")).toBeVisible();
- await expect(page.locator("#videoSize")).toHaveAttribute("max","85");
- await page.locator("#videoSize").fill("72");
- await expect(page.locator("#videoSizeValue")).toHaveText("72 %");
+ await expect(page.locator("body")).toHaveClass(/phone-match-layout/);
+ await expect(page.locator("#videoSize")).toBeHidden();
  const layout=await page.evaluate(()=>{
    const host=document.querySelector("#matchVideoHost");
    const tempo=host.querySelector(".video-control-group:first-child").getBoundingClientRect();
@@ -308,18 +306,21 @@ test("landscape smartphone shows adjustable video width and compact control grou
  expect(layout.phone?layout.eventsBelowVideo:layout.sideBySide).toBe(true);
 });
 
-test("landscape Match and Video share 85 percent width limit",async({page})=>{
+test("landscape Video tab retains adjustable width while phone Match hides the slider",async({page})=>{
  await page.setViewportSize({width:844,height:390});
  await page.goto("/");
  await page.locator('[data-tab="setup"]').click();
  await page.locator('[data-tab="video"]').click();
- await expect(page.locator("#videoSize")).toHaveAttribute("max","85");
- await page.locator('[data-tab="match"]').click();
- await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#videoSize")).toBeVisible();
  await expect(page.locator("#videoSize")).toHaveAttribute("max","85");
  await page.locator("#videoSize").fill("72");
  await expect(page.locator("#videoSizeValue")).toHaveText("72 %");
+ await page.locator('[data-tab="match"]').click();
+ await page.locator("#modeSelect").selectOption("video");
+ await expect(page.locator("#videoSize")).toBeHidden();
  await page.locator('[data-tab="video"]').click();
+ await expect(page.locator("#videoSize")).toBeVisible();
+ await expect(page.locator("#videoSizeValue")).toHaveText("72 %");
  const order=await page.evaluate(()=>{const host=document.querySelector("#videoModule");const controls=host.querySelector(".video-control-groups");const drawing=host.querySelector("#annotationSection");return controls.compareDocumentPosition(drawing)&Node.DOCUMENT_POSITION_FOLLOWING});
  expect(order).toBeTruthy();
 });
