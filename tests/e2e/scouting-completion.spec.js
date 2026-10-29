@@ -8,8 +8,13 @@ const upload=(name,game)=>({name,mimeType:"application/json",buffer:Buffer.from(
 
 async function importSeasonGame(page,game){
   await page.goto("/");
-  await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
+  // An opened single game uses focused Setup, where #setupModeSeason is hidden.
+  // Navigate through Start -> Saison -> Gespeichert -> Erweiterte Verwaltung.
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeAdvanced").click();
+  await expect(page.locator("#setupSeasonPanel")).toBeVisible();
   await page.locator("#seasonGameInput").setInputFiles(upload("video-season.json",game));
   await expect(page.locator("#seasonGameCount")).toContainText("1 Spiel");
   await page.locator('[data-tab="home"]').click();
