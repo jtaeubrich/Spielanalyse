@@ -133,6 +133,37 @@ test("completed standalone live game restores video review label and video works
   expect(session.state.events).toHaveLength(total);
 });
 
+test("returning from a season preserves the standalone completed-match review",async({page})=>{
+  const game=structuredClone(fixture);
+  game.gameName="Abgeschlossenes Einzelspiel";
+  game.isHistorical=false;
+  game.isVideoscoutingFile=false;
+  game.liveScoutingCompleted=true;
+  await page.goto("/");
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeImport").click();
+  await page.locator("#continueGameInput").setInputFiles(upload("finished-standalone.json",game));
+  await expect(page.locator("#modeSelect")).toHaveValue("review");
+
+  const other=structuredClone(fixture);
+  other.gameName="Anderes Saisonspiel";
+  other.isHistorical=false;
+  other.isVideoscoutingFile=false;
+  delete other.liveScoutingCompleted;
+  await importSeasonGame(page,other);
+  await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeLibraryList").getByRole("button",{name:"Fortsetzen"}).first().click();
+  await expect(page.locator("#matchTab")).toBeVisible();
+  await expect(page.locator("#modeSelect")).toHaveValue("review");
+  await expect(page.locator("#modeSelect")).toBeDisabled();
+  await expect(page.locator("body")).toHaveClass(/match-review-mode/);
+  await expect(page.locator("#runBtn")).toBeHidden();
+  await expect(page.locator("#eventCount")).toContainText(String(game.events.length));
+});
+
 test("new manual game clears the review label after opening completed live game",async({page})=>{
   const game=structuredClone(fixture);
   game.isHistorical=false;
