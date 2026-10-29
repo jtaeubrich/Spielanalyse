@@ -284,6 +284,7 @@
     .analysis-subtab{background:transparent;border:0;border-radius:9px;padding:10px 18px;font-weight:750;color:var(--muted);cursor:pointer}
     .analysis-subtab.active{background:var(--cyan);color:#041923}
     .analysis-subtab[hidden]{display:none!important}
+    #analysisTab.season-empty .analysis-grid > :not(#analysisGamePickerHost){display:none!important}
     .analysis-season-focus{border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin-top:10px;font-weight:650;color:var(--cyan)}
     .analysis-season-focus[hidden],#analysisPerspectiveControl[hidden],#analysisPerspectiveStatus[hidden],#analysisGameSelector[hidden]{display:none!important}
     .tab-pane{display:none}.tab-pane.active{display:block}.setup-grid,.analysis-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.setup-card,.analysis-card,.video-card{padding:18px}.setup-card h2,.analysis-card h2,.video-card h2{margin:0 0 14px}.setup-actions{display:flex;gap:8px;flex-wrap:wrap}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.roster-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.roster-table,.stats-table{width:100%;border-collapse:collapse}.roster-table th,.roster-table td,.stats-table th,.stats-table td{padding:8px;border-bottom:1px solid var(--line);text-align:left}.roster-table input{width:100%;min-width:60px;background:#07131c;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px}.roster-table .nr{width:72px}.roster-table .tw,.roster-table .remove{width:54px;text-align:center}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{background:#07131c;border:1px solid var(--line);border-radius:14px;padding:14px}.metric strong{display:block;font-size:28px;color:var(--cyan)}.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.filterbar .field{width:auto;min-width:180px;margin:0}.analysis-events,.playlist{display:grid;gap:8px;max-height:520px;overflow:auto}.analysis-event,.clip{border:1px solid var(--line);background:#0a1720;color:var(--text);border-radius:12px;padding:11px;text-align:left;cursor:pointer}.analysis-event:hover,.clip:hover{border-color:var(--cyan)}.defense-name{color:#ffca55}.video-page{display:grid;gap:14px;min-width:0}.video-filter-card{width:100%;min-width:0}.video-filter-card .filterbar{margin-bottom:0}.video-content-grid{display:grid;grid-template-columns:minmax(0,var(--video-share,64%)) minmax(300px,1fr);grid-template-areas:"player events" "production presets";gap:14px;align-items:start;min-width:0;transition:grid-template-columns .16s ease}#videoPlayerHost{grid-area:player;min-width:0}.video-event-data-card{grid-area:editor;min-width:0}.video-event-data-card .event-editor{margin:0;padding:0;border:0}.video-event-data-card .event-editor h2{margin:0 0 10px}.video-event-data-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px}.video-event-data-grid label{min-width:0;color:var(--muted);font-size:12px}.video-event-data-grid .field{width:100%;min-width:0;margin:4px 0 0}.video-event-data-grid .wide{grid-column:1/-1}.video-event-meta-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}.video-event-meta-row .field{margin:0}.video-event-data-card .event-editor-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}.video-event-data-card .tag-chips{margin-bottom:8px}#videoPlayerHost .video-pane{display:block}#videoPlayerHost .workspace{height:fit-content}.video-events-card{grid-area:events;display:flex;flex-direction:column;min-width:0;max-width:100%;min-height:360px;overflow:hidden}.video-events-card .playlist{flex:1 1 auto;min-width:0;min-height:0;max-height:none;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.video-events-card .event-editor{flex:0 0 auto;max-width:100%;max-height:52%;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}.video-production-card{grid-area:production}.video-presets-card{grid-area:presets;margin-top:0;padding:18px;border-top:1px solid var(--line)}.video-production-card h3{margin:20px 0 10px}.production-settings{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}.production-settings label{color:var(--muted);font-size:13px}.production-settings .field{width:100px;margin:4px 0 0}.sync-row{display:flex;gap:8px;flex-wrap:wrap}.sync-state{color:var(--muted);margin:10px 0}.wide{grid-column:1/-1}
@@ -1848,6 +1849,7 @@ import { previewOfficialSeasonRosters, applyOfficialSeasonRosters } from "./src/
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonTrendSeries as coreSeasonTrendSeries, seasonPlayerComparison as coreSeasonPlayerComparison, seasonTrendYAxisTicks as coreSeasonTrendYAxisTicks } from "./src/season-trends.js?v=3";
 import { analysisViewSide, analysisVideoRole, analysisPerspectiveText } from "./src/analysis-perspective.js?v=1";
+import { selectSeasonPreviewGame } from "./src/season-selection.js?v=1";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver, createAliasedSeasonPlayerKeyResolver as coreCreateAliasedSeasonPlayerKeyResolver, setSeasonPlayerAlias as coreSetSeasonPlayerAlias, resolveSeasonPlayerAliasKey as coreResolveSeasonPlayerAliasKey } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
 import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition, videoScoutingEventStamp as coreVideoScoutingEventStamp, reconstructedGameClock as coreReconstructedGameClock, scoreAtVideoPosition as coreScoreAtVideoPosition } from "./src/video-sync.js?v=151";
@@ -1875,7 +1877,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     {id:"standard-defense-by-player",name:"Alle Abwehraktionen je Spieler",builtIn:true,filters:{team:"all",player:"all",type:"defense",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"defender",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Abwehr_{Spieler}"}},
     {id:"standard-saves-by-keeper",name:"Alle Paraden je Torwart",builtIn:true,filters:{team:"own",player:"all",type:"save",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"keeper",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Paraden_{Spieler}"}}
   ];
-  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},activeSeasonGameId=null,seasonLibraryId=null,seasonLibraryRecords=[],seasonWriteQueue=Promise.resolve();
+  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},seasonLastEditedGameId="",activeSeasonGameId=null,seasonLibraryId=null,seasonLibraryRecords=[],seasonWriteQueue=Promise.resolve();
   let gameRunning=false, gameBase=0, gameStarted=0;
   let videoRunning=false, videoBase=0, videoStarted=0;
   let liveClockRunning=false,liveClockBase=0,liveClockStarted=0,liveClockInitialized=false;
@@ -1895,6 +1897,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
   }
   function showSetupMode(mode,{focused=setupFocused}={}){
     const isSeason=mode==="season";
+    if(isSeason)enterSeasonWorkspace();
     // A season-only analysis viewpoint must not carry over to an independent
     // game when returning from season management. Keep this view-only: never
     // modify recorded team assignments, events or imported season data.
@@ -1919,7 +1922,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     showTab("home");
     if(setupWorkingMode==="season")homeShow("dashboard","season");
   };
-  $("setupModeSingle").onclick=()=>showSetupMode("single",{focused:false});
+  $("setupModeSingle").onclick=()=>{enterStandaloneWorkspace();showSetupMode("single",{focused:false})};
   $("setupModeSeason").onclick=()=>showSetupMode("season",{focused:false});
   try{const legacyNs=["handball","Match","Flow"].join(""),newNs="handballSpielanalyse",suffixes=[".clipPresets",".globalSettings",".tagLibrary",".session",".analysisPdfSections",".videoSize",".courtLabelPositions"];for(const suffix of suffixes){const nextKey=newNs+suffix;if(localStorage.getItem(nextKey)===null){const oldValue=localStorage.getItem(legacyNs+suffix);if(oldValue!==null)localStorage.setItem(nextKey,oldValue)}}}catch{}
   const playerName=p=>p?`${p.nr!==null&&p.nr!==undefined&&String(p.nr).trim()!==""?"#"+p.nr+" ":"#? "}${p.vorname||""} ${p.nachname||""}`.trim():"Unbekannt";
@@ -1972,7 +1975,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(own)own.textContent=(ownTeam==="home"?"Heim · ":"Gast · ")+(state[ownTeam]?.name||ownTeam);
       if(opp)opp.textContent=(otherSide==="home"?"Heim · ":"Gast · ")+(state[otherSide]?.name||otherSide);
     }
-    const [h,a]=score(),scores={home:h,away:a},other=opponentTeam(),left="home",right="away",role=t=>t==="home"?"Heim":"Gast",teamName=t=>state[t]?.name||role(t);$("homeName").textContent=`${role(left)} · ${teamName(left)}`;$("awayName").textContent=`${role(right)} · ${teamName(right)}`;$("score").textContent=`${scores[left]} : ${scores[right]}`;$("half").textContent=`${state.timer.half}. Halbzeit`;for(const team of ["home","away"]){const b=$(team+"Poss");b.textContent=`${(state[team]?.name||role(team)).slice(0,21)}${(state[team]?.name||"").length>21?"…":""} · Ballbesitz`;b.style.order=String((team==="home"?1:3))}document.querySelector(".possession .arrow").style.order="2";document.querySelectorAll(".poss").forEach(b=>b.classList.toggle("active",b.dataset.team===state.possession));for(const team of ["home","away"]){const option=$("rosterTeam").querySelector(`option[value="${team}"]`);option.textContent=(team==="home"?"Heim · ":"Gast · ")+(state[team]?.name||team)}$("matchTabButton").classList.toggle("hidden",state.isHistorical);if(state.isHistorical&&activeTab==="match")showTab("analysis");$("eventCount").textContent=`${state.events.length} Ereignisse`;$("triggerActionBtn").classList.toggle("hidden",!state.shotCapture.trigger);$("idleStep").querySelector(".actions")?.classList.toggle("no-trigger",!state.shotCapture.trigger);renderActiveKeepers();renderEvents();renderSetup();renderAnalysis();renderVideoPlaylist();if(activeTab==="data")renderDataEditor();updateSyncState();updateMatchReviewControls();persistSession();}
+    const [h,a]=score(),scores={home:h,away:a},other=opponentTeam(),left="home",right="away",role=t=>t==="home"?"Heim":"Gast",teamName=t=>state[t]?.name||role(t);$("homeName").textContent=`${role(left)} · ${teamName(left)}`;$("awayName").textContent=`${role(right)} · ${teamName(right)}`;$("score").textContent=`${scores[left]} : ${scores[right]}`;if(analysisSeasonActive()&&!activeSeasonGameId)renderSeasonPreviewHeader();$("half").textContent=`${state.timer.half}. Halbzeit`;for(const team of ["home","away"]){const b=$(team+"Poss");b.textContent=`${(state[team]?.name||role(team)).slice(0,21)}${(state[team]?.name||"").length>21?"…":""} · Ballbesitz`;b.style.order=String((team==="home"?1:3))}document.querySelector(".possession .arrow").style.order="2";document.querySelectorAll(".poss").forEach(b=>b.classList.toggle("active",b.dataset.team===state.possession));for(const team of ["home","away"]){const option=$("rosterTeam").querySelector(`option[value="${team}"]`);option.textContent=(team==="home"?"Heim · ":"Gast · ")+(state[team]?.name||team)}$("matchTabButton").classList.toggle("hidden",state.isHistorical);if(state.isHistorical&&activeTab==="match")showTab("analysis");$("eventCount").textContent=`${state.events.length} Ereignisse`;$("triggerActionBtn").classList.toggle("hidden",!state.shotCapture.trigger);$("idleStep").querySelector(".actions")?.classList.toggle("no-trigger",!state.shotCapture.trigger);renderActiveKeepers();renderEvents();renderSetup();renderAnalysis();renderVideoPlaylist();if(activeTab==="data")renderDataEditor();updateSyncState();updateMatchReviewControls();persistSession();}
   // Reconstructed clock belongs to the video, not the official event timestamps.
   // Each manual pause/resume creates a video-position anchor, which remains editable by seeking.
   function reviewClockPoints(half,start,length){
@@ -2499,6 +2502,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     // Persist the prior game's pending edits before switching.
     persistSession();
     if(activeSeasonGameId){try{await storeInternalSeason()}catch(error){return toast("Vorheriges Saisonspiel konnte nicht gesichert werden: "+(error?.message||"Speicherfehler"))}}
+    if(historical){
+      enterSeasonWorkspace();
+      analysisSelectedGameId=id;
+      $("analysisPlayerFilter").value="all";
+      renderAnalysisGamePicker();showTab("analysis");return;
+    }
+    seasonLastEditedGameId=id;analysisSelectedGameId=id;persistSeasonSoon();
     const stateCopy=structuredClone(game.state);
     if(!historical){
       for(const side of ["home","away"]){
@@ -2672,7 +2682,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const name=game.state.gameName||game.fileName;
     if(!confirm(`„${name}“ aus der Saison entfernen?`))return;
     if(activeSeasonGameId===id){persistSession();activeSeasonGameId=null;persistSession()}
-    seasonGames=seasonGames.filter(item=>item.id!==id);renderSeason();persistSeasonSoon();toast("Saisonspiel entfernt");
+    seasonGames=seasonGames.filter(item=>item.id!==id);if(seasonLastEditedGameId===id)seasonLastEditedGameId="";if(analysisSelectedGameId===id)analysisSelectedGameId="";renderSeason();persistSeasonSoon();toast("Saisonspiel entfernt");
   }
   function selectedSeasonGames(){return seasonGames.filter(game=>game.selected&&(!seasonPreferredTeam||game.ownTeam=== "home"||game.ownTeam==="away"))}
   function seasonEventPlayerKey(event,game){return coreSeasonEventPlayerKey(event,game,seasonPlayerResolver())}
@@ -3601,7 +3611,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("seasonPlayerRows").innerHTML=players.sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const quote=p.isTW?(p.saves+p.against?p.rate+" %":"–"):(p.decidedShots?p.rate+" %":"–");return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.isTW?"–":p.shots}</td><td>${p.value}</td><td>${p.assists}</td><td>${quote}</td><td>${p.penalties}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="8">Keine Spielerdaten vorhanden.</td></tr>';
     renderSeasonGraphics();
   }
-  function renderSeason(){renderAnalysisGamePicker();renderSeasonLibrary();$("seasonMergePlayers").disabled=!seasonGames.length;renderSetupSeasonPicker();$("seasonArchiveTeam").value=seasonArchiveTeam;seasonPopulatePreferredTeam();const seasonFilter=$("seasonTeamFilter");if(seasonFilter){const own=seasonFilter.querySelector('option[value="own"]'),opponent=seasonFilter.querySelector('option[value="opponent"]');if(own)own.textContent=seasonPreferredTeam?"Mein Team · "+seasonPreferredTeam:"Mannschaft A (aus Spieldaten)";if(opponent)opponent.textContent=seasonPreferredTeam?"Gegner":"Mannschaft B (aus Spieldaten)"}const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
+  function renderSeason(){if(analysisSeasonActive()&&!analysisSelectedGameId)analysisSelectedGameId=selectSeasonPreviewGame(seasonGames,seasonLastEditedGameId)?.id||"";renderAnalysisGamePicker();renderSeasonLibrary();$("seasonMergePlayers").disabled=!seasonGames.length;renderSetupSeasonPicker();$("seasonArchiveTeam").value=seasonArchiveTeam;seasonPopulatePreferredTeam();const seasonFilter=$("seasonTeamFilter");if(seasonFilter){const own=seasonFilter.querySelector('option[value="own"]'),opponent=seasonFilter.querySelector('option[value="opponent"]');if(own)own.textContent=seasonPreferredTeam?"Mein Team · "+seasonPreferredTeam:"Mannschaft A (aus Spieldaten)";if(opponent)opponent.textContent=seasonPreferredTeam?"Gegner":"Mannschaft B (aus Spieldaten)"}const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
   $("seasonGameInput").onchange=event=>{const files=[...(event.target.files||[])];event.target.value="";if(files.length)loadSeasonFiles(files)};
   $("seasonUpdateInput").onchange=async event=>{const file=event.target.files?.[0],targetId=seasonUpdateTargetId;event.target.value="";seasonUpdateTargetId=null;if(!file||!targetId)return;try{await updateSeasonGameFromFile(file,targetId)}catch(error){toast(error?.message||"Saisonspiel konnte nicht aktualisiert werden")}};
   $("seasonImportInput").onchange=async event=>{
@@ -3631,7 +3641,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("seasonClearGames").onclick=async()=>{
     if(seasonGames.length&&!confirm("Nur Spiele der aktuell ausgewählten Saison leeren? Andere gespeicherte Saisons bleiben erhalten."))return;
     persistSession();activeSeasonGameId=null;persistSession();
-    seasonGames=[];seasonPlayerAliases={};analysisSelectedGameId="";
+    seasonGames=[];seasonPlayerAliases={};seasonLastEditedGameId="";analysisSelectedGameId="";
     renderSeason();
     try{await storeInternalSeason();toast("Spiele der aktiven Saison geleert")}
     catch(error){toast("Saison konnte nicht gespeichert werden: "+error.message)}
@@ -3646,12 +3656,40 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   window.addEventListener("resize",()=>{syncVideoPortraitPlaylist();syncVideoReviewHeight()});
   // A season belongs to the active workspace only when explicitly selected.
   // Retained season archives must not expose the season tab in an independent match.
-  const analysisSeasonActive=()=>Boolean(activeSeasonGameId)||setupWorkingMode==="season";
+  const WORKSPACE_KEY="handballSpielanalyse.workspaceKind";
+  const INDEPENDENT_SESSION_KEY="handballSpielanalyse.independentSession";
+  let workspaceKind=localStorage.getItem(WORKSPACE_KEY)==="season"?"season":"single";
+  // Season previews must never overwrite the current standalone scouting session.
+  function enterSeasonWorkspace(){
+    if(workspaceKind!=="season"&&homeHasSession&&!activeSeasonGameId){
+      persistSession();
+      const snapshot=localStorage.getItem(SESSION_STORAGE_KEY);
+      if(snapshot)localStorage.setItem(INDEPENDENT_SESSION_KEY,snapshot);
+    }
+    workspaceKind="season";localStorage.setItem(WORKSPACE_KEY,workspaceKind);
+    analysisSelectedGameId=selectSeasonPreviewGame(seasonGames,seasonLastEditedGameId)?.id||"";
+    $("analysisTeamFilter").value="own";$("analysisPlayerFilter").value="all";
+  }
+  function enterStandaloneWorkspace({restore=true}={}){
+    if(workspaceKind==="season"&&restore){
+      if(activeSeasonGameId)persistSession();
+      const saved=localStorage.getItem(INDEPENDENT_SESSION_KEY);
+      if(saved)try{
+        if(restoreSessionObject(JSON.parse(saved))){homeHasSession=true;update()}
+      }catch(error){console.warn("Einzelspiel-Wiederherstellung fehlgeschlagen",error)}
+    }
+    workspaceKind="single";localStorage.setItem(WORKSPACE_KEY,workspaceKind);
+    analysisSelectedGameId="";analysisLastSubtab="analysis";
+    $("analysisPerspectiveSelect").value="neutral";
+    $("analysisTeamFilter").value="all";$("analysisPlayerFilter").value="all";
+  }
+  const analysisSeasonActive=()=>workspaceKind==="season";
   let analysisLastSubtab="analysis";
   function showTab(name){
     if(name==="setup"&&homeHasSession&&!activeSeasonGameId&&setupWorkingMode==="single"&&!setupFocused)showSetupMode("single",{focused:true});
     if(name==="home")homeShow("choose",null);
     if(name==="match"&&state.isHistorical)name="analysis";
+    if(analysisSeasonActive()&&!activeSeasonGameId&&["match","video","data"].includes(name))name="analysis";
     if(name==="season"&&!analysisSeasonActive())name="analysis";
     if(name==="analysis"||name==="season")analysisLastSubtab=name;
     activeTab=name;
@@ -3660,6 +3698,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===(analysisWorkspace?"analysis":name)));
     document.querySelectorAll(".tab-pane").forEach(p=>p.classList.toggle("active",p.id===name+"Tab"));
     $("analysisSubtabs").hidden=!analysisWorkspace;
+    const previewOnly=analysisSeasonActive()&&!activeSeasonGameId;
+    $("matchTabButton").classList.toggle("hidden",previewOnly||state.isHistorical);
+    for(const type of ["video","data"]){
+      const tab=document.querySelector('.tab[data-tab="'+type+'"]');
+      if(tab)tab.classList.toggle("hidden",previewOnly);
+    }
+    $("saveBtn").classList.toggle("hidden",previewOnly);
+    $("saveAsBtn").classList.toggle("hidden",previewOnly);
     $("analysisSeasonSubtab").hidden=!analysisSeasonActive();
     for(const [id,selected] of [["analysisSingleSubtab",name==="analysis"],["analysisSeasonSubtab",name==="season"]]){
       $(id).classList.toggle("active",selected);
@@ -3738,6 +3784,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     return (date?date+" · ":"")+(sides||game.state?.gameName||game.fileName||"Spiel");
   }
   function homeShow(view="choose",kind=homeKind){
+    if(view==="dashboard"&&kind==="season")enterSeasonWorkspace();
+    if(view==="actions"&&kind==="game")enterStandaloneWorkspace();
     homeView=view;homeKind=kind;
     for(const [key,id] of Object.entries(homePanels))$(id).hidden=key!==view;
     $("homeBack").hidden=view==="choose";
@@ -3759,7 +3807,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       view==="library"?"Wähle einen gespeicherten Eintrag auf diesem Gerät.":"";
     if(view==="choose")homeRenderRecent();
     if(view==="library")homeRenderLibrary();
-    if(view==="dashboard"){showSetupMode("season",{focused:true});homeRenderSeasonDashboard();}
+    if(view==="dashboard"){showSetupMode("season",{focused:true});homeRenderSeasonDashboard();renderSeasonPreviewHeader();}
   }
   function homeRenderRecent(){
     const host=$("homeRecentOptions");host.replaceChildren();
@@ -3945,11 +3993,21 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       image.src=source;
     }catch{/* Keep the fallback icon if no local logo is available. */}
   }
+  function renderSeasonPreviewHeader(){
+    if(!analysisSeasonActive()||activeSeasonGameId)return;
+    const preview=analysisSelectedGame()?.state;
+    $("homeName").textContent=preview?"Heim · "+(preview.home?.name||"Heim"):"Saison · "+(seasonPreferredTeam||seasonName);
+    $("awayName").textContent=preview?"Gast · "+(preview.away?.name||"Gast"):"";
+    const scores=preview?scoreEvents(preview.events||[]):null;
+    $("score").textContent=scores?scores[0]+" : "+scores[1]:"– : –";
+  }
   function homeRenderSeasonDashboard(){
     const identity=homeCurrentSeasonIdentity();
     $("homeSeasonTeam").textContent=identity.team||"Saisonübersicht";
     $("homeSeasonName").textContent=identity.seasonLabel;
     $("homeSeasonInfo").textContent=identity.meta;
+    const chosen=analysisSelectedGame();
+    $("homeSeasonInfo").textContent=identity.meta+(chosen?" · Analyse: "+String(chosen.state?.gameDate||"").slice(0,10):" · Noch kein analysiertes Spiel");
     $("homeSeasonLogoFallback").innerHTML=homeIconSvg("season");
     void homeRenderSeasonLogo(identity.team);
     const search=$("homeGameSearch").value.trim().toLocaleLowerCase("de");
@@ -3977,6 +4035,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
   }
   function homeAdvancedSetup(kind=homeKind){
+    if(kind==="game")enterStandaloneWorkspace();
     showSetupMode(kind==="season"?"season":"single",{focused:true});
     showTab("setup");
   }
@@ -4025,7 +4084,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   function seasonSnapshot(){
     return {...buildSeasonRecord({name:seasonName||"Saison",games:seasonGames}),
-      preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,playerAliases:seasonPlayerAliases};
+      preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,playerAliases:seasonPlayerAliases,lastEditedGameId:seasonLastEditedGameId};
   }
   function renderSeasonLibrary(){
     const select=$("seasonLibrarySelect");if(!select)return;
@@ -4094,7 +4153,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     seasonLibraryId=freshSeasonLibraryId();
     localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
     seasonName=String(name||"Neue Saison").trim()||"Neue Saison";
-    seasonGames=[];seasonPreferredTeam="";seasonArchiveTeam="";seasonPlayerAliases={};
+    seasonGames=[];seasonPreferredTeam="";seasonArchiveTeam="";seasonPlayerAliases={};seasonLastEditedGameId="";
     analysisSelectedGameId="";
     if(data)applySeasonObject(data,{save:false});
     else renderSeason();
@@ -4116,7 +4175,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     catch(error){toast(error?.message||"Neue Saison konnte nicht angelegt werden")}
     finally{$("seasonNew").disabled=false}
   };
-  function seasonExportObject(){return {...buildSeasonExport({name:seasonName||"Saison",games:seasonGames}),preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,playerAliases:seasonPlayerAliases}}
+  function seasonExportObject(){return {...buildSeasonExport({name:seasonName||"Saison",games:seasonGames}),preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,playerAliases:seasonPlayerAliases,lastEditedGameId:seasonLastEditedGameId}}
   function downloadSeasonExport(){
     if(!seasonGames.length)return toast("Keine Saisonspiele zum Exportieren geladen.");
     const data=seasonExportObject();
@@ -4126,7 +4185,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   function applySeasonObject(data,{save=true}={}){
     const restored=normalizeSeasonArchive(data,seasonCurrentOwnName());
-    seasonGames=restored.games;seasonPlayerAliases=restored.playerAliases||{};seasonPreferredTeam=data?.preferredTeam||"";seasonArchiveTeam=data?.archiveTeam||"";seasonName=suggestedSeasonName(restored.name,seasonPreferredTeam,seasonGames);for(const game of seasonGames){game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":"home"} renderSeason();if(save)persistSeasonSoon();
+    seasonGames=restored.games;seasonPlayerAliases=restored.playerAliases||{};seasonLastEditedGameId=String(data?.lastEditedGameId||"");seasonPreferredTeam=data?.preferredTeam||"";seasonArchiveTeam=data?.archiveTeam||"";seasonName=suggestedSeasonName(restored.name,seasonPreferredTeam,seasonGames);for(const game of seasonGames){game.ownTeam=seasonOwnTeam(game);game.opponentTeam=game.ownTeam==="home"?"away":"home"} renderSeason();if(save)persistSeasonSoon();
   }
   async function restoreStoredSeason(){
     try{
@@ -4404,7 +4463,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("saveTagLibraryFile").onclick=saveTagLibraryFile;
   $("saveTagLibraryAs").onclick=()=>saveTagLibraryAs();
   if(typeof window.showSaveFilePicker!=="function")$("saveTagLibraryAs").classList.add("hidden");
-  function startManualGame(){showSetupMode("single",{focused:true});persistSession();activeSeasonGameId=null;analysisSelectedGameId="";setMatchReviewMode(false,{announce:false});stopGame();mediaPause();state=structuredClone(baseState);state.isHistorical=false;ownTeam="away";state.ownTeam=ownTeam;gameBase=videoBase=liveClockBase=0;gameRunning=videoRunning=liveClockRunning=false;draft=null;selectedVideoEvents.clear();activeVideoEventIndex=null;currentGameFileHandle=null;currentGameFileName=null;normalize();setAnalysisMode("live");update();showTab("setup");setTimeout(()=>$("setupGameName")?.focus(),0);homeHasSession=true;toast("Neues Spiel vorbereitet")}
+  function startManualGame(){enterStandaloneWorkspace({restore:false});showSetupMode("single",{focused:true});persistSession();activeSeasonGameId=null;analysisSelectedGameId="";setMatchReviewMode(false,{announce:false});stopGame();mediaPause();state=structuredClone(baseState);state.isHistorical=false;ownTeam="away";state.ownTeam=ownTeam;gameBase=videoBase=liveClockBase=0;gameRunning=videoRunning=liveClockRunning=false;draft=null;selectedVideoEvents.clear();activeVideoEventIndex=null;currentGameFileHandle=null;currentGameFileName=null;normalize();setAnalysisMode("live");update();showTab("setup");setTimeout(()=>$("setupGameName")?.focus(),0);homeHasSession=true;toast("Neues Spiel vorbereitet")}
   function showNewGameChoice(){const dialog=$("newGameDialog");$("newGameChoiceStep").classList.remove("hidden");$("newGameHandball360Step").classList.add("hidden");$("newGameHandball360Status").textContent="";const rawDetails=$("handballNetRawDetails"),rawJson=$("handballNetRawJson"),rawMeta=$("handballNetRawMeta");if(rawDetails){rawDetails.classList.add("hidden");rawDetails.open=false}if(rawJson)rawJson.textContent="";if(rawMeta)rawMeta.textContent="";dialog.showModal()}
   $("newGame").onclick=showNewGameChoice;
   $("newGameCancel").onclick=()=>$("newGameDialog").close();
@@ -4452,7 +4511,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     await refreshKnownRosterOptions();
     return results;
   }
-  function hbCreateGame(){if(!handballNetImport)return;showSetupMode("single",{focused:true});persistSession();activeSeasonGameId=null;const x=handballNetImport,youtube=String($("handballNetYoutube")?.value||"").trim(),yt=youtubeVideoId(youtube);setMatchReviewMode(false,{announce:false});stopGame();mediaPause();state=structuredClone(baseState);state.competition=x.competition||"Freundschaftsspiel";ownTeam="away";state.ownTeam=ownTeam;state.gameName=((x.matchDate?new Date(x.matchDate).toLocaleDateString("de-DE")+" | ":"")+x.teams.home+" - "+x.teams.away).trim();state.home={name:x.teams.home,players:structuredClone(x.homePlayers)};state.away={name:x.teams.away,players:structuredClone(x.awayPlayers)};state.events=structuredClone(x.normalized);state.timer={...baseState.timer,duration:x.duration,half:1,secondsElapsed:0,active:false};state.gameTime=x.duration*120;state.isHistorical=false;state.isVideoscoutingFile=true;state.officialSource={provider:"handball.net",matchId:x.matchId,matchDate:x.matchDate||null,venue:x.venue||null,competition:x.competition||null,additionalInfoAvailable:Boolean(x.additionalInfo),importedAt:new Date().toISOString()};state.officialData=hbOfficialData(x);state.video={...baseState.video,youtubeUrl:youtube||null,youtubeId:yt};currentGameFileHandle=null;currentGameFileName=null;gameBase=videoBase=liveClockBase=0;gameRunning=videoRunning=liveClockRunning=false;normalize();setAnalysisMode("video");restoreSavedVideoReference();update();showTab("match");syncCurrentGameRosterCollections({silent:true}).then(async results=>{const logos=await importOfficialClubLogos(x);const conflicts=results.flatMap(result=>result?.conflicts||[]).length;if(logos.length)toast(logos.join(" · "));if(conflicts)toast("Spiel aus handball.net-Daten erzeugt · Spielerlisten aktualisiert · "+conflicts+" Konflikt(e) prüfen");else toast("Spiel aus handball.net-Daten erzeugt · Spielerlisten aktualisiert")}).catch(()=>toast("Spiel aus handball.net-Daten erzeugt"))}
+  function hbCreateGame(){if(!handballNetImport)return;enterStandaloneWorkspace({restore:false});showSetupMode("single",{focused:true});persistSession();activeSeasonGameId=null;const x=handballNetImport,youtube=String($("handballNetYoutube")?.value||"").trim(),yt=youtubeVideoId(youtube);setMatchReviewMode(false,{announce:false});stopGame();mediaPause();state=structuredClone(baseState);state.competition=x.competition||"Freundschaftsspiel";ownTeam="away";state.ownTeam=ownTeam;state.gameName=((x.matchDate?new Date(x.matchDate).toLocaleDateString("de-DE")+" | ":"")+x.teams.home+" - "+x.teams.away).trim();state.home={name:x.teams.home,players:structuredClone(x.homePlayers)};state.away={name:x.teams.away,players:structuredClone(x.awayPlayers)};state.events=structuredClone(x.normalized);state.timer={...baseState.timer,duration:x.duration,half:1,secondsElapsed:0,active:false};state.gameTime=x.duration*120;state.isHistorical=false;state.isVideoscoutingFile=true;state.officialSource={provider:"handball.net",matchId:x.matchId,matchDate:x.matchDate||null,venue:x.venue||null,competition:x.competition||null,additionalInfoAvailable:Boolean(x.additionalInfo),importedAt:new Date().toISOString()};state.officialData=hbOfficialData(x);state.video={...baseState.video,youtubeUrl:youtube||null,youtubeId:yt};currentGameFileHandle=null;currentGameFileName=null;gameBase=videoBase=liveClockBase=0;gameRunning=videoRunning=liveClockRunning=false;normalize();setAnalysisMode("video");restoreSavedVideoReference();update();showTab("match");syncCurrentGameRosterCollections({silent:true}).then(async results=>{const logos=await importOfficialClubLogos(x);const conflicts=results.flatMap(result=>result?.conflicts||[]).length;if(logos.length)toast(logos.join(" · "));if(conflicts)toast("Spiel aus handball.net-Daten erzeugt · Spielerlisten aktualisiert · "+conflicts+" Konflikt(e) prüfen");else toast("Spiel aus handball.net-Daten erzeugt · Spielerlisten aktualisiert")}).catch(()=>toast("Spiel aus handball.net-Daten erzeugt"))}
   function hbMergeGame(){if(!handballNetImport)return;const x=handballNetImport;if(x.competition)state.competition=x.competition;hbAddPlayers(state.home,x.homePlayers);hbAddPlayers(state.away,x.awayPlayers);if(!state.home.name||state.home.name==="Gegner")state.home.name=x.teams.home;if(!state.away.name||state.away.name==="Mein Team")state.away.name=x.teams.away;let added=0;for(const e of x.normalized){if(state.events.some(current=>hbEventMatches(current,e)))continue;state.events.push(structuredClone(e));added++}state.events.sort((a,b)=>Number(a.time||0)-Number(b.time||0));state.officialSource={provider:"handball.net",matchId:x.matchId,matchDate:x.matchDate||null,venue:x.venue||null,competition:x.competition||null,additionalInfoAvailable:Boolean(x.additionalInfo),importedAt:new Date().toISOString()};state.officialData=hbOfficialData(x);const youtube=String($("handballNetYoutube")?.value||"").trim();if(youtube){state.video.youtubeUrl=youtube;state.video.youtubeId=youtubeVideoId(youtube)}normalize();update();toast(added?(added+" fehlende offizielle Ereignisse ergänzt"):"Keine fehlenden offiziellen Ereignisse gefunden")}
   function chooseH360Import(imported,sides){
     return new Promise(resolve=>{
@@ -4615,8 +4674,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   function withAnalysisView(action){
     const selected=analysisSelectedGame(),savedState=state,savedTeam=ownTeam;
+    if(analysisSeasonActive()&&!selected){renderEmptySeasonAnalysis();return}
     if(selected&&selected.id!==activeSeasonGameId)state=selected.state;
-    const seasonGame=selected||seasonGames.find(game=>game.id===activeSeasonGameId);
+    const seasonGame=selected;
     if(analysisSeasonActive()){
       // Season identity always wins over the scouting-file perspective.
       const seasonSide=seasonGame?seasonOwnTeam(seasonGame):null;
@@ -4624,6 +4684,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       $("analysisPerspectiveSelect").value=ownTeam;
     }else ownTeam=analysisViewSide($("analysisPerspectiveSelect").value);
     try{return action()}finally{state=savedState;ownTeam=savedTeam}
+  }
+  function renderEmptySeasonAnalysis(){
+    $("analysisTab").classList.add("season-empty");
+    $("analysisSeasonFocus").textContent="Noch kein gespieltes Saisonspiel zur Analyse vorhanden. Wähle ein Saisonspiel oder beginne ein neues Scouting.";
+    $("analysisGamePickerStatus").textContent="Noch keine auswertbare Saisonspiel-Aufzeichnung.";
   }
   function renderAnalysisGamePicker(){
     const picker=$("analysisGamePicker");
@@ -4635,7 +4700,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("analysisSeasonFocus").hidden=!season;
     if(!season)analysisSelectedGameId="";
     const previous=analysisSelectedGameId;
-    picker.replaceChildren(new Option("Aktuelles Spiel (Match)",""));
+    picker.replaceChildren(new Option(season?"Saisonspiel auswählen …":"Aktuelles Spiel (Match)",""));
     const sorted=season?[...seasonGames].sort((a,b)=>
       String(a.state?.gameDate||"").localeCompare(String(b.state?.gameDate||""))):[];
     for(const game of sorted){
@@ -4644,8 +4709,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         " – "+(game.state?.away?.name||"Gast"),game.id));
     }
     if(previous&&!sorted.some(g=>g.id===previous))analysisSelectedGameId="";
+    if(season&&!analysisSelectedGameId)analysisSelectedGameId=selectSeasonPreviewGame(sorted,seasonLastEditedGameId)?.id||"";
     picker.value=analysisSelectedGameId;
+    renderSeasonPreviewHeader();
     const selected=analysisSelectedGame();
+    $("analysisTab").classList.toggle("season-empty",season&&!selected);
     $("analysisGamePickerStatus").textContent=selected
       ?"Nur Analyseansicht: "+(selected.state?.gameName||"Saisonspiel")+
        " · Laufendes Match und Video bleiben unverändert."
@@ -5190,7 +5258,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function savedYoutubeReference(){return resolveYoutubeReference(state.video)}
   function restoreSavedVideoReference(){const youtube=savedYoutubeReference();$("youtubeUrl").value=youtube;if(youtube)$("videoMessage").textContent='YouTube-Link aus der Spieldatei übernommen. Zum Öffnen „YouTube laden“ wählen.';else if(state.video?.localFileName)$("videoMessage").textContent=`Gespeichertes lokales Video „${state.video.localFileName}“ bitte erneut auswählen.`}
   const gameFileTypes=GAME_FILE_TYPES;
-  function applyLoadedGameText(text,historical,fileName,handle=null,linkedSeasonGameId=null,openPreparation=false){try{if(!linkedSeasonGameId){showSetupMode("single",{focused:true});$("analysisPerspectiveSelect").value="neutral";$("analysisTeamFilter").value="all";$("analysisPlayerFilter").value="all"}persistSession();analysisSelectedGameId="";setMatchReviewMode(false,{announce:false});const loaded=parseGameText(text);resetLoadedVideo();activeSeasonGameId=linkedSeasonGameId;state=loaded;ownTeam=["home","away"].includes(loaded.ownTeam)?loaded.ownTeam:"away";state.ownTeam=ownTeam;state.isHistorical=historical;currentGameFileHandle=handle;currentGameFileName=fileName||null;gameBase=Number(state.timer?.secondsElapsed||0);liveClockBase=Number(state.video?.analysisClockMs||0);liveClockInitialized=false;gameRunning=videoRunning=liveClockRunning=false;normalize();restoreSavedVideoReference();videoBase=Number(state.video?.analysisClockMs||0);analysisMode=historical?"video":(state.liveScoutingCompleted?"live":state.isVideoscoutingFile?"video":"live");setAnalysisMode(analysisMode);update();if(openPreparation)showSetupMode("single",{focused:linkedSeasonGameId?setupFocused:true});showTab(openPreparation?"setup":historical?"analysis":"match");if(!historical&&state.liveScoutingCompleted)setMatchReviewMode(true,{announce:false});if(savedYoutubeReference())$("youtubeForm").requestSubmit();homeHasSession=true;toast(linkedSeasonGameId?(historical?"Saisonspiel zur Analyse geöffnet":"Saisonspiel zum Fortsetzen geladen"):(historical?"Spiel für Analyse geladen":"Spiel zum Fortsetzen geladen"))}catch(error){toast(error?.message||"JSON konnte nicht geladen werden")}}
+  function applyLoadedGameText(text,historical,fileName,handle=null,linkedSeasonGameId=null,openPreparation=false){try{if(!linkedSeasonGameId){enterStandaloneWorkspace({restore:false});showSetupMode("single",{focused:true});$("analysisPerspectiveSelect").value="neutral";$("analysisTeamFilter").value="all";$("analysisPlayerFilter").value="all"}persistSession();analysisSelectedGameId="";setMatchReviewMode(false,{announce:false});const loaded=parseGameText(text);resetLoadedVideo();activeSeasonGameId=linkedSeasonGameId;state=loaded;ownTeam=["home","away"].includes(loaded.ownTeam)?loaded.ownTeam:"away";state.ownTeam=ownTeam;state.isHistorical=historical;currentGameFileHandle=handle;currentGameFileName=fileName||null;gameBase=Number(state.timer?.secondsElapsed||0);liveClockBase=Number(state.video?.analysisClockMs||0);liveClockInitialized=false;gameRunning=videoRunning=liveClockRunning=false;normalize();restoreSavedVideoReference();videoBase=Number(state.video?.analysisClockMs||0);analysisMode=historical?"video":(state.liveScoutingCompleted?"live":state.isVideoscoutingFile?"video":"live");setAnalysisMode(analysisMode);update();if(openPreparation)showSetupMode("single",{focused:linkedSeasonGameId?setupFocused:true});showTab(openPreparation?"setup":historical?"analysis":"match");if(!historical&&state.liveScoutingCompleted)setMatchReviewMode(true,{announce:false});if(savedYoutubeReference())$("youtubeForm").requestSubmit();homeHasSession=true;toast(linkedSeasonGameId?(historical?"Saisonspiel zur Analyse geöffnet":"Saisonspiel zum Fortsetzen geladen"):(historical?"Spiel für Analyse geladen":"Spiel zum Fortsetzen geladen"))}catch(error){toast(error?.message||"JSON konnte nicht geladen werden")}}
   async function pickGameFile(historical){if(typeof window.showOpenFilePicker!=="function")return $(historical?"fileInput":"continueGameInput").click();try{const [handle]=await window.showOpenFilePicker(gameOpenPickerOptions());const file=await handle.getFile();applyLoadedGameText(await file.text(),historical,file.name,handle)}catch(error){if(error?.name!=="AbortError")toast(error?.message||"Spiel konnte nicht geöffnet werden")}}
   function loadGameFromInput(e,historical){const f=e.target.files[0];e.target.value="";if(!f)return;const r=new FileReader();r.onload=()=>applyLoadedGameText(r.result,historical,f.name,null);r.onerror=()=>toast("JSON konnte nicht geladen werden");r.readAsText(f)}
   $("continueGameInput").onchange=e=>loadGameFromInput(e,false);$("fileInput").onchange=e=>loadGameFromInput(e,true);

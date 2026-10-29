@@ -1,4 +1,4 @@
-const CACHE_NAME = "handball-spielanalyse-network-first-v29";
+const CACHE_NAME = "handball-spielanalyse-network-first-v30";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const APP_SHELL = [
   "./src/game-format.js",
   "./src/game-files.js",
   "./src/season-files.js",
+  "./src/season-selection.js",
   "./src/analysis-perspective.js",
   "./src/season-archive.js",
   "./src/season-export-names.js",
