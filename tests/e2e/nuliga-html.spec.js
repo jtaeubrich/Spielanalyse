@@ -1,4 +1,7 @@
 import {test,expect} from "@playwright/test";
+test.beforeEach(async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem("handballSpielanalyse.proxyToken","playwright-fake-proxy-token"));
+});
 import {readFile} from "node:fs/promises";
 
 const fixture=String.raw`<!doctype html><html lang="de"><body><h1>HC Bremen - Oberliga Männer Nord</h1><table>
