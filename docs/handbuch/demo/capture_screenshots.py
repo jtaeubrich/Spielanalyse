@@ -35,6 +35,7 @@ def main():
             if args.only_device and device != args.only_device:
                 continue
             context = browser.new_context(viewport={"width": width, "height": height}, device_scale_factor=1)
+            context.add_init_script("localStorage.setItem('handballSpielanalyse.proxyToken', 'demo-proxy-token-not-secret');")
             page = context.new_page()
             for filename in STATES:
                 page.goto(app_url, wait_until="domcontentloaded")
