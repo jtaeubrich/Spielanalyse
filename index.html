@@ -146,6 +146,9 @@
     .seven-meter-outcomes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
     .seven-meter-outcomes .option{min-height:78px;font-size:18px;padding:10px 4px}
     .seven-meter-target{margin-top:14px}
+    .seven-meter-result-section{margin-top:18px}
+    .seven-meter-result-section h3{margin:0 0 6px;font-size:15px;color:var(--muted)}
+    .seven-meter-result-section p{margin:0 0 10px}
     .seven-meter-target summary{cursor:pointer;color:var(--cyan);font-weight:650}
     .seven-meter-target[hidden]{display:none!important}
     .seven-meter-target-list{width:min(100%,360px);margin:8px auto 0}
@@ -1604,16 +1607,19 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
       <div class="step" id="triggerStep"><span class="label">Auslösehandlung</span><h2>Auslösehandlung wählen</h2><p>Links eine Auslösehandlung auswählen und anschließend rechts den Torabschluss starten.</p><div class="trigger-picker"><div class="trigger-picker-list" id="triggerActionList"></div><div class="trigger-picker-actions"><button class="choice goal" id="triggerDecisionShot" type="button" disabled>◎ Torabschluss</button><button class="choice error" id="triggerDecisionAbort" type="button">× Abbruch</button></div></div></div>
       <div class="step" id="playerStep"><span class="label">Schritt 1</span><h2>Angreifender Spieler</h2><p id="playerTeamText"></p><div class="players" id="playerList"></div></div>
       <div class="step" id="sevenMeterStep">
-        <span class="label">7 Meter</span><h2>Wurfausgang</h2>
-        <p>Ergebnis antippen · Zeitstempel wird jetzt gesetzt.</p>
-        <div class="seven-meter-outcomes" id="sevenMeterOutcomes">
-          <button class="option" type="button" data-seven-meter-result="goal">Tor</button>
-          <button class="option" type="button" data-seven-meter-result="save">Parade</button>
-          <button class="option" type="button" data-seven-meter-result="miss">Fehlwurf</button>
-        </div>
+        <span class="label">7 Meter</span><h2>7-Meter-Wurf</h2>
         <details class="seven-meter-target" hidden><summary>Wurfziel</summary>
           <div class="seven-meter-target-list" id="sevenMeterTargetList"></div>
         </details>
+        <div class="seven-meter-result-section">
+          <h3>Wurfausgang</h3>
+          <p>Ergebnis antippen · Zeitstempel wird jetzt gesetzt.</p>
+          <div class="seven-meter-outcomes" id="sevenMeterOutcomes">
+            <button class="option" type="button" data-seven-meter-result="goal">Tor</button>
+            <button class="option" type="button" data-seven-meter-result="save">Parade</button>
+            <button class="option" type="button" data-seven-meter-result="miss">Fehlwurf</button>
+          </div>
+        </div>
       </div>
       <div class="step" id="locationStep"><span class="label">Torwurf</span><h2>Torwurfdetails</h2><p>Wähle die gewünschten Angaben oder überspringe sie mit „Weiter“.</p><div class="shot-detail-grid shot-placement" id="shotDetailPage1"><section id="shotFieldLocation" data-shot-field="location"><h3>Abwurfort</h3><div class="options" id="locationList"></div></section><section id="shotFieldTarget" data-shot-field="target"><h3>Wurfziel</h3><div class="options" id="targetList"></div></section></div></div>
       <div class="step" id="phaseStep"><span class="label">Torwurf</span><h2>Torwurfdetails</h2><p>Wähle die gewünschten Angaben oder überspringe sie mit „Weiter“.</p><div class="shot-detail-grid phase-result-grid" id="shotDetailPage2"><section id="shotFieldPhase" data-shot-field="phase"><h3>Spielsituation</h3><p>Positionsangriff ist vorausgewählt.</p><div class="options" id="phaseList"></div></section><section id="shotFieldResult" data-shot-field="result"><h3>Ergebnis</h3><p>Wie endete der Torwurf?</p><div class="options result-options" id="shotResultList"><button class="option" data-result="goal">Tor</button><button class="option" data-result="save">Parade</button><button class="option" data-result="block">Block</button><button class="option" data-result="freethrow">Freiwurf</button><button class="option hidden" id="missResultButton" data-result="miss">Fehlwurf</button></div><div class="result-auto hidden" id="missResultHint">Fehlwurf – durch das Wurfziel automatisch erkannt.</div></section><section id="shotFieldAssist" data-shot-field="assist"><h3>Assist</h3><p>Optionaler Assist-Geber bei einem Tor unserer Mannschaft.</p><div class="players compact-players" id="assistList"></div></section></div></div>
