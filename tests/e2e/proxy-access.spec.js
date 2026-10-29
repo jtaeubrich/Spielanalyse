@@ -46,7 +46,7 @@ test("per-device proxy token is stored separately, used for calls, and removable
   await page.reload();
 
   await page.locator('[data-tab="setup"]').click();
-  await panel.locator("summary").click();
+  if(!(await panel.evaluate(el=>el.open)))await panel.locator("summary").click();
   await expect(page.locator("#proxyTokenStatus")).toContainText("lokal hinterlegt");
   await expect(page.locator("#proxyTokenInput")).toHaveValue("");
   page.once("dialog",dialog=>dialog.accept());
