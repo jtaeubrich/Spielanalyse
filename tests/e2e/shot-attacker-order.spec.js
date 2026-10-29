@@ -328,6 +328,7 @@ test("seven-meter hides the goal widget and records no target when disabled",asy
   await pickJersey(page,"#playerList",7);
   await expect(page.locator("#sevenMeterStep")).toBeVisible();
   await expect(page.locator("#sevenMeterStep .seven-meter-target")).toBeHidden();
+  await expect(page.locator("#sevenMeterOutcomes")).toBeVisible();
   await page.locator('[data-seven-meter-result="goal"]').click();
   expect(await latestEvent(page)).toMatchObject({type:"goal",z:"7M",is7:true,gz:null});
 });
@@ -340,6 +341,15 @@ test("seven-meter reuses the regular goal map when target capture is enabled",as
   const panel=page.locator("#sevenMeterStep .seven-meter-target");
   await expect(panel).toBeVisible();
   await expect(panel.locator("summary")).toHaveText("Wurfziel");
+  await expect(page.locator("#sevenMeterStep .seven-meter-result-section h3")).toHaveText("Wurfausgang");
+  const targetBeforeOutcome=await page.locator("#sevenMeterStep").evaluate(step=>{
+    const target=step.querySelector(".seven-meter-target");
+    const outcome=step.querySelector(".seven-meter-result-section");
+    return Boolean(target&&outcome&&
+      (target.compareDocumentPosition(outcome)&Node.DOCUMENT_POSITION_FOLLOWING)&&
+      target.getBoundingClientRect().bottom<=outcome.getBoundingClientRect().top);
+  });
+  expect(targetBeforeOutcome).toBe(true);
   await expect(page.locator("#sevenMeterTargetList .goal-map")).toHaveCount(1);
   await expect(page.locator("#targetList .goal-map")).toHaveCount(1);
   await expect(panel).toHaveAttribute("open", "");
