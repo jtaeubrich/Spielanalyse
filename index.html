@@ -836,6 +836,74 @@
     body.match-unified-layout #matchTab #matchGrid>.side{grid-row:3}
   }
 
+
+/* Match-Nachanalyse: 1) Video + Eventzeile, 2) Ballbesitz, 3) Aktionen,
+   4) einklappbare Szenenwiedergabe. Kein Seiten-Grid fuer die Aktionstasten. */
+body.match-unified-layout #matchTab #matchGrid>.side>.events{display:none!important}
+body.match-unified-layout #matchTab #matchGrid>.side{min-height:0;box-sizing:border-box}
+body.match-unified-layout #matchTab #matchSceneSettingsHost{order:4;width:100%;min-width:0;box-sizing:border-box}
+body.match-unified-layout #matchTab #matchSceneSettingsHost[hidden]{display:none!important}
+body.match-unified-layout #matchTab #matchReviewWindow{
+  display:block!important;margin:0;padding:10px 14px;
+}
+body.match-unified-layout #matchTab #matchReviewWindow>summary{
+  cursor:pointer;font-weight:750;color:var(--cyan);padding:4px 0;
+}
+body.match-unified-layout #matchTab #matchReviewWindow .match-review-window-fields{
+  display:none;align-items:end;gap:10px;flex-wrap:wrap;margin-top:12px;
+}
+body.match-unified-layout #matchTab #matchReviewWindow[open] .match-review-window-fields{display:flex}
+@media(max-width:759px){
+  body.match-unified-layout #matchTab #matchGrid{
+    display:flex!important;flex-direction:column!important;grid-template-columns:none!important;
+  }
+  body.match-unified-layout #matchTab #matchVideoHost{order:0;width:100%!important}
+  body.match-unified-layout #matchTab #matchNearbyEvents,
+  body.match-unified-layout #matchTab #matchGrid>.events{order:1;width:100%!important}
+  body.match-unified-layout #matchTab #matchPossessionHost{order:2;width:100%!important}
+  body.match-unified-layout #matchTab #matchGrid>.side{order:3;width:100%!important}
+}
+@media(min-width:760px){
+  body.match-unified-layout.video-scouting-layout #matchTab #matchGrid,
+  body.match-unified-layout.match-review-mode #matchTab #matchGrid{
+    display:grid!important;grid-template-columns:minmax(0,var(--video-share,60%)) minmax(0,1fr)!important;
+    gap:8px!important;align-items:start!important;
+  }
+  body.match-unified-layout #matchTab #matchGrid>#matchVideoHost{
+    grid-column:1!important;grid-row:1!important;width:100%!important;
+  }
+  body.match-unified-layout.video-scouting-layout #matchTab #matchGrid>#matchNearbyEvents,
+  body.match-unified-layout.match-review-mode #matchTab #matchGrid>.events{
+    grid-column:2!important;grid-row:1!important;min-width:0!important;
+  }
+  body.match-unified-layout #matchTab #matchGrid>#matchPossessionHost{
+    grid-column:1/-1!important;grid-row:2!important;width:100%!important;
+  }
+  body.match-unified-layout #matchTab #matchGrid>.side{
+    grid-column:1/-1!important;grid-row:3!important;width:100%!important;
+    max-width:none!important;display:block!important;
+  }
+  body.match-unified-layout #matchTab #matchGrid>#matchSceneSettingsHost{
+    grid-column:1/-1!important;grid-row:4!important;
+  }
+}
+@media (orientation:landscape) and (max-height:600px) and (min-width:660px) and (max-width:1100px){
+  body.video-scouting-layout #matchTab #idleStep .actions{
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  }
+  body.video-scouting-layout #matchTab #idleStep .actions>[data-flow="7m"]{grid-column:3!important;grid-row:1!important}
+  body.video-scouting-layout #matchTab #idleStep .actions>[data-flow="error"]{grid-column:4!important}
+  body.video-scouting-layout #matchTab #idleStep .actions>[data-flow="penalty"]{grid-column:5!important}
+  body.video-scouting-layout #matchTab #idleStep .actions>[data-flow="key"]{grid-column:6!important}
+  body.video-scouting-layout #matchTab #idleStep .actions.no-trigger{
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  }
+  body.video-scouting-layout #matchTab #idleStep .actions.no-trigger>[data-flow="7m"]{grid-column:2!important}
+  body.video-scouting-layout #matchTab #idleStep .actions.no-trigger>[data-flow="error"]{grid-column:3!important}
+  body.video-scouting-layout #matchTab #idleStep .actions.no-trigger>[data-flow="penalty"]{grid-column:4!important}
+  body.video-scouting-layout #matchTab #idleStep .actions.no-trigger>[data-flow="key"]{grid-column:5!important}
+}
+
 /* Scoped to Video tab only; Match and Analysis remain unchanged. */
 #videoTab .video-size{display:flex!important;margin:8px 0 10px;gap:6px}
 #videoTab #videoSize{min-width:0}
@@ -1345,12 +1413,14 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
         <label class="video-size" for="videoSize"><span>Videobreite</span><input id="videoSize" type="range" min="45" max="85" value="60"><output id="videoSizeValue">56 %</output></label>
         <div class="annotation-section" id="annotationSection"><button class="btn annotation-tools-toggle" id="annotationToolsToggle" type="button" aria-expanded="false"><span>Zeichenwerkzeuge</span><span aria-hidden="true">▾</span></button><div class="annotation-toolbar" aria-label="Videoannotation"><button class="btn" id="drawToggle" type="button">Zeichnen</button><button class="btn" id="fullscreenDrawOpen" type="button">Vollbild zeichnen</button><label class="annotation-visibility"><input id="showVideoAnnotations" type="checkbox" checked> Zeichnungen anzeigen</label><select class="field" id="drawTool" aria-label="Zeichenwerkzeug"><option value="pen">Freihand</option><option value="arrow">Pfeil</option><option value="circle">Kreis</option></select><input class="field" id="drawColor" type="color" value="#ffca55" aria-label="Zeichenfarbe"><label class="annotation-time-field">Von <input class="field" id="annotationStart" type="text" inputmode="decimal" placeholder="MM:SS"></label><label class="annotation-time-field">Bis <input class="field" id="annotationEnd" type="text" inputmode="decimal" placeholder="MM:SS"></label><button class="btn" id="undoDrawing" type="button">Zeichnung zurück</button><button class="btn danger" id="clearDrawing" type="button">Zeichnung löschen</button></div></div>
         <div id="videoPortraitPlaylistHost" class="video-portrait-playlist-host" aria-label="Events horizontal scrollen"></div>
-        <div class="match-review-window" id="matchReviewWindow">
-          <strong>Szenenwiedergabe</strong>
-          <label>Vorlauf (s)<input class="field" id="matchPreRoll" type="number" min="0" step="0.5" value="4"></label>
-          <label>Nachlauf (s)<input class="field" id="matchPostRoll" type="number" min="0" step="0.5" value="2"></label>
-          <span class="match-review-window-note">Event auswählen → automatisch mit Vorlauf starten und nach dem Nachlauf stoppen.</span>
-        </div>
+        <details class="match-review-window" id="matchReviewWindow">
+          <summary>Szenenwiedergabe · Vorlauf / Nachlauf</summary>
+          <div class="match-review-window-fields">
+            <label>Vorlauf (s)<input class="field" id="matchPreRoll" type="number" min="0" step="0.5" value="4"></label>
+            <label>Nachlauf (s)<input class="field" id="matchPostRoll" type="number" min="0" step="0.5" value="2"></label>
+            <span class="match-review-window-note">Event auswählen → mit Vorlauf starten und nach dem Nachlauf stoppen.</span>
+          </div>
+        </details>
         <div class="match-review-capture" id="matchReviewCaptureHost"></div><div class="match-review-event-editor hidden" id="matchReviewEventEditorHost"></div>
       </div>
     </section><section class="match-nearby-events hidden" id="matchNearbyEvents"><div class="match-nearby-header"><strong>Alle Events · Videoanalyse</strong><button class="btn" id="matchJumpToCurrentEvent" type="button">Zur Videozeit</button><span id="matchNearbyTime">± 10 Sekunden</span></div><div class="match-nearby-list" id="matchNearbyList" aria-label="Events in der Nähe"></div><div id="matchEventHoldMenu" class="match-event-hold-menu hidden" role="menu"><button class="btn" type="button" id="matchEventHoldDetails">Details ohne Videosprung</button></div><div id="matchNearbyEditorHost" class="hidden"><button class="btn match-editor-close" id="matchEditorClose" type="button" aria-label="Event-Bearbeitung schließen" title="Event-Bearbeitung schließen">×</button></div></section></div>
@@ -1405,6 +1475,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
         <div class="eventlist" id="eventList"><div class="empty">Noch keine Ereignisse erfasst.</div></div>
       </div>
     </aside>
+    <section id="matchSceneSettingsHost" class="match-scene-settings-host" hidden aria-label="Szeneneinstellungen"></section>
   </main>
   </section>
 
@@ -5306,6 +5377,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function parseTime(value){if(/^\d+(?::[0-5]\d){1,2}(?:\.\d+)?$/.test(value)){return value.split(':').reduce((n,v)=>n*60+Number(v),0)}if(/^\d+(?:\.\d+)?$/.test(value))return Number(value);throw Error('Zeit bitte als MM:SS eingeben.');}
   function stopGame(){if(gameRunning){gameBase=currentGameSeconds();gameRunning=false;}state.timer.active=false;$("runBtn").textContent="▶ SPIELZEIT STARTEN";$("runBtn").classList.remove("stop");}
   const matchSide=document.querySelector("#matchGrid>.side"),matchEventsPanel=matchSide?.querySelector(".events"),matchTimeManagement=matchSide?.querySelector(".time-management"),videoEventEditorHome=$("videoEventEditor")?.parentElement,matchCaptureNodes=[$("stepSummary"),...document.querySelectorAll("#matchGrid>.side>.step"),$("backbar")].filter(Boolean);
+  const matchSceneSettings=$("matchReviewWindow"),matchSceneSettingsHome=matchSceneSettings?.parentElement;
   function placeMatchReviewEditor(enabled){const editor=$("videoEventEditor"),fallback=$("matchReviewEventEditorHost");if(!editor)return;if(!enabled){if(videoEventEditorHome&&editor.parentElement!==videoEventEditorHome)videoEventEditorHome.append(editor);return}const wide=window.innerWidth>=1100;if(wide&&matchEventsPanel){if(editor.parentElement!==matchEventsPanel)matchEventsPanel.append(editor)}else if(fallback&&editor.parentElement!==fallback)fallback.append(editor)}
   function updateMatchReviewLayout(){
     const nearbyPanel=$("matchNearbyEvents"),grid=$("matchGrid"),side=grid?.querySelector(":scope > .side");
@@ -5318,6 +5390,14 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     document.body.classList.toggle("video-scouting-layout",videoScouting);
     document.body.classList.toggle("live-scouting-layout",liveScouting);
     document.body.classList.toggle("match-unified-layout",activeTab==="match");
+    const sceneHost=$("matchSceneSettingsHost"),showSceneSettings=videoScouting||enabled;
+    if(sceneHost)sceneHost.hidden=!showSceneSettings;
+    if(matchSceneSettings){
+      if(showSceneSettings&&sceneHost&&matchSceneSettings.parentElement!==sceneHost)sceneHost.append(matchSceneSettings);
+      else if(!showSceneSettings&&matchSceneSettingsHome&&matchSceneSettings.parentElement!==matchSceneSettingsHome){
+        matchSceneSettingsHome.insertBefore(matchSceneSettings,$("matchReviewCaptureHost"));
+      }
+    }
     syncSceneWindowInputs();
     if(topHost&&grid&&topHost.nextElementSibling!==grid)grid.before(topHost);
     if(matchTimeManagement&&topHost&&matchTimeManagement.parentElement!==topHost)topHost.append(matchTimeManagement);

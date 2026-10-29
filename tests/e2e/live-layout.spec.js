@@ -69,3 +69,68 @@ test("live event capture stays full width while review temporarily shows video a
   await page.locator('[data-tab="match"]').click();
   await expectLiveFullWidth(page);
 });
+
+
+test("video scouting puts capture under event strip and scene controls last on phone, tablet and desktop",async({page})=>{
+  await page.goto("/");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator('[data-tab="match"]').click();
+  await page.locator("#modeSelect").selectOption("video");
+  for(const width of [390,820,1280]){
+    await page.setViewportSize({width,height:900});
+    const order=await page.evaluate(()=>{
+      const box=id=>document.getElementById(id).getBoundingClientRect();
+      const video=box("matchVideoHost"),events=box("matchNearbyEvents"),
+        possession=box("matchPossessionHost"),capture=box("idleStep"),
+        settings=box("matchSceneSettingsHost");
+      return {
+        eventRowBeforePossession:possession.top>=Math.max(video.bottom,events.bottom)-3,
+        captureBelowPossession:capture.top>=possession.bottom-3,
+        settingsBelowCapture:settings.top>=capture.bottom-3,
+        captureFullWidth:Math.abs(box("matchGrid").width-box("matchGrid").width)<1 &&
+          document.querySelector("#matchGrid>.side").getBoundingClientRect().width>=box("matchGrid").width-4,
+        sceneHostContainsSettings:document.getElementById("matchSceneSettingsHost").contains(document.getElementById("matchReviewWindow"))
+      };
+    });
+    expect(order).toEqual({
+      eventRowBeforePossession:true,captureBelowPossession:true,
+      settingsBelowCapture:true,captureFullWidth:true,sceneHostContainsSettings:true
+    });
+    await expect(page.locator("#matchReviewWindow")).toBeVisible();
+    await expect(page.locator("#matchReviewWindow")).not.toHaveAttribute("open","");
+    await expect(page.locator("#matchPreRoll")).toBeHidden();
+    await page.locator("#matchReviewWindow summary").click();
+    await expect(page.locator("#matchPreRoll")).toBeVisible();
+    await page.locator("#matchReviewWindow summary").click();
+  }
+  await page.locator("#modeSelect").selectOption("live");
+  await expect(page.locator("#matchSceneSettingsHost")).toBeHidden();
+  await expect(page.locator("#matchGrid>.side #idleStep")).toBeVisible();
+});
+
+test("video review also keeps possession and event capture below the video/event columns",async({page})=>{
+  const file=JSON.parse(await readFile(fixture,"utf8"));
+  file.isHistorical=false;file.isVideoscoutingFile=false;
+  await page.goto("/");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#continueGameInput").setInputFiles({
+    name:"review-layout.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(file))
+  });
+  await page.locator("#matchReviewToggle").click();
+  await expect(page.locator("body")).toHaveClass(/match-review-mode/);
+  await page.setViewportSize({width:820,height:900});
+  const result=await page.evaluate(()=>{
+    const b=id=>document.getElementById(id).getBoundingClientRect();
+    const events=document.querySelector("#matchGrid>.events").getBoundingClientRect();
+    const capture=document.getElementById("idleStep").getBoundingClientRect();
+    const side=document.querySelector("#matchGrid>.side").getBoundingClientRect();
+    return {
+      eventsBesideVideo:events.left>=b("matchVideoHost").right-3,
+      possessionBelowEvents:b("matchPossessionHost").top>=Math.max(events.bottom,b("matchVideoHost").bottom)-3,
+      captureBelowPossession:capture.top>=b("matchPossessionHost").bottom-3,
+      captureFullWidth:side.width>=b("matchGrid").width-4,
+      settingsAtBottom:b("matchSceneSettingsHost").top>=side.bottom-3
+    };
+  });
+  expect(result).toEqual({eventsBesideVideo:true,possessionBelowEvents:true,captureBelowPossession:true,captureFullWidth:true,settingsAtBottom:true});
+});
