@@ -350,6 +350,20 @@ test("seven-meter reuses the regular goal map when target capture is enabled",as
   expect(await latestEvent(page)).toMatchObject({type:"goal",z:"7M",is7:true,gz:"OL",scoreChanged:true});
 });
 
+test("seven-meter parade records selected target and goalkeeper",async({page})=>{
+  const source=await openDemo(page,{target:true});
+  await page.locator("#awayPoss").click();
+  await page.locator('[data-flow="7m"]').click();
+  await pickJersey(page,"#playerList",7);
+  await page.locator('#sevenMeterTargetList [data-target="MM"]').click();
+  await page.locator('[data-seven-meter-result="save"]').click();
+  expect(await latestEvent(page)).toMatchObject({
+    type:"save",z:"7M",is7:true,gz:"MM",scoreChanged:false,
+    team:"home",pId:source.home.players.find(p=>p.nr===1).id,
+    throwerId:source.away.players.find(p=>p.nr===7).id
+  });
+});
+
 test("seven-meter target can be deselected without an outcome timestamp",async({page})=>{
   await openDemo(page,{target:true});
   await page.locator("#awayPoss").click();
