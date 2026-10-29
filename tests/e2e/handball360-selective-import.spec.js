@@ -25,6 +25,7 @@ async function openImport(page){
  return dialog;
 }
 test.beforeEach(async ({page})=>{
+ await page.addInitScript(() => localStorage.setItem("handballSpielanalyse.proxyToken", "playwright-fake-proxy-token"));
  await page.route("**/handball360-proxy-235703972531.europe-west1.run.app/**",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(response)}));
  await page.goto("/");
  await page.locator('[data-tab="setup"]').click();
