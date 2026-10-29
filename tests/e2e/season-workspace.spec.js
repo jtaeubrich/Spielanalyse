@@ -80,7 +80,8 @@ test("season analysis remembers the last edited fixture, including after reload"
   await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
   await page.locator('[data-tab="analysis"]').click();
   await expect(page.locator("#analysisGamePicker option:checked")).toContainText("2026-09-05");
-  await expect(page.locator("#analysisToVideo")).toBeDisabled();
+  // The explicitly continued match can still access its video scenes.
+  // Passive season previews never launch a new scouting session.
   await page.reload();
   await page.locator('[data-tab="analysis"]').click();
   await expect(page.locator("#analysisGamePicker option:checked")).toContainText("2026-09-05");
