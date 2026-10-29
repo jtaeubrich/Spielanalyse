@@ -3671,17 +3671,20 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("analysisTeamFilter").value="own";$("analysisPlayerFilter").value="all";
   }
   function enterStandaloneWorkspace({restore=true}={}){
-    if(workspaceKind==="season"&&restore){
-      if(activeSeasonGameId)persistSession();
+    const leavingSeason=workspaceKind==="season";
+    if(leavingSeason&&restore&&activeSeasonGameId)persistSession();
+    // Reset the context before rendering the restored match; otherwise the
+    // season preview could overwrite the standalone score/header during update().
+    workspaceKind="single";localStorage.setItem(WORKSPACE_KEY,workspaceKind);
+    analysisSelectedGameId="";analysisLastSubtab="analysis";
+    $("analysisPerspectiveSelect").value="neutral";
+    $("analysisTeamFilter").value="all";$("analysisPlayerFilter").value="all";
+    if(leavingSeason&&restore){
       const saved=localStorage.getItem(INDEPENDENT_SESSION_KEY);
       if(saved)try{
         if(restoreSessionObject(JSON.parse(saved))){homeHasSession=true;update()}
       }catch(error){console.warn("Einzelspiel-Wiederherstellung fehlgeschlagen",error)}
     }
-    workspaceKind="single";localStorage.setItem(WORKSPACE_KEY,workspaceKind);
-    analysisSelectedGameId="";analysisLastSubtab="analysis";
-    $("analysisPerspectiveSelect").value="neutral";
-    $("analysisTeamFilter").value="all";$("analysisPlayerFilter").value="all";
   }
   const analysisSeasonActive=()=>workspaceKind==="season";
   let analysisLastSubtab="analysis";
