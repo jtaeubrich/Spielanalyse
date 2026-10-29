@@ -143,8 +143,9 @@ test("new manual game clears the review label after opening completed live game"
   await page.locator("#homeImport").click();
   await page.locator("#continueGameInput").setInputFiles(upload("completed-live.json",game));
   await expect(page.locator("#modeSelect")).toHaveValue("review");
-  await page.locator('[data-tab="setup"]').click();
-  await page.locator("#newGame").click();
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeNew").click();
   await page.locator("#newGameManual").click();
   await page.locator('[data-tab="match"]').click();
   await expect(page.locator("#modeSelect")).toHaveValue("live");
