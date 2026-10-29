@@ -71,8 +71,17 @@ test("season analysis remembers the last edited fixture, including after reload"
     upload("spaet.json",makeGame("Spätes Spiel","2026-10-12","Gegner B","TSV Kronshagen",2))
   ]);
   await page.locator("#seasonPreferredTeam").selectOption({label:"TSV Kronshagen"});
-  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
-  await page.locator("#setupSeasonContinue").click();
+  // A focused season setup does not expose the independent-game selector.
+  // Resume the chosen match through the season overview instead.
+  await expect(page.locator("#setupSeasonGameSelect")).toBeHidden();
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeLibraryList .home-list-row").first()
+    .getByRole("button",{name:"Öffnen",exact:true}).click();
+  const firstGame=page.locator("#homeSeasonGames .home-list-row").first();
+  await expect(firstGame).toContainText("05.09.2026");
+  await firstGame.getByRole("button",{name:"Fortsetzen",exact:true}).click();
   await expect(page.locator("#setupContextTitle")).toContainText("Saisonspiel");
   await page.locator('[data-tab="home"]').click();
   await page.locator("#homeChooseSeason").click();

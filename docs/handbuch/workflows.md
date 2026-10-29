@@ -1,6 +1,6 @@
 # Die drei Scouting-Arbeitsabläufe
 
-**Vor dem Scouting:** Zuerst entscheiden, ob es sich um ein [eigenständiges Einzelspiel oder ein Saisonspiel](saison-workflow.md) handelt. Bei einem Saisonspiel erfolgt die Auswahl im Setup. Dort können offizielle Handball360-Kader vor dem Anpfiff aktualisiert und bei bereits gescouteten Spielen sicher abgeglichen werden (ohne bestehende Spieler-IDs oder Ereignisse zu entfernen). W1–W3 gelten für beide Einstiege.
+**Vor dem Scouting:** Über **Start** zwischen [eigenständigem Einzelspiel und Saison](saison-workflow.md) wählen. Nach dem Öffnen einer Saison ist im Tab **Analyse → Einzelspiel** das zuletzt bearbeitete (sonst jüngste gescoutete) Saisonspiel als reine Vorschau gewählt. Zum Scouting muss die gewünschte Partie auf der Saisonübersicht ausdrücklich mit **Fortsetzen** geöffnet werden. In der Saisonverwaltung können offizielle Handball360-Kader vor Anpfiff aktualisiert und bei gescouteten Spielen ohne Löschung bestehender Ereignisse abgeglichen werden. W1–W3 gelten für beide Einstiege.
 
 
 ## Vor dem Start: Entscheidung

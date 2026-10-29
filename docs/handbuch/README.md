@@ -1,6 +1,6 @@
 # Spielanalyse – Anwenderdokumentation
 
-**Stand:** 24.10.2026 · **Status:** Text und statische Screenshots der echten PWA in Workflows und integrierter `? Hilfe`. Video-Szenen folgen separat.
+**Stand:** 29.10.2026 · **Status:** Text und statische Screenshots der echten PWA in Workflows und integrierter `? Hilfe`. Video-Szenen folgen separat.
 
 ## Ziel und Leserführung
 
@@ -22,13 +22,13 @@ Die Dokumentation erklärt **zuerst die Arbeitsabläufe** und danach die einzeln
 
 | Ausgangslage | Workflow | Hauptansicht |
 |---|---|---|
-| Ich möchte eine komplette Saison und Spielkader vor Anpfiff verwalten | [Saisonworkflow](saison-workflow.md) | Saison → Setup → Match |
-| Ich möchte ein unabhängiges Einzelspiel verwalten | [Einzelspiel](saison-workflow.md#welcher-einstieg-ist-richtig) | Setup → Match |
+| Ich möchte eine komplette Saison und Spielkader vor Anpfiff verwalten | [Saisonworkflow](saison-workflow.md) | Start → Saison → Setup; gewähltes Saisonspiel explizit mit **Fortsetzen** öffnen |
+| Ich möchte ein unabhängiges Einzelspiel verwalten | [Einzelspiel](saison-workflow.md#welcher-einstieg-ist-richtig) | Start → Einzelspiel → Setup → Match |
 | Ich sitze live beim Spiel und möchte unmittelbar Ereignisse erfassen | [W1 Live](workflows.md#w1--ausschließlich-live-scouting) | Match / Live Scouting |
 | Ich erfasse live und ergänze anschließend Details mit Video | [W2 Live + Video](workflows.md#w2--live-scouting-und-spätere-video-nachanalyse) | Match / Live Scouting → Video-Nachanalyse |
 | Ich habe ein fertiges Video, aber noch keine Ereignisse | [W3 Video](workflows.md#w3--ausschließlich-video-scouting) | Match / Video Scouting |
 
-**Gemeinsam für alle Workflows:** Spielanlage im Setup, Ereignisse in derselben Spieldatei, Analyse und Speichern/Export. Sportlounge-Videos werden als MP4 heruntergeladen und über `Lokales Video` geöffnet. nuLiga ist aktuell **keine** vorgesehene Datenquelle.
+**Gemeinsam für alle Workflows:** Spielanlage im Setup, Ereignisse in derselben Spieldatei, Analyse und Speichern/Export. Für Auswertungen gibt es den Haupttab **Analyse** mit **Einzelspiel** und (nur bei geöffneter Saison) **Saison**. Die reine Saisonvorschau lädt automatisch das zuletzt bearbeitete Saisonspiel, startet aber kein Scouting. Sportlounge-Videos können als MP4 heruntergeladen und über `Lokales Video` geöffnet werden. Die öffentliche nuLiga-HTML-Anbindung ist als experimentelle Online-Demo verfügbar und kein garantierter, dauerhaft unterstützter Datendienst.
 
 ## Begriffsklärung
 
