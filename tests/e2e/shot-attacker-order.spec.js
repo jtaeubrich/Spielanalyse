@@ -339,6 +339,7 @@ test("seven-meter reuses the regular goal map when target capture is enabled",as
   await pickJersey(page,"#playerList",7);
   const panel=page.locator("#sevenMeterStep .seven-meter-target");
   await expect(panel).toBeVisible();
+  await expect(panel.locator("summary")).toHaveText("Wurfziel");
   await expect(page.locator("#sevenMeterTargetList .goal-map")).toHaveCount(1);
   await expect(page.locator("#targetList .goal-map")).toHaveCount(1);
   await expect(panel).toHaveAttribute("open", "");
