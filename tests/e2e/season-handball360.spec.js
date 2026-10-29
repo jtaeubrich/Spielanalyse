@@ -605,3 +605,25 @@ test("historical Setup lineup reconciliation preserves scouted events, video and
   await expect(dialog).toContainText("Keine Abweichungen");
   await dialog.locator("#setupOfficialRosterCancel").click();
 });
+
+test("season analysis preview offers explicit entry into video and data editing",async({page})=>{
+  const game=buildHandball360SeasonGame(games[0],"378107",teamId,schedule.matches[0]);
+  await page.locator("#seasonGameInput").setInputFiles(upload("season-analysis-edit.json",game.state));
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSingle").click();
+  await page.locator("#setupSeasonGameSelect").selectOption({index:1});
+  await page.locator("#setupSeasonAnalysis").click();
+  await expect(page.locator("#analysisGamePicker")).toHaveValue(/.+/);
+  await expect(page.locator('[data-tab="video"]')).toBeHidden();
+  await expect(page.locator('[data-tab="data"]')).toBeHidden();
+  await expect(page.locator("#analysisOpenSeasonGame")).toBeVisible();
+  await page.locator("#analysisOpenSeasonGame").click();
+  await expect(page.locator('[data-tab="video"]')).toBeVisible();
+  await expect(page.locator('[data-tab="data"]')).toBeVisible();
+  await page.locator('[data-tab="video"]').click();
+  await expect(page.locator("#videoTab")).toHaveClass(/active/);
+  await page.locator('[data-tab="data"]').click();
+  await expect(page.locator("#dataTab")).toHaveClass(/active/);
+  await page.locator('[data-tab="analysis"]').click();
+  await expect(page.locator("#analysisGamePicker")).toHaveValue(/.+/);
+});
