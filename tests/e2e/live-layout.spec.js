@@ -140,7 +140,8 @@ test("video review also keeps possession and event capture below the video/event
 // reset both and turn the wide-viewport phone into an emulated tablet.
 for(const scenario of [
   {name:"portrait phone review",viewport:{width:390,height:900},screen:{width:390,height:900}},
-  {name:"portrait phone review with wide layout viewport",viewport:{width:820,height:900},screen:{width:390,height:900}}
+  {name:"portrait phone review with wide layout viewport",viewport:{width:820,height:900},screen:{width:390,height:900}},
+  {name:"landscape phone review with wide layout viewport",viewport:{width:844,height:390},screen:{width:844,height:390}}
 ]){
   test.describe(scenario.name,()=>{
     test.use({viewport:scenario.viewport,screen:scenario.screen});
@@ -185,7 +186,75 @@ for(const scenario of [
         settingsBelowActions:true,fullWidth:true,horizontalEvents:true,unsyncedAvailable:true
       });
       await page.locator("#matchGrid>.events .event").first().click();
+      await expect(page.locator("#matchNearbyEditorHost")).toBeVisible();
       await expect(page.locator("#videoEventEditor")).toBeVisible();
+      const layout=await page.evaluate(()=>{
+        const events=document.querySelector("#matchGrid>.events").getBoundingClientRect();
+        const editor=document.getElementById("matchNearbyEditorHost").getBoundingClientRect();
+        const possession=document.getElementById("matchPossessionHost").getBoundingClientRect();
+        const grid=document.getElementById("matchGrid");
+        return {
+          editorBelowEvents:editor.top>=events.bottom-4,
+          possessionBelowEditor:possession.top>=editor.bottom-4,
+          noGridOverflow:grid.scrollWidth<=grid.clientWidth+3
+        };
+      });
+      expect(layout).toEqual({editorBelowEvents:true,possessionBelowEditor:true,noGridOverflow:true});
+      await page.locator("#matchEditorCollapse").click();
+      await expect(page.locator("#matchEditorCollapse")).toHaveAttribute("aria-expanded","false");
+      await expect(page.locator("#videoEventEditor")).toBeHidden();
+      await page.locator("#matchEditorCollapse").click();
+      await expect(page.locator("#videoEventEditor")).toBeVisible();
+      await page.locator("#matchEditorClose").click();
+      await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
     });
   });
 }
+
+
+test.describe("phone video scouting editor",()=>{
+  test.use({viewport:{width:844,height:390},screen:{width:844,height:390}});
+
+  test("uses the same landscape event strip and collapsible editor as review",async({page,isMobile})=>{
+    test.skip(!isMobile,"Phone emulation is covered by the chromium-mobile project.");
+    const game=JSON.parse(await readFile(fixture,"utf8"));
+    game.isHistorical=false;
+    game.isVideoscoutingFile=true;
+    for(const event of game.events)event.realTime=null;
+    await page.goto("/");
+    await page.locator("#homeChooseGame").click();
+    await page.locator("#homeImport").click();
+    await page.locator("#continueGameInput").setInputFiles({
+      name:"landscape-video-scouting.json",
+      mimeType:"application/json",
+      buffer:Buffer.from(JSON.stringify(game))
+    });
+    await expect(page.locator("#modeSelect")).toHaveValue("video");
+    await expect(page.locator("body")).toHaveClass(/phone-match-layout/);
+    await expect(page.locator("#matchNearbyList .match-nearby-item").first()).toBeVisible();
+    const horizontal=await page.evaluate(()=>{
+      const list=document.getElementById("matchNearbyList");
+      const cards=[...list.querySelectorAll(".match-nearby-item")];
+      const video=document.getElementById("matchVideoHost").getBoundingClientRect();
+      const events=document.getElementById("matchNearbyEvents").getBoundingClientRect();
+      const first=cards[0]?.getBoundingClientRect();
+      const second=cards[1]?.getBoundingClientRect();
+      const grid=document.getElementById("matchGrid");
+      return {
+        eventsBelowVideo:events.top>=video.bottom-4,
+        horizontalEvents:Boolean(first&&second)&&Math.abs(first.top-second.top)<5,
+        noGridOverflow:grid.scrollWidth<=grid.clientWidth+3
+      };
+    });
+    expect(horizontal).toEqual({eventsBelowVideo:true,horizontalEvents:true,noGridOverflow:true});
+    await page.locator("#matchNearbyList .match-nearby-item").first().click();
+    await expect(page.locator("#matchNearbyEditorHost")).toBeVisible();
+    await expect(page.locator("#videoEventEditor")).toBeVisible();
+    await page.locator("#matchEditorCollapse").click();
+    await expect(page.locator("#videoEventEditor")).toBeHidden();
+    await page.locator("#matchEditorCollapse").click();
+    await expect(page.locator("#videoEventEditor")).toBeVisible();
+    await page.locator("#matchEditorClose").click();
+    await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
+  });
+});

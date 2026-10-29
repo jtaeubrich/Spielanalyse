@@ -958,6 +958,83 @@ body.phone-match-layout #matchTab #idleStep .actions>.choice{
   min-width:0!important;overflow-wrap:anywhere;
 }
 
+
+  /* A physical phone keeps the same compact Match layout in both orientations. */
+  body.phone-match-layout #matchTab #matchGrid>#matchNearbyEditorHost{
+    display:block!important;order:2!important;grid-column:1/-1!important;
+    grid-row:auto!important;width:100%!important;max-width:100%!important;
+    min-width:0!important;min-height:0!important;height:auto!important;
+    overflow:hidden!important;box-sizing:border-box!important;
+    margin:0!important;padding:8px!important;border:1px solid var(--cyan);
+    border-radius:10px;background:var(--panel2);
+  }
+  body.phone-match-layout #matchTab #matchGrid>#matchNearbyEditorHost.hidden{display:none!important}
+  body.phone-match-layout #matchTab #matchGrid>#matchPossessionHost{order:3!important}
+  body.phone-match-layout #matchTab #matchGrid>.side{order:4!important}
+  body.phone-match-layout #matchTab #matchGrid>#matchSceneSettingsHost{order:5!important}
+  body.phone-match-layout #matchTab #matchGrid>#matchNearbyEvents,
+  body.phone-match-layout #matchTab #matchGrid>.events{max-width:100%!important;overflow:hidden!important}
+  body.phone-match-layout #matchTab #matchNearbyEvents .match-nearby-list,
+  body.phone-match-layout #matchTab #matchGrid>.events .eventlist{width:100%;max-width:100%;box-sizing:border-box}
+  body.phone-match-layout #matchTab #matchGrid>.events .eventlist>.event{
+    display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+    justify-content:flex-start;flex:0 0 min(190px,72vw)!important;min-width:0!important;
+    max-width:190px;gap:3px!important;padding:6px 8px!important;font-size:11px!important;
+    overflow:hidden;box-sizing:border-box;
+  }
+  body.phone-match-layout #matchTab #matchGrid>.events .eventlist>.event>.eventtime{font-size:12px}
+  body.phone-match-layout #matchTab #matchGrid>.events .eventlist>.event>div{
+    min-width:0;max-width:100%;font-size:11px;overflow-wrap:anywhere;
+  }
+  body.phone-match-layout #matchTab #matchGrid>.events .eventlist>.event .delete{
+    align-self:flex-end;font-size:15px;line-height:1;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEvents .match-nearby-item{
+    max-width:190px;box-sizing:border-box;font-size:11px;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .match-editor-toolbar{
+    display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .match-editor-collapse{
+    display:inline-flex;align-items:center;text-align:left;min-width:0;
+    padding:6px 7px;font-size:12px;font-weight:750;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .match-editor-close{
+    float:none;position:static;flex:0 0 auto;
+  }
+  #matchNearbyEditorHost .match-editor-collapse{display:none}
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .match-editor-collapse:not(.hidden){display:inline-flex}
+  body.phone-match-layout #matchTab #matchNearbyEditorHost.collapsed #videoEventEditor{display:none!important}
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .event-editor{
+    margin:4px 0 0!important;padding:6px 0 0!important;max-height:none!important;
+    min-width:0;width:100%;overflow:visible!important;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .event-editor h2{
+    font-size:13px!important;line-height:1.3;margin:0 0 6px;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .video-event-data-grid{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .video-event-data-grid>*{
+    min-width:0!important;max-width:100%;overflow-wrap:anywhere;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .video-event-data-grid .field{
+    display:block;box-sizing:border-box;width:100%;min-width:0!important;
+    padding:6px 7px!important;margin:3px 0 5px!important;font-size:12px!important;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .video-event-data-grid label{font-size:11px}
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .video-event-data-grid .wide{grid-column:1/-1}
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .event-editor-grid{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .event-editor-grid .field{min-width:0}
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .video-event-meta-row{
+    display:flex;flex-wrap:wrap;gap:5px;
+  }
+  body.phone-match-layout #matchTab #matchNearbyEditorHost .video-event-meta-row .btn{
+    min-width:0;font-size:11px;padding:6px;
+  }
+
 /* Scoped to Video tab only; Match and Analysis remain unchanged. */
 #videoTab .video-size{display:flex!important;margin:8px 0 10px;gap:6px}
 #videoTab #videoSize{min-width:0}
@@ -1477,7 +1554,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
         </details>
         <div class="match-review-capture" id="matchReviewCaptureHost"></div><div class="match-review-event-editor hidden" id="matchReviewEventEditorHost"></div>
       </div>
-    </section><section class="match-nearby-events hidden" id="matchNearbyEvents"><div class="match-nearby-header"><strong>Alle Events · Videoanalyse</strong><button class="btn" id="matchJumpToCurrentEvent" type="button">Zur Videozeit</button><span id="matchNearbyTime">± 10 Sekunden</span></div><div class="match-nearby-list" id="matchNearbyList" aria-label="Events in der Nähe"></div><div id="matchEventHoldMenu" class="match-event-hold-menu hidden" role="menu"><button class="btn" type="button" id="matchEventHoldDetails">Details ohne Videosprung</button></div><div id="matchNearbyEditorHost" class="hidden"><button class="btn match-editor-close" id="matchEditorClose" type="button" aria-label="Event-Bearbeitung schließen" title="Event-Bearbeitung schließen">×</button></div></section></div>
+    </section><section class="match-nearby-events hidden" id="matchNearbyEvents"><div class="match-nearby-header"><strong>Alle Events · Videoanalyse</strong><button class="btn" id="matchJumpToCurrentEvent" type="button">Zur Videozeit</button><span id="matchNearbyTime">± 10 Sekunden</span></div><div class="match-nearby-list" id="matchNearbyList" aria-label="Events in der Nähe"></div><div id="matchEventHoldMenu" class="match-event-hold-menu hidden" role="menu"><button class="btn" type="button" id="matchEventHoldDetails">Details ohne Videosprung</button></div><div id="matchNearbyEditorHost" class="hidden"><div class="match-editor-toolbar"><button class="btn match-editor-collapse" id="matchEditorCollapse" type="button" aria-expanded="true" aria-controls="videoEventEditor">▾ Event bearbeiten</button><button class="btn match-editor-close" id="matchEditorClose" type="button" aria-label="Event-Bearbeitung schließen" title="Event-Bearbeitung schließen">×</button></div></div></section></div>
     <section id="matchPossessionHost" class="match-possession-host" aria-label="Ballbesitz"><div class="label">Ballbesitz</div></section>
     <aside class="panel side">
       <div class="time-management">
@@ -2442,12 +2519,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     el.querySelectorAll(".event.jumpable").forEach(row=>{
       const index=Number(row.dataset.eventIndex);
       const jump=()=>{
-        if(review&&!Number.isFinite(eventVideoSeconds(state.events[index]))){
-          pinMatchReviewEvent(index);
+        if(review){
+          showMobileMatchEditor();
+          // Unsynced events and games without a loaded video are still editable.
+          if(Number.isFinite(eventVideoSeconds(state.events[index]))&&mediaReady())seekMatchReviewEvent(index);
+          else pinMatchReviewEvent(index);
           return;
         }
-        if(review)seekMatchReviewEvent(index);
-        else seekEvent(state.events[index]);
+        seekEvent(state.events[index]);
       };
       row.onclick=jump;
       row.onkeydown=ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();jump()}};
@@ -5036,10 +5115,21 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   for(const type of ["touchstart","pointerdown","wheel"]){
     $("matchNearbyList").addEventListener(type,()=>{nearbyManualUntil=performance.now()+8000},{passive:true});
   }
+  $("matchEditorCollapse").onclick=()=>{
+    mobileMatchEditorCollapsed=!mobileMatchEditorCollapsed;
+    syncMobileMatchEditor();
+  };
   $("matchEditorClose").onclick=()=>{
+    mobileMatchEditorShown=false;
+    mobileMatchEditorCollapsed=false;
+    if(activeTab==="match"&&matchReviewMode){
+      reviewPinnedEventIndex=null;
+      reviewSelectionHoldUntil=performance.now()+800;
+    }
     activeVideoEventIndex=null;
     $("matchNearbyEditorHost").classList.add("hidden");
     renderVideoEventEditor();
+    renderEvents();
     renderMatchNearbyEvents(true);
   };
   let holdEventIndex=null;
@@ -5049,6 +5139,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     hideMatchHoldMenu();
     if(index===null)return;
     activeVideoEventIndex=index;
+    showMobileMatchEditor();
     renderVideoEventEditor();
     $("matchNearbyEditorHost").classList.remove("hidden");
     renderMatchNearbyEvents(true);
@@ -5103,12 +5194,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         hideMatchHoldMenu();
         if(activeVideoEventIndex===index){
           activeVideoEventIndex=null;
+          mobileMatchEditorShown=false;
           $("matchNearbyEditorHost").classList.add("hidden");
           renderVideoEventEditor();
           renderMatchNearbyEvents(true);
           return;
         }
-        mediaPause();activeVideoEventIndex=index;renderVideoEventEditor();
+        mediaPause();activeVideoEventIndex=index;showMobileMatchEditor();renderVideoEventEditor();
         $("matchNearbyEditorHost").classList.remove("hidden");
         if(Number.isFinite(at))seekActiveEventExact(event);
         renderMatchNearbyEvents(true);
@@ -5120,6 +5212,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function videoEditorCommit(message="Ereignis geändert"){nearbySignature="";recalculateScores();renderAnalysis();persistSession();renderDataEditor();renderVideoPlaylist();renderEvents();toast(message)}
   function renderVideoEventEditor(){
     const host=$("videoEventEditor"),e=state.events[activeVideoEventIndex];host.classList.toggle("has-event",Boolean(e));
+    syncMobileMatchEditor();
     if(!e){host.innerHTML='<h2>Aktives Ereignis bearbeiten</h2><div class="empty">Ereignis in der Liste auswählen, um seine Daten direkt beim Video zu bearbeiten.</div>';return}
     const tags=normalizedTags(e),annotation=eventAnnotation(e,true),teamItems=[["home",state.home.name],["away",state.away.name]],typeItems=[["shot","Torwurf"],["goal","Tor"],["save","Parade"],["miss","Fehlwurf"],["block","Block"],["error","Technischer Fehler"],["yellow","Gelbe Karte"],["2min","2 Minuten"],["2plus2","2+2 Minuten"],["red","Rote Karte"],["blue","Blaue Karte"],["steal","Steal"],["turnover","Ballbesitzwechsel"],["timeout","Auszeit"],["keyMoment","Schlüsselmoment"]],phaseItems=[["","Nicht angegeben"],...attackPhases,["7-Meter","7-Meter"]],zoneItems=[["","Nicht angegeben"],...locations],targetItems=[["","Nicht angegeben"],...targets,["Unbekannt","Unbekannt"]],errorItems=[["","Nicht angegeben"],...errors],attackTeam=attackingTeamOf(e),defendingTeam=defendingTeamOf(e),defender=(e.playerTags||[]).find(t=>t.team===defendingTeam),defenderItems=[["","Nicht zugeordnet"],["__unknown__","Unbekannt"],...(state[defendingTeam]?.players||[]).map(p=>[String(p.id),playerName(p)])],defenseValue=defender?String(defender.pId):(e.defenderUnknown?"__unknown__":""),defenseTag=tags.find(t=>t.startsWith("Deckung:"))?.slice(8)||"",triggerTag=tags.find(t=>t.startsWith("Auslöser:"))?.slice(8)||"";
     const conditional=[];
@@ -5471,13 +5564,46 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function stopGame(){if(gameRunning){gameBase=currentGameSeconds();gameRunning=false;}state.timer.active=false;$("runBtn").textContent="▶ SPIELZEIT STARTEN";$("runBtn").classList.remove("stop");}
   const matchSide=document.querySelector("#matchGrid>.side"),matchEventsPanel=matchSide?.querySelector(".events"),matchTimeManagement=matchSide?.querySelector(".time-management"),videoEventEditorHome=$("videoEventEditor")?.parentElement,matchCaptureNodes=[$("stepSummary"),...document.querySelectorAll("#matchGrid>.side>.step"),$("backbar")].filter(Boolean);
   const matchSceneSettings=$("matchReviewWindow"),matchSceneSettingsHome=matchSceneSettings?.parentElement;
-  function placeMatchReviewEditor(enabled){const editor=$("videoEventEditor"),fallback=$("matchReviewEventEditorHost");if(!editor)return;if(!enabled){if(videoEventEditorHome&&editor.parentElement!==videoEventEditorHome)videoEventEditorHome.append(editor);return}const wide=window.innerWidth>=1100;if(wide&&matchEventsPanel){if(editor.parentElement!==matchEventsPanel)matchEventsPanel.append(editor)}else if(fallback&&editor.parentElement!==fallback)fallback.append(editor)}
+  let mobileMatchEditorShown=false,mobileMatchEditorCollapsed=false;
   function isPhoneMatchViewport(){
-    // Safari desktop-like CSS viewport widths must not turn an iPhone into a
-    // two-column tablet. Use the physical CSS screen size as well as viewport.
+    // iPhone Safari may expose a tablet-width layout viewport, particularly
+    // in landscape. The short physical screen edge remains phone-sized.
     const shortEdge=Math.min(Number(window.screen?.width)||Infinity,Number(window.screen?.height)||Infinity);
-    const portrait=window.matchMedia("(orientation: portrait)").matches;
-    return window.innerWidth<=600||(portrait&&window.matchMedia("(pointer: coarse)").matches&&shortEdge<=650);
+    return window.innerWidth<=600||(window.matchMedia("(pointer: coarse)").matches&&shortEdge<=650);
+  }
+  function syncMobileMatchEditor(){
+    const host=$("matchNearbyEditorHost"),collapse=$("matchEditorCollapse");
+    if(!host)return;
+    const phone=activeTab==="match"&&isPhoneMatchViewport();
+    const selected=Number.isInteger(activeVideoEventIndex)&&Boolean(state.events[activeVideoEventIndex]);
+    host.classList.toggle("collapsed",phone&&mobileMatchEditorCollapsed);
+    if(collapse){
+      collapse.classList.toggle("hidden",!phone);
+      collapse.setAttribute("aria-expanded",String(!mobileMatchEditorCollapsed));
+      collapse.textContent=(mobileMatchEditorCollapsed?"▸ ":"▾ ")+"Event bearbeiten"+(selected?" · "+(state.events[activeVideoEventIndex].displayTime||fmt(state.events[activeVideoEventIndex].time||0)):"");
+    }
+    if(phone)host.classList.toggle("hidden",!mobileMatchEditorShown||!selected);
+  }
+  function showMobileMatchEditor(){
+    if(!isPhoneMatchViewport())return;
+    mobileMatchEditorShown=true;
+    mobileMatchEditorCollapsed=false;
+    syncMobileMatchEditor();
+  }
+  function placeMatchReviewEditor(enabled){
+    const editor=$("videoEventEditor"),fallback=$("matchReviewEventEditorHost"),mobileHost=$("matchNearbyEditorHost");
+    if(!editor)return;
+    if(!enabled){
+      if(videoEventEditorHome&&editor.parentElement!==videoEventEditorHome)videoEventEditorHome.append(editor);
+      return;
+    }
+    if(isPhoneMatchViewport()&&mobileHost){
+      if(editor.parentElement!==mobileHost)mobileHost.append(editor);
+      return;
+    }
+    const wide=window.innerWidth>=1100;
+    if(wide&&matchEventsPanel){if(editor.parentElement!==matchEventsPanel)matchEventsPanel.append(editor)}
+    else if(fallback&&editor.parentElement!==fallback)fallback.append(editor);
   }
   function updateMatchReviewLayout(){
     const nearbyPanel=$("matchNearbyEvents"),grid=$("matchGrid"),side=grid?.querySelector(":scope > .side");
@@ -5502,8 +5628,12 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     syncSceneWindowInputs();
     if(topHost&&grid&&topHost.nextElementSibling!==grid)grid.before(topHost);
     if(matchTimeManagement&&topHost&&matchTimeManagement.parentElement!==topHost)topHost.append(matchTimeManagement);
-    const possessionHost=$("matchPossessionHost");
+    const possessionHost=$("matchPossessionHost"),nearbyHost=$("matchNearbyEditorHost"),phone=isPhoneMatchViewport();
     if(possessionHost&&possession&&possession.parentElement!==possessionHost)possessionHost.append(possession);
+    // On phones both modes use one editor directly beneath the horizontal event strip.
+    if(phone&&(videoScouting||enabled)&&grid&&possessionHost&&nearbyHost){
+      if(nearbyHost.parentElement!==grid||nearbyHost.nextElementSibling!==possessionHost)grid.insertBefore(nearbyHost,possessionHost);
+    }
     // Capture stays below the video/events row in all modes.
     if(side)for(const node of matchCaptureNodes)side.append(node);
     if(nearbyPanel&&grid&&nearbyPanel.parentElement!==grid)grid.insertBefore(nearbyPanel,side);
@@ -5522,19 +5652,27 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       placeMatchReviewEditor(false);
     }
     if(videoScouting){
-      const editor=$("videoEventEditor"),nearbyHost=$("matchNearbyEditorHost");
+      const editor=$("videoEventEditor");
       if(editor&&nearbyHost&&editor.parentElement!==nearbyHost)nearbyHost.append(editor);
       const capture=$("matchReviewCaptureHost");
-      if(capture&&nearbyHost&&nearbyHost.nextElementSibling!==capture)capture.parentElement.insertBefore(nearbyHost,capture);
-      nearbyHost?.classList.toggle("hidden",activeVideoEventIndex===null);
+      if(!phone&&capture&&nearbyHost&&nearbyHost.nextElementSibling!==capture)capture.parentElement.insertBefore(nearbyHost,capture);
+      nearbyHost?.classList.toggle("hidden",phone?!mobileMatchEditorShown||activeVideoEventIndex===null:activeVideoEventIndex===null);
       renderMatchNearbyEvents(true);
       requestAnimationFrame(syncMatchVideoColumnHeight);
+    }else if(enabled){
+      nearbyPanel?.classList.add("hidden");
+      if(!phone){
+        const list=$("matchNearbyList");
+        if(list&&nearbyHost&&nearbyHost.parentElement!==list.parentElement)list.parentElement.insertBefore(nearbyHost,list.nextSibling);
+        nearbyHost?.classList.add("hidden");
+      }
     }else{
-      const nearbyHost=$("matchNearbyEditorHost"),list=$("matchNearbyList");
+      const list=$("matchNearbyList");
       if(list&&nearbyHost&&nearbyHost.parentElement!==list.parentElement)list.parentElement.insertBefore(nearbyHost,list.nextSibling);
       nearbyPanel?.classList.add("hidden");
       nearbyHost?.classList.add("hidden");
     }
+    syncMobileMatchEditor();
   }
   function syncMatchVideoColumnHeight(){
     const video=$("matchVideoHost"),events=$("matchNearbyEvents");
@@ -5547,8 +5685,15 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     matchVideoResizeObserver.observe($("matchVideoHost"));
   }
   window.addEventListener("resize",()=>{
-    if(activeTab==="match")document.body.classList.toggle("phone-match-layout",isPhoneMatchViewport());
-    if(activeTab==="match"&&matchReviewMode)placeMatchReviewEditor(true);
+    if(activeTab==="match"){
+      const wasPhone=document.body.classList.contains("phone-match-layout");
+      const phone=isPhoneMatchViewport();
+      if(wasPhone!==phone)updateMatchReviewLayout();
+      else{
+        if(matchReviewMode)placeMatchReviewEditor(true);
+        syncMobileMatchEditor();
+      }
+    }
     if(activeTab==="match"&&analysisMode==="video")syncMatchVideoColumnHeight();
   });
 
@@ -5566,8 +5711,8 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     $("modeSelect").disabled=completed;
   }
   function refreshSecondaryClockControls(){$("secondaryClockLabel").textContent=matchReviewMode?"Videozeit":analysisMode==="live"?"Realzeit":"Videozeit";$("videoToggle").classList.remove("hidden","active");$("videoToggle").textContent=matchReviewMode?"▶ Video":analysisMode==="live"?"▶ Realzeit starten":"▶ Start";$("syncVideo").textContent=matchReviewMode||analysisMode==="video"?"Zeit setzen":"Nullen"}
-  function setMatchReviewMode(enabled,{announce=true}={}){enabled=Boolean((enabled||state.liveScoutingCompleted)&&analysisMode==="live"&&!state.isHistorical&&(state.events.length||state.liveScoutingCompleted));if(enabled===matchReviewMode){updateMatchReviewControls();refreshSecondaryClockControls();updateMatchReviewLayout();return}stopGame();if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}mediaPause();scenePlayback.cancel();matchReviewMode=enabled;updateMatchReviewControls();refreshSecondaryClockControls();if(enabled){showTab("match");resizeAnnotationCanvas()}updateMatchReviewLayout();if(announce)toast(enabled?"Video-Nachanalyse aktiv – Events können am Video ergänzt und korrigiert werden":"Video-Nachanalyse beendet")}
-  function setAnalysisMode(mode){const changed=mode!==analysisMode;if(mode!=="live"&&matchReviewMode)setMatchReviewMode(false,{announce:false});stopGame();if(mode==="live"){mediaPause();if(!liveClockInitialized){liveClockBase=0;liveClockInitialized=true}analysisMode="live";state.video.analysisTimeBasis="live-elapsed-ms"}else{if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}analysisMode="video";state.video.analysisTimeBasis="video-absolute-ms"}if(!state.isHistorical)state.isVideoscoutingFile=analysisMode==="video";document.body.classList.toggle("live-mode",analysisMode==="live");$("modeSelect").value=analysisMode;updateMatchReviewLayout();refreshSecondaryClockControls();mediaLast=analysisMode==="video"&&mediaReady()?mediaSeconds():null;updateMatchReviewControls();if(persistenceReady)persistSession();if(changed)toast(analysisMode==="live"?"Live Scouting aktiv – Realzeit separat starten":"Video Scouting aktiv")}
+  function setMatchReviewMode(enabled,{announce=true}={}){enabled=Boolean((enabled||state.liveScoutingCompleted)&&analysisMode==="live"&&!state.isHistorical&&(state.events.length||state.liveScoutingCompleted));if(enabled===matchReviewMode){updateMatchReviewControls();refreshSecondaryClockControls();updateMatchReviewLayout();return}stopGame();if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}mediaPause();scenePlayback.cancel();matchReviewMode=enabled;mobileMatchEditorShown=false;mobileMatchEditorCollapsed=false;updateMatchReviewControls();refreshSecondaryClockControls();if(enabled){showTab("match");resizeAnnotationCanvas()}updateMatchReviewLayout();if(announce)toast(enabled?"Video-Nachanalyse aktiv – Events können am Video ergänzt und korrigiert werden":"Video-Nachanalyse beendet")}
+  function setAnalysisMode(mode){const changed=mode!==analysisMode;if(mode!=="live"&&matchReviewMode)setMatchReviewMode(false,{announce:false});stopGame();if(mode==="live"){mediaPause();if(!liveClockInitialized){liveClockBase=0;liveClockInitialized=true}analysisMode="live";state.video.analysisTimeBasis="live-elapsed-ms"}else{if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}analysisMode="video";state.video.analysisTimeBasis="video-absolute-ms"}if(changed){mobileMatchEditorShown=false;mobileMatchEditorCollapsed=false}if(!state.isHistorical)state.isVideoscoutingFile=analysisMode==="video";document.body.classList.toggle("live-mode",analysisMode==="live");$("modeSelect").value=analysisMode;updateMatchReviewLayout();refreshSecondaryClockControls();mediaLast=analysisMode==="video"&&mediaReady()?mediaSeconds():null;updateMatchReviewControls();if(persistenceReady)persistSession();if(changed)toast(analysisMode==="live"?"Live Scouting aktiv – Realzeit separat starten":"Video Scouting aktiv")}
   $("modeSelect").onchange=e=>{
     if(state.liveScoutingCompleted&&e.target.value!==analysisMode){
       e.target.value=analysisMode;return toast("Live-Scouting wurde abgeschlossen. Bitte die Video-Nachanalyse verwenden.");
