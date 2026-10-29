@@ -26,7 +26,11 @@ async function openImport(page){
 }
 test.beforeEach(async ({page})=>{
  await page.addInitScript(() => localStorage.setItem("handballSpielanalyse.proxyToken", "playwright-fake-proxy-token"));
- await page.route("**/handball360-proxy-235703972531.europe-west1.run.app/**",route=>route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(response)}));
+ await page.route("**/handball360-proxy-235703972531.europe-west1.run.app/**",route=>{
+  const headers={"access-control-allow-origin":"*","access-control-allow-methods":"GET, OPTIONS","access-control-allow-headers":"Authorization"};
+  if(route.request().method()==="OPTIONS")return route.fulfill({status:204,headers});
+  return route.fulfill({status:200,contentType:"application/json",headers,body:JSON.stringify(response)});
+ });
  await page.goto("/");
  await page.locator('[data-tab="setup"]').click();
 });
