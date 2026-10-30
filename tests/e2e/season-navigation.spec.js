@@ -154,6 +154,10 @@ test("season exports use the same short team-and-year basename for JSON and ZIP"
   await page.locator("#seasonName").fill("TSV Kronshagen · Saison 2026/27");
   await page.locator("#seasonName").dispatchEvent("change");
   await page.locator("#seasonPreferredTeam").selectOption({label:"TSV Kronshagen"});
+  await expect(page.locator("#setupExportPanel #seasonExport")).toBeVisible();
+  await expect(page.locator("#setupExportPanel #seasonArchiveExport")).toBeVisible();
+  await expect(page.locator("#seasonExport")).toBeEnabled();
+  await expect(page.locator("#seasonArchiveExport")).toBeEnabled();
   const [json]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExport").click()]);
   expect(json.suggestedFilename()).toBe("TSV_Kronshagen_2026-27.json");
   const [zip]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonArchiveExport").click()]);
