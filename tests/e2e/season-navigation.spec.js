@@ -197,6 +197,11 @@ test("a passive season analysis preview exports the selected game without openin
   await expect(page.locator("#seasonExport")).toBeEnabled();
   await expect(page.locator("#seasonArchiveExport")).toBeEnabled();
   await page.locator('[data-tab="analysis"]').click();
+  // The fixture is dated 2026-11-02, so on 2026-10-30 it is a future match.
+  // Future matches are deliberately not selected for the analysis preview.
+  await expect(page.locator("#analysisGamePicker")).toHaveValue("");
+  await expect(page.locator("#analysisGamePicker option")).toHaveCount(2);
+  await page.locator("#analysisGamePicker").selectOption({index:1});
   await expect(page.locator("#analysisGamePicker")).toHaveValue(/.+/);
   await expect(page.locator('[data-tab="video"]')).toBeHidden();
   await page.locator('[data-tab="setup"]').click();
