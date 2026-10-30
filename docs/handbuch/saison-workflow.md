@@ -9,13 +9,13 @@ Die Spielanalyse unterstützt zwei organisatorische Einstiege. Die eigentliche E
 | Einzelne Begegnung ohne Saisonverknüpfung | **Setup → Neues Spiel** oder **Spiel laden (JSON)** | Eigenständige Spiel-JSON; **Spiel speichern** aktualisiert die geöffnete Datei, sofern der Browser dies ermöglicht, oder bietet einen Download |
 | Begegnung der verwalteten Saison | **Setup → Spiel aus Saison laden** | Änderungen werden unter der bestehenden Saisonspiel-ID lokal im Saisonarchiv aktualisiert; **Spiel speichern** sichert diesen Datensatz |
 | Nachanalyse einer Saisonbegegnung | **Setup → Spiel aus Saison laden → Für Analyse öffnen** | Dieselbe Saisonbegegnung, keine zusätzliche Kopie |
-| Dateien zur Archivierung/Übertragung | **Setup → Saison → Saison exportieren** oder **Team-Archiv (ZIP) exportieren** | Exportierte Momentaufnahme; kein automatischer Abgleich mit früher heruntergeladenen Dateien |
+| Dateien zur Archivierung/Übertragung | **Setup → Export & Datensicherung → Saison als JSON exportieren** oder **Team-Archiv als ZIP exportieren** | Exportierte Momentaufnahme; kein automatischer Abgleich mit früher heruntergeladenen Dateien |
 
 ## Fehlende Schützen mit dem nuLiga-Spielbericht ergänzen
 
 Ist ein bereits live gescoutetes Spiel Teil der Saison, lässt sich der offizielle Bericht direkt am vorhandenen Saisonspiel abgleichen:
 
-1. Das Live-Spiel zunächst **speichern**, danach unter **Setup → Saison → Saison exportieren** eine JSON-Sicherung erstellen.
+1. Das Live-Spiel zunächst **speichern**, danach unter **Setup → Export & Datensicherung → Saison als JSON exportieren** eine JSON-Sicherung erstellen.
 2. Unter **Setup → Saison** die richtige Saison aktivieren und **Saisonspiele** aufklappen.
 3. Bei der betreffenden Begegnung **Protokollabgleich** wählen. Das funktioniert für manuell erstellte und Handball360-verknüpfte Spiele ebenso wie für nuLiga-Spiele.
 4. Die vollständige nuLiga-**Spielbericht-URL** eingeben oder die HTML-Datei auswählen, dann **Offizielles Protokoll laden und vergleichen**.
@@ -44,7 +44,7 @@ Die Übernahme ergänzt **ausschließlich Spieler-ID, Nummer und Namen** an ausg
 
 Die Saison wird über **Start → Saison** geöffnet und unter **Setup → Saison** verwaltet. Beim Öffnen wird die **Einzelspielanalyse** auf das zuletzt bearbeitete Saisonspiel ausgerichtet; fehlt eine solche Kennung, auf das jüngste bereits gescoutete Spiel. Sind noch keine gescouteten Partien vorhanden, zeigt die Einzelspielanalyse einen leeren Zustand. Unter **Setup → Einzelspiel** werden unabhängige Matches angelegt und für ihr eigenes Scouting vorbereitet. Die aktiven Arbeitskontexte **Saison** und **unabhängiges Einzelspiel** sind getrennt.
 
-Unter **Setup → Saison → Gespeicherte Saisons** lassen sich mehrere Saisons getrennt auf demselben Gerät verwalten. Mit **+ Neue Saison** entsteht eine weitere, zunächst leere Saison; über die Auswahl kann man zwischen vorhandenen Saisons wechseln, ohne deren Spiele zu vermischen. Die bisherige lokal gespeicherte Saison wird beim ersten Start in die neue Saisonbibliothek übernommen. Ein **Saison-JSON-Import** erzeugt ebenfalls einen eigenen gespeicherten Saisoneintrag. **Saison leeren** entfernt nur die Spiele der ausgewählten Saison; andere lokal gespeicherte Saisons bleiben erhalten. Zur Sicherung auf anderen Geräten weiterhin **Saison exportieren** oder **Team-Archiv (ZIP) exportieren** verwenden. Die lokale Saisonbibliothek wird nicht zwischen Geräten synchronisiert.
+Unter **Setup → Saison → Gespeicherte Saisons** lassen sich mehrere Saisons getrennt auf demselben Gerät verwalten. Mit **+ Neue Saison** entsteht eine weitere, zunächst leere Saison; über die Auswahl kann man zwischen vorhandenen Saisons wechseln, ohne deren Spiele zu vermischen. Die bisherige lokal gespeicherte Saison wird beim ersten Start in die neue Saisonbibliothek übernommen. Ein **Saison-JSON-Import** erzeugt ebenfalls einen eigenen gespeicherten Saisoneintrag. **Saison leeren** entfernt nur die Spiele der ausgewählten Saison; andere lokal gespeicherte Saisons bleiben erhalten. Zur Sicherung auf anderen Geräten weiterhin **Setup → Export & Datensicherung → Saison als JSON exportieren** oder **Team-Archiv als ZIP exportieren** verwenden. Die lokale Saisonbibliothek wird nicht zwischen Geräten synchronisiert.
 
 Im einzigen Haupttab **Analyse** gibt es zwei Untertabs: **Einzelspiel** und **Saison**. Im Saisonkontext gehören beide ausschließlich zur geöffneten Saison und zur unter **Mein Team für die Saison** gewählten Mannschaft, unabhängig von Heim- oder Auswärtsspielen. Die Spielauswahl unter **Analyse → Einzelspiel** wechselt nur die Statistikvorschau; aktives Match, Spieluhr und Video werden nicht ersetzt. Über die Saisonübersicht lässt sich eine konkrete Partie mit **Fortsetzen** ausdrücklich in die Scouting-Vorbereitung laden. **Analyse → Saison** fasst alle für die Statistik markierten Saisonspiele zusammen.
 
@@ -105,7 +105,7 @@ Die **Saisonanalyse** berücksichtigt nur die ausdrücklich ausgewählten Spiele
 
 ![Saison-Kennzahlen und Filter in der PWA – Demowerte](images/generated/season-analytics-desktop.jpg)
 
-**Sicherung:** Über **Saison exportieren** entsteht eine JSON-Datei mit der aktuellen Saison. Über **Team-Archiv (ZIP) exportieren** entsteht zusätzlich eine Ordnerstruktur mit einer vollständigen `spiel.json` pro Begegnung:
+**Sicherung:** Unter **Setup → Export & Datensicherung** entsteht über **Saison als JSON exportieren** eine JSON-Datei mit der aktuellen Saison. Über **Team-Archiv als ZIP exportieren** entsteht zusätzlich eine Ordnerstruktur mit einer vollständigen `spiel.json` pro Begegnung. **Einzelspiel als JSON exportieren** erzeugt unabhängig von der aktiven Speicherung eine eigene Spiel-Datei (auch aus einer ausgewählten Saisonvorschau):
 
 ```text
 TSV_Kronshagen_mB/
