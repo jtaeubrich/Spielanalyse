@@ -159,3 +159,51 @@ test("season exports use the same short team-and-year basename for JSON and ZIP"
   const [zip]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonArchiveExport").click()]);
   expect(zip.suggestedFilename()).toBe("TSV_Kronshagen_2026-27_archiv.zip");
 });
+
+
+test("export controls live in Setup and an independent game exports without replacing storage",async({page})=>{
+  await page.goto("/");
+  await expect(page.locator(".filebar #saveBtn")).toHaveCount(1);
+  await expect(page.locator(".filebar #saveAsBtn")).toHaveCount(0);
+  await page.locator('[data-tab="setup"]').click();
+  await expect(page.locator("#setupExportPanel")).toBeVisible();
+  await expect(page.locator("#saveAsBtn")).toBeVisible();
+  await expect(page.locator("#seasonExport")).toBeDisabled();
+  await expect(page.locator("#seasonArchiveExport")).toBeDisabled();
+  const source=game("Unabhängiges Einzelspiel",{home:"TSV Kronshagen",away:"VfL"});
+  await page.locator("#continueGameInput").setInputFiles(upload("original.json",source));
+  await page.locator('[data-tab="setup"]').click();
+  const [download]=await Promise.all([
+    page.waitForEvent("download"),page.locator("#saveAsBtn").click()
+  ]);
+  const exported=JSON.parse(await readFile(await download.path(),"utf8"));
+  expect(exported.gameName).toBe("Unabhängiges Einzelspiel");
+  expect(exported.home.name).toBe("TSV Kronshagen");
+  await expect(page.locator("#setupHomeName")).toHaveValue("TSV Kronshagen");
+  await expect(page.locator(".filebar #saveBtn")).toHaveCount(1);
+});
+
+test("a passive season analysis preview exports the selected game without opening editing",async({page})=>{
+  await page.goto("/");
+  await openSeasonSetup(page);
+  const fixture=game("Bremen Saisonspiel",{events:[
+    {id:"goal-export",type:"goal",team:"home",time:120,scoreH:1,scoreA:0,pId:null,z:"RL",gz:"UL"}
+  ]});
+  await page.locator("#seasonGameInput").setInputFiles(upload("bremen.json",fixture));
+  await expect(page.locator("#seasonExport")).toBeEnabled();
+  await expect(page.locator("#seasonArchiveExport")).toBeEnabled();
+  await page.locator('[data-tab="analysis"]').click();
+  await expect(page.locator("#analysisGamePicker")).toHaveValue(/.+/);
+  await expect(page.locator('[data-tab="video"]')).toBeHidden();
+  await page.locator('[data-tab="setup"]').click();
+  const [download]=await Promise.all([
+    page.waitForEvent("download"),page.locator("#saveAsBtn").click()
+  ]);
+  const exported=JSON.parse(await readFile(await download.path(),"utf8"));
+  expect(exported.gameName).toBe("Bremen Saisonspiel");
+  expect(exported.events).toHaveLength(1);
+  expect(exported.events[0].id).toBe("goal-export");
+  await page.locator('[data-tab="analysis"]').click();
+  await expect(page.locator('[data-tab="video"]')).toBeHidden();
+  await expect(page.locator("#analysisOpenSeasonGame")).toBeVisible();
+});
