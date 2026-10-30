@@ -34,7 +34,7 @@
 5. **Während des Spiels:** Ereignisse über den Eventfluss im Match-Tab erfassen; Folgeangaben (z. B. Spieler, Wurfbereich/Ziel, Ausgang, Spielsituation) nach tatsächlich beobachteten Fakten setzen.
 6. **Unterbrechung/Halbzeit:** **Spielzeit** pausieren und Halbzeit wechseln. **Realzeit nicht zusammen mit der Spielzeit stoppen oder nullen:** Sie soll weiterlaufen, solange die zugehörige Videoaufnahme eine durchgehende Zeitachse hat. Bei unterbrochenen/geschnittenen Aufnahmen muss der Videozeitbezug später entsprechend geprüft werden.
 7. **Nach Abpfiff:** Events auf Vollständigkeit, Spielstand und Realzeitbezug prüfen; `Analyse` öffnen.
-8. **Sichern:** `Spiel speichern` oder `Kopie exportieren` nutzen. Bei verknüpften Saisonspielen wird der Saison-Datensatz aktualisiert; bei unabhängigen Dateien hängt die Speicherung vom Browser ab.
+8. **Sichern:** Über `Spiel speichern` das aktive Saisonspiel im lokalen Saisonarchiv beziehungsweise die eigenständige Spiel-Datei (browserabhängig) aktualisieren. Für eine unabhängige Kopie **Setup → Export & Datensicherung → Einzelspiel als JSON exportieren** verwenden; dieser Export verändert die Spielverknüpfung nicht.
 
 **Ergebnis:** Ereignisse mit Spielzeit, Mannschafts-/Spielerbezug und auswertbaren Details. Kein Video erforderlich.
 
