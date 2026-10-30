@@ -1470,8 +1470,8 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
       <summary>Export &amp; Datensicherung</summary>
       <div class="setup-actions setup-export-actions">
         <button class="btn" id="saveAsBtn" type="button">Einzelspiel als JSON exportieren</button>
-        <button class="btn" id="seasonExport" type="button">Saison als JSON exportieren</button>
-        <button class="btn" id="seasonArchiveExport" type="button">Team-Archiv als ZIP exportieren</button>
+        <button class="btn" id="seasonExport" type="button" disabled>Saison als JSON exportieren</button>
+        <button class="btn" id="seasonArchiveExport" type="button" disabled>Team-Archiv als ZIP exportieren</button>
       </div>
       <p class="number-help">Einzelspiel: aktuelles Spiel oder ausgewählte Saisonvorschau. Saison und ZIP: alle Spiele der aktiven Saison. Exporte erzeugen separate Dateien und ändern keine gespeicherte Sitzung.</p>
     </details>
@@ -5652,7 +5652,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   async function saveGame(){if(activeSeasonGameId){persistSession();try{await storeInternalSeason();toast("Saisonspiel gespeichert – Änderungen im Saisonarchiv übernommen")}catch(error){toast(error?.message||"Saisonspiel konnte nicht gespeichert werden")}return}const text=gameJson();if(!currentGameFileHandle)return saveGameAs(text);try{await writeGameFile(currentGameFileHandle,text);currentGameFileName=currentGameFileHandle.name;await storeInternalGame(text).catch(()=>{});toast("Geladene Datei aktualisiert")}catch(error){toast(error?.message||"Spiel konnte nicht gespeichert werden")}}
   async function exportSelectedGameJson(){
     try{
-      if(analysisSeasonActive()&&!activeSeasonGameId){
+      if(analysisSeasonActive()&&(!activeSeasonGameId||(analysisSelectedGameId&&analysisSelectedGameId!==activeSeasonGameId))){
         const game=analysisSelectedGame();
         if(!game)return toast("Bitte zuerst ein Saisonspiel auswählen.");
         const fileName=coreDefaultGameFileName(game.state?.gameName,game.fileName);
