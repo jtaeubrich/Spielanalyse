@@ -33,11 +33,11 @@ test("PWA-generated clip manifest is compatible with the Companion format and se
 
   expect(manifest.format).toBe("handball-match-flow-clip-upload-manifest");
   expect(manifest.version).toBe(1);
-  expect(manifest.fileName).toMatch(/_upload_manifest\\.json$/);
+  expect(manifest.fileName).toMatch(/_upload_manifest\.json$/);
   expect(manifest.source.localFileName).toBe(game.video.localFileName);
   expect(manifest.outputs).toHaveLength(1);
   const output=manifest.outputs[0];
-  expect(output.fileName).toMatch(/\\.mp4$/);
+  expect(output.fileName).toMatch(/\.mp4$/);
   expect(output.fileBase+".mp4").toBe(output.fileName);
   expect(output.playlistTargets).toHaveLength(1);
   expect(output.playlistTargets[0]).toMatchObject({
