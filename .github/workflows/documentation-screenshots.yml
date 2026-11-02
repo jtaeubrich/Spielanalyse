@@ -51,17 +51,58 @@ jobs:
       - name: Commit the selected screenshots permanently
         id: screenshot_commit
         if: github.ref == 'refs/heads/main'
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/handbuch/images/generated
-          if ! git diff --cached --quiet; then
-            git commit -m "docs: refresh illustrated help screenshots [skip ci]"
-            git fetch origin main
-            git rebase origin/main
-            git push origin HEAD:main
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+          git add -- docs/handbuch/images/generated
+          if git diff --cached --quiet; then
+            echo "Generated screenshots are unchanged."
+            exit 0
           fi
+
+          # JPEGs cannot be rebased/merged reliably when main has moved.
+          # Keep the validated images outside the checkout, then reapply them
+          # onto the latest main commit. Never copy stale images over new UI.
+          snapshot_dir="$(mktemp -d)"
+          trap 'rm -rf "$snapshot_dir"' EXIT
+          cp -a docs/handbuch/images/generated "$snapshot_dir/generated"
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+              echo "The screenshot source commit is no longer on main; skipping outdated screenshots."
+              exit 0
+            fi
+            if ! git diff --quiet "$GITHUB_SHA" origin/main -- \
+              index.html src docs/handbuch/demo .github/workflows/documentation-screenshots.yml; then
+              echo "A newer UI or screenshot generator is on main; skipping outdated screenshots."
+              exit 0
+            fi
+
+            # This checkout is ephemeral and the generated files are backed up.
+            # Resetting avoids any binary rebase and stages only screenshots.
+            git reset --hard origin/main
+            mkdir -p docs/handbuch/images/generated
+            cp -a "$snapshot_dir/generated/." docs/handbuch/images/generated/
+            git add -- docs/handbuch/images/generated
+
+            if git diff --cached --quiet; then
+              echo "The latest main already contains these screenshots."
+              exit 0
+            fi
+
+            git commit -m "docs: refresh illustrated help screenshots [skip ci]"
+            if git push origin HEAD:main; then
+              echo "changed=true" >> "$GITHUB_OUTPUT"
+              echo "Screenshots published successfully."
+              exit 0
+            fi
+            echo "main advanced during push (attempt $attempt); retrying from the latest commit."
+          done
+          echo "Could not publish screenshots after three attempts." >&2
+          exit 1
       - name: Deploy updated screenshots without rerunning tests
         if: steps.screenshot_commit.outputs.changed == 'true'
         env:
