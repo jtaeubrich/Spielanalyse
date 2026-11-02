@@ -46,4 +46,4 @@ Das Manifest enthält in `documentationEvents` pro Ereignis `videoTime` (Positio
 
 ## Technische Kompatibilitätsnotiz
 
-Der aktuelle PWA-Export bezeichnet sein Clip-Manifest an einer Stelle als `handball-spielanalyse-clip-upload-manifest`, der Companion akzeptiert dagegen `handball-match-flow-clip-upload-manifest`. Das **hier erzeugte** Dokumentationsmanifest verwendet bereits den im Companion akzeptierten Wert. Die abweichenden Kennungen sollten separat vereinheitlicht werden, wenn wir die regulären PWA-Manifeste durch den Companion schicken wollen.
+Die PWA erzeugt neue Clip-Manifeste im gemeinsamen Format `handball-match-flow-clip-upload-manifest` (Version 1), wie auch dieses Dokumentationsmanifest. Der Companion akzeptiert zusätzlich die ältere PWA-Kennung `handball-spielanalyse-clip-upload-manifest`, damit bereits gespeicherte Exporte weiterhin funktionieren. Für einen Kompatibilitätstest ohne Quellvideo eignet sich `python main.py <manifest.json> --dry-run`; für tatsächliches Rendern wird FFmpeg und eine passende lokale Quelldatei benötigt.
