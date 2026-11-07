@@ -34,9 +34,7 @@ async function startShot(page,team="away"){
 async function selectGoalDetails(page){
   await page.locator('#locationList [data-court-label="K"] text').click();
   await page.locator('#shotResultList [data-result="goal"]').click();
-  // If enabled for this test, the optional assist step must be completed.
-  if(await page.locator("#assistList").isVisible())
-    await page.locator("#assistList").getByRole("button",{name:"Kein Assist"}).click();
+  // "Kein Assist" is preselected, so choosing the outcome completes the page.
 }
 async function pickJersey(page,host,number){
   const picker=page.locator(host);
@@ -194,13 +192,59 @@ test("shot: shooter-last clears assist when the announced shooter is also assist
   await configureOrder(page,"last");
   await startShot(page,"away");
   await page.locator('#locationList [data-court-label="K"] text').click();
-  await page.locator('#shotResultList [data-result="goal"]').click();
+  // Assist is optional, but can still be explicitly selected before the result.
   await pickJersey(page,"#assistList",7);
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator('#shotResultList [data-result="goal"]').click();
   await expect(page.locator("#playerStep")).toBeVisible();
   await pickJersey(page,"#playerList",7);
   const e=await latestEvent(page);
   expect(e.pId).toBe(original.away.players.find(p=>p.nr===7).id);
   expect(e).not.toHaveProperty("assistPId");
+});
+
+
+test("shot with optional assist enabled advances directly to shooter after the goal",async({page})=>{
+  const source=await openDemo(page,{assist:true});
+  await configureOrder(page,"last");
+  await startShot(page,"away");
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator('#locationList [data-court-label="K"] text').click();
+  const noAssist=page.locator("#assistList").getByRole("button",{name:"Kein Assist"});
+  await expect(noAssist).toHaveClass(/selected/);
+  await expect(page.locator("#shotFieldAssist")).toBeVisible();
+  // The optional assist picker must come before the result so the result is last.
+  const assistBeforeResult=await page.locator("#shotFieldAssist").evaluate(el=>
+    Boolean(el.compareDocumentPosition(document.getElementById("shotFieldResult"))&Node.DOCUMENT_POSITION_FOLLOWING)
+  );
+  expect(assistBeforeResult).toBe(true);
+  await page.locator('#shotResultList [data-result="goal"]').click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await expect(page.locator("#flowNext")).toBeVisible();
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+  await pickJersey(page,"#playerList",7);
+  const event=await latestEvent(page);
+  expect(event).toMatchObject({type:"goal",team:"away",pId:source.away.players.find(p=>p.nr===7).id,scoreA:1});
+  expect(event).not.toHaveProperty("assistPId");
+});
+
+test("shot progresses across configured pages and automatically asks for shooter after parade",async({page})=>{
+  const source=await openDemo(page,{target:true,phase:true,assist:true,defense:false});
+  await configureOrder(page,"last");
+  await startShot(page,"away");
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator('#locationList [data-court-label="K"] text').click();
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator('#targetList [data-target="OL"]').click();
+  await expect(page.locator("#phaseStep")).toBeVisible();
+  await expect(page.locator('#shotResultList [data-result="save"]')).toBeVisible();
+  await expect(page.locator("#assistList").getByRole("button",{name:"Kein Assist"})).toHaveClass(/selected/);
+  await page.locator('#shotResultList [data-result="save"]').click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",7);
+  const event=await latestEvent(page);
+  expect(event).toMatchObject({type:"save",throwerId:source.away.players.find(p=>p.nr===7).id,z:"K",gz:"OL"});
+  await expect(page.locator("#eventCount")).toHaveText("1 Ereignisse");
 });
 
 test("shot: technical errors still select offender first when scorer-last is enabled",async({page})=>{
