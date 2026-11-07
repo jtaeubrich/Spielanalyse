@@ -138,12 +138,15 @@ test("penalties and assists reuse the responsive player picker",async({page,isMo
   if(isMobile)await attackers.getByRole("button",{name:"Ziffer 7",exact:true}).click();
   await attackers.locator('.fast-player-tile[data-jersey-number="7"]').click();
   await page.locator('#locationList [data-court-label="K"] text').click();
-  await page.locator('#shotResultList [data-result="goal"]').click();
+  // Optional assist is selected before the final result, which now
+  // automatically completes the shot without an extra "Weiter" tap.
   const assists=page.locator("#assistList");
   await expect(assists.locator(isMobile?".fast-picker-phone":".fast-picker-tablet")).toBeVisible();
   if(isMobile)await assists.getByRole("button",{name:"Ziffer 1",exact:true}).click();
   await expect(assists.locator('.fast-player-tile[data-jersey-number="7"]')).toHaveCount(0);
   await assists.locator('.fast-player-tile[data-jersey-number="1"]').click();
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await page.locator('#shotResultList [data-result="goal"]').click();
   await expect(page.locator("#idleStep")).toBeVisible();
   const event=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state.events.at(-1));
   expect(event).toMatchObject({type:"goal",pId:source.away.players.find(p=>p.nr===7).id,assistPId:source.away.players.find(p=>p.nr===1).id});
