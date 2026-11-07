@@ -6281,6 +6281,10 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
         draft.preSevenMeter=null;
       }
     }
+    // Rebuild the picker when returning to the shooter step. On phones the
+    // old jersey-prefix digits would otherwise remain in the keypad and
+    // concatenate with the new number (e.g. "7" + "10" -> "710").
+    if(previous==="player"&&draft?.flow==="shot")renderPlayers();
     showStep(previous);
   };
   $("flowNext").onclick=()=>{if(!draft)return;if(currentStep==='player'){chooseAttacker(null)}else if(draft.flow==='shot'&&shotStepOrder.includes(currentStep))advanceShotPage();else if(currentStep==='shotTag')openTags();else if(currentStep==='error'){draft.errorType=null;draft.result='error';$("commitEvent").click()}else if(currentStep==='penalty')choosePenalized(null)};
