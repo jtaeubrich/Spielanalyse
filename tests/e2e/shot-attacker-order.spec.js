@@ -187,45 +187,86 @@ test("opponent shot still requests our defender when Kronshagen plays at home",a
   ]));
 });
 
-test("shot: shooter-last clears assist when the announced shooter is also assist provider",async({page})=>{
+test("shot: assist picker follows shooter and excludes the shooter himself",async({page})=>{
   const original=await openDemo(page,{assist:true});
   await configureOrder(page,"last");
   await startShot(page,"away");
   await page.locator('#locationList [data-court-label="K"] text').click();
-  // Assist is optional, but can still be explicitly selected before the result.
-  await pickJersey(page,"#assistList",7);
-  await expect(page.locator("#locationStep")).toBeVisible();
   await page.locator('#shotResultList [data-result="goal"]').click();
   await expect(page.locator("#playerStep")).toBeVisible();
+  await expect(page.locator("#assistStep")).toBeHidden();
   await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#assistStep")).toBeVisible();
+  await expect(page.locator('#assistList .fast-player-tile[data-jersey-number="7"]')).toHaveCount(0);
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+  await pickJersey(page,"#assistList",10);
+  await expect(page.locator("#idleStep")).toBeVisible();
   const e=await latestEvent(page);
-  expect(e.pId).toBe(original.away.players.find(p=>p.nr===7).id);
-  expect(e).not.toHaveProperty("assistPId");
+  expect(e).toMatchObject({
+    type:"goal",
+    pId:original.away.players.find(p=>p.nr===7).id,
+    assistPId:original.away.players.find(p=>p.nr===10).id,
+    scoreA:1
+  });
 });
 
-
-test("shot with optional assist enabled advances directly to shooter after the goal",async({page})=>{
+test("shot with optional assist enabled asks for shooter then for optional assist",async({page})=>{
   const source=await openDemo(page,{assist:true});
   await configureOrder(page,"last");
   await startShot(page,"away");
   await expect(page.locator("#locationStep")).toBeVisible();
   await page.locator('#locationList [data-court-label="K"] text').click();
-  const noAssist=page.locator("#assistList").getByRole("button",{name:"Kein Assist"});
-  await expect(noAssist).toHaveClass(/selected/);
-  await expect(page.locator("#shotFieldAssist")).toBeVisible();
-  // The optional assist picker must come before the result so the result is last.
-  const assistBeforeResult=await page.locator("#shotFieldAssist").evaluate(el=>
-    Boolean(el.compareDocumentPosition(document.getElementById("shotFieldResult"))&Node.DOCUMENT_POSITION_FOLLOWING)
-  );
-  expect(assistBeforeResult).toBe(true);
+  await expect(page.locator("#shotFieldAssist")).toBeHidden();
   await page.locator('#shotResultList [data-result="goal"]').click();
   await expect(page.locator("#playerStep")).toBeVisible();
-  await expect(page.locator("#flowNext")).toBeVisible();
+  await expect(page.locator("#assistStep")).toBeHidden();
   await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
   await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#assistStep")).toBeVisible();
+  await expect(page.locator("#assistList").getByRole("button",{name:"Kein Assist"})).toBeVisible();
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+  await page.locator("#assistList").getByRole("button",{name:"Kein Assist"}).click();
+  await expect(page.locator("#idleStep")).toBeVisible();
   const event=await latestEvent(page);
   expect(event).toMatchObject({type:"goal",team:"away",pId:source.away.players.find(p=>p.nr===7).id,scoreA:1});
   expect(event).not.toHaveProperty("assistPId");
+});
+
+test("shot with shooter-first defers assist until after details and result",async({page})=>{
+  const source=await openDemo(page,{assist:true});
+  await configureOrder(page,"first");
+  await startShot(page,"away");
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#locationStep")).toBeVisible();
+  await expect(page.locator("#assistStep")).toBeHidden();
+  await page.locator('#locationList [data-court-label="K"] text').click();
+  await page.locator('#shotResultList [data-result="goal"]').click();
+  await expect(page.locator("#assistStep")).toBeVisible();
+  await expect(page.locator("#eventCount")).toHaveText("0 Ereignisse");
+  await pickJersey(page,"#assistList",10);
+  const event=await latestEvent(page);
+  expect(event).toMatchObject({
+    type:"goal",pId:source.away.players.find(p=>p.nr===7).id,
+    assistPId:source.away.players.find(p=>p.nr===10).id
+  });
+});
+
+test("shot: back from assist returns to shooter when shooter-last",async({page})=>{
+  await openDemo(page,{assist:true});
+  await configureOrder(page,"last");
+  await startShot(page,"away");
+  await page.locator('#locationList [data-court-label="K"] text').click();
+  await page.locator('#shotResultList [data-result="goal"]').click();
+  await pickJersey(page,"#playerList",7);
+  await expect(page.locator("#assistStep")).toBeVisible();
+  await page.locator("#flowBack").click();
+  await expect(page.locator("#playerStep")).toBeVisible();
+  await pickJersey(page,"#playerList",10);
+  await expect(page.locator("#assistStep")).toBeVisible();
+  await expect(page.locator('#assistList .fast-player-tile[data-jersey-number="10"]')).toHaveCount(0);
+  await page.locator("#assistList").getByRole("button",{name:"Kein Assist"}).click();
+  await expect(page.locator("#idleStep")).toBeVisible();
 });
 
 test("shot progresses across configured pages and automatically asks for shooter after parade",async({page})=>{
@@ -238,7 +279,7 @@ test("shot progresses across configured pages and automatically asks for shooter
   await page.locator('#targetList [data-target="OL"]').click();
   await expect(page.locator("#phaseStep")).toBeVisible();
   await expect(page.locator('#shotResultList [data-result="save"]')).toBeVisible();
-  await expect(page.locator("#assistList").getByRole("button",{name:"Kein Assist"})).toHaveClass(/selected/);
+  await expect(page.locator("#assistStep")).toBeHidden();
   await page.locator('#shotResultList [data-result="save"]').click();
   await expect(page.locator("#playerStep")).toBeVisible();
   await pickJersey(page,"#playerList",7);
