@@ -252,7 +252,7 @@ test("shot with shooter-first defers assist until after details and result",asyn
   });
 });
 
-test("shot: back from assist returns to shooter when shooter-last",async({page})=>{
+test("shot: back from assist returns to shooter when shooter-last",async({page,isMobile})=>{
   await openDemo(page,{assist:true});
   await configureOrder(page,"last");
   await startShot(page,"away");
@@ -262,6 +262,8 @@ test("shot: back from assist returns to shooter when shooter-last",async({page})
   await expect(page.locator("#assistStep")).toBeVisible();
   await page.locator("#flowBack").click();
   await expect(page.locator("#playerStep")).toBeVisible();
+  // A second jersey number must start with a fresh keypad on smartphones.
+  if(isMobile)await expect(page.locator("#playerList .fast-picker-digits")).toHaveText("–");
   await pickJersey(page,"#playerList",10);
   await expect(page.locator("#assistStep")).toBeVisible();
   await expect(page.locator('#assistList .fast-player-tile[data-jersey-number="10"]')).toHaveCount(0);
