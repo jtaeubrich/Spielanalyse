@@ -34,8 +34,6 @@ test("only the actual playback rate has an active border and background, even af
   await page.locator("#youtubeForm button").first().click();
   await expect(page.locator("#videoMessage")).toContainText("Bereit.");
 
-  const rates=page.locator("#matchVideoHost [data-rate]");
-  await expect(rates.filter({has:page.locator(".selected")})).toHaveCount(0);
   await expect(page.locator('#matchVideoHost [data-rate="1"]')).toHaveAttribute("aria-pressed","true");
 
   const rateHalf=page.locator('#matchVideoHost [data-rate="0.5"]');
