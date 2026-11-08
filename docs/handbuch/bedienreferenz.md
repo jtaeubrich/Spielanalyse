@@ -87,6 +87,7 @@ Die Spielerwahl verändert nicht automatisch bestehende Ereignisse oder deren Ze
 
 ## Daten editieren
 - Bestehende Events bearbeiten, einschließlich Zeitangaben und Details.
+- **Schlüsselmoment – beteiligte Spieler korrigieren:** Im Match-Tab den Schlüsselmoment in der Eventliste auswählen (Nachspielanalyse) und unter **Event-Details → Beteiligte Spieler** die Mehrfachauswahl öffnen. Alternativ **Daten editieren** öffnen, den Schlüsselmoment auswählen und **Beteiligte Spieler** aufklappen. Durch Antippen eines Spielers wird seine Zuordnung hinzugefügt oder entfernt. Mehrere Spieler sind möglich, auch aus beiden Mannschaften. **Keine Zuordnung** löscht alle Zuordnungen, **Unbekannt** markiert eine unbekannte Zuordnung. Frühere Spieler, die nicht mehr im aktuellen Kader stehen, bleiben sichtbar und lassen sich gezielt entfernen. Änderungen werden direkt im aktuellen Spiel übernommen; anschließend **Spiel speichern** nutzen, damit sie auch in der Saison- beziehungsweise Spiel-Datei gesichert sind.
 - Zusätzlich vorhanden: **ACTA-Abgleich** für den Vergleich mit einem DHB-ACTA-Spielbericht.
 - Jede Korrektur erst nach Kontrolle der zugrunde liegenden Video-/Spielzeit speichern.
 
