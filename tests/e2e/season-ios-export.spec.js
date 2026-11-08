@@ -36,7 +36,7 @@ async function setFakeIPad(page,mode){
     Object.defineProperty(navigator,"maxTouchPoints",{configurable:true,value:5});
     window.__shareResult=null;
     Object.defineProperty(navigator,"canShare",{configurable:true,value:({files})=>
-      mode==="supported"?Boolean(files?.length):
+      (mode==="supported"||mode==="cancel")?Boolean(files?.length):
       mode==="txt"?(files?.[0]?.name?.endsWith(".txt")||false):
       false
     });
@@ -95,5 +95,5 @@ test("iPad cancelled share is clearly reported without silently downloading",asy
   await openSeasonWithGame(page);
   await page.locator("#seasonExport").click();
   // No download fallback is triggered by a cancellation.
-  await expect(page.locator("#seasonExportStatus")).toContainText("Teilen der Saisondatei nicht");
+  await expect(page.locator("#seasonExportStatus")).toContainText("Teilen abgebrochen");
 });
