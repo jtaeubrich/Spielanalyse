@@ -374,7 +374,7 @@ test("review editor moves below the video on tablet and narrow desktop panes, bu
   }
   // Editing must remain functional after moving the live DOM node between hosts.
   await page.locator("#eventVideoComment").fill("Sichtbare Event-Details nach Layoutwechsel");
-  await page.locator("#eventVideoComment").blur();
+  await page.locator("#eventVideoComment").press("Tab");
   await expect(page.locator("#eventVideoComment")).toHaveValue("Sichtbare Event-Details nach Layoutwechsel");
   await expect(page.locator("#matchGrid>.events .event").first()).toBeVisible();
 });
