@@ -1517,6 +1517,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
       <div class="setup-actions setup-export-actions">
         <button class="btn" id="saveAsBtn" type="button">Einzelspiel als JSON exportieren</button>
         <button class="btn" id="seasonExport" type="button" disabled>Saison als JSON exportieren</button>
+        <button class="btn hidden" id="seasonExportText" type="button" disabled>Saison als Text teilen (.txt)</button>
         <button class="btn hidden" id="seasonExportDownload" type="button" disabled>Saison direkt herunterladen</button>
         <button class="btn" id="seasonArchiveExport" type="button" disabled>Team-Archiv als ZIP exportieren</button>
       </div>
@@ -3977,7 +3978,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("seasonPlayerRows").innerHTML=players.sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const quote=p.isTW?(p.saves+p.against?p.rate+" %":"–"):(p.decidedShots?p.rate+" %":"–");return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.isTW?"–":p.shots}</td><td>${p.value}</td><td>${p.assists}</td><td>${quote}</td><td>${p.penalties}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="8">Keine Spielerdaten vorhanden.</td></tr>';
     renderSeasonGraphics();
   }
-  function renderSeason(){$("seasonExport").disabled=!seasonGames.length;$("seasonExportDownload").disabled=!seasonGames.length;$("seasonExportDownload").classList.toggle("hidden",!isAppleTouchDevice());$("seasonExport").textContent=isAppleTouchDevice()?"Saison-JSON in Dateien sichern":"Saison als JSON exportieren";$("seasonArchiveExport").disabled=!seasonGames.length;if(analysisSeasonActive()&&!analysisSelectedGameId)analysisSelectedGameId=selectSeasonPreviewGame(seasonGames,seasonLastEditedGameId)?.id||"";renderAnalysisGamePicker();renderSeasonLibrary();$("seasonMergePlayers").disabled=!seasonGames.length;renderSetupSeasonPicker();$("seasonArchiveTeam").value=seasonArchiveTeam;seasonPopulatePreferredTeam();const seasonFilter=$("seasonTeamFilter");if(seasonFilter){const own=seasonFilter.querySelector('option[value="own"]'),opponent=seasonFilter.querySelector('option[value="opponent"]');if(own)own.textContent=seasonPreferredTeam?"Mein Team · "+seasonPreferredTeam:"Mannschaft A (aus Spieldaten)";if(opponent)opponent.textContent=seasonPreferredTeam?"Gegner":"Mannschaft B (aus Spieldaten)"}const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
+  function renderSeason(){$("seasonExport").disabled=!seasonGames.length;$("seasonExportDownload").disabled=!seasonGames.length;$("seasonExportDownload").classList.toggle("hidden",!isAppleTouchDevice());$("seasonExportText").disabled=!seasonGames.length;$("seasonExportText").classList.toggle("hidden",!isAppleTouchDevice());$("seasonExport").textContent=isAppleTouchDevice()?"Saison-JSON in Dateien sichern":"Saison als JSON exportieren";$("seasonArchiveExport").disabled=!seasonGames.length;if(analysisSeasonActive()&&!analysisSelectedGameId)analysisSelectedGameId=selectSeasonPreviewGame(seasonGames,seasonLastEditedGameId)?.id||"";renderAnalysisGamePicker();renderSeasonLibrary();$("seasonMergePlayers").disabled=!seasonGames.length;renderSetupSeasonPicker();$("seasonArchiveTeam").value=seasonArchiveTeam;seasonPopulatePreferredTeam();const seasonFilter=$("seasonTeamFilter");if(seasonFilter){const own=seasonFilter.querySelector('option[value="own"]'),opponent=seasonFilter.querySelector('option[value="opponent"]');if(own)own.textContent=seasonPreferredTeam?"Mein Team · "+seasonPreferredTeam:"Mannschaft A (aus Spieldaten)";if(opponent)opponent.textContent=seasonPreferredTeam?"Gegner":"Mannschaft B (aus Spieldaten)"}const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
   $("seasonGameInput").onchange=event=>{const files=[...(event.target.files||[])];event.target.value="";if(files.length)loadSeasonFiles(files)};
   $("seasonUpdateInput").onchange=async event=>{const file=event.target.files?.[0],targetId=seasonUpdateTargetId;event.target.value="";seasonUpdateTargetId=null;if(!file||!targetId)return;try{await updateSeasonGameFromFile(file,targetId)}catch(error){toast(error?.message||"Saisonspiel konnte nicht aktualisiert werden")}};
   $("seasonImportInput").onchange=async event=>{
@@ -3990,7 +3991,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(activeTab==="home"){$("homeGameSearch").value="";homeShow("dashboard","season")};
     }catch(error){toast(error?.message||"Saison konnte nicht importiert werden")}
   };
-  $("seasonExport").onclick=shareSeasonExport;
+  $("seasonExport").onclick=()=>shareSeasonExport();
+  $("seasonExportText").onclick=()=>shareSeasonExport({forceText:true});
   $("seasonExportDownload").onclick=downloadSeasonExport;
   $("seasonArchiveExport").onclick=()=>{
     if(!seasonGames.length)return toast("Keine Saisonspiele zum Exportieren geladen.");
@@ -4567,7 +4569,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       seasonExportFeedback("Download von "+fileName+" angefordert. Bitte in der Browser-Downloadliste und der Dateien-App überprüfen.");
     }catch(error){seasonExportFeedback(error?.message||"Saison-Download konnte nicht gestartet werden.")}
   }
-  async function shareSeasonExport(){
+  async function shareSeasonExport({forceText=false}={}){
     if(!seasonGames.length)return seasonExportFeedback("Keine Saisonspiele zum Exportieren geladen.");
     // Desktop keeps the existing download semantics. On iOS an installed PWA
     // may silently lose a blob: download, so offer the native Files picker.
@@ -4576,20 +4578,22 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const {text,fileName}=seasonExportPayload();
       let file=null,renamed=false;
       if(typeof navigator.share==="function"&&typeof navigator.canShare==="function"){
-        for(const type of ["application/json","text/plain"]){
-          const candidate=new File([text],fileName,{type});
-          if(navigator.canShare({files:[candidate]})){file=candidate;break}
+        if(!forceText){
+          for(const type of ["application/json","text/plain"]){
+            const candidate=new File([text],fileName,{type});
+            if(navigator.canShare({files:[candidate]})){file=candidate;break}
+          }
         }
-        // Some iOS versions reject .json as a shareable file type. Last
-        // resort: share the unchanged JSON contents as text with a visible
-        // .txt suffix and explain how to restore the original extension.
+        // canShare() validates data, but does not check that an installed
+        // destination will actually accept the JSON file. Offer a separate
+        // direct user gesture to force the simpler .txt file format.
         if(!file){
           const candidate=new File([text],fileName+".txt",{type:"text/plain"});
           if(navigator.canShare({files:[candidate]})){file=candidate;renamed=true}
         }
       }
       if(!file){
-        seasonExportFeedback("Dieses iPad unterstützt das Teilen der Saisondatei nicht. Nutze „Saison direkt herunterladen“ und prüfe danach die Safari-Downloads.");
+        seasonExportFeedback("Dieses iPad unterstützt das Teilen dieser Datei nicht. Versuche „Saison als Text teilen (.txt)“ oder „Saison direkt herunterladen“ und prüfe danach die Dateien-App.");
         return;
       }
       // Must be called directly in the originating button gesture.
@@ -4598,7 +4602,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         ?"Datei an „Teilen“ übergeben: "+file.name+". In „Dateien“ sichern und vor einem Saisonimport die Endung .txt entfernen."
         :"Datei an „Teilen“ übergeben. Bitte „In Dateien sichern“ wählen und den Speicherort in der Dateien-App prüfen.");
     }catch(error){
-      if(error?.name==="AbortError")return seasonExportFeedback("Teilen abgebrochen: Es wurde kein Speicherort bestätigt.");
+      if(error?.name==="AbortError")return seasonExportFeedback("Teilen nicht abgeschlossen: Der Dialog wurde geschlossen oder es ist kein passendes Freigabeziel verfügbar. Wurde kein Dialog angezeigt, versuche „Saison als Text teilen (.txt)“. Die Saison ist weiterhin in der App vorhanden.");
       seasonExportFeedback("Datei konnte nicht an „Teilen“ übergeben werden: "+(error?.message||"Unbekannter Fehler")+". Alternativ „Saison direkt herunterladen“ verwenden.");
     }
   }
