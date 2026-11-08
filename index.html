@@ -571,6 +571,35 @@
       }
     }
 
+
+    /* Review editor: the video may be 45-85% wide. When the remaining event
+       column is too narrow, place the editor in this full video-column host. */
+    body.match-review-mode #matchTab #matchReviewEventEditorHost:empty{
+      display:none!important;
+    }
+    body.match-review-mode #matchTab #matchReviewEventEditorHost:not(:empty){
+      display:block!important;width:100%;min-width:0;max-width:100%;
+      box-sizing:border-box;margin:10px 0 0;padding:12px 14px;
+      border:1px solid var(--line);border-radius:14px;
+      background:var(--panel2);
+    }
+    body.match-review-mode #matchTab #matchReviewEventEditorHost>.event-editor{
+      margin:0!important;padding:0!important;border:0!important;
+      max-height:none!important;overflow:visible!important;
+    }
+    body.match-review-mode #matchTab #matchReviewEventEditorHost .video-event-data-grid{
+      grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;
+    }
+    body.match-review-mode #matchTab #matchReviewEventEditorHost .video-event-data-grid label,
+    body.match-review-mode #matchTab #matchReviewEventEditorHost .video-event-data-grid .field{
+      min-width:0;width:100%;box-sizing:border-box;
+    }
+    @media(max-width:440px){
+      body.match-review-mode #matchTab #matchReviewEventEditorHost .video-event-data-grid{
+        grid-template-columns:minmax(0,1fr);
+      }
+    }
+
     .match-review-pin-state{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 0 9px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:#091822;color:var(--muted);font-size:12px}
     .match-review-pin-state:has(#veeUnpin){color:var(--cyan);border-color:#2d6777}
 
@@ -1607,7 +1636,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
             <span class="match-review-window-note">Event auswählen → mit Vorlauf starten und nach dem Nachlauf stoppen.</span>
           </div>
         </details>
-        <div class="match-review-capture" id="matchReviewCaptureHost"></div><div class="match-review-event-editor hidden" id="matchReviewEventEditorHost"></div>
+        <div class="match-review-event-editor hidden" id="matchReviewEventEditorHost"></div><div class="match-review-capture" id="matchReviewCaptureHost"></div>
       </div>
     </section><section class="match-nearby-events hidden" id="matchNearbyEvents"><div class="match-nearby-header"><strong>Alle Events · Videoanalyse</strong><button class="btn" id="matchJumpToCurrentEvent" type="button">Zur Videozeit</button><span id="matchNearbyTime">± 10 Sekunden</span></div><div class="match-nearby-list" id="matchNearbyList" aria-label="Events in der Nähe"></div><div id="matchEventHoldMenu" class="match-event-hold-menu hidden" role="menu"><button class="btn" type="button" id="matchEventHoldDetails">Details ohne Videosprung</button></div><div id="matchNearbyEditorHost" class="hidden"><div class="match-editor-toolbar"><button class="btn match-editor-collapse" id="matchEditorCollapse" type="button" aria-expanded="true" aria-controls="videoEventEditor">▾ Event bearbeiten</button><button class="btn match-editor-close" id="matchEditorClose" type="button" aria-label="Event-Bearbeitung schließen" title="Event-Bearbeitung schließen">×</button></div></div></section></div>
     <section id="matchPossessionHost" class="match-possession-host" aria-label="Ballbesitz"><div class="label">Ballbesitz</div></section>
@@ -5722,9 +5751,16 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       if(editor.parentElement!==mobileHost)mobileHost.append(editor);
       return;
     }
-    const wide=window.innerWidth>=1100;
-    if(wide&&matchEventsPanel){if(editor.parentElement!==matchEventsPanel)matchEventsPanel.append(editor)}
-    else if(fallback&&editor.parentElement!==fallback)fallback.append(editor);
+    // A wide viewport is not enough: the video-width slider can squeeze the
+    // event column to 15% even on a desktop monitor. Use the actual width.
+    // Tablet-sized layouts always keep editing below the video.
+    const eventColumnWidth=matchEventsPanel?.getBoundingClientRect().width||0;
+    const sidebarHasRoom=window.innerWidth>=1500&&eventColumnWidth>=560;
+    if(sidebarHasRoom&&matchEventsPanel){
+      if(editor.parentElement!==matchEventsPanel)matchEventsPanel.append(editor);
+    }else if(fallback&&editor.parentElement!==fallback){
+      fallback.append(editor);
+    }
   }
   function updateMatchReviewLayout(){
     const nearbyPanel=$("matchNearbyEvents"),grid=$("matchGrid"),side=grid?.querySelector(":scope > .side");
@@ -5804,6 +5840,14 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   if(typeof ResizeObserver!=="undefined"){
     const matchVideoResizeObserver=new ResizeObserver(()=>{if(activeTab==="match"&&analysisMode==="video")syncMatchVideoColumnHeight()});
     matchVideoResizeObserver.observe($("matchVideoHost"));
+    // Reposition the selected event when available space changes, including
+    // screen rotation, zooming and a change to the video-width slider.
+    if(matchEventsPanel){
+      const reviewEditorResizeObserver=new ResizeObserver(()=>{
+        if(activeTab==="match"&&matchReviewMode)placeMatchReviewEditor(true);
+      });
+      reviewEditorResizeObserver.observe(matchEventsPanel);
+    }
   }
   window.addEventListener("resize",()=>{
     if(activeTab==="match"){
@@ -5874,7 +5918,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function updateRate(){if(!mediaReady())return;const actual=localVideoReady?localVideo.playbackRate:yt.getPlaybackRate();document.querySelectorAll('[data-rate]').forEach(b=>{b.classList.toggle('selected',Number(b.dataset.rate)===actual);b.setAttribute('aria-pressed',String(Number(b.dataset.rate)===actual));});state.video.playbackRate=actual;}
   document.querySelectorAll('[data-rate]').forEach(b=>b.onclick=()=>{if(!mediaReady())return toast('Zuerst ein YouTube- oder lokales Video laden.');const rate=Number(b.dataset.rate);advanceGame();if(localVideoReady)localVideo.playbackRate=rate;else{if(!yt.getAvailablePlaybackRates().includes(rate))return toast('Diese Geschwindigkeit ist für dieses Video nicht verfügbar.');yt.setPlaybackRate(rate)}updateRate();});
   document.querySelectorAll('[data-video-seek]').forEach(button=>button.onclick=()=>{if(!mediaReady())return toast('Zuerst ein YouTube- oder lokales Video laden.');const delta=Number(button.dataset.videoSeek),next=Math.max(0,mediaSeconds()+delta);scenePlayback.cancel();mediaSeek(next);mediaLast=null;$("videoMessage").textContent=`Video ${delta>0?"+":""}${delta} Sekunden gesprungen.`});
-  function setVideoSize(value){const size=Math.min(85,Math.max(45,Number(value)||60));$("videoSize").max="85";document.documentElement.style.setProperty('--video-share',size+'%');$("videoSize").value=String(size);$("videoSizeValue").value=size+' %';try{localStorage.setItem('handballSpielanalyse.videoSize',String(size))}catch{}}
+  function setVideoSize(value){const size=Math.min(85,Math.max(45,Number(value)||60));$("videoSize").max="85";document.documentElement.style.setProperty('--video-share',size+'%');$("videoSize").value=String(size);$("videoSizeValue").value=size+' %';try{localStorage.setItem('handballSpielanalyse.videoSize',String(size))}catch{}if(activeTab==="match"&&matchReviewMode)requestAnimationFrame(()=>placeMatchReviewEditor(true));}
   $("videoSize").oninput=e=>setVideoSize(e.target.value);
   let savedVideoSize=60;try{savedVideoSize=localStorage.getItem('handballSpielanalyse.videoSize')||60}catch{}setVideoSize(savedVideoSize);
   function setAnnotationToolsOpen(open){const section=$("annotationSection"),toggle=$("annotationToolsToggle");section.classList.toggle("open",open);toggle.setAttribute("aria-expanded",String(open));toggle.lastElementChild.textContent=open?"▴":"▾";if(!open){drawingEnabled=false;drawingDraft=null;$("annotationCanvas").classList.remove("drawing");$("drawToggle").classList.remove("selected");$("drawToggle").textContent="Zeichnen";renderAnnotation()}}
