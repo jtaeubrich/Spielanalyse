@@ -307,3 +307,74 @@ test.describe("compact phone review event deletion",()=>{
     await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
   });
 });
+
+
+test("review editor moves below the video on tablet and narrow desktop panes, but can remain beside a wide desktop video",async({page})=>{
+  const game=JSON.parse(await readFile(fixture,"utf8"));
+  game.isHistorical=false;
+  game.isVideoscoutingFile=false;
+  await page.setViewportSize({width:1024,height:820});
+  await page.goto("/");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#continueGameInput").setInputFiles({
+    name:"responsive-review-editor.json",
+    mimeType:"application/json",
+    buffer:Buffer.from(JSON.stringify(game))
+  });
+  await page.locator("#matchReviewToggle").click();
+  await expect(page.locator("body")).toHaveClass(/match-review-mode/);
+  await expect(page.locator("#matchGrid>.events .event").first()).toBeVisible();
+  await page.locator("#matchGrid>.events .event").first().click();
+  await expect(page.locator("#videoEventEditor")).toBeVisible();
+
+  async function editorGeometry(){
+    return page.evaluate(()=>{
+      const box=selector=>document.querySelector(selector).getBoundingClientRect();
+      const editor=document.getElementById("videoEventEditor");
+      const grid=box("#matchGrid");
+      const video=box("#matchVideoHost");
+      const events=box("#matchGrid>.events");
+      const parent=editor.parentElement;
+      return {
+        parent:parent.id || (parent.classList.contains("events")?"events":"unknown"),
+        editorWidth:box("#videoEventEditor").width,
+        videoWidth:video.width,
+        eventWidth:events.width,
+        editorTop:box("#videoEventEditor").top,
+        videoStageBottom:box("#matchVideoHost .video-stage").bottom,
+        eventBesideVideo:events.left>=video.right-4,
+        overflow:document.getElementById("matchGrid").scrollWidth>grid.width+4
+      };
+    });
+  }
+
+  for(const layout of [
+    {width:1024,share:85},
+    {width:1366,share:75},
+    {width:1600,share:85},
+    {width:1600,share:45},
+    {width:1600,share:85}
+  ]){
+    await page.setViewportSize({width:layout.width,height:900});
+    await page.locator("#videoSize").fill(String(layout.share));
+    const shouldDock=layout.width>=1500&&layout.share===45;
+    await expect.poll(async()=>(await editorGeometry()).parent)
+      .toBe(shouldDock?"events":"matchReviewEventEditorHost");
+    const state=await editorGeometry();
+    expect(state.eventBesideVideo).toBe(true);
+    expect(state.overflow).toBe(false);
+    if(shouldDock){
+      expect(state.eventWidth).toBeGreaterThanOrEqual(560);
+    }else{
+      expect(state.editorWidth).toBeGreaterThan(state.eventWidth*0.8);
+      expect(state.editorWidth).toBeGreaterThan(state.videoWidth*0.65);
+      expect(state.editorTop).toBeGreaterThanOrEqual(state.videoStageBottom-3);
+    }
+    await expect(page.locator("#veeRealTime")).toBeVisible();
+  }
+  // Editing must remain functional after moving the live DOM node between hosts.
+  await page.locator("#eventVideoComment").fill("Sichtbare Event-Details nach Layoutwechsel");
+  await page.locator("#eventVideoComment").blur();
+  await expect(page.locator("#eventVideoComment")).toHaveValue("Sichtbare Event-Details nach Layoutwechsel");
+  await expect(page.locator("#matchGrid>.events .event").first()).toBeVisible();
+});
