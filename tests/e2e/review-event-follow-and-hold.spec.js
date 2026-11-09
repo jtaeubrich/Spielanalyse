@@ -58,15 +58,17 @@ test.describe("video-review tablet sidebar",()=>{
   test("event column has at least the visible video height while details remain below",async({page,isMobile})=>{
     test.skip(isMobile,"Tablet layout is validated with a tablet-sized desktop viewport");
     await openReview(page);
-    const column=page.locator("#matchGrid>.events");
-    const list=page.locator("#eventList");
+    const column=page.locator("#matchNearbyEvents");
+    const list=page.locator("#matchNearbyList");
+    await list.locator(".match-nearby-item").first().click();
+    await expect(page.locator("#videoEventEditor")).toBeVisible();
     for(const share of [60,75,85]){
       await page.locator("#videoSize").fill(String(share));
       await expect.poll(async()=>page.evaluate(()=>{
         const video=document.querySelector("#matchVideoHost").getBoundingClientRect();
-        const editor=document.getElementById("matchReviewEventEditorHost").getBoundingClientRect();
-        const events=document.querySelector("#matchGrid>.events").getBoundingClientRect();
-        const list=document.getElementById("eventList");
+        const editor=document.getElementById("matchNearbyEditorHost").getBoundingClientRect();
+        const events=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
+        const list=document.getElementById("matchNearbyList");
         return {
           heightDifference:Math.round(events.height-(editor.top-video.top-12)),
           sameRow:Math.abs(events.top-video.top)<5,
@@ -79,8 +81,8 @@ test.describe("video-review tablet sidebar",()=>{
       });
       const sizes=await page.evaluate(()=>{
         const video=document.querySelector("#matchVideoHost").getBoundingClientRect();
-        const editor=document.getElementById("matchReviewEventEditorHost").getBoundingClientRect();
-        const events=document.querySelector("#matchGrid>.events").getBoundingClientRect();
+        const editor=document.getElementById("matchNearbyEditorHost").getBoundingClientRect();
+        const events=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
         return {needed:editor.top-video.top-12,actual:events.height};
       });
       expect(sizes.actual).toBeGreaterThanOrEqual(sizes.needed-8);
@@ -93,19 +95,19 @@ test.describe("video-review tablet sidebar",()=>{
   test("video-time auto-follow respects manual scrolling and has a return button",async({page,isMobile})=>{
     test.skip(isMobile,"Tablet-specific vertical follow is not the phone's horizontal strip");
     await openReview(page,{video:true});
-    await expect(page.locator("#matchReviewJumpToCurrentEvent")).toBeVisible();
-    await expect(page.locator("#eventList .event")).toHaveCount(136);
+    await expect(page.locator("#matchJumpToCurrentEvent")).toBeVisible();
+    await expect(page.locator("#matchNearbyList .match-nearby-item")).toHaveCount(136);
     const seekCount=await page.evaluate(()=>window.__fakeVideoSeeks.length);
     await page.evaluate(()=>window.__fakeVideoPosition=1120);
-    await expect.poll(()=>page.locator("#eventList").evaluate(el=>el.scrollTop),{timeout:5000}).toBeGreaterThan(1000);
-    await page.locator("#eventList").evaluate(el=>{
+    await expect.poll(()=>page.locator("#matchNearbyList").evaluate(el=>el.scrollTop),{timeout:5000}).toBeGreaterThan(1000);
+    await page.locator("#matchNearbyList").evaluate(el=>{
       el.scrollTop=0;
       el.dispatchEvent(new WheelEvent("wheel",{bubbles:true}));
     });
     await page.waitForTimeout(400);
-    expect(await page.locator("#eventList").evaluate(el=>el.scrollTop)).toBeLessThan(100);
-    await page.locator("#matchReviewJumpToCurrentEvent").click();
-    await expect.poll(()=>page.locator("#eventList").evaluate(el=>el.scrollTop)).toBeGreaterThan(1000);
+    expect(await page.locator("#matchNearbyList").evaluate(el=>el.scrollTop)).toBeLessThan(100);
+    await page.locator("#matchJumpToCurrentEvent").click();
+    await expect.poll(()=>page.locator("#matchNearbyList").evaluate(el=>el.scrollTop)).toBeGreaterThan(1000);
     expect(await page.evaluate(()=>window.__fakeVideoSeeks.length)).toBe(seekCount);
   });
 
@@ -113,7 +115,7 @@ test.describe("video-review tablet sidebar",()=>{
     test.skip(isMobile,"Review long-press is validated on a tablet-like pointer viewport");
     await openReview(page,{video:true});
     const initial=await page.evaluate(()=>({time:window.__fakeVideoPosition,seeks:window.__fakeVideoSeeks.length}));
-    const target=page.locator('#eventList .event[data-event-index="5"]');
+    const target=page.locator('#matchNearbyList .match-nearby-item[data-event-index="5"]');
     await target.scrollIntoViewIfNeeded();
     const rect=await target.boundingBox();
     expect(rect).toBeTruthy();
@@ -123,7 +125,7 @@ test.describe("video-review tablet sidebar",()=>{
     await page.mouse.up();
     await page.locator("#matchEventHoldDetails").click();
     await expect(page.locator("#matchEventHoldMenu")).toBeHidden();
-    await expect(page.locator('#eventList .event[data-event-index="5"]')).toHaveClass(/current/);
+    await expect(page.locator('#matchNearbyList .match-nearby-item[data-event-index="5"]')).toHaveClass(/current/);
     await expect(page.locator("#videoEventEditor")).toContainText("Fixierung lösen");
     expect(await page.evaluate(()=>window.__fakeVideoSeeks.length)).toBe(initial.seeks);
     expect(await page.evaluate(()=>window.__fakeVideoPosition)).toBe(initial.time);
@@ -134,9 +136,9 @@ test("phone review still uses horizontal events rather than tablet-height column
   test.skip(!isMobile,"Phone layout is validated with a mobile browser");
   await openReview(page);
   await expect(page.locator("body")).toHaveClass(/phone-match-layout/);
-  const layout=await page.locator("#eventList").evaluate(el=>{
-    const first=el.querySelector(".event")?.getBoundingClientRect();
-    const next=el.querySelectorAll(".event")[1]?.getBoundingClientRect();
+  const layout=await page.locator("#matchNearbyList").evaluate(el=>{
+    const first=el.querySelector(".match-nearby-item")?.getBoundingClientRect();
+    const next=el.querySelectorAll(".match-nearby-item")[1]?.getBoundingClientRect();
     return {overflowX:getComputedStyle(el).overflowX,sameRow:Boolean(first&&next)&&Math.abs(first.top-next.top)<5};
   });
   expect(layout.overflowX).toBe("auto");
