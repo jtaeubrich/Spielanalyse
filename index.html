@@ -1442,6 +1442,102 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
     .preflight-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
     .preflight-actions #preflightStart{margin-left:auto}
     @media(max-width:600px){.preflight-grid{grid-template-columns:1fr}.preflight-actions{display:grid;grid-template-columns:1fr 1fr}.preflight-actions #preflightStart{grid-column:1/-1;margin:0}}
+
+/* The Match video editor and compact event list are shared between both video
+   workflows. This is a presentation-only override; Live, Video tab, stored
+   game and season data are not modified. */
+body.video-workflow-layout #matchTab #matchGrid>.events{display:none!important}
+body.video-workflow-layout #matchTab #matchNearbyEvents{
+  display:flex!important;flex-direction:column;min-width:0;
+  max-height:none!important;box-sizing:border-box;
+}
+body.video-workflow-layout #matchTab #matchNearbyEvents .match-nearby-list{
+  min-height:0;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+}
+body.video-workflow-layout #matchTab .match-nearby-item{
+  display:block;position:relative;box-sizing:border-box;
+  padding-right:34px;cursor:pointer;-webkit-touch-callout:none;
+  -webkit-user-select:none;user-select:none;touch-action:pan-y;
+}
+body.video-workflow-layout #matchTab .match-nearby-item.selected{
+  border-color:var(--cyan);background:#164b5a;
+}
+body.video-workflow-layout #matchTab .match-nearby-delete{
+  position:absolute;top:3px;right:3px;width:28px;height:30px;min-width:28px;
+  border:0;border-radius:6px;background:transparent;color:var(--red);
+  font-size:21px;line-height:1;cursor:pointer;z-index:2;
+}
+body.video-workflow-layout #matchTab .match-nearby-delete:hover{background:#76263555}
+body.video-workflow-layout #matchTab #matchNearbyEditorHost:not(.hidden){
+  display:block;margin:10px 0 12px;padding:12px;border:1px solid var(--cyan);
+  border-radius:12px;background:var(--panel2);overflow:visible;height:auto;
+  min-height:0;max-height:none;box-sizing:border-box;
+}
+body.video-workflow-layout #matchTab #matchNearbyEditorHost .event-editor{
+  max-height:none!important;overflow:visible!important;
+}
+@media(min-width:760px){
+  body.video-workflow-layout #matchTab #matchGrid{
+    display:grid!important;
+    grid-template-columns:minmax(0,var(--video-share,60%)) minmax(0,1fr)!important;
+    align-items:start;
+  }
+  body.video-workflow-layout #matchTab #matchVideoHost{grid-column:1!important;grid-row:1!important}
+  body.video-workflow-layout #matchTab #matchNearbyEvents{
+    grid-column:2!important;grid-row:1!important;
+    height:var(--match-video-height,560px)!important;
+    min-height:var(--match-video-height,560px)!important;overflow:hidden;
+  }
+  body.video-workflow-layout #matchTab #matchNearbyEvents .match-nearby-list{
+    flex:1 1 auto;overflow-y:auto!important;overflow-x:hidden!important;
+    max-height:none!important;height:auto!important;scroll-snap-type:none;
+  }
+  body.video-workflow-layout #matchTab #matchNearbyEvents .match-nearby-item{
+    flex:0 0 auto;width:100%;max-width:none;
+  }
+  body.video-workflow-layout #matchTab #matchPossessionHost{
+    grid-column:1/-1!important;grid-row:2!important;
+  }
+  body.video-workflow-layout #matchTab #matchGrid>.side{
+    grid-column:1/-1!important;grid-row:3!important;
+  }
+  body.video-workflow-layout #matchTab #matchSceneSettingsHost{
+    grid-column:1/-1!important;grid-row:4!important;
+  }
+}
+@media(max-width:759px){
+  body.video-workflow-layout #matchTab #matchGrid{
+    display:flex!important;flex-direction:column!important;
+    grid-template-columns:none!important;
+  }
+  body.video-workflow-layout #matchTab #matchNearbyEvents{
+    width:100%!important;height:auto!important;min-height:0!important;
+    max-height:none!important;overflow:visible!important;
+  }
+  body.video-workflow-layout #matchTab #matchNearbyEvents .match-nearby-list{
+    display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+    width:100%;height:auto!important;max-height:none!important;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    scroll-snap-type:x proximity!important;
+  }
+  body.video-workflow-layout #matchTab #matchNearbyEvents .match-nearby-item{
+    flex:0 0 min(178px,67vw)!important;
+    min-width:0!important;max-width:178px!important;
+    scroll-snap-align:start;touch-action:pan-x;
+  }
+}
+body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents .match-nearby-list{
+  display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+  overflow-x:auto!important;overflow-y:hidden!important;
+}
+body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents .match-nearby-item{
+  flex:0 0 min(178px,67vw)!important;min-width:0!important;
+  max-width:178px!important;touch-action:pan-x;
+}
+body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
+  height:auto!important;min-height:0!important;max-height:none!important;
+}
+
 </style>
 </head>
 <body>
@@ -5452,7 +5548,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function scrollMatchEventsToVideo(force=false){
     const host=$("matchNearbyList");
     if(!host||!mediaReady()||activeTab!=="match"||(analysisMode!=="video"&&!matchReviewMode))return;
-    if(!force&&performance.now()<nearbyManualUntil)return;
+    if(!force&&(performance.now()<nearbyManualUntil||activeVideoEventIndex!==null))return;
     const now=mediaSeconds();
     if(!Number.isFinite(now))return;
     const buttons=[...host.querySelectorAll(".match-nearby-item[data-video-seconds]")];
@@ -6054,125 +6150,99 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     mobileMatchEditorCollapsed=false;
     syncMobileMatchEditor();
   }
-  function placeMatchReviewEditor(enabled){
-    const editor=$("videoEventEditor"),fallback=$("matchReviewEventEditorHost"),mobileHost=$("matchNearbyEditorHost");
-    if(!editor)return;
-    if(!enabled){
-      if(videoEventEditorHome&&editor.parentElement!==videoEventEditorHome)videoEventEditorHome.append(editor);
+  // One DOM layout for video scouting and video review. This moves the *same*
+  // editor and event list; no scouting data or stored JSON shape is changed.
+  function placeMatchVideoEditor(active){
+    const editor=$("videoEventEditor"),host=$("matchNearbyEditorHost"),
+      capture=$("matchReviewCaptureHost"),possession=$("matchPossessionHost"),
+      grid=$("matchGrid");
+    if(!editor||!host)return;
+    if(!active){
+      if(videoEventEditorHome&&editor.parentElement!==videoEventEditorHome)
+        videoEventEditorHome.append(editor);
       return;
     }
-    if(isPhoneMatchViewport()&&mobileHost){
-      if(editor.parentElement!==mobileHost)mobileHost.append(editor);
-      return;
-    }
-    // A wide viewport is not enough: the video-width slider can squeeze the
-    // event column to 15% even on a desktop monitor. Use the actual width.
-    // Tablet-sized layouts always keep editing below the video.
-    const eventColumnWidth=matchEventsPanel?.getBoundingClientRect().width||0;
-    const sidebarHasRoom=window.innerWidth>=1500&&eventColumnWidth>=560;
-    if(sidebarHasRoom&&matchEventsPanel){
-      if(editor.parentElement!==matchEventsPanel)matchEventsPanel.append(editor);
-    }else if(fallback&&editor.parentElement!==fallback){
-      fallback.append(editor);
+    if(editor.parentElement!==host)host.append(editor);
+    if(isPhoneMatchViewport()){
+      if(grid&&possession&&(host.parentElement!==grid||host.nextElementSibling!==possession))
+        grid.insertBefore(host,possession);
+    }else if(capture?.parentElement){
+      // Put all event details between the video controls and capture inputs.
+      if(host.parentElement!==capture.parentElement||host.nextElementSibling!==capture)
+        capture.parentElement.insertBefore(host,capture);
     }
   }
   function updateMatchReviewLayout(){
-    const nearbyPanel=$("matchNearbyEvents"),grid=$("matchGrid"),side=grid?.querySelector(":scope > .side");
-    const enabled=activeTab==="match"&&matchReviewMode;
-    const videoScouting=activeTab==="match"&&analysisMode==="video"&&!enabled;
-    const liveScouting=activeTab==="match"&&analysisMode==="live"&&!enabled;
-    const topHost=$("matchReviewTopHost"),videoHost=$("matchVideoHost"),videoControls=videoHost?.querySelector(".video-control-groups");
-    const host=$("matchReviewCaptureHost"),possession=$("homePoss")?.closest(".possession");
-    document.body.classList.toggle("match-review-mode",enabled);
-    document.body.classList.toggle("video-scouting-layout",videoScouting);
-    document.body.classList.toggle("live-scouting-layout",liveScouting);
+    const grid=$("matchGrid"),side=grid?.querySelector(":scope > .side"),
+      nearbyPanel=$("matchNearbyEvents"),editorHost=$("matchNearbyEditorHost"),
+      topHost=$("matchReviewTopHost"),possessionHost=$("matchPossessionHost"),
+      possession=$("homePoss")?.closest(".possession"),sceneHost=$("matchSceneSettingsHost");
+    const review=activeTab==="match"&&matchReviewMode;
+    const videoWorkflow=activeTab==="match"&&(analysisMode==="video"||review);
+    const live=activeTab==="match"&&!videoWorkflow;
+    const phone=isPhoneMatchViewport();
+    document.body.classList.toggle("match-review-mode",review);
+    // All video modes share the video-scouting rules, plus a single explicit
+    // layout override class to disable obsolete review-only event panels.
+    document.body.classList.toggle("video-scouting-layout",videoWorkflow);
+    document.body.classList.toggle("video-workflow-layout",videoWorkflow);
+    document.body.classList.toggle("live-scouting-layout",live);
     document.body.classList.toggle("match-unified-layout",activeTab==="match");
-    document.body.classList.toggle("phone-match-layout",activeTab==="match"&&isPhoneMatchViewport());
-    const sceneHost=$("matchSceneSettingsHost"),showSceneSettings=videoScouting||enabled;
-    if(sceneHost)sceneHost.hidden=!showSceneSettings;
+    document.body.classList.toggle("phone-match-layout",activeTab==="match"&&phone);
+    if(sceneHost)sceneHost.hidden=!videoWorkflow;
     if(matchSceneSettings){
-      if(showSceneSettings&&sceneHost&&matchSceneSettings.parentElement!==sceneHost)sceneHost.append(matchSceneSettings);
-      else if(!showSceneSettings&&matchSceneSettingsHome&&matchSceneSettings.parentElement!==matchSceneSettingsHome){
+      if(videoWorkflow&&sceneHost&&matchSceneSettings.parentElement!==sceneHost)
+        sceneHost.append(matchSceneSettings);
+      else if(!videoWorkflow&&matchSceneSettingsHome&&matchSceneSettings.parentElement!==matchSceneSettingsHome)
         matchSceneSettingsHome.insertBefore(matchSceneSettings,$("matchReviewCaptureHost"));
-      }
     }
     syncSceneWindowInputs();
     if(topHost&&grid&&topHost.nextElementSibling!==grid)grid.before(topHost);
-    if(matchTimeManagement&&topHost&&matchTimeManagement.parentElement!==topHost)topHost.append(matchTimeManagement);
-    const possessionHost=$("matchPossessionHost"),nearbyHost=$("matchNearbyEditorHost"),phone=isPhoneMatchViewport();
-    if(possessionHost&&possession&&possession.parentElement!==possessionHost)possessionHost.append(possession);
-    // On phones both modes use one editor directly beneath the horizontal event strip.
-    if(phone&&(videoScouting||enabled)&&grid&&possessionHost&&nearbyHost){
-      if(nearbyHost.parentElement!==grid||nearbyHost.nextElementSibling!==possessionHost)grid.insertBefore(nearbyHost,possessionHost);
-    }
-    // Capture stays below the video/events row in all modes.
+    if(matchTimeManagement&&topHost&&matchTimeManagement.parentElement!==topHost)
+      topHost.append(matchTimeManagement);
+    if(possessionHost&&possession&&possession.parentElement!==possessionHost)
+      possessionHost.append(possession);
     if(side)for(const node of matchCaptureNodes)side.append(node);
-    if(nearbyPanel&&grid&&nearbyPanel.parentElement!==grid)grid.insertBefore(nearbyPanel,side);
-    if(matchEventsPanel&&grid&&side){
-      if(videoScouting){
-        if(matchEventsPanel.parentElement!==side)side.append(matchEventsPanel);
-      }else if(matchEventsPanel.parentElement!==grid){
-        grid.insertBefore(matchEventsPanel,side);
-      }
-      const label=matchEventsPanel.querySelector(".label");
-      if(label)label.textContent=enabled?"Ereignisse im Video":"Letzte Ereignisse";
-    }
-    $("matchReviewJumpToCurrentEvent").classList.toggle("hidden",!enabled||phone);
-    if(enabled){
-      placeMatchReviewEditor(true);renderEvents();renderVideoEventEditor();
-      requestAnimationFrame(syncMatchVideoColumnHeight);
-    }else{
-      placeMatchReviewEditor(false);
-    }
-    if(videoScouting){
-      const editor=$("videoEventEditor");
-      if(editor&&nearbyHost&&editor.parentElement!==nearbyHost)nearbyHost.append(editor);
-      const capture=$("matchReviewCaptureHost");
-      if(!phone&&capture&&nearbyHost&&nearbyHost.nextElementSibling!==capture)capture.parentElement.insertBefore(nearbyHost,capture);
-      nearbyHost?.classList.toggle("hidden",phone?!mobileMatchEditorShown||activeVideoEventIndex===null:activeVideoEventIndex===null);
+    if(nearbyPanel&&grid&&side&&nearbyPanel.parentElement!==grid)grid.insertBefore(nearbyPanel,side);
+    // The former review-only event list is retained solely for Live scouting.
+    // It remains attached to the capture pane but hidden in either video mode.
+    if(matchEventsPanel&&side&&matchEventsPanel.parentElement!==side)side.append(matchEventsPanel);
+    $("matchReviewJumpToCurrentEvent").classList.add("hidden");
+    placeMatchVideoEditor(videoWorkflow);
+    if(videoWorkflow){
+      if(nearbyPanel)nearbyPanel.classList.remove("hidden");
+      const selected=Number.isInteger(activeVideoEventIndex)&&Boolean(state.events[activeVideoEventIndex]);
+      editorHost?.classList.toggle("hidden",!selected||(phone&&!mobileMatchEditorShown));
       renderMatchNearbyEvents(true);
+      renderVideoEventEditor();
       requestAnimationFrame(syncMatchVideoColumnHeight);
-    }else if(enabled){
-      nearbyPanel?.classList.add("hidden");
-      if(!phone){
-        const list=$("matchNearbyList");
-        if(list&&nearbyHost&&nearbyHost.parentElement!==list.parentElement)list.parentElement.insertBefore(nearbyHost,list.nextSibling);
-        nearbyHost?.classList.add("hidden");
-      }
     }else{
-      const list=$("matchNearbyList");
-      if(list&&nearbyHost&&nearbyHost.parentElement!==list.parentElement)list.parentElement.insertBefore(nearbyHost,list.nextSibling);
       nearbyPanel?.classList.add("hidden");
-      nearbyHost?.classList.add("hidden");
+      editorHost?.classList.add("hidden");
     }
     syncMobileMatchEditor();
   }
   function syncMatchVideoColumnHeight(){
     const video=$("matchVideoHost"),events=$("matchNearbyEvents");
-    if(!video)return;
+    if(!video||!events||activeTab!=="match"||(analysisMode!=="video"&&!matchReviewMode))return;
     const videoRect=video.getBoundingClientRect();
-    if(videoRect.height>0)events?.style.setProperty("--match-video-height",Math.round(videoRect.height)+"px");
-    if(activeTab!=="match"||!matchReviewMode||isPhoneMatchViewport()||!matchEventsPanel)return;
-    // The details editor lives below the video on tablets. The outer video
-    // host also contains that editor, so its *total* height would be wrong.
-    const editorTop=$("matchReviewEventEditorHost")?.getBoundingClientRect().top;
-    const measured=editorTop>videoRect.top+120
-      ?editorTop-videoRect.top-12
-      :video.querySelector(".video-pane .workspace")?.getBoundingClientRect().height;
-    if(Number.isFinite(measured)&&measured>120)
-      matchEventsPanel.style.setProperty("--match-review-video-height",Math.round(measured)+"px");
+    // The match video host also contains the event editor and capture area.
+    // Exclude both from the measured height of the adjacent events panel.
+    const capture=$("matchReviewCaptureHost")?.getBoundingClientRect();
+    const editor=$("matchNearbyEditorHost")?.getBoundingClientRect();
+    const points=[capture,editor].filter(rect=>rect&&rect.top>videoRect.top+120)
+      .map(rect=>rect.top-videoRect.top);
+    const videoFrame=video.querySelector(".video-pane .workspace");
+    const fallback=videoFrame?.getBoundingClientRect().height||videoRect.height;
+    const height=Math.round(points.length?Math.min(...points)-8:fallback);
+    if(height>120)events.style.setProperty("--match-video-height",height+"px");
   }
   if(typeof ResizeObserver!=="undefined"){
     const matchVideoResizeObserver=new ResizeObserver(()=>{if(activeTab==="match"&&(analysisMode==="video"||matchReviewMode))syncMatchVideoColumnHeight()});
     matchVideoResizeObserver.observe($("matchVideoHost"));
     // Reposition the selected event when available space changes, including
     // screen rotation, zooming and a change to the video-width slider.
-    if(matchEventsPanel){
-      const reviewEditorResizeObserver=new ResizeObserver(()=>{
-        if(activeTab==="match"&&matchReviewMode)placeMatchReviewEditor(true);
-      });
-      reviewEditorResizeObserver.observe(matchEventsPanel);
-    }
+    // No review-only event editor relocation: both modes use a single host.
   }
   window.addEventListener("resize",()=>{
     if(activeTab==="match"){
@@ -6180,7 +6250,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       const phone=isPhoneMatchViewport();
       if(wasPhone!==phone)updateMatchReviewLayout();
       else{
-        if(matchReviewMode)placeMatchReviewEditor(true);
+        placeMatchVideoEditor(analysisMode==="video"||matchReviewMode);
         syncMobileMatchEditor();
       }
     }
