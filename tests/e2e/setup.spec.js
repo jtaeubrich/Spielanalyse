@@ -710,7 +710,7 @@ test("unified Match workspace keeps controls and capture ordered across modes",a
      possessionInHost:document.querySelector("#matchPossessionHost").contains(possession),
      possessionAboveCapture:bounds("#matchPossessionHost").bottom<=bounds("#idleStep").top+3,
      captureBelowVideo:videoHidden
-       ? getComputedStyle(document.querySelector("#matchGrid > .events")).display==="none"
+       ? getComputedStyle(document.querySelector("#matchGrid > .side > .events")).display==="none"
        : bounds("#idleStep").top>=bounds("#matchVideoHost").top
     };
    });
