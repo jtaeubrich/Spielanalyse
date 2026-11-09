@@ -125,7 +125,7 @@ test.describe("video-review tablet sidebar",()=>{
     await page.mouse.up();
     await page.locator("#matchEventHoldDetails").click();
     await expect(page.locator("#matchEventHoldMenu")).toBeHidden();
-    await expect(page.locator('#matchNearbyList .match-nearby-item[data-event-index="5"]')).toHaveClass(/current/);
+    await expect(page.locator('#matchNearbyList .match-nearby-item[data-event-index="5"]')).toHaveClass(/selected/);
     await expect(page.locator("#videoEventEditor")).toContainText("Fixierung lösen");
     expect(await page.evaluate(()=>window.__fakeVideoSeeks.length)).toBe(initial.seeks);
     expect(await page.evaluate(()=>window.__fakeVideoPosition)).toBe(initial.time);
