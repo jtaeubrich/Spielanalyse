@@ -62,7 +62,7 @@ test("multi-player key moments are visible and editable in Daten editieren and i
   // Video review uses the same saved playerTags[] and lets us fix them.
   await page.locator('[data-tab="match"]').click();
   await page.locator("#matchReviewToggle").click();
-  const event=page.locator("#matchGrid>.events .event").first();
+  const event=page.locator("#matchNearbyList .match-nearby-item").first();
   await expect(event).toBeVisible();
   await event.click();
   const videoPicker=page.locator("#veeKeyMomentPlayers");
