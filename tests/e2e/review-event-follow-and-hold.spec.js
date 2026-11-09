@@ -95,6 +95,7 @@ test.describe("video-review tablet sidebar",()=>{
     await openReview(page,{video:true});
     await expect(page.locator("#matchReviewJumpToCurrentEvent")).toBeVisible();
     await expect(page.locator("#eventList .event")).toHaveCount(136);
+    const seekCount=await page.evaluate(()=>window.__fakeVideoSeeks.length);
     await page.evaluate(()=>window.__fakeVideoPosition=1120);
     await expect.poll(()=>page.locator("#eventList").evaluate(el=>el.scrollTop),{timeout:5000}).toBeGreaterThan(1000);
     await page.locator("#eventList").evaluate(el=>{
@@ -105,12 +106,13 @@ test.describe("video-review tablet sidebar",()=>{
     expect(await page.locator("#eventList").evaluate(el=>el.scrollTop)).toBeLessThan(100);
     await page.locator("#matchReviewJumpToCurrentEvent").click();
     await expect.poll(()=>page.locator("#eventList").evaluate(el=>el.scrollTop)).toBeGreaterThan(1000);
-    expect(await page.evaluate(()=>window.__fakeVideoSeeks.length)).toBe(0);
+    expect(await page.evaluate(()=>window.__fakeVideoSeeks.length)).toBe(seekCount);
   });
 
   test("550ms long press opens selected event details without a video seek",async({page,isMobile})=>{
     test.skip(isMobile,"Review long-press is validated on a tablet-like pointer viewport");
     await openReview(page,{video:true});
+    const initial=await page.evaluate(()=>({time:window.__fakeVideoPosition,seeks:window.__fakeVideoSeeks.length}));
     const target=page.locator('#eventList .event[data-event-index="5"]');
     await target.scrollIntoViewIfNeeded();
     const rect=await target.boundingBox();
@@ -123,8 +125,8 @@ test.describe("video-review tablet sidebar",()=>{
     await expect(page.locator("#matchEventHoldMenu")).toBeHidden();
     await expect(page.locator('#eventList .event[data-event-index="5"]')).toHaveClass(/current/);
     await expect(page.locator("#videoEventEditor")).toContainText("Fixierung lösen");
-    expect(await page.evaluate(()=>window.__fakeVideoSeeks.length)).toBe(0);
-    expect(await page.evaluate(()=>window.__fakeVideoPosition)).toBe(0);
+    expect(await page.evaluate(()=>window.__fakeVideoSeeks.length)).toBe(initial.seeks);
+    expect(await page.evaluate(()=>window.__fakeVideoPosition)).toBe(initial.time);
   });
 });
 
