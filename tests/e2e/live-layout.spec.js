@@ -60,7 +60,8 @@ test("live event capture stays full width while review temporarily shows video a
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
   await expect(page.locator("body")).not.toHaveClass(/live-scouting-layout/);
   await expect(page.locator("#matchVideoHost")).toBeVisible();
-  await expect(page.locator("#matchGrid > .events")).toBeVisible();
+  await expect(page.locator("#matchNearbyEvents")).toBeVisible();
+  await expect(page.locator("#matchGrid > .events")).toBeHidden();
   await page.locator("#matchReviewToggle").click();
   await expectLiveFullWidth(page);
   // The separate video tab must remain usable even while Live is selected.
@@ -122,7 +123,7 @@ test("video review also keeps possession and event capture below the video/event
   await expect(page.locator("body")).not.toHaveClass(/phone-match-layout/);
   const result=await page.evaluate(()=>{
     const b=id=>document.getElementById(id).getBoundingClientRect();
-    const events=document.querySelector("#matchGrid>.events").getBoundingClientRect();
+    const events=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
     const capture=document.getElementById("idleStep").getBoundingClientRect();
     const side=document.querySelector("#matchGrid>.side").getBoundingClientRect();
     return {
@@ -165,16 +166,16 @@ for(const scenario of [
       await expect(page.locator("body")).toHaveClass(/phone-match-layout/);
       await expect(page.locator("#videoSize")).toBeHidden();
       expect(await page.evaluate(()=>({width:screen.width,height:screen.height}))).toEqual(scenario.screen);
-      await expect(page.locator("#matchGrid>.events .event")).toHaveCount(game.events.length);
+      await expect(page.locator("#matchNearbyList .match-nearby-item")).toHaveCount(game.events.length);
       const result=await page.evaluate(expectedEventCount=>{
         const rect=id=>document.getElementById(id).getBoundingClientRect();
-        const eventList=document.getElementById("eventList"),
-          cards=[...eventList.querySelectorAll(".event")];
+        const eventList=document.getElementById("matchNearbyList"),
+          cards=[...eventList.querySelectorAll(".match-nearby-item")];
         const first=cards[0]?.getBoundingClientRect(),second=cards[1]?.getBoundingClientRect();
         const grid=rect("matchGrid"),side=document.querySelector("#matchGrid>.side").getBoundingClientRect();
         return {
-          eventBelowVideo:rect("eventList").top>=rect("matchVideoHost").bottom-4,
-          possessionBelowEvents:rect("matchPossessionHost").top>=rect("eventList").bottom-4,
+          eventBelowVideo:rect("matchNearbyEvents").top>=rect("matchVideoHost").bottom-4,
+          possessionBelowEvents:rect("matchPossessionHost").top>=rect("matchNearbyEvents").bottom-4,
           captureBelowPossession:side.top>=rect("matchPossessionHost").bottom-4,
           settingsBelowActions:rect("matchSceneSettingsHost").top>=side.bottom-4,
           fullWidth:side.width>=grid.width-4,
@@ -186,11 +187,11 @@ for(const scenario of [
         eventBelowVideo:true,possessionBelowEvents:true,captureBelowPossession:true,
         settingsBelowActions:true,fullWidth:true,horizontalEvents:true,unsyncedAvailable:true
       });
-      await page.locator("#matchGrid>.events .event").first().click();
+      await page.locator("#matchNearbyList .match-nearby-item").first().click();
       await expect(page.locator("#matchNearbyEditorHost")).toBeVisible();
       await expect(page.locator("#videoEventEditor")).toBeVisible();
       const layout=await page.evaluate(()=>{
-        const events=document.querySelector("#matchGrid>.events").getBoundingClientRect();
+        const events=document.querySelector("#matchNearbyEvents").getBoundingClientRect();
         const editor=document.getElementById("matchNearbyEditorHost").getBoundingClientRect();
         const possession=document.getElementById("matchPossessionHost").getBoundingClientRect();
         const grid=document.getElementById("matchGrid");
@@ -278,12 +279,12 @@ test.describe("compact phone review event deletion",()=>{
     });
     await page.locator("#matchReviewToggle").click();
     await expect(page.locator("#videoSize")).toBeHidden();
-    const cards=page.locator("#matchGrid>.events .event");
+    const cards=page.locator("#matchNearbyList .match-nearby-item");
     await expect(cards).toHaveCount(game.events.length);
     const geometry=await cards.first().evaluate(card=>{
-      const box=card.getBoundingClientRect(),cross=card.querySelector(".delete").getBoundingClientRect();
-      const meta=card.querySelector(".eventmeta").getBoundingClientRect();
-      const time=card.querySelector(".eventtime").getBoundingClientRect();
+      const box=card.getBoundingClientRect(),cross=card.querySelector(".match-nearby-delete").getBoundingClientRect();
+      const meta=card.querySelector(".compact-event-player").getBoundingClientRect();
+      const time=card.querySelector(".compact-event-head").getBoundingClientRect();
       return {
         compact:box.height<=78,
         xTopRight:cross.top<=box.top+12&&cross.right>=box.right-10,
@@ -296,12 +297,12 @@ test.describe("compact phone review event deletion",()=>{
     // Cancel must leave all events and the active editor untouched.
     let message="";
     page.once("dialog",async dialog=>{message=dialog.message();await dialog.dismiss();});
-    await cards.first().locator(".delete").click();
+    await cards.first().locator(".match-nearby-delete").click();
     expect(message).toMatch(/Ereignis.*wirklich löschen/);
     await expect(cards).toHaveCount(game.events.length);
 
     page.once("dialog",async dialog=>{message=dialog.message();await dialog.accept();});
-    await cards.first().locator(".delete").click();
+    await cards.first().locator(".match-nearby-delete").click();
     expect(message).toMatch(/Ereignis.*wirklich löschen/);
     await expect(cards).toHaveCount(game.events.length-1);
     await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
@@ -309,7 +310,7 @@ test.describe("compact phone review event deletion",()=>{
 });
 
 
-test("review editor moves below the video on tablet and narrow desktop panes, but can remain beside a wide desktop video",async({page})=>{
+test("review editor stays below the video across tablet and desktop widths, sharing the video scouting host",async({page})=>{
   const game=JSON.parse(await readFile(fixture,"utf8"));
   game.isHistorical=false;
   game.isVideoscoutingFile=false;
@@ -323,8 +324,8 @@ test("review editor moves below the video on tablet and narrow desktop panes, bu
   });
   await page.locator("#matchReviewToggle").click();
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
-  await expect(page.locator("#matchGrid>.events .event").first()).toBeVisible();
-  await page.locator("#matchGrid>.events .event").first().click();
+  await expect(page.locator("#matchNearbyList .match-nearby-item").first()).toBeVisible();
+  await page.locator("#matchNearbyList .match-nearby-item").first().click();
   await expect(page.locator("#videoEventEditor")).toBeVisible();
 
   async function editorGeometry(){
@@ -333,7 +334,7 @@ test("review editor moves below the video on tablet and narrow desktop panes, bu
       const editor=document.getElementById("videoEventEditor");
       const grid=box("#matchGrid");
       const video=box("#matchVideoHost");
-      const events=box("#matchGrid>.events");
+      const events=box("#matchNearbyEvents");
       const parent=editor.parentElement;
       return {
         parent:parent.id || (parent.classList.contains("events")?"events":"unknown"),
@@ -357,24 +358,18 @@ test("review editor moves below the video on tablet and narrow desktop panes, bu
   ]){
     await page.setViewportSize({width:layout.width,height:900});
     await page.locator("#videoSize").fill(String(layout.share));
-    const shouldDock=layout.width>=1500&&layout.share===45;
     await expect.poll(async()=>(await editorGeometry()).parent)
-      .toBe(shouldDock?"events":"matchReviewEventEditorHost");
+      .toBe("matchNearbyEditorHost");
     const state=await editorGeometry();
     expect(state.eventBesideVideo).toBe(true);
     expect(state.overflow).toBe(false);
-    if(shouldDock){
-      expect(state.eventWidth).toBeGreaterThanOrEqual(560);
-    }else{
-      expect(state.editorWidth).toBeGreaterThan(state.eventWidth*0.8);
-      expect(state.editorWidth).toBeGreaterThan(state.videoWidth*0.65);
-      expect(state.editorTop).toBeGreaterThanOrEqual(state.videoStageBottom-3);
-    }
+    expect(state.editorWidth).toBeGreaterThan(state.videoWidth*0.65);
+    expect(state.editorTop).toBeGreaterThanOrEqual(state.videoStageBottom-3);
     await expect(page.locator("#veeRealTime")).toBeVisible();
   }
   // Editing must remain functional after moving the live DOM node between hosts.
   await page.locator("#eventVideoComment").fill("Sichtbare Event-Details nach Layoutwechsel");
   await page.locator("#eventVideoComment").press("Tab");
   await expect(page.locator("#eventVideoComment")).toHaveValue("Sichtbare Event-Details nach Layoutwechsel");
-  await expect(page.locator("#matchGrid>.events .event").first()).toBeVisible();
+  await expect(page.locator("#matchNearbyList .match-nearby-item").first()).toBeVisible();
 });
