@@ -67,7 +67,7 @@ test("iPad unsupported share offers explicit download fallback with intact seaso
   await setFakeIPad(page,"unsupported");
   await openSeasonWithGame(page);
   await page.locator("#seasonExport").click();
-  await expect(page.locator("#seasonExportStatus")).toContainText("Teilen der Saisondatei nicht");
+  await expect(page.locator("#seasonExportStatus")).toContainText("Teilen dieser Datei nicht");
   const [download]=await Promise.all([
     page.waitForEvent("download"),
     page.locator("#seasonExportDownload").click()
@@ -95,5 +95,5 @@ test("iPad cancelled share is clearly reported without silently downloading",asy
   await openSeasonWithGame(page);
   await page.locator("#seasonExport").click();
   // No download fallback is triggered by a cancellation.
-  await expect(page.locator("#seasonExportStatus")).toContainText("Teilen abgebrochen");
+  await expect(page.locator("#seasonExportStatus")).toContainText("Teilen nicht abgeschlossen");
 });
