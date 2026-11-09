@@ -38,7 +38,7 @@ test("technical-error player can be corrected in video review and persists in Da
   await page.locator('[data-tab="match"]').click();
   await page.locator("#matchReviewToggle").click();
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
-  await page.locator("#matchGrid>.events .event").first().click();
+  await page.locator("#matchNearbyList .match-nearby-item").first().click();
 
   const chooser=page.locator("#veePlayer");
   await expect(chooser).toBeVisible();
@@ -59,7 +59,7 @@ test("technical-error player can be corrected in video review and persists in Da
     pNr:after.nr,
     pName:after.nachname+", "+after.vorname
   });
-  await expect(page.locator("#matchGrid>.events .event").first()).toContainText(after.nachname);
+  await expect(page.locator("#matchNearbyList .match-nearby-item").first()).toContainText(after.nachname);
   await page.locator('[data-tab="data"]').click();
   await expect(page.locator("#dataEditorDetails select.player-edit").first()).toHaveValue(String(after.id));
 
