@@ -875,6 +875,9 @@
       flex:1 1 auto;min-height:0;max-height:none!important;height:auto;overflow-y:auto;
       overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
     }
+    body.match-unified-layout.match-review-mode:not(.phone-match-layout) #matchTab #eventList .event.jumpable{
+      -webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:pan-y;
+    }
   }
 
   /* Live Scouting uses the full screen for clocks and event capture.
@@ -6058,7 +6061,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       const label=matchEventsPanel.querySelector(".label");
       if(label)label.textContent=enabled?"Ereignisse im Video":"Letzte Ereignisse";
     }
-    $("matchReviewJumpToCurrentEvent").classList.toggle("hidden",!enabled);
+    $("matchReviewJumpToCurrentEvent").classList.toggle("hidden",!enabled||phone);
     if(enabled){
       placeMatchReviewEditor(true);renderEvents();renderVideoEventEditor();
       requestAnimationFrame(syncMatchVideoColumnHeight);
