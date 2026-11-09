@@ -2391,7 +2391,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     toast("Synchronisationspunkt gespeichert.");
   };
   function updateReviewClock(videoAt=mediaSeconds()){
-    const shown=(activeTab==="match"&&analysisMode==="video")||activeTab==="video";
+    const shown=(activeTab==="match"&&(analysisMode==="video"||matchReviewMode))||activeTab==="video";
     $("reviewClock").classList.toggle("hidden",!shown);
     if(!shown)return;
     $("reviewVideoTime").textContent=Number.isFinite(videoAt)?fmt(videoAt,true):"--:--";
@@ -2403,7 +2403,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("reviewClockPause").disabled=!clock||!clock.running;
     $("reviewClockStart").disabled=!clock||clock.running;
   }
-  let annotationLastFrame=0;function tick(){updateReviewClock();const gs=currentGameSeconds(),secondaryMs=matchReviewMode&&mediaReady()?Math.round(mediaSeconds()*1000):currentVideoMs(),halfDue=gs>=Number(state.timer.duration||0)*60;$("gameClock").textContent=fmt((state.timer.half-1)*state.timer.duration*60+gs);$("videoClock").textContent=fmt(secondaryMs/1000,true);$("halfBtn").classList.toggle("half-due",halfDue);$("halfBtn").setAttribute("aria-label",halfDue?"Halbzeit wechseln – Spielzeit abgelaufen":"Halbzeit wechseln");$("halfBtn").title=halfDue?"Spielzeit der aktuellen Halbzeit ist abgelaufen":"";scenePlayback.tick();if((activeTab==="video"||activeTab==="match")&&performance.now()-annotationLastFrame>100){annotationLastFrame=performance.now();renderAnnotation()}if(activeTab==="match"&&analysisMode==="video"&&performance.now()-nearbyLastRefresh>350){nearbyLastRefresh=performance.now();renderMatchNearbyEvents()}if(activeTab==="match"&&matchReviewMode&&mediaReady()){updateMatchReviewActiveEvent();scrollReviewEventsToVideo()}requestAnimationFrame(tick)}requestAnimationFrame(tick);
+  let annotationLastFrame=0;function tick(){updateReviewClock();const gs=currentGameSeconds(),secondaryMs=matchReviewMode&&mediaReady()?Math.round(mediaSeconds()*1000):currentVideoMs(),halfDue=gs>=Number(state.timer.duration||0)*60;$("gameClock").textContent=fmt((state.timer.half-1)*state.timer.duration*60+gs);$("videoClock").textContent=fmt(secondaryMs/1000,true);$("halfBtn").classList.toggle("half-due",halfDue);$("halfBtn").setAttribute("aria-label",halfDue?"Halbzeit wechseln – Spielzeit abgelaufen":"Halbzeit wechseln");$("halfBtn").title=halfDue?"Spielzeit der aktuellen Halbzeit ist abgelaufen":"";scenePlayback.tick();if((activeTab==="video"||activeTab==="match")&&performance.now()-annotationLastFrame>100){annotationLastFrame=performance.now();renderAnnotation()}if(activeTab==="match"&&(analysisMode==="video"||matchReviewMode)&&performance.now()-nearbyLastRefresh>350){nearbyLastRefresh=performance.now();renderMatchNearbyEvents()}requestAnimationFrame(tick)}requestAnimationFrame(tick);
   const shotFieldOrder=["location","target","phase","result"],shotStepOrder=["location","phase"],shotFieldLabels={location:"Abwurfort",target:"Wurfziel",phase:"Spielsituation",result:"Torerfolg / Parade",assist:"Assist"};
   const shotFieldElements={location:$("shotFieldLocation"),target:$("shotFieldTarget"),phase:$("shotFieldPhase"),result:$("shotFieldResult"),assist:$("shotFieldAssist")},shotControlElements={phaseList:$("phaseList"),resultList:$("shotResultList"),missButton:$("missResultButton"),missHint:$("missResultHint")};
   function enabledShotFields(){return shotFieldOrder.filter(key=>state.shotCapture[key])}
@@ -2660,7 +2660,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   function updateMatchReviewActiveEvent(){if(Number.isInteger(reviewPinnedEventIndex)&&state.events[reviewPinnedEventIndex]){if(activeVideoEventIndex!==reviewPinnedEventIndex){activeVideoEventIndex=reviewPinnedEventIndex;selectedVideoEvents.clear();selectedVideoEvents.add(reviewPinnedEventIndex);markReviewSelectedEvent();renderVideoEventEditor();renderAnnotation()}return}if(reviewPinnedEventIndex!==null)reviewPinnedEventIndex=null;if(performance.now()<reviewSelectionHoldUntil)return;const next=activeMatchReviewEventIndex(mediaSeconds());if(next===activeVideoEventIndex)return;activeVideoEventIndex=next;selectedVideoEvents.clear();if(Number.isInteger(next))selectedVideoEvents.add(next);markReviewSelectedEvent();renderVideoEventEditor();renderAnnotation()}
   function pinMatchReviewEvent(index){if(!Number.isInteger(index)||!state.events[index])return;reviewPinnedEventIndex=index;activeVideoEventIndex=index;selectedVideoEvents.clear();selectedVideoEvents.add(index);renderEvents();renderVideoEventEditor();renderAnnotation()}
-  function unpinMatchReviewEvent(){reviewPinnedEventIndex=null;reviewSelectionHoldUntil=performance.now()+350;renderEvents();renderVideoEventEditor();if(activeTab==="match"&&matchReviewMode&&mediaReady())setTimeout(()=>updateMatchReviewActiveEvent(),360)}
+  function unpinMatchReviewEvent(){reviewPinnedEventIndex=null;reviewSelectionHoldUntil=performance.now()+350;renderEvents();renderVideoEventEditor();renderMatchNearbyEvents(true)}
   function seekMatchReviewEvent(index){const e=state.events[index],exact=e?eventVideoSeconds(e):NaN;if(!e||!Number.isFinite(exact))return toast("Für dieses Ereignis ist keine Videozeit berechenbar.");if(!mediaReady())return toast("Zuerst das passende Video laden.");const window=playEventScene(exact);if(!window)return;pinMatchReviewEvent(index);reviewSelectionHoldUntil=performance.now()+500;$("videoMessage").textContent=`Szene bei ${fmt(exact,true)} · ${window.preRoll} s davor / ${window.postRoll} s danach. Ereignis ist für die Korrektur fixiert.`}
   function renderEvents(){
     const liveUndo=$("liveUndoBtn");
@@ -5451,7 +5451,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   let nearbySignature="",nearbyLastRefresh=0,nearbyAutoEventIndex=null,nearbyManualUntil=0;
   function scrollMatchEventsToVideo(force=false){
     const host=$("matchNearbyList");
-    if(!host||!mediaReady()||activeTab!=="match"||analysisMode!=="video"||matchReviewMode)return;
+    if(!host||!mediaReady()||activeTab!=="match"||(analysisMode!=="video"&&!matchReviewMode))return;
     if(!force&&performance.now()<nearbyManualUntil)return;
     const now=mediaSeconds();
     if(!Number.isFinite(now))return;
@@ -5465,25 +5465,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const hostRect=host.getBoundingClientRect(),targetRect=target.getBoundingClientRect();
     const offset=horizontal?host.scrollLeft+targetRect.left-hostRect.left:host.scrollTop+targetRect.top-hostRect.top;
     if(horizontal)host.scrollLeft=offset;else host.scrollTop=offset;
-    // Only an automatic jump may dismiss the editor. Manual list scrolling
-    // retains the selection, so the user can inspect older events.
-    if(!force&&activeVideoEventIndex!==null){
-      const selected=host.querySelector('.match-nearby-item.selected');
-      if(selected){
-        const selectedRect=selected.getBoundingClientRect();
-        const visibleRect=host.getBoundingClientRect();
-        const disappeared=horizontal
-          ?selectedRect.right<=visibleRect.left+2
-          :selectedRect.bottom<=visibleRect.top+2;
-        if(disappeared){
-          activeVideoEventIndex=null;
-          $("matchNearbyEditorHost").classList.add("hidden");
-          selected.classList.remove("selected");
-          renderVideoEventEditor();
-          nearbySignature="";
-        }
-      }
-    }
+    // The selected event is controlled by the user. Scrolling never closes
+    // the editor or substitutes another event while it is being edited.
   }
   $("matchJumpToCurrentEvent").onclick=()=>{nearbyManualUntil=0;nearbyAutoEventIndex=null;scrollMatchEventsToVideo(true)};
   for(const type of ["touchstart","pointerdown","wheel"]){
@@ -5515,81 +5498,154 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(activeTab==="match"&&matchReviewMode){
       // Pin the editor without seeking, pausing or changing the video time.
       pinMatchReviewEvent(index);
-      showMobileMatchEditor();
+      mobileMatchEditorShown=true;
+      mobileMatchEditorCollapsed=false;
+      $("matchNearbyEditorHost").classList.remove("hidden");
+      renderMatchNearbyEvents(true);
+      syncMobileMatchEditor();
       return;
     }
     activeVideoEventIndex=index;
-    showMobileMatchEditor();
-    renderVideoEventEditor();
+    mobileMatchEditorShown=true;
+    mobileMatchEditorCollapsed=false;
     $("matchNearbyEditorHost").classList.remove("hidden");
+    renderVideoEventEditor();
     renderMatchNearbyEvents(true);
   };
   document.addEventListener("pointerdown",event=>{
     if(!$("matchEventHoldMenu").contains(event.target))hideMatchHoldMenu();
   });
+  // Shared compact event list for direct video scouting and post-match review.
+  // Rendering affects only the DOM; the existing game and season formats stay
+  // untouched. All timestamps are derived from the existing videoSyncOptions().
   function renderMatchNearbyEvents(force=false){
     const panel=$("matchNearbyEvents"),host=$("matchNearbyList");
     if(!panel||!host)return;
-    const shown=activeTab==="match"&&analysisMode==="video"&&!matchReviewMode;
+    const shown=activeTab==="match"&&(analysisMode==="video"||matchReviewMode);
     panel.classList.toggle("hidden",!shown);
     if(!shown)return;
-    const entries=state.events.map((event,index)=>({event,index,position:eventVideoPosition(event)})).map(item=>({...item,at:item.position.seconds}))
-      .sort((a,b)=>Number.isFinite(a.at)?Number.isFinite(b.at)?a.at-b.at:-1:Number.isFinite(b.at)?1:(a.event.time??Infinity)-(b.event.time??Infinity));
-    const key=entries.map(item=>item.index+":"+item.event.type+":"+item.event.time+":"+item.event.realTime+":"+item.at).join("|")+";"+activeVideoEventIndex;
-    if(!force&&key===nearbySignature){scrollMatchEventsToVideo();return;}
+    const entries=state.events.map((event,index)=>({event,index,position:eventVideoPosition(event)}))
+      .map(item=>({...item,at:item.position.seconds}))
+      .sort((a,b)=>Number.isFinite(a.at)
+        ?Number.isFinite(b.at)?a.at-b.at:-1
+        :Number.isFinite(b.at)?1:(a.event.time??Infinity)-(b.event.time??Infinity));
+    const key=entries.map(item=>[item.index,item.event.type,item.event.time,item.event.realTime,
+      item.event.pId,item.event.pName,item.event.note,item.at].join(":")).join("|")+";"+activeVideoEventIndex;
+    if(!force&&key===nearbySignature){scrollMatchEventsToVideo();return}
+    const oldTop=host.scrollTop,oldLeft=host.scrollLeft;
     nearbySignature=key;
-    $("matchNearbyTime").textContent=entries.length+" Events · "+entries.filter(item=>!Number.isFinite(item.at)).length+" ohne Videozeit";
+    $("matchNearbyTime").textContent=entries.length+" Events · "+
+      entries.filter(item=>!Number.isFinite(item.at)).length+" ohne Videozeit";
     host.replaceChildren();
-    if(!entries.length){const empty=document.createElement("div");empty.className="match-nearby-empty";empty.textContent="Noch keine Ereignisse erfasst.";host.append(empty);return}
+    if(!entries.length){
+      const empty=document.createElement("div");
+      empty.className="match-nearby-empty";
+      empty.textContent="Noch keine Ereignisse erfasst.";
+      host.append(empty);
+      return;
+    }
     for(const {event,index,at,position} of entries){
-      const btn=document.createElement("button");
-      btn.dataset.eventIndex=String(index);
-      if(Number.isFinite(at))btn.dataset.videoSeconds=String(at);btn.type="button";btn.className="match-nearby-item"+(index===activeVideoEventIndex?" selected":"");
+      const row=document.createElement("div");
+      row.dataset.eventIndex=String(index);
+      if(Number.isFinite(at))row.dataset.videoSeconds=String(at);
+      row.role="button";row.tabIndex=0;
+      row.className="match-nearby-item"+(index===activeVideoEventIndex?" selected":"");
       const labels=compactEventLabels(event,position);
-      const headline=document.createElement("strong");headline.className="compact-event-head";headline.textContent=labels.headline;
-      const player=document.createElement("span");player.className="compact-event-player";player.textContent=labels.player;
-      const video=document.createElement("small");video.className="compact-event-video";video.textContent=labels.videoTime;
-      btn.append(headline,player,video);
+      row.setAttribute("aria-label",labels.headline+" · "+labels.player);
+      const headline=document.createElement("strong");
+      headline.className="compact-event-head";headline.textContent=labels.headline;
+      const player=document.createElement("span");
+      player.className="compact-event-player";player.textContent=labels.player;
+      const video=document.createElement("small");
+      video.className="compact-event-video";video.textContent=labels.videoTime;
+      const del=document.createElement("button");
+      del.type="button";del.className="match-nearby-delete";
+      del.textContent="×";
+      del.setAttribute("aria-label","Ereignis löschen: "+labels.headline);
+      del.title="Ereignis löschen";
+      del.onclick=ev=>{
+        ev.stopPropagation();
+        hideMatchHoldMenu();
+        if(!window.confirm("Ereignis "+labels.headline+
+          (labels.player?" · "+labels.player:"")+" wirklich löschen?"))return;
+        state.events.splice(index,1);
+        if(activeVideoEventIndex===index)activeVideoEventIndex=null;
+        else if(activeVideoEventIndex!==null&&activeVideoEventIndex>index)activeVideoEventIndex--;
+        if(reviewPinnedEventIndex===index)reviewPinnedEventIndex=null;
+        else if(reviewPinnedEventIndex!==null&&reviewPinnedEventIndex>index)reviewPinnedEventIndex--;
+        mobileMatchEditorShown=activeVideoEventIndex!==null;
+        nearbySignature="";
+        update();
+        renderMatchNearbyEvents(true);
+        renderVideoEventEditor();
+        syncMobileMatchEditor();
+      };
+      row.append(headline,player,video,del);
+      const openEditor=(seek=false)=>{
+        hideMatchHoldMenu();
+        const alreadySelected=activeVideoEventIndex===index;
+        // A second short tap toggles the selected event, in both modes.
+        if(seek&&alreadySelected){
+          $("matchEditorClose").click();
+          return;
+        }
+        activeVideoEventIndex=index;
+        if(matchReviewMode)reviewPinnedEventIndex=index;
+        mobileMatchEditorShown=true;
+        mobileMatchEditorCollapsed=false;
+        $("matchNearbyEditorHost").classList.remove("hidden");
+        if(seek){
+          mediaPause();
+          scenePlayback.cancel();
+          if(Number.isFinite(at)&&mediaReady()){
+            // Unlike a clip action, a short tap always seeks to the exact
+            // event. The clip window can be played explicitly in the editor.
+            mediaSeek(at);
+            mediaLast=null;
+            $("videoMessage").textContent="Zum Ereignis gesprungen: "+fmt(at,true);
+          }
+        }
+        renderVideoEventEditor();
+        renderMatchNearbyEvents(true);
+        renderAnnotation();
+      };
       let holdTimer=null,holdPoint=null,suppressClick=false;
       const stopHold=()=>{if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null}};
-      btn.addEventListener("pointerdown",e=>{
-        if(e.button!==0)return;
+      row.addEventListener("pointerdown",ev=>{
+        if(ev.button!==0||ev.target.closest(".match-nearby-delete"))return;
         stopHold();
-        holdPoint={x:e.clientX,y:e.clientY};
+        holdPoint={x:ev.clientX,y:ev.clientY};
         holdTimer=setTimeout(()=>{
           holdTimer=null;
           suppressClick=true;
           holdEventIndex=index;
-          const menu=$("matchEventHoldMenu"),rect=btn.getBoundingClientRect();
+          const menu=$("matchEventHoldMenu"),rect=row.getBoundingClientRect();
           menu.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-260))+"px";
           menu.style.top=Math.max(8,Math.min(rect.bottom+4,window.innerHeight-54))+"px";
           menu.classList.remove("hidden");
         },550);
       });
-      btn.addEventListener("pointermove",e=>{if(holdPoint&&Math.hypot(e.clientX-holdPoint.x,e.clientY-holdPoint.y)>12)stopHold()});
-      for(const type of ["pointerup","pointercancel","pointerleave"])btn.addEventListener(type,stopHold);
-      btn.addEventListener("contextmenu",e=>{if(suppressClick){e.preventDefault()}});
-      btn.onclick=()=>{
+      row.addEventListener("pointermove",ev=>{
+        if(holdPoint&&Math.hypot(ev.clientX-holdPoint.x,ev.clientY-holdPoint.y)>12)stopHold();
+      });
+      for(const type of ["pointerup","pointercancel","pointerleave"])row.addEventListener(type,stopHold);
+      row.addEventListener("contextmenu",ev=>{if(suppressClick)ev.preventDefault()});
+      row.onclick=ev=>{
+        if(ev.target.closest(".match-nearby-delete"))return;
         if(suppressClick){suppressClick=false;return}
-        hideMatchHoldMenu();
-        if(activeVideoEventIndex===index){
-          activeVideoEventIndex=null;
-          mobileMatchEditorShown=false;
-          $("matchNearbyEditorHost").classList.add("hidden");
-          renderVideoEventEditor();
-          renderMatchNearbyEvents(true);
-          return;
-        }
-        mediaPause();activeVideoEventIndex=index;showMobileMatchEditor();renderVideoEventEditor();
-        $("matchNearbyEditorHost").classList.remove("hidden");
-        if(Number.isFinite(at))seekActiveEventExact(event);
-        renderMatchNearbyEvents(true);
-      };host.append(btn);
+        openEditor(true);
+      };
+      row.onkeydown=ev=>{
+        if(ev.target!==row)return;
+        if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();openEditor(true)}
+      };
+      host.append(row);
     }
+    host.scrollTop=oldTop;host.scrollLeft=oldLeft;
     nearbyAutoEventIndex=null;
     scrollMatchEventsToVideo();
   }
-  function videoEditorCommit(message="Ereignis geändert"){nearbySignature="";recalculateScores();renderAnalysis();persistSession();renderDataEditor();renderVideoPlaylist();renderEvents();toast(message)}
+  function videoEditorCommit(message="Ereignis geändert"){nearbySignature="";recalculateScores();renderAnalysis();persistSession();renderDataEditor();renderVideoPlaylist();renderEvents();renderMatchNearbyEvents(true);toast(message)}
   function renderVideoEventEditor(){
     const host=$("videoEventEditor"),e=state.events[activeVideoEventIndex];const keyMomentPlayersOpen=Boolean(host.querySelector("#veeKeyMomentPlayers")?.open);host.classList.toggle("has-event",Boolean(e));
     syncMobileMatchEditor();
