@@ -861,6 +861,21 @@
     body.match-unified-layout #matchTab #matchGrid>.side{grid-column:1/-1;grid-row:2}
   }
   body.match-unified-layout.match-review-mode #matchTab #matchGrid>.events .eventlist{max-height:40vh}
+  /* Tablet review: use the full video-and-controls height for the adjacent
+     event column. The details editor stays underneath the video, not in this
+     constrained sidebar. The phone's horizontal event strip is unchanged. */
+  @media(min-width:760px) and (max-width:1499px){
+    body.match-unified-layout.match-review-mode:not(.phone-match-layout) #matchTab #matchGrid>.events{
+      box-sizing:border-box;display:flex!important;flex-direction:column;
+      height:var(--match-review-video-height,560px)!important;
+      min-height:var(--match-review-video-height,560px)!important;
+      max-height:none!important;overflow:hidden;
+    }
+    body.match-unified-layout.match-review-mode:not(.phone-match-layout) #matchTab #matchGrid>.events #eventList{
+      flex:1 1 auto;min-height:0;max-height:none!important;height:auto;overflow-y:auto;
+      overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+    }
+  }
 
   /* Live Scouting uses the full screen for clocks and event capture.
      Video and both event lists are reserved for video scouting/review. */
@@ -1710,7 +1725,7 @@ body.annotations-visible #matchTab .video-pane.match-context .annotation-canvas{
       <div class="step" id="tagsStep"><span class="label">Letzter Schritt</span><h2 id="tagTitle">Abwehrzuordnung</h2><p id="tagHelp">Wähle genau einen eigenen Abwehrspieler. Das Ereignis wird sofort gespeichert.</p><div class="tags" id="tagList"></div><button class="hidden" id="commitEvent" type="button">Ereignis speichern</button></div>
       <div class="step" id="keyStep"><span class="label">Schlüsselmoment</span><h2>Freier Marker</h2><textarea class="field" id="keyNote" rows="4" placeholder="Was war hier entscheidend?"></textarea><p id="keyTagHelp">Optional eigene Abwehrspieler zuordnen.</p><div class="tags" id="keyTagList"></div><div class="footerbuttons"><button class="btn" data-back="idle">Abbrechen</button><button class="btn primary" id="commitKey">Marker speichern</button></div></div>
 <div class="backbar hidden" id="backbar"><button class="btn" id="flowBack" disabled>← Zurück</button><button class="btn primary" id="flowNext">Weiter →</button><button class="tiny" id="flowCancel">Auswahl verwerfen</button></div>      <div class="panel events">
-        <div class="clockhead" style="margin-bottom:10px"><span class="label">Letzte Ereignisse</span><button class="tiny" id="undoBtn">Letztes löschen</button></div>
+        <div class="clockhead" style="margin-bottom:10px"><span class="label">Letzte Ereignisse</span><button class="tiny hidden" id="matchReviewJumpToCurrentEvent" type="button" title="Ereignisliste zur aktuellen Videozeit führen">Zur Videozeit</button><button class="tiny" id="undoBtn">Letztes löschen</button></div>
         <div class="eventlist" id="eventList"><div class="empty">Noch keine Ereignisse erfasst.</div></div>
       </div>
     </aside>
@@ -2385,7 +2400,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("reviewClockPause").disabled=!clock||!clock.running;
     $("reviewClockStart").disabled=!clock||clock.running;
   }
-  let annotationLastFrame=0;function tick(){updateReviewClock();const gs=currentGameSeconds(),secondaryMs=matchReviewMode&&mediaReady()?Math.round(mediaSeconds()*1000):currentVideoMs(),halfDue=gs>=Number(state.timer.duration||0)*60;$("gameClock").textContent=fmt((state.timer.half-1)*state.timer.duration*60+gs);$("videoClock").textContent=fmt(secondaryMs/1000,true);$("halfBtn").classList.toggle("half-due",halfDue);$("halfBtn").setAttribute("aria-label",halfDue?"Halbzeit wechseln – Spielzeit abgelaufen":"Halbzeit wechseln");$("halfBtn").title=halfDue?"Spielzeit der aktuellen Halbzeit ist abgelaufen":"";scenePlayback.tick();if((activeTab==="video"||activeTab==="match")&&performance.now()-annotationLastFrame>100){annotationLastFrame=performance.now();renderAnnotation()}if(activeTab==="match"&&analysisMode==="video"&&performance.now()-nearbyLastRefresh>350){nearbyLastRefresh=performance.now();renderMatchNearbyEvents()}if(activeTab==="match"&&matchReviewMode&&mediaReady())updateMatchReviewActiveEvent();requestAnimationFrame(tick)}requestAnimationFrame(tick);
+  let annotationLastFrame=0;function tick(){updateReviewClock();const gs=currentGameSeconds(),secondaryMs=matchReviewMode&&mediaReady()?Math.round(mediaSeconds()*1000):currentVideoMs(),halfDue=gs>=Number(state.timer.duration||0)*60;$("gameClock").textContent=fmt((state.timer.half-1)*state.timer.duration*60+gs);$("videoClock").textContent=fmt(secondaryMs/1000,true);$("halfBtn").classList.toggle("half-due",halfDue);$("halfBtn").setAttribute("aria-label",halfDue?"Halbzeit wechseln – Spielzeit abgelaufen":"Halbzeit wechseln");$("halfBtn").title=halfDue?"Spielzeit der aktuellen Halbzeit ist abgelaufen":"";scenePlayback.tick();if((activeTab==="video"||activeTab==="match")&&performance.now()-annotationLastFrame>100){annotationLastFrame=performance.now();renderAnnotation()}if(activeTab==="match"&&analysisMode==="video"&&performance.now()-nearbyLastRefresh>350){nearbyLastRefresh=performance.now();renderMatchNearbyEvents()}if(activeTab==="match"&&matchReviewMode&&mediaReady()){updateMatchReviewActiveEvent();scrollReviewEventsToVideo()}requestAnimationFrame(tick)}requestAnimationFrame(tick);
   const shotFieldOrder=["location","target","phase","result"],shotStepOrder=["location","phase"],shotFieldLabels={location:"Abwurfort",target:"Wurfziel",phase:"Spielsituation",result:"Torerfolg / Parade",assist:"Assist"};
   const shotFieldElements={location:$("shotFieldLocation"),target:$("shotFieldTarget"),phase:$("shotFieldPhase"),result:$("shotFieldResult"),assist:$("shotFieldAssist")},shotControlElements={phaseList:$("phaseList"),resultList:$("shotResultList"),missButton:$("missResultButton"),missHint:$("missResultHint")};
   function enabledShotFields(){return shotFieldOrder.filter(key=>state.shotCapture[key])}
@@ -2607,7 +2622,40 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function matchReviewEntries(){return state.events.map((event,index)=>({event,index,video:eventVideoSeconds(event)})).filter(item=>Number.isFinite(item.video)).sort((a,b)=>a.video-b.video)}
   function nearestMatchReviewEventIndex(videoSeconds,tolerance=3){let best=null;for(const item of matchReviewEntries()){const delta=Math.abs(item.video-videoSeconds);if(delta<=tolerance&&(!best||delta<best.delta))best={index:item.index,delta}}return best?.index??null}
   function activeMatchReviewEventIndex(videoSeconds){const best=coreNearestActiveClip(matchReviewEntries(),videoSeconds,coreNormalizeSceneWindow(state.video.preRoll,state.video.postRoll));return best?.index??null}
-  function updateMatchReviewActiveEvent(){if(Number.isInteger(reviewPinnedEventIndex)&&state.events[reviewPinnedEventIndex]){if(activeVideoEventIndex!==reviewPinnedEventIndex){activeVideoEventIndex=reviewPinnedEventIndex;selectedVideoEvents.clear();selectedVideoEvents.add(reviewPinnedEventIndex);renderEvents();renderVideoEventEditor();renderAnnotation()}return}if(reviewPinnedEventIndex!==null)reviewPinnedEventIndex=null;if(performance.now()<reviewSelectionHoldUntil)return;const next=activeMatchReviewEventIndex(mediaSeconds());if(next===activeVideoEventIndex)return;activeVideoEventIndex=next;selectedVideoEvents.clear();if(Number.isInteger(next))selectedVideoEvents.add(next);renderEvents();renderVideoEventEditor();renderAnnotation()}
+  let reviewManualScrollUntil=0,reviewAutoScrollIndex=null,reviewScrollLastCheck=0;
+  function markReviewSelectedEvent(){
+    if(activeTab!=="match"||!matchReviewMode)return;
+    for(const row of $("eventList").querySelectorAll(".event[data-event-index]"))
+      row.classList.toggle("current",Number(row.dataset.eventIndex)===activeVideoEventIndex);
+  }
+  function scrollReviewEventsToVideo(force=false){
+    if(activeTab!=="match"||!matchReviewMode||!mediaReady()||isPhoneMatchViewport())return;
+    if(!force&&(reviewPinnedEventIndex!==null||performance.now()<reviewManualScrollUntil))return;
+    const stamp=performance.now();
+    if(!force&&stamp-reviewScrollLastCheck<250)return;
+    reviewScrollLastCheck=stamp;
+    const entries=matchReviewEntries(),now=mediaSeconds();
+    if(!entries.length||!Number.isFinite(now))return;
+    // Keep the nearest upcoming event on screen, matching direct video
+    // scouting's five-second lookback. No seeking or data writes occur.
+    const target=entries.find(item=>item.video>=now-5)||entries[entries.length-1];
+    if(!target||(!force&&reviewAutoScrollIndex===target.index))return;
+    const host=$("eventList"),row=host.querySelector('.event[data-event-index="'+target.index+'"]');
+    if(!row)return;
+    reviewAutoScrollIndex=target.index;
+    const rect=host.getBoundingClientRect(),item=row.getBoundingClientRect();
+    host.scrollTop=Math.max(0,host.scrollTop+item.top-rect.top);
+  }
+  $("matchReviewJumpToCurrentEvent").onclick=()=>{
+    reviewManualScrollUntil=0;reviewAutoScrollIndex=null;
+    scrollReviewEventsToVideo(true);
+  };
+  for(const type of ["touchstart","pointerdown","wheel"]){
+    $("eventList").addEventListener(type,()=>{
+      if(activeTab==="match"&&matchReviewMode)reviewManualScrollUntil=performance.now()+8000;
+    },{passive:true});
+  }
+  function updateMatchReviewActiveEvent(){if(Number.isInteger(reviewPinnedEventIndex)&&state.events[reviewPinnedEventIndex]){if(activeVideoEventIndex!==reviewPinnedEventIndex){activeVideoEventIndex=reviewPinnedEventIndex;selectedVideoEvents.clear();selectedVideoEvents.add(reviewPinnedEventIndex);markReviewSelectedEvent();renderVideoEventEditor();renderAnnotation()}return}if(reviewPinnedEventIndex!==null)reviewPinnedEventIndex=null;if(performance.now()<reviewSelectionHoldUntil)return;const next=activeMatchReviewEventIndex(mediaSeconds());if(next===activeVideoEventIndex)return;activeVideoEventIndex=next;selectedVideoEvents.clear();if(Number.isInteger(next))selectedVideoEvents.add(next);markReviewSelectedEvent();renderVideoEventEditor();renderAnnotation()}
   function pinMatchReviewEvent(index){if(!Number.isInteger(index)||!state.events[index])return;reviewPinnedEventIndex=index;activeVideoEventIndex=index;selectedVideoEvents.clear();selectedVideoEvents.add(index);renderEvents();renderVideoEventEditor();renderAnnotation()}
   function unpinMatchReviewEvent(){reviewPinnedEventIndex=null;reviewSelectionHoldUntil=performance.now()+350;renderEvents();renderVideoEventEditor();if(activeTab==="match"&&matchReviewMode&&mediaReady())setTimeout(()=>updateMatchReviewActiveEvent(),360)}
   function seekMatchReviewEvent(index){const e=state.events[index],exact=e?eventVideoSeconds(e):NaN;if(!e||!Number.isFinite(exact))return toast("Für dieses Ereignis ist keine Videozeit berechenbar.");if(!mediaReady())return toast("Zuerst das passende Video laden.");const window=playEventScene(exact);if(!window)return;pinMatchReviewEvent(index);reviewSelectionHoldUntil=performance.now()+500;$("videoMessage").textContent=`Szene bei ${fmt(exact,true)} · ${window.preRoll} s davor / ${window.postRoll} s danach. Ereignis ist für die Korrektur fixiert.`}
@@ -2626,12 +2674,15 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       el.innerHTML='<div class="empty">Noch keine Ereignisse erfasst.</div>';
       return;
     }
+    const previousScrollTop=el.scrollTop,previousScrollLeft=el.scrollLeft;
     el.innerHTML=entries.map(({event:e,index,video})=>{
       const synced=Number.isFinite(video),selectable=review||synced;
       const current=review&&index===activeVideoEventIndex;
       const title=synced?"Zum Ereignis im Video springen":"Ereignis ohne Videozeit bearbeiten";
       return `<div class="event${selectable?' jumpable':''}${current?' current':''}"${selectable?` data-event-index="${index}" role="button" tabindex="0" title="${title}"`:''}><span class="eventtime">${review&&synced?fmt(video,true):(e.displayTime||(e.time!=null?fmt(e.time):"Spielzeit offen"))}</span><div><strong>${eventLabels[e.type]||e.type}</strong><div class="eventmeta">${review?(e.displayTime||fmt(e.time||0))+" · ":""}${escapeHtml(e.pName||e.throwerName||e.note||"")}${e.playerTags?.length?` · ${e.type==="keyMoment"?"Beteiligte":"Abwehr"}: ${e.playerTags.map(t=>escapeHtml(getPlayer(t.pId)?playerName(getPlayer(t.pId)):(t.pName||"Unbekannt"))).join(", ")}`:e.defenderUnknown?` · ${e.type==="keyMoment"?"Beteiligte":"Abwehr"}: Unbekannt`:""}</div></div><button class="delete" type="button" data-event-index="${index}" aria-label="Ereignis löschen: ${escapeHtml(eventLabels[e.type]||e.type)}">×</button></div>`;
     }).join("");
+    // Rebuilding the list after a correction must not undo manual scrolling.
+    el.scrollTop=previousScrollTop;el.scrollLeft=previousScrollLeft;
     el.querySelectorAll(".event.jumpable").forEach(row=>{
       const index=Number(row.dataset.eventIndex);
       const jump=()=>{
@@ -2644,7 +2695,30 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         }
         seekEvent(state.events[index]);
       };
-      row.onclick=jump;
+      let holdTimer=null,holdPoint=null,suppressClick=false;
+      const stopHold=()=>{if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null}};
+      // Video-Nachanalyse on tablet/desktop: long press opens the same
+      // "Details ohne Videosprung" menu as direct video scouting.
+      row.addEventListener("pointerdown",ev=>{
+        if(!review||isPhoneMatchViewport()||ev.button!==0||ev.target.closest(".delete"))return;
+        stopHold();holdPoint={x:ev.clientX,y:ev.clientY};
+        holdTimer=setTimeout(()=>{
+          holdTimer=null;suppressClick=true;holdEventIndex=index;
+          const menu=$("matchEventHoldMenu"),rect=row.getBoundingClientRect();
+          // The video-scouting panel is hidden during review; move its fixed
+          // context menu out of that hidden panel before showing it.
+          if(menu.parentElement!==document.body)document.body.append(menu);
+          menu.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-260))+"px";
+          menu.style.top=Math.max(8,Math.min(rect.bottom+4,window.innerHeight-54))+"px";
+          menu.classList.remove("hidden");
+        },550);
+      });
+      row.addEventListener("pointermove",ev=>{
+        if(holdPoint&&Math.hypot(ev.clientX-holdPoint.x,ev.clientY-holdPoint.y)>12)stopHold();
+      });
+      for(const type of ["pointerup","pointercancel","pointerleave"])row.addEventListener(type,stopHold);
+      row.addEventListener("contextmenu",ev=>{if(suppressClick)ev.preventDefault()});
+      row.onclick=()=>{if(suppressClick){suppressClick=false;return}jump()};
       row.onkeydown=ev=>{if(ev.target!==row)return;if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();jump()}};
     });
     el.querySelectorAll(".delete").forEach(b=>b.onclick=ev=>{
@@ -5435,6 +5509,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const index=holdEventIndex;
     hideMatchHoldMenu();
     if(index===null)return;
+    if(activeTab==="match"&&matchReviewMode){
+      // Pin the editor without seeking, pausing or changing the video time.
+      pinMatchReviewEvent(index);
+      showMobileMatchEditor();
+      return;
+    }
     activeVideoEventIndex=index;
     showMobileMatchEditor();
     renderVideoEventEditor();
@@ -5978,8 +6058,10 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       const label=matchEventsPanel.querySelector(".label");
       if(label)label.textContent=enabled?"Ereignisse im Video":"Letzte Ereignisse";
     }
+    $("matchReviewJumpToCurrentEvent").classList.toggle("hidden",!enabled);
     if(enabled){
       placeMatchReviewEditor(true);renderEvents();renderVideoEventEditor();
+      requestAnimationFrame(syncMatchVideoColumnHeight);
     }else{
       placeMatchReviewEditor(false);
     }
@@ -6008,12 +6090,21 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   }
   function syncMatchVideoColumnHeight(){
     const video=$("matchVideoHost"),events=$("matchNearbyEvents");
-    if(!video||!events)return;
-    const height=Math.round(video.getBoundingClientRect().height);
-    if(height>0)events.style.setProperty("--match-video-height",height+"px");
+    if(!video)return;
+    const videoRect=video.getBoundingClientRect();
+    if(videoRect.height>0)events?.style.setProperty("--match-video-height",Math.round(videoRect.height)+"px");
+    if(activeTab!=="match"||!matchReviewMode||isPhoneMatchViewport()||!matchEventsPanel)return;
+    // The details editor lives below the video on tablets. The outer video
+    // host also contains that editor, so its *total* height would be wrong.
+    const editorTop=$("matchReviewEventEditorHost")?.getBoundingClientRect().top;
+    const measured=editorTop>videoRect.top+120
+      ?editorTop-videoRect.top-12
+      :video.querySelector(".video-pane .workspace")?.getBoundingClientRect().height;
+    if(Number.isFinite(measured)&&measured>120)
+      matchEventsPanel.style.setProperty("--match-review-video-height",Math.round(measured)+"px");
   }
   if(typeof ResizeObserver!=="undefined"){
-    const matchVideoResizeObserver=new ResizeObserver(()=>{if(activeTab==="match"&&analysisMode==="video")syncMatchVideoColumnHeight()});
+    const matchVideoResizeObserver=new ResizeObserver(()=>{if(activeTab==="match"&&(analysisMode==="video"||matchReviewMode))syncMatchVideoColumnHeight()});
     matchVideoResizeObserver.observe($("matchVideoHost"));
     // Reposition the selected event when available space changes, including
     // screen rotation, zooming and a change to the video-width slider.
@@ -6034,7 +6125,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
         syncMobileMatchEditor();
       }
     }
-    if(activeTab==="match"&&analysisMode==="video")syncMatchVideoColumnHeight();
+    if(activeTab==="match"&&(analysisMode==="video"||matchReviewMode))syncMatchVideoColumnHeight();
   });
 
 
