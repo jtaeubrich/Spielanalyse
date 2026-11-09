@@ -63,7 +63,7 @@ test("on iPad: unsupported Web Share offers explicit download without claiming s
   await page.goto("/");
   await openSeason(page);
   await page.locator("#seasonExport").click();
-  await expect(page.locator("#seasonExportStatus")).toContainText("unterstützt das Teilen der Saisondatei nicht");
+  await expect(page.locator("#seasonExportStatus")).toContainText("unterstützt das Teilen dieser Datei nicht");
   const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#seasonExportDownload").click()]);
   expect(download.suggestedFilename()).toMatch(/\.json$/);
   const data=JSON.parse(await readFile(await download.path(),"utf8"));
@@ -82,6 +82,6 @@ test("on iPad: cancelling the native share dialog does not silently trigger a do
   const downloads=[];
   page.on("download",download=>downloads.push(download));
   await page.locator("#seasonExport").click();
-  await expect(page.locator("#seasonExportStatus")).toContainText("Teilen abgebrochen");
+  await expect(page.locator("#seasonExportStatus")).toContainText("Teilen nicht abgeschlossen");
   expect(downloads).toHaveLength(0);
 });
