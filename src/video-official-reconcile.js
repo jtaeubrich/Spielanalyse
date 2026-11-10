@@ -139,9 +139,9 @@ export function prepareHandball360VideoComparison(state,prepared) {
       const incomingId=String(original.handballNetId||"").trim();
       const name=playerName(original);
       const linked=incomingId?local.filter(p=>String(p.handballNetId||"").trim()===incomingId):[];
-      const byName=name?local.filter(p=>playerName(p)===name &&
-        (p.nr==null||p.nr===""||original.nr==null||original.nr===""||
-          String(p.nr)===String(original.nr))):[];
+      // A unique exact full name links the same person even when jersey
+      // numbers differ; the existing jersey number is kept unchanged.
+      const byName=name?local.filter(p=>playerName(p)===name):[];
       let match=linked.length===1?linked[0]:linked.length===0&&byName.length===1?byName[0]:null;
       if(!match){
         match=structuredClone(original);
