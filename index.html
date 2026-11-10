@@ -1538,6 +1538,14 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
   height:auto!important;min-height:0!important;max-height:none!important;
 }
 
+.video-official-toolbar{margin:6px 0 9px;display:flex;flex-wrap:wrap;gap:8px}
+#videoOfficialDialog{width:min(96vw,900px);max-height:90vh;overflow-y:auto}
+.video-official-form{display:grid;grid-template-columns:minmax(180px,0.75fr) minmax(240px,1.75fr);gap:12px}
+.video-official-row{display:flex;align-items:center;gap:10px;padding:9px;margin:6px 0;border:1px solid var(--line);border-radius:8px}
+.video-official-row>span{flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px}
+.video-official-row>select{flex:0 1 260px;min-width:80px}
+.video-official-row.is-possible{opacity:.8}
+@media(max-width:620px){.video-official-form{grid-template-columns:1fr}.video-official-row{flex-wrap:wrap}.video-official-row>select{flex:1 1 100%}}
 </style>
 </head>
 <body>
@@ -1762,6 +1770,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         <label class="video-size" for="videoSize"><span>Videobreite</span><input id="videoSize" type="range" min="45" max="85" value="60"><output id="videoSizeValue">56 %</output></label>
         <div class="annotation-section" id="annotationSection"><button class="btn annotation-tools-toggle" id="annotationToolsToggle" type="button" aria-expanded="false"><span>Zeichenwerkzeuge</span><span aria-hidden="true">▾</span></button><div class="annotation-toolbar" aria-label="Videoannotation"><button class="btn" id="drawToggle" type="button">Zeichnen</button><button class="btn" id="fullscreenDrawOpen" type="button">Vollbild zeichnen</button><label class="annotation-visibility"><input id="showVideoAnnotations" type="checkbox" checked> Zeichnungen anzeigen</label><select class="field" id="drawTool" aria-label="Zeichenwerkzeug"><option value="pen">Freihand</option><option value="arrow">Pfeil</option><option value="circle">Kreis</option></select><input class="field" id="drawColor" type="color" value="#ffca55" aria-label="Zeichenfarbe"><label class="annotation-time-field">Von <input class="field" id="annotationStart" type="text" inputmode="decimal" placeholder="MM:SS"></label><label class="annotation-time-field">Bis <input class="field" id="annotationEnd" type="text" inputmode="decimal" placeholder="MM:SS"></label><button class="btn" id="undoDrawing" type="button">Zeichnung zurück</button><button class="btn danger" id="clearDrawing" type="button">Zeichnung löschen</button></div></div>
         <div id="videoPortraitPlaylistHost" class="video-portrait-playlist-host" aria-label="Events horizontal scrollen"></div>
+        <div class="video-official-toolbar"><button class="btn hidden" id="videoOfficialOpen" type="button">Offizielle Daten abgleichen · Handball360 / nuLiga</button></div>
         <details class="match-review-window" id="matchReviewWindow">
           <summary>Szenenwiedergabe · Vorlauf / Nachlauf</summary>
           <div class="match-review-window-fields">
@@ -2061,6 +2070,30 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
   <button class="btn" id="seasonNuLigaApplyReport" type="button">Bericht online laden und abgleichen</button>
   <p role="status" class="number-help" id="seasonNuLigaReportStatus">Noch kein Bericht zugeordnet.</p>
 </dialog>
+<dialog id="videoOfficialDialog" class="season-h360-dialog video-official-dialog" aria-labelledby="videoOfficialTitle">
+  <div class="clockhead"><h2 id="videoOfficialTitle">Offizielle Spieldaten abgleichen</h2><button class="btn" type="button" id="videoOfficialClose">Schließen</button></div>
+  <p class="editor-help" id="videoOfficialGame"></p>
+  <p class="editor-help">Für beide Videomodi. Das Laden verändert kein Scouting. Vorhandene Ereignisse, Spiel- und Videozeiten, Wurfpositionen, Kommentare und Zeichnungen werden nicht ersetzt. Fehlende Ereignisse und Spielerzuordnungen werden nur nach Auswahl ergänzt.</p>
+  <div class="video-official-form">
+    <label>Offizielle Quelle<select class="field" id="videoOfficialSource"><option value="handball360">Handball360 / handball.net</option><option value="nuliga">nuLiga-Spielbericht</option></select></label>
+    <label id="videoOfficialUrlLabel">Spiel-Link<input class="field" id="videoOfficialUrl" type="text" inputmode="url" placeholder="https://www.handball.net/match/378107"></label>
+  </div>
+  <details id="videoOfficialFileWrap" hidden><summary>Optional: nuLiga-Spielbericht als HTML-Datei verwenden</summary><input class="field" id="videoOfficialFile" type="file" accept=".html,.htm,text/html"></details>
+  <div class="season-tools"><button class="btn primary" id="videoOfficialLoad" type="button">Protokoll laden und vergleichen</button></div>
+  <p id="videoOfficialStatus" class="number-help" role="status">Wähle eine Quelle und lade den offiziellen Spielbericht.</p>
+  <div id="videoOfficialPreview" hidden>
+    <p id="videoOfficialSummary" class="editor-help"></p>
+    <label class="editor-help"><input type="checkbox" id="videoOfficialRosters"> Fehlende offizielle Spieler/Kaderangaben im aktuellen Spiel ergänzen (vorhandene Werte beibehalten)</label>
+    <h3>Ereignisabgleich</h3>
+    <p class="number-help">„Vorhanden“ und „mögliche Dublette“ werden nicht importiert. Bei fehlenden Ereignissen entscheidest du einzeln.</p>
+    <div id="videoOfficialEventRows" class="protocol-rows"></div>
+    <h3>Fehlende Spielerzuordnungen</h3>
+    <p class="number-help">Wähle ausdrücklich, welche Zuordnungen aus dem offiziellen Bericht ergänzt werden sollen. Bereits vorhandene Zuordnungen bleiben unverändert.</p>
+    <div class="season-tools"><button class="btn" id="videoOfficialSafe" type="button">Eindeutige Zuordnungen markieren</button><button class="btn" id="videoOfficialNone" type="button">Alle Auswahlen aufheben</button></div>
+    <div id="videoOfficialPlayerRows" class="protocol-rows"></div>
+    <div class="footerbuttons"><button class="btn primary" id="videoOfficialApply" type="button">Auswahl prüfen und übernehmen</button></div>
+  </div>
+</dialog>
 <dialog id="seasonProtocolDialog" class="season-h360-dialog" aria-labelledby="seasonProtocolTitle">
   <div class="clockhead"><h2 id="seasonProtocolTitle">Scouting mit offiziellem Spielbericht abgleichen</h2><button class="btn" id="seasonProtocolClose" type="button">Schließen</button></div>
   <p id="seasonProtocolGame" class="editor-help"></p>
@@ -2270,6 +2303,7 @@ import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonSchedu
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
+import { previewVideoOfficialAdditions, applyVideoOfficialAdditions, applyVideoOfficialPlayerSelections, prepareHandball360VideoComparison } from "./src/video-official-reconcile.js?v=1";
 import { previewOfficialSeasonRosters, applyOfficialSeasonRosters } from "./src/season-roster-refresh.js?v=1";
 import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics } from "./src/analysis-core.js";
 import { seasonTrendSeries as coreSeasonTrendSeries, seasonPlayerComparison as coreSeasonPlayerComparison, seasonTrendYAxisTicks as coreSeasonTrendYAxisTicks } from "./src/season-trends.js?v=3";
@@ -6180,6 +6214,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       possession=$("homePoss")?.closest(".possession"),sceneHost=$("matchSceneSettingsHost");
     const review=activeTab==="match"&&matchReviewMode;
     const videoWorkflow=activeTab==="match"&&(analysisMode==="video"||review);
+    $("videoOfficialOpen").classList.toggle("hidden",!videoWorkflow);
     const live=activeTab==="match"&&!videoWorkflow;
     const phone=isPhoneMatchViewport();
     document.body.classList.toggle("match-review-mode",review);
