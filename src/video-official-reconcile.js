@@ -120,3 +120,47 @@ export function applyVideoOfficialPlayerSelections(game,officialEvents,selection
   }
   return {game:next,applied:selections.length};
 }
+
+function playerName(player) {
+  return key([player?.vorname,player?.nachname].filter(Boolean).join(" "));
+}
+// A prepared Handball360 roster is mapped to the *local* player IDs before
+// suggestions are computed. No existing identity, jersey number or goalkeeper
+// flag is overwritten; new players receive collision-free IDs.
+export function prepareHandball360VideoComparison(state,prepared) {
+  if(!state?.home||!state?.away||!Array.isArray(prepared?.normalized))
+    throw new Error("Unvollständige Daten für den Handball360-Abgleich.");
+  const candidate=structuredClone(state),playerMap=new Map(),ids=new Set(
+    ["home","away"].flatMap(side=>(candidate[side].players||[]).map(player=>String(player.id)))
+  );
+  for(const side of ["home","away"]){
+    const local=candidate[side].players||(candidate[side].players=[]);
+    for(const original of prepared[side==="home"?"homePlayers":"awayPlayers"]||[]){
+      const incomingId=String(original.handballNetId||"").trim();
+      const name=playerName(original);
+      const linked=incomingId?local.filter(p=>String(p.handballNetId||"").trim()===incomingId):[];
+      const byName=name?local.filter(p=>playerName(p)===name &&
+        (p.nr==null||p.nr===""||original.nr==null||original.nr===""||
+          String(p.nr)===String(original.nr))):[];
+      let match=linked.length===1?linked[0]:linked.length===0&&byName.length===1?byName[0]:null;
+      if(!match){
+        match=structuredClone(original);
+        let id=String(match.id??"hb-player");
+        while(ids.has(id))id+="-official";
+        match.id=id;ids.add(id);local.push(match);
+      }else{
+        if(!match.handballNetId&&incomingId)match.handballNetId=incomingId;
+        if((match.nr==null||match.nr==="")&&original.nr!=null&&original.nr!=="")match.nr=original.nr;
+      }
+      if(incomingId)playerMap.set(side+":"+incomingId,match);
+    }
+  }
+  const officialEvents=prepared.normalized.map(raw=>{
+    const event=structuredClone(raw),external=event.pId==null?"":String(event.pId);
+    const match=playerMap.get(event.team+":"+external);
+    event.pId=match?.id??null;
+    if(match?.nr!=null&&match.nr!=="")event.pNr=match.nr;
+    return event;
+  });
+  return {state:candidate,officialEvents};
+}
