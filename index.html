@@ -1546,6 +1546,10 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
 .video-official-row>select{flex:0 1 260px;min-width:80px}
 .video-official-row.is-possible{opacity:.8}
 @media(max-width:620px){.video-official-form{grid-template-columns:1fr}.video-official-row{flex-wrap:wrap}.video-official-row>select{flex:1 1 100%}}
+.analysis-player-namecell{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:130px}
+.analysis-player-videos{display:inline-grid;place-items:center;flex:none;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--text);cursor:pointer;font:inherit;font-size:15px;line-height:1}
+.analysis-player-videos:hover,.analysis-player-videos:focus-visible{border-color:var(--cyan);color:var(--cyan);outline-offset:2px}
+@media print{.analysis-player-videos{display:none!important}}
 </style>
 </head>
 <body>
@@ -5578,7 +5582,60 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function renderAnalysisCourt(shots,hostId,mode,role){const host=$(hostId),svg=createSectorCourt({shots,mode,role});const seven=document.createElement("button");seven.className="btn";seven.type="button";seven.dataset.zone="7M";seven.innerHTML=mapCell(shotCellStats(shots,"z","7M"),mode,"7M – 7 Meter");seven.onclick=()=>openVideoForMap(role,"zone","7M");host.replaceChildren(svg,seven,labelPositionTools())}
   function renderShotMap(shots,goalId,courtId,mode,role){const inner=targets.slice(0,9),goal=$(goalId);goal.innerHTML=`<button class="out-cell out-top" data-target="OT">${mapMissCell(shotCellStats(shots,"gz",["OTL","OTM","OTR"]),mode,"OT – Über das Tor")}</button><button class="out-cell out-left" data-target="ML">${mapMissCell(shotCellStats(shots,"gz","ML"),mode,"ML – Links vorbei")}</button><div class="analysis-goal-inner">${inner.map(([v,l])=>`<button class="goal-cell" data-target="${v}" title="${l}">${mapCell(shotCellStats(shots,"gz",v),mode,l)}</button>`).join("")}</div><button class="out-cell out-right" data-target="MR">${mapMissCell(shotCellStats(shots,"gz","MR"),mode,"MR – Rechts vorbei")}</button>`;goal.querySelectorAll("[data-target]").forEach(b=>b.onclick=()=>openVideoForMap(role,"target",b.dataset.target));renderAnalysisCourt(shots,courtId,mode,role)}
   function goalkeeperForGoal(goal,defendingTeam){return coreGoalkeeperForGoal(goal,defendingTeam,state,getPlayer)}
-  function renderPlayerTable(team,tbodyId,role,playerFilter,zone,target,phase){const rows=[],selected=playerFilter==="all"?null:getPlayer(playerFilter),players=(state[team].players||[]).filter(p=>!selected||String(p.id)===String(selected.id)),showAssists=team===ownTeam;for(const p of players){const stats=corePlayerMetrics({player:p,team,ownTeam,events:state.events,gameState:state,getPlayer,zone,target,phase}),attempts=stats.attempts===null?"–":stats.attempts,value=stats.value;rows.push(showAssists?`<tr><td>${playerName(p)}</td><td>${attempts}</td><td>${value}</td><td>${stats.assists}</td><td>${stats.rate} %</td><td>${stats.mentions}</td><td>${stats.errors}</td><td>${stats.penalties}</td></tr>`:`<tr><td>${playerName(p)}</td><td>${attempts}</td><td>${value}</td><td>${stats.rate} %</td><td>${stats.mentions}</td><td>${stats.errors}</td><td>${stats.penalties}</td></tr>`)}$(tbodyId).innerHTML=rows.join("")||(showAssists?'<tr><td colspan="8">Keine passenden Spieler.</td></tr>':'<tr><td colspan="7">Keine passenden Spieler.</td></tr>')}
+  // A player's video shortcut deliberately changes only the current view
+  // and its filters. The game/season JSON schemas remain untouched.
+  async function openAnalysisPlayerVideos(playerId,side,seasonGameId){
+    if(!["home","away"].includes(side))return;
+    if(seasonGameId&&seasonGameId!==activeSeasonGameId){
+      if(!analysisSeasonActive()||!seasonGames.some(game=>game.id===seasonGameId))
+        return toast("Dieses Saisonspiel konnte nicht gefunden werden.");
+      // An archived fixture is only a read-only preview in Analysis.
+      // Load exactly that game with the established safe season workflow.
+      $("setupSeasonGameSelect").value=seasonGameId;
+      await openSetupSeasonGame(false);
+      if(activeSeasonGameId!==seasonGameId)
+        return toast("Saisonspiel konnte nicht für die Videos geöffnet werden.");
+      analysisSelectedGameId=seasonGameId;
+    }
+    const player=state[side]?.players?.find(p=>String(p.id)===String(playerId));
+    if(!player)return toast("Spieler ist im geladenen Spiel nicht vorhanden.");
+    // Do not inherit zone, target, tag, type or game phase filters.
+    // Team=all also includes involvement in events of the opposing side
+    // (for example saves, marked defenders and goalkeepers on throws).
+    $("videoTeamFilter").value="all";
+    populatePlayerFilter($("videoPlayerFilter"),"all");
+    $("videoPlayerFilter").value=String(player.id);
+    if($("videoPlayerFilter").value!==String(player.id))
+      return toast("Spielerfilter konnte nicht gesetzt werden.");
+    for(const id of ["videoTypeFilter","videoZoneFilter","videoTargetFilter","videoPhaseFilter","videoTagFilter"])
+      $(id).value="all";
+    showTab("video");
+    const count=videoFilteredEntries().length;
+    if(!count)toast("Für "+playerName(player)+" sind noch keine Ereignisse zugeordnet.");
+  }
+  function renderPlayerTable(team,tbodyId,role,playerFilter,zone,target,phase){
+    const rows=[],selected=playerFilter==="all"?null:getPlayer(playerFilter),
+      players=(state[team].players||[]).filter(p=>!selected||String(p.id)===String(selected.id)),
+      showAssists=team===ownTeam;
+    const selectedSeasonId=analysisSeasonActive()?analysisSelectedGameId:null;
+    for(const p of players){
+      const stats=corePlayerMetrics({player:p,team,ownTeam,events:state.events,
+        gameState:state,getPlayer,zone,target,phase}),
+        attempts=stats.attempts===null?"–":stats.attempts,value=stats.value,
+        name=escapeHtml(playerName(p)),
+        nameCell=`<td><div class="analysis-player-namecell"><span>${name}</span><button class="analysis-player-videos" type="button" title="Videos von ${name} anzeigen" aria-label="Videos von ${name} anzeigen">▶</button></div></td>`;
+      rows.push(showAssists
+        ?`<tr>${nameCell}<td>${attempts}</td><td>${value}</td><td>${stats.assists}</td><td>${stats.rate} %</td><td>${stats.mentions}</td><td>${stats.errors}</td><td>${stats.penalties}</td></tr>`
+        :`<tr>${nameCell}<td>${attempts}</td><td>${value}</td><td>${stats.rate} %</td><td>${stats.mentions}</td><td>${stats.errors}</td><td>${stats.penalties}</td></tr>`);
+    }
+    const body=$(tbodyId);
+    body.innerHTML=rows.join("")||(showAssists
+      ?'<tr><td colspan="8">Keine passenden Spieler.</td></tr>'
+      :'<tr><td colspan="7">Keine passenden Spieler.</td></tr>');
+    body.querySelectorAll(".analysis-player-videos").forEach((button,index)=>{
+      button.onclick=()=>void openAnalysisPlayerVideos(players[index].id,team,selectedSeasonId);
+    });
+  }
   let analysisSelectedGameId="";
   function analysisSelectedGame(){
     return seasonGames.find(g=>g.id===analysisSelectedGameId)||null;
