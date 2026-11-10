@@ -69,7 +69,8 @@ async function storedGame(page){
 }
 for(const mode of ["video","review"]){
   test(mode+": nuLiga preview and selective import preserve manually scouted data",async({page})=>{
-    const original=await openGame(page,mode);
+    await openGame(page,mode);
+    const initial=await storedGame(page);
     await page.locator("#videoOfficialSource").selectOption("nuliga");
     await page.locator("#videoOfficialFile").setInputFiles({
       name:"offizieller-bericht.html",mimeType:"text/html",buffer:Buffer.from(report)
@@ -80,7 +81,7 @@ for(const mode of ["video","review"]){
     await expect(page.locator("#videoOfficialSummary")).toContainText("3 vorhanden");
     await expect(page.locator("#videoOfficialSummary")).toContainText("1 eindeutig fehlend");
     const before=await storedGame(page);
-    expect(before.events).toEqual(original.events);
+    expect(before.events).toEqual(initial.events);
     await expect(page.locator("#videoOfficialEventRows .video-official-add:not(:disabled)")).toHaveCount(1);
     await page.locator("#videoOfficialNone").click();
     await expect(page.locator("#videoOfficialEventRows .video-official-add:checked")).toHaveCount(0);
@@ -109,7 +110,8 @@ for(const mode of ["video","review"]){
     await expect(page.locator("#videoOfficialSummary")).toContainText("0 eindeutig fehlend");
   });
   test(mode+": Handball360 compares existing goal and imports only the confirmed sanction",async({page})=>{
-    const original=await openGame(page,mode);
+    await openGame(page,mode);
+    const initial=await storedGame(page);
     await page.route("**/match/378107",route=>route.fulfill({
       status:200,contentType:"application/json",body:JSON.stringify(hbPayload)
     }));
@@ -118,7 +120,7 @@ for(const mode of ["video","review"]){
     await expect(page.locator("#videoOfficialStatus")).toContainText("Vorschau geladen");
     await expect(page.locator("#videoOfficialSummary")).toContainText("1 vorhanden");
     await expect(page.locator("#videoOfficialSummary")).toContainText("1 eindeutig fehlend");
-    expect((await storedGame(page)).events).toEqual(original.events);
+    expect((await storedGame(page)).events).toEqual(initial.events);
     await page.locator("#videoOfficialEventRows .video-official-add:not(:disabled)").check();
     page.once("dialog",dlg=>dlg.accept());
     await page.locator("#videoOfficialApply").click();
@@ -128,8 +130,8 @@ for(const mode of ["video","review"]){
     expect(state.events.filter(e=>e.type==="goal")).toHaveLength(3);
     const sanction=state.events.find(e=>e.type==="2min");
     expect(sanction).toMatchObject({time:320,team:"home",officialEventId:98702,realTime:null,pId:"local-4"});
-    expect(state.events.find(e=>e.id==="own-1")).toEqual(original.events[0]);
-    expect(state.video).toEqual((await storedGame(page)).video);
+    expect(state.events.find(e=>e.id==="own-1")).toEqual(initial.events[0]);
+    expect(state.video).toEqual(initial.video);
     expect(state.officialSource.matchId).toBe("378107");
   });
 }
