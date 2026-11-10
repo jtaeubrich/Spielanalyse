@@ -95,7 +95,8 @@ export function applyVideoOfficialAdditions(state,officialEvents,selectedIndices
     used.add(String(event.id));
     next.events.push(event);
   }
-  next.events.sort((a,b)=>Number(a.time||0)-Number(b.time||0));
+  // Keep existing event array positions stable. The video list sorts its own
+  // presentation by video time; reordering here would invalidate editor indices.
   return {state:next,added:indexes.length};
 }
 export function applyVideoOfficialPlayerSelections(game,officialEvents,selections) {
