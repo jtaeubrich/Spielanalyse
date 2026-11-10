@@ -3456,6 +3456,259 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     finally{button.disabled=false}
   };
 
+
+  // One read-only official comparison dialog for both Match video workflows.
+  // It may patch the current game only after the user explicitly confirms a
+  // selection; it never replaces existing events, video positions or annotations.
+  let videoOfficialDraft=null;
+  const videoOfficialFingerprint=()=>JSON.stringify([
+    state.gameName,state.gameDate,state.home?.name,state.away?.name,
+    state.events,state.home?.players,state.away?.players,
+    activeSeasonGameId,workspaceKind
+  ]);
+  function videoOfficialResetPreview(){
+    videoOfficialDraft=null;
+    $("videoOfficialPreview").hidden=true;
+    $("videoOfficialEventRows").replaceChildren();
+    $("videoOfficialPlayerRows").replaceChildren();
+  }
+  function videoOfficialUpdateSource(){
+    const nuliga=$("videoOfficialSource").value==="nuliga";
+    $("videoOfficialFileWrap").hidden=!nuliga;
+    $("videoOfficialUrlLabel").firstChild.textContent=nuliga?"nuLiga-Spielbericht-URL":"Handball360-Match-Link";
+    $("videoOfficialUrl").placeholder=nuliga
+      ?"https://hvnb-handball.liga.nu/.../groupMeetingReport?meeting=..."
+      :"https://www.handball.net/match/378107";
+    $("videoOfficialFile").value="";
+    videoOfficialResetPreview();
+    $("videoOfficialStatus").textContent="Offiziellen Bericht laden, anschließend die Änderungen auswählen.";
+  }
+  $("videoOfficialSource").onchange=videoOfficialUpdateSource;
+  $("videoOfficialClose").onclick=()=>$("videoOfficialDialog").close();
+  $("videoOfficialDialog").addEventListener("close",videoOfficialResetPreview);
+  $("videoOfficialOpen").onclick=()=>{
+    if(activeTab!=="match"||(analysisMode!=="video"&&!matchReviewMode))return;
+    videoOfficialResetPreview();
+    $("videoOfficialGame").textContent=String(state.gameName||"Aktuelles Spiel")+
+      " · "+String(state.home?.name||"Heim")+" – "+String(state.away?.name||"Gast")+
+      " · "+state.events.length+" eigene Events";
+    const info=state.officialSource||{};
+    const source=info.provider==="nuliga"?"nuliga":"handball360";
+    $("videoOfficialSource").value=source;
+    videoOfficialUpdateSource();
+    $("videoOfficialUrl").value=source==="nuliga"
+      ?(state.officialData?.nuLigaReport?.reportUrl||info.reportUrl||"")
+      :(info.provider==="handball.net"&&info.matchId
+        ?"https://www.handball.net/match/"+info.matchId:"");
+    $("videoOfficialRosters").checked=false;
+    $("videoOfficialDialog").showModal();
+  };
+  function videoOfficialDisplayEvent(event){
+    const tm=event?.displayTime||(event?.time!=null?fmt(event.time):"ohne Zeit");
+    const title=eventLabels[event?.type]||event?.type||"Ereignis";
+    const team=event?.team==="home"?(state.home.name||"Heim"):
+      event?.team==="away"?(state.away.name||"Gast"):"Ohne Team";
+    return tm+" · "+title+" · "+team+" · "+(event?.pName||"Unbekannt")+
+      (event?.type==="goal"&&event?.scoreH!=null&&event?.scoreA!=null
+        ?" · "+event.scoreH+":"+event.scoreA:"");
+  }
+  function videoOfficialRenderPreview(){
+    const draft=videoOfficialDraft;
+    if(!draft)return;
+    const rows=$("videoOfficialEventRows"),players=$("videoOfficialPlayerRows");
+    rows.replaceChildren();players.replaceChildren();
+    const status={present:"Vorhanden",possible:"Mögliche Dublette",missing:"Fehlt",unsupported:"Nicht unterstützt"};
+    for(const row of draft.preview.rows){
+      const event=draft.officialEvents[row.officialIndex];
+      if(row.status==="unsupported")continue;
+      const wrap=document.createElement("label");wrap.className="video-official-row"+(row.status==="possible"?" is-possible":"");
+      const check=document.createElement("input");check.type="checkbox";check.className="video-official-add";
+      check.dataset.officialIndex=String(row.officialIndex);
+      check.disabled=row.status!=="missing";check.checked=false;
+      const content=document.createElement("span");
+      content.textContent=videoOfficialDisplayEvent(event)+" · "+status[row.status]+
+        (row.reason?" ("+row.reason+")":"");
+      wrap.append(check,content);rows.append(wrap);
+    }
+    if(!rows.childElementCount)rows.textContent="Keine unterstützten offiziellen Ereignisse vorhanden.";
+    for(const row of draft.playerPreview.rows){
+      const local=draft.candidate.state.events[row.localIndex];
+      const wrap=document.createElement("div");wrap.className="video-official-row";
+      const check=document.createElement("input");check.type="checkbox";check.className="video-official-player";
+      check.dataset.localIndex=String(row.localIndex);check.dataset.localId=String(local.id??"");
+      check.disabled=!row.candidates.length;check.checked=false;
+      const content=document.createElement("span");
+      content.textContent=videoOfficialDisplayEvent(local)+(row.reason?" · "+row.reason:"");
+      const select=document.createElement("select");select.className="field video-official-player-choice";
+      select.add(new Option("Nicht zuordnen",""));
+      for(const item of row.candidates){
+        const event=draft.officialEvents[item.officialIndex],team=draft.candidate.state[event.team];
+        const player=team.players.find(p=>String(p.id)===String(item.playerId));
+        const label=videoOfficialDisplayEvent(event)+
+          (player?" · #"+(player.nr??"?"):"");
+        select.add(new Option(label,String(item.officialIndex)));
+      }
+      select.value=row.suggestedIndex==null?"":String(row.suggestedIndex);
+      select.onchange=()=>{check.checked=Boolean(select.value)};
+      wrap.append(check,content,select);players.append(wrap);
+    }
+    if(!players.childElementCount)players.textContent="Keine offenen Spielerzuordnungen gefunden.";
+    $("videoOfficialSummary").textContent=draft.officialEvents.length+" offizielle Ereignisse · "+
+      draft.preview.presentCount+" vorhanden · "+draft.preview.possibleCount+" mögliche Dubletten · "+
+      draft.preview.missingCount+" eindeutig fehlend · "+
+      draft.playerPreview.rows.length+" ungeklärte Spielerzuordnungen. Alle Ergänzungen sind zunächst abgewählt.";
+    $("videoOfficialPreview").hidden=false;
+  }
+  $("videoOfficialSafe").onclick=()=>{
+    if(!videoOfficialDraft)return;
+    const safe=new Map(videoOfficialDraft.playerPreview.rows.filter(x=>x.safe).map(x=>[x.localIndex,x]));
+    for(const checkbox of $("videoOfficialPlayerRows").querySelectorAll(".video-official-player")){
+      const row=safe.get(Number(checkbox.dataset.localIndex));
+      checkbox.checked=Boolean(row);
+      const select=checkbox.closest(".video-official-row").querySelector("select");
+      select.value=row?String(row.suggestedIndex):"";
+    }
+  };
+  $("videoOfficialNone").onclick=()=>{
+    for(const check of $("videoOfficialPreview").querySelectorAll(".video-official-add,.video-official-player"))
+      check.checked=false;
+    $("videoOfficialRosters").checked=false;
+  };
+  $("videoOfficialLoad").onclick=async()=>{
+    const button=$("videoOfficialLoad"),kind=$("videoOfficialSource").value,
+      url=$("videoOfficialUrl").value.trim(),file=$("videoOfficialFile").files?.[0];
+    if(kind==="handball360"&&!url)
+      return $("videoOfficialStatus").textContent="Bitte den Handball360-Match-Link eingeben.";
+    if(kind==="nuliga"&&!url&&!file)
+      return $("videoOfficialStatus").textContent="Bitte einen nuLiga-Spielbericht-Link oder eine HTML-Datei auswählen.";
+    const fingerprint=videoOfficialFingerprint();
+    button.disabled=true;videoOfficialResetPreview();
+    $("videoOfficialStatus").textContent="Offiziellen Bericht laden und vergleichen …";
+    try{
+      let candidate,officialEvents,metadata={};
+      if(kind==="handball360"){
+        const matchId=handballNetMatchId(url);
+        if(!matchId)throw Error("Ungültige Handball360-/handball.net-Match-ID.");
+        if(state.officialSource?.provider==="handball.net"&&
+          state.officialSource?.matchId&&String(state.officialSource.matchId)!==matchId)
+          throw Error("Der Link gehört nicht zur bereits verknüpften Handball360-Match-ID.");
+        const response=await fetch(HANDBALL_NET_WORKER+"/match/"+encodeURIComponent(matchId),{
+          headers:{Authorization:proxyBearerToken(),Accept:"application/json"},cache:"no-store"
+        });
+        const raw=await response.json().catch(()=>null);
+        if(!response.ok)throw Error(raw?.error?.message||"Handball360-Proxy HTTP "+response.status);
+        const prepared=hbPrepare(raw,{fallbackMatchId:matchId});
+        if(String(prepared.matchId)!==matchId)throw Error("Offizielle Match-ID passt nicht zum gewählten Link.");
+        if(videoOfficialFingerprint()!==fingerprint)throw Error("Das aktuelle Spiel hat sich beim Abruf geändert.");
+        const homeMatch=hbNameKey(prepared.teams.home)===hbNameKey(state.home.name),
+          awayMatch=hbNameKey(prepared.teams.away)===hbNameKey(state.away.name);
+        if(!homeMatch||!awayMatch){
+          if(!confirm("Die Mannschaftsnamen stimmen nicht vollständig überein:\n\n"+
+            "Dein Spiel: "+state.home.name+" – "+state.away.name+"\n"+
+            "Handball360: "+prepared.teams.home+" – "+prepared.teams.away+
+            "\n\nNur fortfahren, wenn die Begegnung eindeutig identisch ist."))return;
+        }
+        const comparison=prepareHandball360VideoComparison(state,prepared);
+        candidate={state:comparison.state};officialEvents=comparison.officialEvents;
+        metadata={source:"handball360",matchId,matchDate:prepared.matchDate||null};
+      }else{
+        if(!file){
+          const endpoint=new URL(nuLigaUrlInfo(url).url);
+          if(!["groupMeetingReport","clubMeetingReport"].includes(endpoint.pathname.split("/").at(-1)))
+            throw Error("Bitte einen direkten nuLiga-Spielbericht verlinken.");
+        }
+        const report=parseNuLigaReportHtml(file?await file.text():await getNuLigaOnlineHtml(url));
+        if(!report.gameNumber)throw Error("Die Spielnummer fehlt im offiziellen nuLiga-Bericht.");
+        if(state.officialSource?.provider==="nuliga"&&state.officialSource?.gameNumber&&
+          String(state.officialSource.gameNumber)!==String(report.gameNumber))
+          throw Error("nuLiga-Spielnummer gehört nicht zum aktuellen Spiel.");
+        if(videoOfficialFingerprint()!==fingerprint)throw Error("Das aktuelle Spiel hat sich beim Abruf geändert.");
+        if(state.officialSource?.provider!=="nuliga"&&!confirm(
+          "nuLiga-Bericht Nr. "+report.gameNumber+" mit deinem aktuellen Spiel vergleichen?\n\n"+
+          state.home.name+" – "+state.away.name+"\n\n"+
+          "Bitte kontrolliere vor der Auswahl, ob Teams und Spieltag übereinstimmen."))return;
+        const compared=attachNuLigaReportForComparison({state:structuredClone(state)},report,{reportUrl:url});
+        candidate=compared;officialEvents=compared.state.officialData.nuLigaEvents;
+        metadata={source:"nuliga",reportUrl:url,gameNumber:report.gameNumber};
+      }
+      if(videoOfficialFingerprint()!==fingerprint)throw Error("Das aktuelle Spiel wurde geändert. Bitte Bericht erneut laden.");
+      const preview=previewVideoOfficialAdditions(state,officialEvents),
+        playerPreview=previewNuLigaEventMatches(candidate,officialEvents);
+      videoOfficialDraft={candidate,officialEvents,preview,playerPreview,metadata,fingerprint};
+      videoOfficialRenderPreview();
+      $("videoOfficialStatus").textContent="Vorschau geladen. Es wurden noch keine Daten gespeichert.";
+    }catch(error){
+      $("videoOfficialStatus").textContent="Abgleich fehlgeschlagen: "+(error?.message||String(error));
+    }finally{button.disabled=false}
+  };
+  $("videoOfficialApply").onclick=async()=>{
+    const draft=videoOfficialDraft,status=$("videoOfficialStatus"),button=$("videoOfficialApply");
+    if(!draft)return;
+    button.disabled=true;
+    try{
+      if(videoOfficialFingerprint()!==draft.fingerprint)
+        throw Error("Das Spiel wurde seit der Vorschau verändert. Bitte Bericht erneut laden.");
+      const add=[...$("videoOfficialEventRows").querySelectorAll(".video-official-add:checked")]
+        .map(check=>Number(check.dataset.officialIndex));
+      const mapped=[...$("videoOfficialPlayerRows").querySelectorAll(".video-official-player:checked")]
+        .map(check=>{
+          const choice=check.closest(".video-official-row").querySelector("select");
+          if(!choice.value)throw Error("Für eine markierte Spielerzuordnung fehlt die Auswahl.");
+          return {localIndex:Number(check.dataset.localIndex),
+            localId:check.dataset.localId,officialIndex:Number(choice.value)};
+        });
+      const rosters=$("videoOfficialRosters").checked;
+      if(!add.length&&!mapped.length&&!rosters)
+        throw Error("Keine Ergänzungen ausgewählt. Es wurden keine Daten verändert.");
+      const working={state:structuredClone(state)};
+      if(rosters)for(const side of ["home","away"])
+        working.state[side].players=structuredClone(draft.candidate.state[side].players);
+      // If the roster was not requested, an imported official player must not
+      // become a dangling local ID.
+      const official=draft.officialEvents.map(e=>{
+        const copy=structuredClone(e);
+        if(copy.pId!=null&&["home","away"].includes(copy.team)&&
+          !working.state[copy.team].players.some(p=>String(p.id)===String(copy.pId)))
+          copy.pId=null;
+        return copy;
+      });
+      const attributed=applyVideoOfficialPlayerSelections(working,official,mapped);
+      const appended=applyVideoOfficialAdditions(attributed.game.state,official,add);
+      const confirmed=confirm(
+        "Offizielle Daten in dieses Spiel übernehmen?\n\n"+
+        add.length+" fehlende Ereignisse, "+mapped.length+" Spielerzuordnungen"+
+        (rosters?", fehlende Kaderangaben":"")+".\n\n"+
+        "Vorhandene Events, Videozeiten und Kommentare bleiben erhalten.");
+      if(!confirmed){status.textContent="Übernahme abgebrochen. Nichts verändert.";return}
+      if(videoOfficialFingerprint()!==draft.fingerprint)
+        throw Error("Das Spiel wurde während der Bestätigung verändert. Bitte erneut vergleichen.");
+      state.events=appended.state.events;
+      if(rosters)for(const side of ["home","away"])
+        state[side].players=structuredClone(appended.state[side].players);
+      if(draft.metadata.source==="nuliga"){
+        state.officialData=structuredClone({
+          ...(state.officialData||{}),
+          ...draft.candidate.state.officialData
+        });
+      }else if(!state.officialSource||state.officialSource.provider==="handball.net"){
+        state.officialSource={
+          ...(state.officialSource||{}),provider:"handball.net",
+          matchId:draft.metadata.matchId,
+          matchUrl:"https://www.handball.net/match/"+draft.metadata.matchId,
+          matchDate:state.officialSource?.matchDate||draft.metadata.matchDate
+        };
+      }
+      update();persistSession();
+      if(activeSeasonGameId)await storeInternalSeason();
+      status.textContent="Übernommen: "+appended.added+" Ereignisse, "+attributed.applied+
+        " Spielerzuordnungen"+(rosters?", Kader ergänzt":"")+". Bestehende Scouting-Daten beibehalten.";
+      videoOfficialResetPreview();
+      toast("Offizieller Abgleich übernommen");
+    }catch(error){
+      status.textContent="Nicht übernommen: "+(error?.message||String(error));
+    }finally{button.disabled=false}
+  };
+
   let nuLigaMatches=[];
   function nuLigaGameKey(game){const source=game?.state?.officialSource;return source?.provider==="nuliga"
     ?[String(source.group||""),String(source.championship||""),String(source.gameNumber||"")].join(":"):null}
