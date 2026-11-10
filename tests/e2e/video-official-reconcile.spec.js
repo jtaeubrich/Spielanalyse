@@ -3,6 +3,9 @@ import {readFile} from "node:fs/promises";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 
+test.beforeEach(async ({page})=>{
+  await page.addInitScript(()=>localStorage.setItem("handballSpielanalyse.proxyToken","playwright-fake-proxy-token"));
+});
 const dir=path.dirname(fileURLToPath(import.meta.url));
 const fixture=path.resolve(dir,"../../docs/handbuch/demo/fixtures/00-setup.json");
 const report=[
@@ -112,9 +115,15 @@ for(const mode of ["video","review"]){
   test(mode+": Handball360 compares existing goal and imports only the confirmed sanction",async({page})=>{
     await openGame(page,mode);
     const initial=await storedGame(page);
-    await page.route("**/match/378107",route=>route.fulfill({
-      status:200,contentType:"application/json",body:JSON.stringify(hbPayload)
-    }));
+    await page.route("**/handball360-proxy-235703972531.europe-west1.run.app/**",route=>{
+      const headers={"access-control-allow-origin":"*",
+        "access-control-allow-methods":"GET, OPTIONS",
+        "access-control-allow-headers":"Authorization"};
+      if(route.request().method()==="OPTIONS")
+        return route.fulfill({status:204,headers});
+      if(!route.request().url().endsWith("/match/378107"))return route.abort();
+      return route.fulfill({status:200,headers,contentType:"application/json",body:JSON.stringify(hbPayload)});
+    });
     await page.locator("#videoOfficialUrl").fill("https://www.handball.net/match/378107");
     await page.locator("#videoOfficialLoad").click();
     await expect(page.locator("#videoOfficialStatus")).toContainText("Vorschau geladen");
