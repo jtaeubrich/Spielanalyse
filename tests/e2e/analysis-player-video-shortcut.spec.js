@@ -33,7 +33,9 @@ test("Analysis player video icon opens Video filtered for that player, regardles
   expect(player).toBeDefined();
   const playerIndex=source.away.players.findIndex(p=>String(p.id)===String(player.id));
   const before=await stored(page);
-  await page.locator("#ownPlayerRows .analysis-player-videos").nth(playerIndex).click();
+  // Neutral analysis perspective shows Heim as the first player card,
+  // independent of the original scouting ownTeam ("away").
+  await page.locator("#opponentPlayerRows .analysis-player-videos").nth(playerIndex).click();
   await expect(page.locator('[data-tab="video"]')).toHaveClass(/active/);
   await expect(page.locator("#videoTeamFilter")).toHaveValue("all");
   await expect(page.locator("#videoPlayerFilter")).toHaveValue(String(player.id));
@@ -51,7 +53,7 @@ test("Analysis opponent player video icon selects the opponent rather than the s
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#continueGameInput").setInputFiles(upload("einzelspiel.json",source));
   await page.locator('[data-tab="analysis"]').click();
-  await page.locator("#opponentPlayerRows .analysis-player-videos").first().click();
+  await page.locator("#ownPlayerRows .analysis-player-videos").first().click();
   await expect(page.locator('[data-tab="video"]')).toHaveClass(/active/);
   await expect(page.locator("#videoTeamFilter")).toHaveValue("all");
   await expect(page.locator("#videoPlayerFilter")).toHaveValue(String(source.home.players[0].id));
@@ -67,7 +69,12 @@ test("Season preview player video icon opens only the selected fixture and retai
   await page.goto("/");
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#continueGameInput").setInputFiles(upload("unabhaengig.json",independent));
-  await page.locator("#setupModeSeason").click();
+  // After an individual game has been opened, the setup mode switch is
+  // intentionally hidden; enter the season library through Start instead.
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeAdvanced").click();
   await page.locator("#seasonGameInput").setInputFiles([
     upload("eins.json",first),upload("zwei.json",second)
   ]);
@@ -87,7 +94,5 @@ test("Season preview player video icon opens only the selected fixture and retai
     JSON.parse(localStorage.getItem("handballSpielanalyse.independentSession"))?.state);
   expect(independentSaved.events).toHaveLength(1);
   expect(independentSaved.gameName).toBe("Unabhängiges Einzelspiel");
-  await page.locator('[data-tab="setup"]').click();
-  await page.locator("#setupModeSeason").click();
   await expect(page.locator("#seasonGameCount")).toContainText("2 Spiele");
 });
