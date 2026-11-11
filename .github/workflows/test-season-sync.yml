@@ -26,5 +26,5 @@ jobs:
           node --test cloud-run-season-sync/api.test.js
       - name: Run browser-client unit tests
         run: |
-          npm ci
+          npm install --no-audit --no-fund
           npx vitest run tests/season-sync-client.test.js
