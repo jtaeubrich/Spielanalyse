@@ -30,9 +30,13 @@ function findRelated(event, events, used=new Set()){
     const index=selectable(events,item=>officialIdentifier(item)===official,used);
     if(index>=0)return index;
   }
-  // Only match changed source IDs via a unique time/type/team/score key.
-  // Ambiguous matches are kept separate instead of risking wrong attribution.
-  return selectable(events,item=>fallbackIdentifier(item)===fallbackIdentifier(event),used);
+  // Stable event IDs are authoritative. A newly created local key moment
+  // with a different ID must never be collapsed into a published one even
+  // if it happens at the same moment.
+  if(id)return -1;
+  // For very old events lacking IDs, use a unique fallback only.
+  return selectable(events,item=>!eventIdentifier(item)&&
+    fallbackIdentifier(item)===fallbackIdentifier(event),used);
 }
 function hasValue(value){
   return value!==undefined&&value!==null&&value!=="" &&
@@ -147,7 +151,11 @@ function assertGameIdentity(local,incoming){
     throw new Error("Spieltermin und Mannschaften unterscheiden sich bei "+name(local)+". Bitte Saison prüfen.");
 }
 function seasonYears(value){
-  return /20\d{2}\s*[-\/]\s*\d{2,4}/.exec(String(value||""))?.[0].replace(/\s/g,"")||"";
+  const match=/(20\d{2})\s*[-\/]\s*(\d{2,4})/.exec(String(value||""));
+  if(!match)return "";
+  const start=Number(match[1]);
+  const end=match[2].length===2?Math.floor(start/100)*100+Number(match[2]):Number(match[2]);
+  return end===start+1?start+"/"+String(end).slice(-2):"";
 }
 function publicationChanged(a,b){
   // Presentation-state differences from local users must not count as a
