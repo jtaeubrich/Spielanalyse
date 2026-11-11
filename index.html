@@ -5173,12 +5173,26 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       playerAliases:source.playerAliases||{},
       lastEditedGameId:source.lastEditedGameId||""};
   }
-  function downloadPrivateSeasonBackup(){
+  async function downloadPrivateSeasonBackup(){
     if(!seasonPublishedSource)return;
     const archive=seasonExportObject({includePersonal:true});
     const name=seasonExportFileName({seasonName,preferredTeam:seasonPreferredTeam,
       archiveTeam:seasonArchiveTeam,games:seasonGames}).replace(/\.json$/,"_MEIN_BACKUP.json");
-    downloadBlob(new Blob([JSON.stringify(archive,null,2)],{type:"application/json"}),name);
+    const text=JSON.stringify(archive,null,2);
+    if(isAppleTouchDevice()&&typeof navigator.share==="function"&&typeof navigator.canShare==="function"){
+      const file=new File([text],name,{type:"application/json"});
+      if(navigator.canShare({files:[file]})){
+        try{
+          await navigator.share({files:[file]});
+          return toast("Privates Backup an „Teilen“ übergeben. Bitte in Dateien sichern und nicht an die Mannschaft weitergeben.");
+        }catch(error){
+          if(error?.name==="AbortError")return;
+          toast("Teilen fehlgeschlagen. Privates Backup weiterhin lokal vorhanden.");
+          return;
+        }
+      }
+    }
+    downloadBlob(new Blob([text],{type:"application/json"}),name);
     toast("Privates Backup angefordert. Diese Datei enthält persönliche Kommentare und Markierungen.");
   }
   $("seasonPersonalBackup").onclick=downloadPrivateSeasonBackup;
