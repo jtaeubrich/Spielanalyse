@@ -40,6 +40,8 @@ describe("safe three-way season refresh",()=>{
     const update=original();
     update.createdAt="2026-11-11T20:00:00Z";
     update.games[0].state.events[0].scoreH=2;
+    update.games[0].state.events[0].videoAnnotation.shapes=[
+      {type:"arrow",x1:1,y1:2,x2:3,y2:4}];
     update.games[0].state.events[0].comment="Neuer Trainerhinweis";
     update.games[0].state.events[0].tags=["Deckung:6:0"];
     update.games[0].state.events.push(event("c",100));
@@ -54,7 +56,9 @@ describe("safe three-way season refresh",()=>{
     expect(annotated.note).toBe("Darauf achten");
     expect(annotated.highlight).toBe(true);
     expect(annotated.videoAnnotation.comment).toBe("Meine Zeichnung");
-    expect(annotated.videoAnnotation.shapes).toHaveLength(1);
+    expect(annotated.videoAnnotation.shapes).toHaveLength(2);
+    expect(annotated.videoAnnotation.shapes.some(s=>s.x1===10)).toBe(true);
+    expect(annotated.videoAnnotation.shapes.some(s=>s.x1===1)).toBe(true);
     expect(annotated.tags).toEqual(["Deckung:6:0","Mein Marker"]);
     expect(match.map(e=>e.id)).toContain("my-moment");
     expect(match.map(e=>e.id)).toContain("c");
