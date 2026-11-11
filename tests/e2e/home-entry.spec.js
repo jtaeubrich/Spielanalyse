@@ -151,7 +151,8 @@ test("Home uses distinct self-contained SVG icons for seasons and games",async({
   await page.locator("#homeNew").click();
   await page.locator("#homeBack").click();
   await expect(page.locator("#homeLibrary")).toBeVisible();
-  await expect(page.locator("#homeLibraryList .home-list-icon svg")).toHaveCount(2);
+  // Fresh devices do not save a phantom empty season.
+  await expect(page.locator("#homeLibraryList .home-list-icon svg")).toHaveCount(1);
 });
 
 test("season overview replaces the generic hero with team, season and stored club logo",async({page})=>{
