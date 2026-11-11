@@ -2357,7 +2357,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     {id:"standard-defense-by-player",name:"Alle Abwehraktionen je Spieler",builtIn:true,filters:{team:"all",player:"all",type:"defense",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"defender",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Abwehr_{Spieler}"}},
     {id:"standard-saves-by-keeper",name:"Alle Paraden je Torwart",builtIn:true,filters:{team:"own",player:"all",type:"save",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"keeper",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Paraden_{Spieler}"}}
   ];
-  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},seasonLastEditedGameId="",activeSeasonGameId=null,seasonLibraryId=null,seasonLibraryRecords=[],seasonWriteQueue=Promise.resolve(),seasonPublishedSource=null,seasonRefreshDraft=null,seasonRefreshBusy=false;
+  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},seasonLastEditedGameId="",activeSeasonGameId=null,seasonLibraryId=null,seasonLibraryRecords=[],seasonWriteQueue=Promise.resolve(),seasonPublishedSource=null,seasonInitialImportSource=null,seasonRefreshDraft=null,seasonRefreshBusy=false;
   let gameRunning=false, gameBase=0, gameStarted=0;
   let videoRunning=false, videoBase=0, videoStarted=0;
   let liveClockRunning=false,liveClockBase=0,liveClockStarted=0,liveClockInitialized=false;
@@ -4468,6 +4468,19 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const raw=JSON.parse(await file.text());
       const parsed=normalizeSeasonArchive(raw,seasonCurrentOwnName());
       await activateNewSeason({...raw,...parsed},parsed.name);
+      // Preserve the first imported publication as a comparison baseline.
+      // This is local metadata only and does not change the exported JSON.
+      seasonInitialImportSource={...parsed,
+        createdAt:raw.createdAt||null,
+        preferredTeam:String(raw.preferredTeam||""),
+        archiveTeam:String(raw.archiveTeam||""),
+        playerAliases:raw.playerAliases||{},
+        lastEditedGameId:raw.lastEditedGameId||""};
+      try{
+        await writeInternalRecord(INTERNAL_SEASON_STORE,{
+          id:"seed-"+seasonLibraryId,source:seasonInitialImportSource
+        });
+      }catch(error){console.warn("Erster Saison-Vergleichsstand konnte nicht gesichert werden",error)}
       toast("Saison mit "+seasonGames.length+" Spielen als eigener Eintrag importiert");
       if(activeTab==="home"){$("homeGameSearch").value="";homeShow("dashboard","season")};
     }catch(error){toast(error?.message||"Saison konnte nicht importiert werden")}
@@ -4508,7 +4521,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         playerAliases:raw.playerAliases||{},
         lastEditedGameId:raw.lastEditedGameId||""};
       const existing={name:seasonName,preferredTeam:seasonPreferredTeam,games:seasonGames};
-      const prepared=prepareSeasonRefresh(existing,incoming,seasonPublishedSource);
+      const prepared=prepareSeasonRefresh(existing,incoming,seasonPublishedSource||seasonInitialImportSource);
       const fingerprint=JSON.stringify({id:seasonLibraryId,preferredTeam:seasonPreferredTeam,games:seasonGames});
       seasonRefreshDraft={...prepared,libraryId:seasonLibraryId,fingerprint,fileName:file.name};
       $("seasonRefreshIdentity").textContent=seasonName+
@@ -4529,8 +4542,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const caption=document.createElement("span");caption.textContent=label;
         card.append(total,caption);host.append(card);
       }
-      $("seasonRefreshCaution").textContent=seasonPublishedSource
-        ?"Vorhandene persönliche Kommentare und Zeichnungen werden mithilfe des letzten veröffentlichten Stands vom Trainerinhalt getrennt. Fehlende Saisonspiele werden nicht gelöscht."
+      $("seasonRefreshCaution").textContent=seasonPublishedSource||seasonInitialImportSource
+        ?"Persönliche Kommentare und Zeichnungen werden mithilfe des letzten importierten Originalstands vom Trainerinhalt getrennt. Fehlende Saisonspiele werden nicht gelöscht."
         :"Erster Abgleich: Ein bisheriger veröffentlichter Vergleichsstand fehlt. Bereits vorhandene Kommentare und Markierungen werden daher vorsichtshalber als persönlich behandelt und erhalten.";
       $("seasonRefreshStatus").textContent="Noch nichts geändert. Erst nach Bestätigung wird die ausgewählte Saison aktualisiert.";
       $("seasonRefreshConfirm").disabled=false;
@@ -5125,6 +5138,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     activeSeasonGameId=null;persistSession();
     seasonLibraryId=id;localStorage.setItem(seasonLibraryPointer,id);
     seasonPublishedSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"source-"+id))?.source||null;
+    seasonInitialImportSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"seed-"+id))?.source||null;
     analysisSelectedGameId="";
     applySeasonObject(record,{save:false});
     await storeInternalSeason();
@@ -5135,7 +5149,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(seasonLibraryId)await storeInternalSeason();
     activeSeasonGameId=null;persistSession();
     seasonLibraryId=freshSeasonLibraryId();
-    seasonPublishedSource=null;
+    seasonPublishedSource=null;seasonInitialImportSource=null;
     localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
     seasonName=String(name||"Neue Saison").trim()||"Neue Saison";
     seasonGames=[];seasonPreferredTeam="";seasonArchiveTeam="";seasonPlayerAliases={};seasonLastEditedGameId="";
@@ -5281,6 +5295,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         renderSeason();
       }
       seasonPublishedSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"source-"+seasonLibraryId))?.source||null;
+      seasonInitialImportSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"seed-"+seasonLibraryId))?.source||null;
       renderSeason();
       localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
       await storeInternalSeason();
