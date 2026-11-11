@@ -149,7 +149,7 @@ test("season refresh rejects wrong season and does not create a second season",a
 test("canceling a preview never writes new season or source state",async({page})=>{
   await openSeason(page);
   const id=await page.locator("#seasonLibrarySelect").inputValue();
-  await page.locator("#homeSeasonRefresh").click();
+  await expect(page.locator("#homeSeasonRefresh")).toBeVisible();
   await page.locator("#seasonRefreshInput").setInputFiles(upload("aktuell.json",updated));
   await expect(page.locator("#seasonRefreshDialog")).toBeVisible();
   await page.locator("#seasonRefreshCancel").click();
