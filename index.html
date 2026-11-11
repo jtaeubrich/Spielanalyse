@@ -5409,7 +5409,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   async function activateNewSeason(data,name){
     clearTimeout(seasonPersistTimer);
     persistSession();
-    if(seasonLibraryId)await storeInternalSeason();
+    // The initial empty season is only a UI placeholder. Never persist it
+    // when a player follows their first invitation or imports a real season.
+    if(seasonLibraryId&&seasonLibraryRecords.some(item=>item.id===seasonLibraryId))
+      await storeInternalSeason();
     activeSeasonGameId=null;persistSession();
     seasonLibraryId=freshSeasonLibraryId();
     seasonPublishedSource=null;seasonInitialImportSource=null;seasonCloudConfig=null;
@@ -5564,7 +5567,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       renderSeasonCloudStatus();
       renderSeason();
       localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
-      await storeInternalSeason();
+      // Do not create a persistent ghost season on a fresh device.
+      // The first import/subscription will create exactly one real season.
+      if(stored||legacy?.games?.length||seasonLibraryRecords.length)
+        await storeInternalSeason();
       return Boolean(seasonGames.length);
     }catch(error){
       console.error("Gespeicherte Saison konnte nicht wiederhergestellt werden",error);
