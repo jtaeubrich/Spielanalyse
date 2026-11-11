@@ -4472,6 +4472,130 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(activeTab==="home"){$("homeGameSearch").value="";homeShow("dashboard","season")};
     }catch(error){toast(error?.message||"Saison konnte nicht importiert werden")}
   };
+
+  // Importing an archive still creates a new season. A refresh always targets
+  // the currently selected library ID, never a new season.
+  const openSeasonRefreshPicker=()=>{
+    if(seasonRefreshBusy)return;
+    if(!seasonGames.length){toast("Bitte zuerst eine bestehende Saison öffnen.");return}
+    $("seasonRefreshInput").click();
+  };
+  $("seasonRefreshOpen").onclick=openSeasonRefreshPicker;
+  $("homeSeasonRefresh").onclick=openSeasonRefreshPicker;
+  $("seasonRefreshCancel").onclick=()=>$("seasonRefreshDialog").close();
+  $("seasonRefreshClose").onclick=()=>$("seasonRefreshDialog").close();
+  $("seasonRefreshDialog").addEventListener("close",()=>{
+    seasonRefreshDraft=null;
+    $("seasonRefreshStatus").textContent="";
+  });
+  $("seasonRefreshInput").onchange=async event=>{
+    const file=event.target.files?.[0];
+    event.target.value="";
+    if(!file||seasonRefreshBusy)return;
+    seasonRefreshBusy=true;
+    try{
+      if(!seasonLibraryId||!seasonGames.length)
+        throw Error("Keine bestehende Saison für die Aktualisierung ausgewählt.");
+      // Persist currently edited events before computing the local overlay.
+      persistSession();
+      const raw=JSON.parse(await file.text());
+      const normalized=normalizeSeasonArchive(raw,seasonPreferredTeam||seasonCurrentOwnName());
+      const incoming={...normalized,
+        name:normalized.name,
+        createdAt:raw.createdAt||null,
+        preferredTeam:String(raw.preferredTeam||""),
+        archiveTeam:String(raw.archiveTeam||""),
+        playerAliases:raw.playerAliases||{},
+        lastEditedGameId:raw.lastEditedGameId||""};
+      const existing={name:seasonName,preferredTeam:seasonPreferredTeam,games:seasonGames};
+      const prepared=prepareSeasonRefresh(existing,incoming,seasonPublishedSource);
+      const fingerprint=JSON.stringify({id:seasonLibraryId,preferredTeam:seasonPreferredTeam,games:seasonGames});
+      seasonRefreshDraft={...prepared,libraryId:seasonLibraryId,fingerprint,fileName:file.name};
+      $("seasonRefreshIdentity").textContent=seasonName+
+        " · Datei: "+file.name+" · "+prepared.shared+" gemeinsame Spiele";
+      const metrics=[
+        ["Neue Spiele",prepared.summary.newGames],
+        ["Aktualisierte Spiele",prepared.summary.updatedGames],
+        ["Unveränderte Spiele",prepared.summary.unchangedGames],
+        ["Lokal erhaltene Spiele",prepared.summary.retainedGames],
+        ["Persönliche Markierungen",prepared.summary.personalAnnotations],
+        ["Eigene zusätzliche Events",prepared.summary.personalEvents+
+          prepared.summary.recoveredAnnotations]
+      ];
+      const host=$("seasonRefreshPreview");host.replaceChildren();
+      for(const [label,value] of metrics){
+        const card=document.createElement("div");card.className="season-refresh-stat";
+        const total=document.createElement("strong");total.textContent=String(value);
+        const caption=document.createElement("span");caption.textContent=label;
+        card.append(total,caption);host.append(card);
+      }
+      $("seasonRefreshCaution").textContent=seasonPublishedSource
+        ?"Vorhandene persönliche Kommentare und Zeichnungen werden mithilfe des letzten veröffentlichten Stands vom Trainerinhalt getrennt. Fehlende Saisonspiele werden nicht gelöscht."
+        :"Erster Abgleich: Ein bisheriger veröffentlichter Vergleichsstand fehlt. Bereits vorhandene Kommentare und Markierungen werden daher vorsichtshalber als persönlich behandelt und erhalten.";
+      $("seasonRefreshStatus").textContent="Noch nichts geändert. Erst nach Bestätigung wird die ausgewählte Saison aktualisiert.";
+      $("seasonRefreshConfirm").disabled=false;
+      $("seasonRefreshDialog").showModal();
+    }catch(error){
+      toast("Aktualisierung nicht gestartet: "+(error?.message||String(error)));
+    }finally{seasonRefreshBusy=false}
+  };
+  $("seasonRefreshConfirm").onclick=async()=>{
+    const draft=seasonRefreshDraft;
+    if(!draft||seasonRefreshBusy)return;
+    seasonRefreshBusy=true;
+    const button=$("seasonRefreshConfirm"),status=$("seasonRefreshStatus");
+    button.disabled=true;
+    try{
+      if(seasonLibraryId!==draft.libraryId)
+        throw Error("Die aktive Saison hat gewechselt. Bitte Datei erneut auswählen.");
+      persistSession();
+      const fingerprint=JSON.stringify({id:seasonLibraryId,
+        preferredTeam:seasonPreferredTeam,games:seasonGames});
+      if(fingerprint!==draft.fingerprint)
+        throw Error("Die Saison wurde seit der Vorschau bearbeitet. Bitte Datei erneut auswählen.");
+      const id=seasonLibraryId;
+      clearTimeout(seasonPersistTimer);
+      await seasonWriteQueue; // Finish previous saves before taking backup.
+      const before=seasonSnapshot();
+      const nextSnapshot={
+        ...buildSeasonRecord({name:seasonName||"Saison",games:draft.games}),
+        preferredTeam:seasonPreferredTeam||draft.source.preferredTeam,
+        archiveTeam:seasonArchiveTeam,
+        playerAliases:seasonPlayerAliases,
+        lastEditedGameId:seasonLastEditedGameId
+      };
+      const now=new Date().toISOString();
+      const updated={...nextSnapshot,id,updatedAt:now};
+      const mirror={...nextSnapshot,id:INTERNAL_SEASON_KEY,updatedAt:now};
+      const rollback={...before,id:"backup-"+id,updatedAt:now};
+      const publisher={id:"source-"+id,source:draft.source,updatedAt:now};
+      // One atomic IndexedDB transaction: either publisher source, local
+      // merged season, mirror and rollback exist together or none change.
+      seasonWriteQueue=seasonWriteQueue.then(()=>writeInternalRecords(
+        INTERNAL_SEASON_STORE,[rollback,updated,mirror,publisher]));
+      await seasonWriteQueue;
+      seasonGames=structuredClone(draft.games);
+      seasonPublishedSource=structuredClone(draft.source);
+      seasonPreferredTeam=nextSnapshot.preferredTeam;
+      if(activeSeasonGameId){
+        // The previously open working copy is stale after this update.
+        // Detach it, so its later autosave cannot roll back the new season.
+        activeSeasonGameId=null;
+        persistSession();
+      }
+      analysisSelectedGameId=seasonGames.some(game=>game.id===analysisSelectedGameId)
+        ?analysisSelectedGameId:"";
+      updateSeasonLibraryCache(updated);
+      renderSeason();
+      seasonRefreshDraft=null;
+      $("seasonRefreshDialog").close();
+      if(activeTab==="home")homeShow("dashboard","season");
+      toast("Saison aktualisiert: "+draft.summary.newGames+" neue Spiele, "+
+        draft.summary.updatedGames+" aktualisiert. Persönliche Markierungen bleiben erhalten.");
+    }catch(error){
+      status.textContent="Nicht übernommen: "+(error?.message||String(error));
+    }finally{button.disabled=false;seasonRefreshBusy=false}
+  };
   $("seasonExport").onclick=()=>shareSeasonExport();
   $("seasonExportText").onclick=()=>shareSeasonExport({forceText:true});
   $("seasonExportDownload").onclick=downloadSeasonExport;
