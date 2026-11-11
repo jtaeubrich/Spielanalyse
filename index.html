@@ -4548,7 +4548,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     try{
       if(seasonLibraryId!==draft.libraryId)
         throw Error("Die aktive Saison hat gewechselt. Bitte Datei erneut auswählen.");
-      persistSession();
+      // The modal blocks editing; avoid rewriting running clock fields in
+      // the active game after the refresh preview was captured.
       const fingerprint=JSON.stringify({id:seasonLibraryId,
         preferredTeam:seasonPreferredTeam,games:seasonGames});
       if(fingerprint!==draft.fingerprint)
