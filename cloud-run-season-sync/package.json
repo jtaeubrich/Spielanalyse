@@ -1,0 +1,16 @@
+{
+  "name": "handball-season-sync",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test *.test.js"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.16.0"
+  }
+}
