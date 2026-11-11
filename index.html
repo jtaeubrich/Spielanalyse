@@ -4521,8 +4521,216 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(!seasonGames.length){toast("Bitte zuerst eine bestehende Saison öffnen.");return}
     $("seasonRefreshInput").click();
   };
+
+  // Cloud metadata lives in IndexedDB outside the v1 season files. The
+  // trainer secret is never persisted, shared, exported or put in invite URLs.
+  function cloudStatus(message){$("seasonCloudStatus").textContent=message}
+  function renderSeasonCloudStatus(){
+    const connection=seasonCloudConfig;
+    $("seasonCloudPublish").disabled=!seasonGames.length||connection?.role==="reader";
+    $("seasonCloudCheck").disabled=!connection;
+    $("seasonCloudRotateReader").hidden=connection?.role!=="trainer";
+    $("seasonCloudCopyInvite").disabled=connection?.role!=="trainer";
+    if(connection?.api&&document.activeElement!==$("seasonCloudEndpoint"))
+      $("seasonCloudEndpoint").value=connection.api;
+    $("seasonCloudInvite").value=connection?.role==="trainer"
+      ?makeSeasonInvite(location.origin+location.pathname,connection):"";
+    $("homeSeasonRefresh").textContent=connection?"Saison online aktualisieren":"Saison aktualisieren";
+    cloudStatus(connection
+      ?(connection.role==="trainer"?"Trainer-Verbindung":"Spieler-Lesezugang")+
+        " · veröffentlichte Version "+(connection.revision||0)+
+        ". Eigene Markierungen bleiben auf diesem Gerät."
+      :"Noch keine Cloud-Saison verbunden. Der Dateiabgleich bleibt verfügbar.");
+  }
+  async function saveSeasonCloudConnection(connection){
+    if(!seasonLibraryId)throw Error("Keine aktive Saison vorhanden.");
+    await writeInternalRecord(INTERNAL_SEASON_STORE,{
+      id:"sync-"+seasonLibraryId,connection:structuredClone(connection),
+      updatedAt:new Date().toISOString()
+    });
+    seasonCloudConfig=structuredClone(connection);
+    renderSeasonCloudStatus();
+  }
+  async function downloadSeasonCloudRelease(connection){
+    const latest=await latestCloudSeason(connection);
+    if(!latest.revision||!latest.sha256)
+      throw Error("Die Cloud-Saison wurde noch nicht veröffentlicht.");
+    const download=await downloadCloudSeason(connection);
+    if(download.revision!==latest.revision||download.sha256!==latest.sha256)
+      throw Error("Die Saison wurde während des Abrufs geändert. Bitte erneut aktualisieren.");
+    return {...download,publishedAt:latest.publishedAt};
+  }
+  function cloudRefreshPreview(release,connection){
+    openSeasonRefreshPreview(release.archive,"Cloud · Version "+release.revision,{
+      connection,revision:release.revision,
+      sha256:release.sha256,publishedAt:release.publishedAt
+    });
+  }
+  async function refreshCurrentSeasonFromCloud(){
+    if(!seasonCloudConfig)throw Error("Diese Saison ist noch nicht mit der Cloud verbunden.");
+    if(!seasonGames.length)throw Error("Bitte zuerst die bestehende Saison öffnen.");
+    const connection=seasonCloudConfig;
+    const latest=await latestCloudSeason(connection);
+    if(latest.revision===connection.revision&&latest.sha256===connection.sha256)
+      return toast("Die Saison ist bereits auf dem aktuellen Cloud-Stand.");
+    const release=await downloadSeasonCloudRelease(connection);
+    cloudRefreshPreview(release,connection);
+    cloudStatus("Neue Veröffentlichung "+release.revision+" geladen. Bitte die Vorschau prüfen.");
+  }
+  async function joinSeasonCloud(invite){
+    if(seasonRefreshBusy)throw Error("Eine Saisonaktualisierung läuft bereits.");
+    seasonRefreshBusy=true;
+    try{
+      const release=await downloadSeasonCloudRelease(invite);
+      const linked=[];
+      for(const record of seasonLibraryRecords){
+        const config=(await readInternalRecord(INTERNAL_SEASON_STORE,"sync-"+record.id))?.connection;
+        if(config?.seasonId===invite.seasonId&&config?.api===invite.api)
+          linked.push({record,config});
+      }
+      if(linked.length){
+        const existing=linked[0];
+        if(seasonLibraryId!==existing.record.id)await switchSeasonLibrary(existing.record.id);
+        const connection=existing.config.role==="trainer"
+          ?existing.config:{...invite,revision:existing.config.revision,
+            sha256:existing.config.sha256};
+        if(release.revision===connection.revision&&release.sha256===connection.sha256){
+          await saveSeasonCloudConnection({...connection,
+            revision:release.revision,sha256:release.sha256});
+          if(activeTab==="home")homeShow("dashboard","season");
+          toast("Diese Saison ist bereits abonniert und aktuell.");
+          return;
+        }
+        cloudRefreshPreview(release,connection);
+        return;
+      }
+      const parsed=normalizeSeasonArchive(release.archive,seasonCurrentOwnName());
+      const common=new Set(seasonGames.map(game=>game.id));
+      const shared=parsed.games.filter(game=>common.has(game.id)).length;
+      const publishedTeam=String(release.archive.preferredTeam||"").trim();
+      // A previously imported copy may already exist locally. Ask once
+      // before attaching cloud updates to it; never silently replace it.
+      if(seasonGames.length&&shared&&(!publishedTeam||!seasonPreferredTeam||
+        publishedTeam===seasonPreferredTeam)&&confirm(
+          "Es gibt bereits "+shared+" passende Spiele in deiner aktuellen Saison.\n\n"+
+          "Diese vorhandene Saison mit dem Cloud-Abo verbinden, statt eine neue anzulegen?")){
+        cloudRefreshPreview(release,invite);
+        return;
+      }
+      if(!confirm("Cloud-Saison „"+parsed.name+"“ mit "+
+        parsed.games.length+" Spielen auf diesem Gerät hinzufügen?\n\n"+
+        "Deine bisherigen Saisons bleiben unverändert."))return;
+      const normalized={...parsed,createdAt:release.archive.createdAt||null,
+        preferredTeam:release.archive.preferredTeam||"",
+        archiveTeam:release.archive.archiveTeam||"",
+        playerAliases:release.archive.playerAliases||{},
+        lastEditedGameId:release.archive.lastEditedGameId||""};
+      await activateNewSeason({...release.archive,...parsed},parsed.name);
+      const connection={...invite,role:"reader",revision:release.revision,
+        sha256:release.sha256,lastPublishedAt:release.publishedAt};
+      await writeInternalRecords(INTERNAL_SEASON_STORE,[
+        {id:"source-"+seasonLibraryId,source:normalized,updatedAt:new Date().toISOString()},
+        {id:"sync-"+seasonLibraryId,connection,updatedAt:new Date().toISOString()}
+      ]);
+      seasonPublishedSource=structuredClone(normalized);
+      seasonCloudConfig=connection;
+      renderSeasonCloudStatus();
+      renderSeason();
+      if(activeTab==="home")homeShow("dashboard","season");
+      toast("Cloud-Saison hinzugefügt. Weitere Updates gehen in dieselbe Saison.");
+    }finally{seasonRefreshBusy=false}
+  }
+  $("seasonCloudPublish").onclick=async()=>{
+    const button=$("seasonCloudPublish");button.disabled=true;
+    try{
+      if(!seasonGames.length)throw Error("Keine Saisonspiele vorhanden.");
+      if(seasonCloudConfig?.role==="reader")
+        throw Error("Diese Saison hat nur Lesezugang. Persönliche Daten dürfen nicht hochgeladen werden.");
+      const endpoint=seasonCloudEndpoint($("seasonCloudEndpoint").value);
+      const adminToken=$("seasonCloudAdminToken").value.trim();
+      const existing=seasonCloudConfig;
+      if(existing&&existing.api!==endpoint)
+        throw Error("Die Saison ist mit einem anderen Cloud-Dienst verbunden.");
+      const last=existing?await latestCloudSeason(existing):null;
+      if(!confirm((existing?"Eine neue Version veröffentlichen?":"Neue Cloud-Saison anlegen?")+
+        "\n\n"+seasonName+" · "+seasonGames.length+" Spiele\n\n"+
+        "Der Trainerstand wird für alle Spieler mit Leselink sichtbar."))return;
+      let connection=existing;
+      if(!connection){
+        connection=await createCloudSeason(endpoint,adminToken);
+        await saveSeasonCloudConnection(connection);
+      }
+      // Only a trainer-created connection can upload. Player-owned comments
+      // cannot reach this endpoint because reader roles are rejected above.
+      const archive=seasonExportObject({includePersonal:true});
+      const result=await publishCloudSeason(connection,archive,adminToken,
+        last?.revision??connection.revision??0);
+      await saveSeasonCloudConnection({...connection,role:"trainer",
+        revision:result.revision,sha256:result.sha256,
+        lastPublishedAt:result.publishedAt});
+      cloudStatus("Version "+result.revision+" veröffentlicht. Den Einladungslink kannst du jetzt teilen.");
+      toast("Cloud-Saison veröffentlicht: Version "+result.revision);
+    }catch(error){cloudStatus("Veröffentlichung fehlgeschlagen: "+error.message)}
+    finally{button.disabled=false;renderSeasonCloudStatus()}
+  };
+  $("seasonCloudCheck").onclick=async()=>{
+    const button=$("seasonCloudCheck");button.disabled=true;
+    try{await refreshCurrentSeasonFromCloud()}
+    catch(error){cloudStatus("Abruf fehlgeschlagen: "+error.message)}
+    finally{renderSeasonCloudStatus()}
+  };
+  $("seasonCloudRotateReader").onclick=async()=>{
+    if(seasonCloudConfig?.role!=="trainer")return;
+    if(!confirm("Alle bisherigen Saison-Einladungslinks ungültig machen?\n\n"+
+      "Anschließend musst du den neuen Link mit deinen Spielern teilen."))return;
+    const button=$("seasonCloudRotateReader");button.disabled=true;
+    try{
+      const updated=await rotateCloudReadKey(seasonCloudConfig,
+        $("seasonCloudAdminToken").value.trim());
+      await saveSeasonCloudConnection(updated);
+      toast("Alter Lesezugang widerrufen. Neuen Link an die Mannschaft senden.");
+    }catch(error){cloudStatus("Zugang konnte nicht erneuert werden: "+error.message)}
+    finally{button.disabled=false}
+  };
+  $("seasonCloudCopyInvite").onclick=async()=>{
+    const value=$("seasonCloudInvite").value;
+    if(!value)return;
+    try{await navigator.clipboard.writeText(value);toast("Einladungslink kopiert. Nur an die Mannschaft senden.")}
+    catch{
+      $("seasonCloudInvite").focus();
+      $("seasonCloudInvite").select();
+      toast("Link ist markiert. Bitte kopieren und nur an die Mannschaft senden.");
+    }
+  };
+  $("seasonCloudJoin").onclick=async()=>{
+    const input=$("seasonCloudJoinInput").value.trim();
+    try{
+      const fragment=input.startsWith("#")?input:new URL(input).hash;
+      const invite=parseSeasonInvite(fragment);
+      if(!invite)throw Error("Bitte einen gültigen Saison-Einladungslink einfügen.");
+      await joinSeasonCloud(invite);
+      $("seasonCloudJoinInput").value="";
+    }catch(error){cloudStatus("Einladung fehlgeschlagen: "+error.message)}
+  };
+  // Capture the invite and remove its bearer capability from browser history
+  // before starting any asynchronous network activity or persistence.
+  let pendingCloudInvite=null;
+  try{
+    pendingCloudInvite=parseSeasonInvite(location.hash);
+    if(pendingCloudInvite)history.replaceState(null,"",location.pathname+location.search);
+  }catch(error){
+    if(location.hash.includes("saison="))
+      history.replaceState(null,"",location.pathname+location.search);
+    console.warn("Ungültiger Saison-Einladungslink:",error.message);
+  }
   $("seasonRefreshOpen").onclick=openSeasonRefreshPicker;
-  $("homeSeasonRefresh").onclick=openSeasonRefreshPicker;
+  $("homeSeasonRefresh").onclick=async()=>{
+    if(!seasonCloudConfig)return openSeasonRefreshPicker();
+    const button=$("homeSeasonRefresh");button.disabled=true;
+    try{await refreshCurrentSeasonFromCloud()}
+    catch(error){toast("Cloud-Aktualisierung fehlgeschlagen: "+error.message)}
+    finally{button.disabled=false}
+  };
   $("seasonRefreshCancel").onclick=()=>$("seasonRefreshDialog").close();
   $("seasonRefreshClose").onclick=()=>$("seasonRefreshDialog").close();
   $("seasonRefreshDialog").addEventListener("close",()=>{
@@ -4630,6 +4838,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         ...draft.cloudMeta.connection,revision:draft.cloudMeta.revision,
         sha256:draft.cloudMeta.sha256,
         lastPublishedAt:draft.cloudMeta.publishedAt||null};
+      if(draft.cloudMeta)renderSeasonCloudStatus();
       seasonPreferredTeam=nextSnapshot.preferredTeam;
       if(activeSeasonGameId){
         // The previously open working copy is stale after this update.
@@ -7369,7 +7578,9 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   $('numberTeam').onchange=renderNumbers;
   $('closeNumbers').onclick=()=>$('numbersDialog').close();
   $('numbersForm').onsubmit=e=>{e.preventDefault();for(const [key,value] of Object.entries(numberEdits)){if(value!==''&&(!/^\\d{1,2}$/.test(value))){$('numberError').textContent='Bitte Nummern zwischen 0 und 99 eintragen.';return;}}for(const team of ['home','away'])for(const p of state[team].players){const value=numberEdits[team+':'+p.id];if(value!==undefined)p.nr=value===''?'':Number(value);}document.querySelectorAll('.player-label').forEach(label=>{const p=getPlayer(label.dataset.playerId);if(p)playerLabel(label.parentElement,p);});showStep(currentStep);$('numbersDialog').close();toast('Rückennummern übernommen');};
-  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical)setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;homeShow("choose",null);showTab("home");if(restoredSession)toast("Letzter Spielstand automatisch wiederhergestellt");else if(restoredSeason)toast(`Saison „${seasonName}“ automatisch wiederhergestellt`);
+  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical)setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;homeShow("choose",null);showTab("home");if(pendingCloudInvite)await joinSeasonCloud(pendingCloudInvite).catch(error=>{
+  toast("Saison-Einladung konnte nicht geöffnet werden: "+error.message);
+});if(restoredSession)toast("Letzter Spielstand automatisch wiederhergestellt");else if(restoredSeason)toast(`Saison „${seasonName}“ automatisch wiederhergestellt`);
 })();
 </script>
   <script>
