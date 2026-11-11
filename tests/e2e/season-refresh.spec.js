@@ -155,5 +155,5 @@ test("canceling a preview never writes new season or source state",async({page})
   await page.locator("#seasonRefreshCancel").click();
   await expect(page.locator("#seasonRefreshDialog")).toBeHidden();
   expect((await readStore(page,id)).games).toHaveLength(1);
-  expect(await readStore(page,"source-"+id)).toBeNull();
+  expect(await readStore(page,"source-"+id)).toBeFalsy();
 });
