@@ -39,7 +39,7 @@ test("identically named seasons can be renamed and one removed without affecting
   await page.locator("#homeChooseSeason").click();
   await page.locator("#homeOpen").click();
   const rows=page.locator("#homeLibraryList .home-list-row");
-  await expect(rows).toHaveCount(3); // includes the preserved default season
+  await expect(rows).toHaveCount(2); // only the two explicitly created seasons
   const duplicates=rows.filter({hasText:"HC Bremen | Saison 2026/27"});
   await expect(duplicates).toHaveCount(2);
   await expect(duplicates.first()).toContainText("Kennung:");
@@ -49,7 +49,7 @@ test("identically named seasons can be renamed and one removed without affecting
   page.once("dialog",dialog=>dialog.accept());
   await duplicates.first().getByRole("button",{name:"Löschen"}).click();
   await expect(duplicates).toHaveCount(1);
-  await expect(rows).toHaveCount(2);
+  await expect(rows).toHaveCount(1);
   page.once("dialog",dialog=>dialog.accept("HC Bremen | 2026/27 korrigiert"));
   await duplicates.first().getByRole("button",{name:"Umbenennen"}).click();
   await expect(page.locator("#homeLibraryList")).toContainText("HC Bremen | 2026/27 korrigiert");
@@ -57,7 +57,7 @@ test("identically named seasons can be renamed and one removed without affecting
   await page.locator("#homeChooseSeason").click();
   await page.locator("#homeOpen").click();
   await expect(page.locator("#homeLibraryList")).toContainText("HC Bremen | 2026/27 korrigiert");
-  await expect(page.locator("#homeLibraryList .home-list-row")).toHaveCount(2);
+  await expect(page.locator("#homeLibraryList .home-list-row")).toHaveCount(1);
 });
 
 test("generic imported season title displays an inferred team name without renaming a custom season",async({page})=>{
