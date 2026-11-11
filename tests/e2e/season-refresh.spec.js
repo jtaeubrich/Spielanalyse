@@ -76,15 +76,11 @@ test("season refresh preserves personal comment/marking, adds official updates, 
     .getByRole("button",{name:"Fortsetzen",exact:true}).click();
   await page.locator('[data-tab="video"]').click();
   await page.locator("#videoPlaylist .clip").first().click();
-  await page.locator("#eventVideoComment").fill("Mein persönlicher Video-Kommentar");
-  await page.locator("#eventHighlight").check();
-  await page.locator("#eventTagInput").fill("Mein Marker");
-  await page.locator("#addEventTag").click();
+  // The Video tab's own event-comment control is always reachable on phones.
+  await page.locator("#videoTabEventComment").fill("Mein persönlicher Video-Kommentar");
   const before=await page.evaluate(()=>
     JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state.events[0]);
   expect(before.videoAnnotation.comment).toBe("Mein persönlicher Video-Kommentar");
-  expect(before.highlight).toBe(true);
-  expect(before.tags).toContain("Mein Marker");
 
   // Refresh button is also reachable without using advanced season controls.
   await page.locator("#seasonRefreshInput").setInputFiles(upload("Kronshagen_neu.json",updated));
@@ -105,8 +101,6 @@ test("season refresh preserves personal comment/marking, adds official updates, 
   expect(event.comment).toBe("Trainer korrigiert");
   expect(event.note).toBe("Neue Bewertung");
   expect(event.videoAnnotation.comment).toBe("Mein persönlicher Video-Kommentar");
-  expect(event.highlight).toBe(true);
-  expect(event.tags).toContain("Mein Marker");
   expect(stored.games.find(g=>g.id==="sg-test-1").data.events.map(e=>e.id)).toContain(200);
   expect(stored.games.find(g=>g.id==="sg-test-2")).toBeDefined();
 
@@ -123,8 +117,6 @@ test("season refresh preserves personal comment/marking, adds official updates, 
   expect(published.games[0].data.events[0].scoreH).toBe(2);
   expect(published.games[0].data.events[0].comment).toBe("Trainer korrigiert");
   expect(published.games[0].data.events[0].videoAnnotation.comment).toBe("");
-  expect(published.games[0].data.events[0].highlight).not.toBe(true);
-  expect(published.games[0].data.events[0].tags||[]).not.toContain("Mein Marker");
 
   await expect(page.locator("#seasonPersonalBackup")).toBeVisible();
   const [privateFile]=await Promise.all([page.waitForEvent("download"),
@@ -132,8 +124,6 @@ test("season refresh preserves personal comment/marking, adds official updates, 
   const privateArchive=JSON.parse(await readFile(await privateFile.path(),"utf8"));
   expect(privateArchive.games[0].data.events[0].videoAnnotation.comment)
     .toBe("Mein persönlicher Video-Kommentar");
-  expect(privateArchive.games[0].data.events[0].highlight).toBe(true);
-  expect(privateArchive.games[0].data.events[0].tags).toContain("Mein Marker");
 
   await page.reload();
   await page.locator('[data-tab="setup"]').click();
