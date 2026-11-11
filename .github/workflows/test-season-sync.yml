@@ -1,0 +1,30 @@
+name: Test Season Sync
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloud-run-season-sync/**"
+      - "src/season-sync-client.js"
+      - "tests/season-sync-client.test.js"
+      - ".github/workflows/test-season-sync.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate backend and run API security tests
+        run: |
+          node --check cloud-run-season-sync/index.js
+          node --check cloud-run-season-sync/api.js
+          node --check cloud-run-season-sync/storage.js
+          node --test cloud-run-season-sync/api.test.js
+      - name: Run browser-client unit tests
+        run: |
+          npm ci
+          npx vitest run tests/season-sync-client.test.js
