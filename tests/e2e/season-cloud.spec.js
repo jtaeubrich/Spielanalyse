@@ -36,9 +36,9 @@ const archive=(revision)=>({
 const sha=value=>createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const upload=(name,obj)=>({name,mimeType:"application/json",
   buffer:Buffer.from(JSON.stringify(obj))});
-function mockCloud(page){
+async function mockCloud(page){
   const context={revision:1,calls:[],lastArchive:null};
-  page.route(API+"/**",async route=>{
+  await page.route(API+"/**",async route=>{
     const req=route.request(),url=new URL(req.url()),method=req.method();
     context.calls.push({method,path:url.pathname,auth:req.headers().authorization||""});
     const headers={"Access-Control-Allow-Origin":"*",
@@ -97,7 +97,7 @@ async function readSeason(page,id){
   },id);
 }
 test("trainer publishes only with admin key and obtains a read-only invitation",async({page})=>{
-  const cloud=mockCloud(page);
+  const cloud=await mockCloud(page);
   await page.goto("/");
   await page.locator("#seasonImportInput").setInputFiles(upload("trainer.json",archive(1)));
   await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
@@ -124,7 +124,7 @@ test("trainer publishes only with admin key and obtains a read-only invitation",
 });
 
 test("player subscribes with one invite, keeps local comments after cloud refresh and never uploads",async({page})=>{
-  const cloud=mockCloud(page);
+  const cloud=await mockCloud(page);
   page.on("dialog",dialog=>dialog.accept());
   const link="/#saison="+encodeURIComponent(ID)+"&key="+encodeURIComponent(READER)+
     "&api="+encodeURIComponent(API);
