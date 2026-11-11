@@ -5411,7 +5411,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     persistSession();
     // The initial empty season is only a UI placeholder. Never persist it
     // when a player follows their first invitation or imports a real season.
-    if(seasonLibraryId&&seasonLibraryRecords.some(item=>item.id===seasonLibraryId))
+    if(seasonLibraryId&&(seasonGames.length>0||seasonLibraryRecords.some(item=>item.id===seasonLibraryId)))
       await storeInternalSeason();
     activeSeasonGameId=null;persistSession();
     seasonLibraryId=freshSeasonLibraryId();
