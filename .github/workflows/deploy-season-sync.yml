@@ -1,0 +1,41 @@
+name: Deploy Season Sync (manual)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test API and syntax
+        run: |
+          node --check cloud-run-season-sync/index.js
+          node --check cloud-run-season-sync/api.js
+          node --check cloud-run-season-sync/storage.js
+          node --test cloud-run-season-sync/api.test.js
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Deploy separate Cloud Run service
+        env:
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BUCKET: ${{ vars.SEASON_SYNC_BUCKET }}
+          RUNTIME_SERVICE_ACCOUNT: ${{ vars.SEASON_SYNC_RUNTIME_SERVICE_ACCOUNT }}
+          TOKEN_SECRET: ${{ vars.SEASON_SYNC_TRAINER_SECRET }}
+        run: |
+          test -n "$PROJECT_ID" && test -n "$BUCKET" && test -n "$RUNTIME_SERVICE_ACCOUNT" && test -n "$TOKEN_SECRET"
+          gcloud run deploy handball-season-sync \
+            --source cloud-run-season-sync \
+            --project "$PROJECT_ID" \
+            --region europe-west1 \
+            --service-account "$RUNTIME_SERVICE_ACCOUNT" \
+            --set-env-vars "SEASON_SYNC_BUCKET=$BUCKET,ALLOWED_ORIGINS=https://jtaeubrich.github.io" \
+            --set-secrets "TRAINER_PUBLISH_TOKEN=$TOKEN_SECRET:latest" \
+            --allow-unauthenticated --quiet
