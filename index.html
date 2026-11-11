@@ -4590,7 +4590,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       renderSeason();
       seasonRefreshDraft=null;
       $("seasonRefreshDialog").close();
-      if(activeTab==="home")homeShow("dashboard","season");
+      // Never leave an outdated game editor on screen after its backing
+      // season has been replaced. Re-open a game from the current dashboard.
+      showTab("home");
+      homeShow("dashboard","season");
       toast("Saison aktualisiert: "+draft.summary.newGames+" neue Spiele, "+
         draft.summary.updatedGames+" aktualisiert. Persönliche Markierungen bleiben erhalten.");
     }catch(error){
