@@ -18,7 +18,7 @@ const game=(name,events,day="2026-11-08")=>{
   return g;
 };
 const originalEvent={id:100,type:"goal",team:"home",time:123,scoreH:1,scoreA:0,
-  comment:"",realTime:140000,z:"RL-6m",gz:"UL",videoAnnotation:{shapes:[],comment:""}};
+  comment:"Trainer-Hinweis alt",note:"Alte Bewertung",realTime:140000,z:"RL-6m",gz:"UL",videoAnnotation:{shapes:[],comment:""}};
 const archive=(games,date)=>({
   format:"handball-spielanalyse-season",version:1,
   name:"TSV Kronshagen · Saison 2026/27",
@@ -27,7 +27,7 @@ const archive=(games,date)=>({
 });
 const first=archive([["sg-test-1",game("Spiel 1",[originalEvent])]],"2026-11-08T19:00:00Z");
 const updated=archive([
-  ["sg-test-1",game("Spiel 1",[{...originalEvent,scoreH:2,comment:"Trainer korrigiert"},{
+  ["sg-test-1",game("Spiel 1",[{...originalEvent,scoreH:2,comment:"Trainer korrigiert",note:"Neue Bewertung"},{
     id:200,type:"2min",team:"away",time:180,realTime:200000
   }])],
   ["sg-test-2",game("Spiel 2",[{id:300,type:"goal",team:"home",time:80,scoreH:1,scoreA:0}],
@@ -102,6 +102,8 @@ test("season refresh preserves personal comment/marking, adds official updates, 
   const stored=await readStore(page,currentSeasonId);
   const event=stored.games.find(g=>g.id==="sg-test-1").data.events.find(e=>e.id===100);
   expect(event.scoreH).toBe(2);
+  expect(event.comment).toBe("Trainer korrigiert");
+  expect(event.note).toBe("Neue Bewertung");
   expect(event.videoAnnotation.comment).toBe("Mein persönlicher Video-Kommentar");
   expect(event.highlight).toBe(true);
   expect(event.tags).toContain("Mein Marker");
@@ -119,6 +121,7 @@ test("season refresh preserves personal comment/marking, adds official updates, 
   expect(published.format).toBe("handball-spielanalyse-season");
   expect(published.games).toHaveLength(2);
   expect(published.games[0].data.events[0].scoreH).toBe(2);
+  expect(published.games[0].data.events[0].comment).toBe("Trainer korrigiert");
   expect(published.games[0].data.events[0].videoAnnotation.comment).toBe("");
   expect(published.games[0].data.events[0].highlight).not.toBe(true);
   expect(published.games[0].data.events[0].tags||[]).not.toContain("Mein Marker");
