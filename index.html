@@ -14,6 +14,16 @@
   <link rel="icon" type="image/svg+xml" href="./icons/logo-ball-flow.svg?v=34">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=34">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon-v29.png?v=34">
+  <script>
+    // Remove the read-only invitation capability from the visible URL before
+    // any third-party compatibility libraries are loaded.
+    try{
+      if(location.hash.includes("saison=")){
+        sessionStorage.setItem("handballSpielanalyse.pendingSeasonInvite",location.hash);
+        history.replaceState(null,"",location.pathname+location.search);
+      }
+    }catch(error){console.warn("Saisonlink konnte nicht vorbereitet werden",error?.name)}
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
@@ -4716,7 +4726,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   // before starting any asynchronous network activity or persistence.
   let pendingCloudInvite=null;
   try{
-    pendingCloudInvite=parseSeasonInvite(location.hash);
+    const candidate=sessionStorage.getItem("handballSpielanalyse.pendingSeasonInvite")||location.hash;
+    sessionStorage.removeItem("handballSpielanalyse.pendingSeasonInvite");
+    pendingCloudInvite=parseSeasonInvite(candidate);
     if(pendingCloudInvite)history.replaceState(null,"",location.pathname+location.search);
   }catch(error){
     if(location.hash.includes("saison="))
