@@ -17,8 +17,11 @@ export function createGcsSeasonStore({bucketName,storage=new Storage()}={}){
     async read(id){
       const file=bucket.file(filename(id));
       try{
-        const [buffer]=await file.download();
+        // Read one immutable GCS generation to avoid pairing old metadata
+        // with a newer generation during a concurrent trainer publication.
         const [details]=await file.getMetadata();
+        const fixed=bucket.file(filename(id),{generation:details.generation});
+        const [buffer]=await fixed.download();
         return {metadata:JSON.parse(buffer.toString("utf8")),generation:details.generation};
       }catch(error){
         if(error?.code===404)return {metadata:null,generation:null};
