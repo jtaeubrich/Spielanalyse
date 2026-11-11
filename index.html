@@ -1550,6 +1550,10 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
 .analysis-player-videos{display:inline-grid;place-items:center;flex:none;width:32px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--text);cursor:pointer;font:inherit;font-size:15px;line-height:1}
 .analysis-player-videos:hover,.analysis-player-videos:focus-visible{border-color:var(--cyan);color:var(--cyan);outline-offset:2px}
 @media print{.analysis-player-videos{display:none!important}}
+.season-refresh-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}
+.season-refresh-stat{padding:12px;border:1px solid var(--line);border-radius:9px}
+.season-refresh-stat strong{display:block;font-size:22px}
+@media(max-width:550px){.season-refresh-preview{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -1607,7 +1611,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         <div id="homeLibraryList" class="home-list"></div>
       </div>
       <div id="homeSeasonDashboard" class="home-view panel home-library" hidden>
-        <div class="home-dashboard-actions"><button type="button" class="btn" id="homeSeasonManage">Saison verwalten</button><button type="button" class="btn primary" id="homeSeasonAnalyze">Saisonanalyse öffnen</button></div>
+        <div class="home-dashboard-actions"><button type="button" class="btn" id="homeSeasonManage">Saison verwalten</button><button type="button" class="btn primary" id="homeSeasonRefresh">Saison aktualisieren</button><button type="button" class="btn primary" id="homeSeasonAnalyze">Saisonanalyse öffnen</button></div>
         <h3>Spiele dieser Saison</h3>
         <div class="home-search-row"><label for="homeGameSearch">Spiel suchen</label><input class="field" type="search" id="homeGameSearch" placeholder="Mannschaft oder Datum" autocomplete="off"></div>
         <div id="homeSeasonGames" class="home-list"></div>
@@ -1645,7 +1649,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         <button class="btn" id="seasonExport" type="button" disabled>Saison als JSON exportieren</button>
         <button class="btn hidden" id="seasonExportText" type="button" disabled>Saison als Text teilen (.txt)</button>
         <button class="btn hidden" id="seasonExportDownload" type="button" disabled>Saison direkt herunterladen</button>
-        <button class="btn" id="seasonArchiveExport" type="button" disabled>Team-Archiv als ZIP exportieren</button>
+        <button class="btn" id="seasonArchiveExport" type="button" disabled>Team-Archiv als ZIP exportieren</button><button class="btn hidden" id="seasonPersonalBackup" type="button" disabled>Meine persönlichen Daten sichern (privat)</button>
       </div>
       <p class="number-help">Einzelspiel: aktuelles Spiel oder ausgewählte Saisonvorschau. Saison und ZIP: alle Spiele der aktiven Saison. Auf iPad und iPhone bei „In Dateien sichern“ den gewünschten iCloud-Ordner wählen. Der reine Download verwendet den Browser-Downloadordner.</p>
       <p class="number-help" id="seasonExportStatus" role="status" aria-live="polite"></p>
@@ -1885,7 +1889,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
       <section class="panel season-card wide" id="seasonManagementCard">
         <div class="clockhead"><div><h2>Saisonverwaltung</h2><p class="editor-help">Saisonspiele importieren, sichern und mit offiziellen Spielberichten abgleichen. Bestehende Scouting-Daten bleiben erhalten.</p></div><span class="badge" id="seasonStatus">Keine Spiele geladen</span></div>
         <div class="season-library"><label for="seasonLibrarySelect"><strong>Gespeicherte Saisons</strong></label><select class="field" id="seasonLibrarySelect" aria-label="Gespeicherte Saison auswählen"><option value="">Aktive Saison</option></select><button class="btn primary" id="seasonNew" type="button">+ Neue Saison</button><p class="number-help" id="seasonLibraryStatus">Alle Saisons werden auf diesem Gerät getrennt gespeichert. Saisonwechsel verändert das aktive Match nicht.</p></div>
-        <div class="season-meta"><label>Saisonname<input class="field" id="seasonName" value="Saison 2026/27" placeholder="z. B. Saison 2026/27"></label><label>Archiv-Mannschaft (jahrgangsunabhängig)<input class="field" id="seasonArchiveTeam" placeholder="z. B. TSV Kronshagen mB"></label><label>Mein Team für die Saison<select class="field" id="seasonPreferredTeam"><option value="">Keine Mannschaft ausgewählt</option></select></label></div><div class="season-tools"><button class="btn primary" id="seasonHandball360Open" type="button">Saison über Handball360 importieren</button><button class="btn" id="seasonNuLigaOpen" type="button">nuLiga HTML-Demo</button><label class="btn" for="seasonGameInput">Spiel-JSONs laden</label><input id="seasonGameInput" type="file" accept=".json,application/json" multiple hidden><input id="seasonUpdateInput" type="file" accept=".json,application/json" hidden><label class="btn" for="seasonImportInput">Saison importieren</label><input id="seasonImportInput" type="file" accept=".json,application/json" hidden><button class="btn" id="seasonSelectAll" type="button">Alle auswählen</button><button class="btn" id="seasonSelectNone" type="button">Auswahl aufheben</button><button class="btn danger" id="seasonClearGames" type="button">Saison leeren</button></div>
+        <div class="season-meta"><label>Saisonname<input class="field" id="seasonName" value="Saison 2026/27" placeholder="z. B. Saison 2026/27"></label><label>Archiv-Mannschaft (jahrgangsunabhängig)<input class="field" id="seasonArchiveTeam" placeholder="z. B. TSV Kronshagen mB"></label><label>Mein Team für die Saison<select class="field" id="seasonPreferredTeam"><option value="">Keine Mannschaft ausgewählt</option></select></label></div><div class="season-tools"><button class="btn primary" id="seasonHandball360Open" type="button">Saison über Handball360 importieren</button><button class="btn" id="seasonNuLigaOpen" type="button">nuLiga HTML-Demo</button><label class="btn" for="seasonGameInput">Spiel-JSONs laden</label><input id="seasonGameInput" type="file" accept=".json,application/json" multiple hidden><input id="seasonUpdateInput" type="file" accept=".json,application/json" hidden><label class="btn" for="seasonImportInput">Saison importieren</label><input id="seasonImportInput" type="file" accept=".json,application/json" hidden><button class="btn primary" id="seasonRefreshOpen" type="button">Bestehende Saison aktualisieren</button><input id="seasonRefreshInput" type="file" accept=".json,application/json" hidden><button class="btn" id="seasonSelectAll" type="button">Alle auswählen</button><button class="btn" id="seasonSelectNone" type="button">Auswahl aufheben</button><button class="btn danger" id="seasonClearGames" type="button">Saison leeren</button></div>
         <details class="season-games-details" id="seasonGamesDetails">
           <summary>Saisonspiele <span class="badge" id="seasonGameCount">0 Spiele</span></summary>
           <div id="seasonGameList" class="season-game-list"><div class="empty">Noch keine Saisonspiele geladen.</div></div>
@@ -2098,6 +2102,18 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
     <div class="footerbuttons"><button class="btn primary" id="videoOfficialApply" type="button">Auswahl prüfen und übernehmen</button></div>
   </div>
 </dialog>
+<dialog id="seasonRefreshDialog" class="season-h360-dialog" aria-labelledby="seasonRefreshTitle">
+  <div class="clockhead"><h2 id="seasonRefreshTitle">Saison aktualisieren</h2><button type="button" class="btn" id="seasonRefreshClose">Schließen</button></div>
+  <p class="editor-help" id="seasonRefreshIdentity"></p>
+  <p class="editor-help">Neue Saisonstände werden nur in die ausgewählte Saison übernommen. Deine eigenen Kommentare, Markierungen, Tags, Zeichnungen und Schlüsselmomente bleiben privat erhalten.</p>
+  <div id="seasonRefreshPreview" class="season-refresh-preview"></div>
+  <p id="seasonRefreshCaution" class="number-help"></p>
+  <div class="footerbuttons">
+    <button class="btn" type="button" id="seasonRefreshCancel">Abbrechen</button>
+    <button class="btn primary" type="button" id="seasonRefreshConfirm">Aktualisierung übernehmen</button>
+  </div>
+  <p id="seasonRefreshStatus" role="status" class="number-help"></p>
+</dialog>
 <dialog id="seasonProtocolDialog" class="season-h360-dialog" aria-labelledby="seasonProtocolTitle">
   <div class="clockhead"><h2 id="seasonProtocolTitle">Scouting mit offiziellem Spielbericht abgleichen</h2><button class="btn" id="seasonProtocolClose" type="button">Schließen</button></div>
   <p id="seasonProtocolGame" class="editor-help"></p>
@@ -2300,6 +2316,7 @@ import { GAME_FORMAT, CURRENT_GAME_VERSION, migrateGameData, stampCurrentGameFor
 import { GAME_FILE_TYPES, parseGameText, defaultGameFileName as coreDefaultGameFileName, gameOpenPickerOptions, gameSavePickerOptions, writeTextFileHandle } from "./src/game-files.js";
 import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeSeasonGame, normalizeSeasonArchive, parseSeasonText, mergeSeasonGames, readSeasonGameFiles, suggestedSeasonName } from "./src/season-files.js?v=2";
 import { seasonExportFileName } from "./src/season-export-names.js?v=1";
+import { prepareSeasonRefresh, exportPublishedSeason } from "./src/season-update.js?v=1";
 import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection, applyStoredGoalkeeperMarkings } from "./src/roster.js";
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
@@ -2329,7 +2346,7 @@ import { readInstagramTemplates, saveInstagramTemplates, halftimeScore } from ".
 import { exportTeamCollection, parseTeamCollection, mergeTeamCollections, mapOfficialSides } from "./src/team-metadata-sync.js";
 import { connectClipAudio } from "./src/clip-audio.js";
 import { normalizeSceneWindow as coreNormalizeSceneWindow, clipWindowAt as coreClipWindowAt, buildClipEntries as coreBuildClipEntries, totalClipDuration as coreTotalClipDuration, nearestActiveClip as coreNearestActiveClip } from "./src/clip-core.js";
-import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL_SEASON_KEY, INTERNAL_ROSTER_STORE, SESSION_STORAGE_KEY, buildInternalGameRecord, buildSeasonRecord, buildSeasonExport, buildSessionRecord, buildRosterRecord, readInternalRecord, listInternalRecords, writeInternalRecord, deleteInternalRecord } from "./src/storage.js";
+import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL_SEASON_KEY, INTERNAL_ROSTER_STORE, SESSION_STORAGE_KEY, buildInternalGameRecord, buildSeasonRecord, buildSeasonExport, buildSessionRecord, buildRosterRecord, readInternalRecord, listInternalRecords, writeInternalRecord, writeInternalRecords, deleteInternalRecord } from "./src/storage.js";
 
 (async()=>{
   const shotSettingDefaults={attacker:true,attackerOrder:"last",location:true,target:true,phase:true,result:true,assist:false,tag:false,defense:true,trigger:true};
