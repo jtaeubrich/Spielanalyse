@@ -1554,6 +1554,11 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
 .season-refresh-stat{padding:12px;border:1px solid var(--line);border-radius:9px}
 .season-refresh-stat strong{display:block;font-size:22px}
 @media(max-width:550px){.season-refresh-preview{grid-template-columns:1fr 1fr}}
+.season-cloud-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:12px 0}
+.season-cloud-card{padding:12px;border:1px solid var(--line);border-radius:12px;margin:12px 0}
+.season-cloud-card label{display:block;font-size:13px;margin:8px 0}
+.season-cloud-card .field{width:100%;box-sizing:border-box;margin-top:4px}
+#seasonCloudInvite{font-family:monospace;font-size:12px}
 </style>
 </head>
 <body>
@@ -1890,6 +1895,28 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         <div class="clockhead"><div><h2>Saisonverwaltung</h2><p class="editor-help">Saisonspiele importieren, sichern und mit offiziellen Spielberichten abgleichen. Bestehende Scouting-Daten bleiben erhalten.</p></div><span class="badge" id="seasonStatus">Keine Spiele geladen</span></div>
         <div class="season-library"><label for="seasonLibrarySelect"><strong>Gespeicherte Saisons</strong></label><select class="field" id="seasonLibrarySelect" aria-label="Gespeicherte Saison auswählen"><option value="">Aktive Saison</option></select><button class="btn primary" id="seasonNew" type="button">+ Neue Saison</button><p class="number-help" id="seasonLibraryStatus">Alle Saisons werden auf diesem Gerät getrennt gespeichert. Saisonwechsel verändert das aktive Match nicht.</p></div>
         <div class="season-meta"><label>Saisonname<input class="field" id="seasonName" value="Saison 2026/27" placeholder="z. B. Saison 2026/27"></label><label>Archiv-Mannschaft (jahrgangsunabhängig)<input class="field" id="seasonArchiveTeam" placeholder="z. B. TSV Kronshagen mB"></label><label>Mein Team für die Saison<select class="field" id="seasonPreferredTeam"><option value="">Keine Mannschaft ausgewählt</option></select></label></div><div class="season-tools"><button class="btn primary" id="seasonHandball360Open" type="button">Saison über Handball360 importieren</button><button class="btn" id="seasonNuLigaOpen" type="button">nuLiga HTML-Demo</button><label class="btn" for="seasonGameInput">Spiel-JSONs laden</label><input id="seasonGameInput" type="file" accept=".json,application/json" multiple hidden><input id="seasonUpdateInput" type="file" accept=".json,application/json" hidden><label class="btn" for="seasonImportInput">Saison importieren</label><input id="seasonImportInput" type="file" accept=".json,application/json" hidden><button class="btn primary" id="seasonRefreshOpen" type="button">Bestehende Saison aktualisieren</button><input id="seasonRefreshInput" type="file" accept=".json,application/json" hidden><button class="btn" id="seasonSelectAll" type="button">Alle auswählen</button><button class="btn" id="seasonSelectNone" type="button">Auswahl aufheben</button><button class="btn danger" id="seasonClearGames" type="button">Saison leeren</button></div>
+
+        <details class="season-games-details season-cloud-card" id="seasonCloudPanel">
+          <summary>☁ Saison-Cloud · für die Mannschaft</summary>
+          <p class="editor-help">Neue Spiele online veröffentlichen oder die bestehende Saison mit einem Klick aktualisieren. Eigene Markierungen und Kommentare bleiben auf diesem Gerät.</p>
+          <div class="season-cloud-fields">
+            <label>Cloud-Run-Saison-Dienst<input class="field" id="seasonCloudEndpoint" type="url" placeholder="https://handball-season-sync-…europe-west1.run.app" autocomplete="off" spellcheck="false"></label>
+            <label>Trainer-Schlüssel (nur zum Veröffentlichen, nicht gespeichert)<input class="field" id="seasonCloudAdminToken" type="password" autocomplete="off" placeholder="Nur auf dem Trainergerät eingeben"></label>
+          </div>
+          <div class="season-tools">
+            <button class="btn primary" id="seasonCloudPublish" type="button">Saison veröffentlichen</button>
+            <button class="btn" id="seasonCloudCheck" type="button">Cloud-Stand abrufen</button>
+            <button class="btn" id="seasonCloudRotateReader" type="button">Lesezugang widerrufen und erneuern</button>
+          </div>
+          <label>Einladungslink für Spieler<input class="field" id="seasonCloudInvite" type="text" readonly placeholder="Nach der ersten Veröffentlichung verfügbar"></label>
+          <div class="season-tools">
+            <button class="btn" id="seasonCloudCopyInvite" type="button">Einladungslink kopieren</button>
+          </div>
+          <p class="number-help">Der Einladungslink erlaubt das Lesen der veröffentlichten Saison. Nur an die Mannschaft weitergeben. Beim Erneuern des Lesezugangs werden bisherige Links ungültig.</p>
+          <label>Einladung auf diesem Gerät öffnen<input class="field" id="seasonCloudJoinInput" type="text" autocomplete="off" placeholder="Saisonlink hier einfügen"></label>
+          <div class="season-tools"><button class="btn" id="seasonCloudJoin" type="button">Saison abonnieren</button></div>
+          <p id="seasonCloudStatus" class="number-help" role="status">Noch keine Saison-Cloud verbunden.</p>
+        </details>
         <details class="season-games-details" id="seasonGamesDetails">
           <summary>Saisonspiele <span class="badge" id="seasonGameCount">0 Spiele</span></summary>
           <div id="seasonGameList" class="season-game-list"><div class="empty">Noch keine Saisonspiele geladen.</div></div>
@@ -2317,6 +2344,7 @@ import { GAME_FILE_TYPES, parseGameText, defaultGameFileName as coreDefaultGameF
 import { seasonGameId as coreSeasonGameId, normalizeSeasonGame as coreNormalizeSeasonGame, normalizeSeasonArchive, parseSeasonText, mergeSeasonGames, readSeasonGameFiles, suggestedSeasonName } from "./src/season-files.js?v=2";
 import { seasonExportFileName } from "./src/season-export-names.js?v=1";
 import { prepareSeasonRefresh, exportPublishedSeason } from "./src/season-update.js?v=1";
+import {seasonCloudEndpoint,makeSeasonInvite,parseSeasonInvite,createCloudSeason,latestCloudSeason,downloadCloudSeason,publishCloudSeason,rotateCloudReadKey} from "./src/season-sync-client.js?v=1";
 import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mergeRosterCollection, applyStoredGoalkeeperMarkings } from "./src/roster.js";
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
