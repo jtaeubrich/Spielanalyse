@@ -2357,7 +2357,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     {id:"standard-defense-by-player",name:"Alle Abwehraktionen je Spieler",builtIn:true,filters:{team:"all",player:"all",type:"defense",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"defender",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Abwehr_{Spieler}"}},
     {id:"standard-saves-by-keeper",name:"Alle Paraden je Torwart",builtIn:true,filters:{team:"own",player:"all",type:"save",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"keeper",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Paraden_{Spieler}"}}
   ];
-  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},seasonLastEditedGameId="",activeSeasonGameId=null,seasonLibraryId=null,seasonLibraryRecords=[],seasonWriteQueue=Promise.resolve();
+  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},seasonLastEditedGameId="",activeSeasonGameId=null,seasonLibraryId=null,seasonLibraryRecords=[],seasonWriteQueue=Promise.resolve(),seasonPublishedSource=null,seasonRefreshDraft=null,seasonRefreshBusy=false;
   let gameRunning=false, gameBase=0, gameStarted=0;
   let videoRunning=false, videoBase=0, videoStarted=0;
   let liveClockRunning=false,liveClockBase=0,liveClockStarted=0,liveClockInitialized=false;
@@ -4459,7 +4459,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("seasonPlayerRows").innerHTML=players.sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const quote=p.isTW?(p.saves+p.against?p.rate+" %":"–"):(p.decidedShots?p.rate+" %":"–");return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.isTW?"–":p.shots}</td><td>${p.value}</td><td>${p.assists}</td><td>${quote}</td><td>${p.penalties}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="8">Keine Spielerdaten vorhanden.</td></tr>';
     renderSeasonGraphics();
   }
-  function renderSeason(){$("seasonExport").disabled=!seasonGames.length;$("seasonExportDownload").disabled=!seasonGames.length;$("seasonExportDownload").classList.toggle("hidden",!isAppleTouchDevice());$("seasonExportText").disabled=!seasonGames.length;$("seasonExportText").classList.toggle("hidden",!isAppleTouchDevice());$("seasonExport").textContent=isAppleTouchDevice()?"Saison-JSON in Dateien sichern":"Saison als JSON exportieren";$("seasonArchiveExport").disabled=!seasonGames.length;if(analysisSeasonActive()&&!analysisSelectedGameId)analysisSelectedGameId=selectSeasonPreviewGame(seasonGames,seasonLastEditedGameId)?.id||"";renderAnalysisGamePicker();renderSeasonLibrary();$("seasonMergePlayers").disabled=!seasonGames.length;renderSetupSeasonPicker();$("seasonArchiveTeam").value=seasonArchiveTeam;seasonPopulatePreferredTeam();const seasonFilter=$("seasonTeamFilter");if(seasonFilter){const own=seasonFilter.querySelector('option[value="own"]'),opponent=seasonFilter.querySelector('option[value="opponent"]');if(own)own.textContent=seasonPreferredTeam?"Mein Team · "+seasonPreferredTeam:"Mannschaft A (aus Spieldaten)";if(opponent)opponent.textContent=seasonPreferredTeam?"Gegner":"Mannschaft B (aus Spieldaten)"}const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
+  function renderSeason(){$("seasonExport").disabled=!seasonGames.length;$("seasonExportDownload").disabled=!seasonGames.length;$("seasonExportDownload").classList.toggle("hidden",!isAppleTouchDevice());$("seasonExportText").disabled=!seasonGames.length;$("seasonExportText").classList.toggle("hidden",!isAppleTouchDevice());$("seasonExport").textContent=isAppleTouchDevice()?"Saison-JSON in Dateien sichern":"Saison als JSON exportieren";$("seasonArchiveExport").disabled=!seasonGames.length;$("seasonPersonalBackup").disabled=!seasonGames.length||!seasonPublishedSource;$("seasonPersonalBackup").classList.toggle("hidden",!seasonPublishedSource);if(analysisSeasonActive()&&!analysisSelectedGameId)analysisSelectedGameId=selectSeasonPreviewGame(seasonGames,seasonLastEditedGameId)?.id||"";renderAnalysisGamePicker();renderSeasonLibrary();$("seasonMergePlayers").disabled=!seasonGames.length;renderSetupSeasonPicker();$("seasonArchiveTeam").value=seasonArchiveTeam;seasonPopulatePreferredTeam();const seasonFilter=$("seasonTeamFilter");if(seasonFilter){const own=seasonFilter.querySelector('option[value="own"]'),opponent=seasonFilter.querySelector('option[value="opponent"]');if(own)own.textContent=seasonPreferredTeam?"Mein Team · "+seasonPreferredTeam:"Mannschaft A (aus Spieldaten)";if(opponent)opponent.textContent=seasonPreferredTeam?"Gegner":"Mannschaft B (aus Spieldaten)"}const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis()}
   $("seasonGameInput").onchange=event=>{const files=[...(event.target.files||[])];event.target.value="";if(files.length)loadSeasonFiles(files)};
   $("seasonUpdateInput").onchange=async event=>{const file=event.target.files?.[0],targetId=seasonUpdateTargetId;event.target.value="";seasonUpdateTargetId=null;if(!file||!targetId)return;try{await updateSeasonGameFromFile(file,targetId)}catch(error){toast(error?.message||"Saisonspiel konnte nicht aktualisiert werden")}};
   $("seasonImportInput").onchange=async event=>{
@@ -4479,7 +4479,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(!seasonGames.length)return toast("Keine Saisonspiele zum Exportieren geladen.");
     try{
       const archive=createTeamArchive({
-        teamName:archiveTeamName(),preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,seasonName:seasonName,games:seasonGames
+        teamName:archiveTeamName(),preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,
+        seasonName:seasonPublishedSource?.name||seasonName,
+        games:seasonPublishedSource?.games||seasonGames
       });
       downloadBlob(archive.blob,archive.fileName);
       toast("ZIP mit "+archive.index.games.length+" Spielen exportiert");
@@ -4953,6 +4955,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
     select.value=selected||"";
     $("seasonLibraryStatus").textContent=entries.length+" gespeicherte Saison(en) auf diesem Gerät. "+
+      (seasonPublishedSource?"Diese Saison erhält Updates; deine privaten Anmerkungen bleiben lokal. ":"")+
       "Andere Saisons bleiben beim Wechsel erhalten; das laufende Match wird nicht gewechselt.";
   }
   function updateSeasonLibraryCache(record){
@@ -4993,6 +4996,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     // Unlink the old scouting session without replacing its current data.
     activeSeasonGameId=null;persistSession();
     seasonLibraryId=id;localStorage.setItem(seasonLibraryPointer,id);
+    seasonPublishedSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"source-"+id))?.source||null;
     analysisSelectedGameId="";
     applySeasonObject(record,{save:false});
     await storeInternalSeason();
@@ -5003,6 +5007,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(seasonLibraryId)await storeInternalSeason();
     activeSeasonGameId=null;persistSession();
     seasonLibraryId=freshSeasonLibraryId();
+    seasonPublishedSource=null;
     localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
     seasonName=String(name||"Neue Saison").trim()||"Neue Saison";
     seasonGames=[];seasonPreferredTeam="";seasonArchiveTeam="";seasonPlayerAliases={};seasonLastEditedGameId="";
@@ -5031,7 +5036,27 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     return /iPad|iPhone|iPod/i.test(navigator.userAgent||"")||
       (navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
   }
-  function seasonExportObject(){return {...buildSeasonExport({name:seasonName||"Saison",games:seasonGames}),preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,playerAliases:seasonPlayerAliases,lastEditedGameId:seasonLastEditedGameId}}
+  function seasonExportObject({includePersonal=false}={}){
+    const publisher=includePersonal?null:exportPublishedSeason(seasonPublishedSource);
+    const source=publisher||{name:seasonName||"Saison",games:seasonGames,
+      preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,
+      playerAliases:seasonPlayerAliases,lastEditedGameId:seasonLastEditedGameId};
+    return {...buildSeasonExport({name:source.name||"Saison",games:source.games,
+      createdAt:publisher?.createdAt||new Date().toISOString()}),
+      preferredTeam:source.preferredTeam||"",
+      archiveTeam:source.archiveTeam||"",
+      playerAliases:source.playerAliases||{},
+      lastEditedGameId:source.lastEditedGameId||""};
+  }
+  function downloadPrivateSeasonBackup(){
+    if(!seasonPublishedSource)return;
+    const archive=seasonExportObject({includePersonal:true});
+    const name=seasonExportFileName({seasonName,preferredTeam:seasonPreferredTeam,
+      archiveTeam:seasonArchiveTeam,games:seasonGames}).replace(/\.json$/,"_MEIN_BACKUP.json");
+    downloadBlob(new Blob([JSON.stringify(archive,null,2)],{type:"application/json"}),name);
+    toast("Privates Backup angefordert. Diese Datei enthält persönliche Kommentare und Markierungen.");
+  }
+  $("seasonPersonalBackup").onclick=downloadPrivateSeasonBackup;
   function seasonExportPayload(){
     return {
       text:JSON.stringify(seasonExportObject(),null,2),
@@ -5113,6 +5138,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         seasonLibraryId=freshSeasonLibraryId();
         renderSeason();
       }
+      seasonPublishedSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"source-"+seasonLibraryId))?.source||null;
+      renderSeason();
       localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
       await storeInternalSeason();
       return Boolean(seasonGames.length);
