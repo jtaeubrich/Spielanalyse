@@ -53,6 +53,18 @@ function personalPatch(base,event){
   const source=base?.videoAnnotation||{},own=event.videoAnnotation||{};
   const ann={};
   for(const field of new Set([...Object.keys(source),...Object.keys(own)])){
+    if(field==="shapes"){
+      // A user's drawings and newly published coaching drawings are separate
+      // additions. Keep both rather than replacing the coach's new shapes.
+      const oldShapes=Array.isArray(source.shapes)?source.shapes:[],
+        localShapes=Array.isArray(own.shapes)?own.shapes:[];
+      const oldKeys=oldShapes.map(shape=>JSON.stringify(shape)),
+        localKeys=localShapes.map(shape=>JSON.stringify(shape));
+      const added=localShapes.filter(shape=>!oldKeys.includes(JSON.stringify(shape)));
+      const removed=base?oldKeys.filter(shape=>!localKeys.includes(shape)):[];
+      if(added.length||removed.length)ann.shapeDiff={added:copy(added),removed};
+      continue;
+    }
     if(base?!same(source[field],own[field]):hasValue(own[field]))
       ann[field]=copy(own[field]);
   }
@@ -75,6 +87,15 @@ function applyPersonalPatch(target,patch){
   if(patch.videoAnnotation){
     const annotation={...(target.videoAnnotation||{})};
     for(const [field,value] of Object.entries(patch.videoAnnotation)){
+      if(field==="shapeDiff"){
+        const existing=Array.isArray(annotation.shapes)?annotation.shapes:[];
+        const shapes=existing.filter(shape=>!value.removed.includes(JSON.stringify(shape)));
+        for(const shape of value.added){
+          if(!shapes.some(item=>same(item,shape)))shapes.push(copy(shape));
+        }
+        annotation.shapes=shapes;
+        continue;
+      }
       if(value===undefined)delete annotation[field];
       else annotation[field]=copy(value);
     }
