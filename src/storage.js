@@ -151,6 +151,24 @@ export async function writeInternalRecord(storeName, record, indexedDb = globalT
   }
 }
 
+// Atomically write the refreshed season, its safe rollback snapshot and the
+// last publisher version in one IndexedDB transaction. No schema migration.
+export async function writeInternalRecords(storeName, records, indexedDb = globalThis.indexedDB) {
+  const items=Array.isArray(records)?records:[];
+  if(!items.length)return;
+  const db=await openInternalDb(indexedDb);
+  try{
+    await new Promise((resolve,reject)=>{
+      const transaction=db.transaction(storeName,"readwrite");
+      const store=transaction.objectStore(storeName);
+      for(const record of items)store.put(record);
+      transaction.oncomplete=resolve;
+      transaction.onerror=()=>reject(transaction.error||new Error("Saison konnte nicht atomar gespeichert werden"));
+      transaction.onabort=()=>reject(transaction.error||new Error("Saison-Aktualisierung abgebrochen"));
+    });
+  }finally{db.close()}
+}
+
 export async function deleteInternalRecord(storeName, key, indexedDb = globalThis.indexedDB) {
   const db = await openInternalDb(indexedDb);
   try {
