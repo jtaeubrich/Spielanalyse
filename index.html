@@ -2385,7 +2385,7 @@ import { INTERNAL_GAME_STORE, INTERNAL_GAME_KEY, INTERNAL_SEASON_STORE, INTERNAL
     {id:"standard-defense-by-player",name:"Alle Abwehraktionen je Spieler",builtIn:true,filters:{team:"all",player:"all",type:"defense",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"defender",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Abwehr_{Spieler}"}},
     {id:"standard-saves-by-keeper",name:"Alle Paraden je Torwart",builtIn:true,filters:{team:"own",player:"all",type:"save",zone:"all",target:"all",phase:"all",tag:"all"},splitBy:"keeper",clip:{preRoll:4,postRoll:2},output:{mode:"individual",fileName:"Paraden_{Spieler}"}}
   ];
-  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},seasonLastEditedGameId="",activeSeasonGameId=null,seasonLibraryId=null,seasonLibraryRecords=[],seasonWriteQueue=Promise.resolve(),seasonPublishedSource=null,seasonInitialImportSource=null,seasonRefreshDraft=null,seasonRefreshBusy=false;
+  let clipPresets=[],tagLibrary=[],defenseFormations=["6:0","5:1","3:2:1","3:3"],triggerActions=["Aalborg","Mensa","Rolle","Jugo"],activeDefense={home:null,away:null},pendingTriggerAction=null,editingClipPresetId=null,generatedClipUrls=[],currentGameFileHandle=null,currentGameFileName=null,currentTagFileHandle=null,currentTagFileName=null,seasonGames=[],seasonName="Saison 2026/27",seasonPreferredTeam="",seasonCompareMode="absolute",seasonPlayerAliases={},seasonLastEditedGameId="",activeSeasonGameId=null,seasonLibraryId=null,seasonLibraryRecords=[],seasonWriteQueue=Promise.resolve(),seasonPublishedSource=null,seasonInitialImportSource=null,seasonRefreshDraft=null,seasonRefreshBusy=false;,seasonCloudConfig=null;
   let gameRunning=false, gameBase=0, gameStarted=0;
   let videoRunning=false, videoBase=0, videoStarted=0;
   let liveClockRunning=false,liveClockBase=0,liveClockStarted=0,liveClockInitialized=false;
@@ -4529,17 +4529,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     seasonRefreshDraft=null;
     $("seasonRefreshStatus").textContent="";
   });
-  $("seasonRefreshInput").onchange=async event=>{
-    const file=event.target.files?.[0];
-    event.target.value="";
-    if(!file||seasonRefreshBusy)return;
-    seasonRefreshBusy=true;
-    try{
-      if(!seasonLibraryId||!seasonGames.length)
-        throw Error("Keine bestehende Saison für die Aktualisierung ausgewählt.");
-      // Persist currently edited events before computing the local overlay.
-      persistSession();
-      const raw=JSON.parse(await file.text());
+  function openSeasonRefreshPreview(raw,label,cloudMeta=null){
+    if(!seasonLibraryId||!seasonGames.length)
+      throw Error("Keine bestehende Saison für die Aktualisierung ausgewählt.");
+    persistSession();
       const normalized=normalizeSeasonArchive(raw,seasonPreferredTeam||seasonCurrentOwnName());
       const incoming={...normalized,
         name:normalized.name,
@@ -4551,9 +4544,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const existing={name:seasonName,preferredTeam:seasonPreferredTeam,games:seasonGames};
       const prepared=prepareSeasonRefresh(existing,incoming,seasonPublishedSource||seasonInitialImportSource);
       const fingerprint=JSON.stringify({id:seasonLibraryId,preferredTeam:seasonPreferredTeam,games:seasonGames});
-      seasonRefreshDraft={...prepared,libraryId:seasonLibraryId,fingerprint,fileName:file.name};
+      seasonRefreshDraft={...prepared,libraryId:seasonLibraryId,fingerprint,fileName:label,
+        cloudMeta};
       $("seasonRefreshIdentity").textContent=seasonName+
-        " · Datei: "+file.name+" · "+prepared.shared+" gemeinsame Spiele";
+        " · Datei: "+label+" · "+prepared.shared+" gemeinsame Spiele";
       const metrics=[
         ["Neue Spiele",prepared.summary.newGames],
         ["Aktualisierte Spiele",prepared.summary.updatedGames],
@@ -4576,9 +4570,15 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       $("seasonRefreshStatus").textContent="Noch nichts geändert. Erst nach Bestätigung wird die ausgewählte Saison aktualisiert.";
       $("seasonRefreshConfirm").disabled=false;
       $("seasonRefreshDialog").showModal();
-    }catch(error){
-      toast("Aktualisierung nicht gestartet: "+(error?.message||String(error)));
-    }finally{seasonRefreshBusy=false}
+  }
+  $("seasonRefreshInput").onchange=async event=>{
+    const file=event.target.files?.[0];event.target.value="";
+    if(!file||seasonRefreshBusy)return;
+    seasonRefreshBusy=true;
+    try{
+      openSeasonRefreshPreview(JSON.parse(await file.text()),file.name);
+    }catch(error){toast("Aktualisierung nicht gestartet: "+(error?.message||String(error)))}
+    finally{seasonRefreshBusy=false}
   };
   $("seasonRefreshConfirm").onclick=async()=>{
     const draft=seasonRefreshDraft;
@@ -4613,11 +4613,23 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const publisher={id:"source-"+id,source:draft.source,updatedAt:now};
       // One atomic IndexedDB transaction: either publisher source, local
       // merged season, mirror and rollback exist together or none change.
+      const records=[rollback,updated,mirror,publisher];
+      if(draft.cloudMeta){
+        const connection={...draft.cloudMeta.connection,
+          revision:draft.cloudMeta.revision,
+          sha256:draft.cloudMeta.sha256,
+          lastPublishedAt:draft.cloudMeta.publishedAt||null};
+        records.push({id:"sync-"+id,connection,updatedAt:now});
+      }
       seasonWriteQueue=seasonWriteQueue.then(()=>writeInternalRecords(
-        INTERNAL_SEASON_STORE,[rollback,updated,mirror,publisher]));
+        INTERNAL_SEASON_STORE,records));
       await seasonWriteQueue;
       seasonGames=structuredClone(draft.games);
       seasonPublishedSource=structuredClone(draft.source);
+      if(draft.cloudMeta)seasonCloudConfig={
+        ...draft.cloudMeta.connection,revision:draft.cloudMeta.revision,
+        sha256:draft.cloudMeta.sha256,
+        lastPublishedAt:draft.cloudMeta.publishedAt||null};
       seasonPreferredTeam=nextSnapshot.preferredTeam;
       if(activeSeasonGameId){
         // The previously open working copy is stale after this update.
@@ -5167,6 +5179,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     seasonLibraryId=id;localStorage.setItem(seasonLibraryPointer,id);
     seasonPublishedSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"source-"+id))?.source||null;
     seasonInitialImportSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"seed-"+id))?.source||null;
+    seasonCloudConfig=(await readInternalRecord(INTERNAL_SEASON_STORE,"sync-"+id))?.connection||null;
+    renderSeasonCloudStatus();
     analysisSelectedGameId="";
     applySeasonObject(record,{save:false});
     await storeInternalSeason();
@@ -5177,7 +5191,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(seasonLibraryId)await storeInternalSeason();
     activeSeasonGameId=null;persistSession();
     seasonLibraryId=freshSeasonLibraryId();
-    seasonPublishedSource=null;seasonInitialImportSource=null;
+    seasonPublishedSource=null;seasonInitialImportSource=null;seasonCloudConfig=null;
+    renderSeasonCloudStatus();
     localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
     seasonName=String(name||"Neue Saison").trim()||"Neue Saison";
     seasonGames=[];seasonPreferredTeam="";seasonArchiveTeam="";seasonPlayerAliases={};seasonLastEditedGameId="";
@@ -5324,6 +5339,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       }
       seasonPublishedSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"source-"+seasonLibraryId))?.source||null;
       seasonInitialImportSource=(await readInternalRecord(INTERNAL_SEASON_STORE,"seed-"+seasonLibraryId))?.source||null;
+      seasonCloudConfig=(await readInternalRecord(INTERNAL_SEASON_STORE,"sync-"+seasonLibraryId))?.connection||null;
+      renderSeasonCloudStatus();
       renderSeason();
       localStorage.setItem(seasonLibraryPointer,seasonLibraryId);
       await storeInternalSeason();
