@@ -1,6 +1,7 @@
 // Private season distribution. All writes require the trainer-only token.
 // Reader capabilities never grant write access or upload personal notes.
 import {createHash,randomBytes,randomUUID,timingSafeEqual} from "node:crypto";
+import {handleTeamSpace} from "./team-space-api.js";
 const MAX_BYTES=25*1024*1024;
 const VALID_ID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const GAME_ID=/^sg-[a-z0-9_-]{1,80}$/i;
@@ -90,6 +91,8 @@ export function createSeasonSyncHandler({store,adminToken,allowedOrigins=[],
       }
       const url=new URL(req.url||"/","http://localhost");
       if(url.pathname==="/health"&&req.method==="GET")return send(res,200,{status:"ok"});
+      if(await handleTeamSpace(req,res,url,{store,adminToken,now,idFactory,readerFactory,
+        trainer,reader,send,err,bodyJson,sha}))return;
       if(url.pathname==="/seasons"&&req.method==="POST"){
         trainer(req,adminToken);
         const seasonId=idFactory(),readToken=readerFactory();
