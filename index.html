@@ -5423,6 +5423,484 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("homeGameSearch").oninput=homeRenderSeasonDashboard;
 
 
+
+  // Team Space records are kept apart from season/game JSON archives. A
+  // player's capabilities are read-only, and local source snapshots exist
+  // solely to preserve personal annotations during later publications.
+  const teamSpaces=new Map(),teamSpaceLinks=new Map();
+  let teamSpaceSelectedId="",teamSpaceCatalogData=null,teamStandaloneGames=[],
+    teamSpaceBusy=false,teamStandaloneActiveId=null;
+  const teamLinkId=id=>"teamspace-link-"+id;
+  const teamSeasonLinkId=(spaceId,seasonId)=>"teamspace-season-link-"+spaceId+"-"+seasonId;
+  const teamGameLinkId=(spaceId,gameId)=>"teamspace-game-link-"+spaceId+"-"+gameId;
+  const teamSingleId=(spaceId,gameId)=>"teamspace-localgame-"+spaceId+"-"+gameId;
+  const teamActiveConnection=()=>teamSpaces.get(teamSpaceSelectedId);
+  function teamStatus(message){$("teamSpaceStatus").textContent=message;}
+  async function teamSpaceRestore(){
+    const records=await listInternalRecords(INTERNAL_SEASON_STORE);
+    teamSpaces.clear();teamSpaceLinks.clear();
+    for(const record of records){
+      const id=String(record.id||"");
+      if(id.startsWith("teamspace-link-")&&record.connection)
+        teamSpaces.set(record.connection.spaceId,record.connection);
+      else if(id.startsWith("teamspace-season-link-")||
+        id.startsWith("teamspace-game-link-"))
+        teamSpaceLinks.set(id,record);
+    }
+    const singles=await listInternalRecords(INTERNAL_GAME_STORE);
+    teamStandaloneGames=singles.filter(row=>
+      String(row.id||"").startsWith("teamspace-localgame-"));
+    if(!teamSpaces.has(teamSpaceSelectedId))
+      teamSpaceSelectedId=localStorage.getItem("handballSpielanalyse.teamSpace")||"";
+    if(!teamSpaces.has(teamSpaceSelectedId))
+      teamSpaceSelectedId=teamSpaces.keys().next().value||"";
+  }
+  function teamSpaceLocalSeason(remoteId){
+    const link=teamSpaceLinks.get(teamSeasonLinkId(teamSpaceSelectedId,remoteId));
+    return link&&homeSeasonRecords().some(row=>row.id===link.localSeasonId)?link:null;
+  }
+  function teamSpaceLocalGame(game){
+    const single=teamStandaloneGames.find(row=>row.id===teamSingleId(teamSpaceSelectedId,game.id));
+    if(single)return {mode:"single",revision:single.revision||0,record:single};
+    const link=teamSpaceLinks.get(teamGameLinkId(teamSpaceSelectedId,game.id));
+    if(link&&homeSeasonRecords().some(s=>s.id===link.localSeasonId))
+      return {mode:"season",revision:link.revision||0,link};
+    for(const season of teamSpaceCatalogData?.seasons||[]){
+      if(!season.gameIds.includes(game.id))continue;
+      const seasonLink=teamSpaceLocalSeason(season.id);
+      if(!seasonLink)continue;
+      const local=homeSeasonRecords().find(row=>row.id===seasonLink.localSeasonId);
+      if(!local?.games.some(item=>item.id===game.id))continue;
+      return {mode:"season",revision:seasonLink.gameRevisions?.[game.id]||0,
+        link:{localSeasonId:seasonLink.localSeasonId,localGameId:game.id}};
+    }
+    return null;
+  }
+  function teamSpaceCurrentCatalogGameRevisions(remoteSeason){
+    const result={};
+    for(const gameId of remoteSeason.gameIds){
+      const game=teamSpaceCatalogData?.games.find(item=>item.id===gameId);
+      if(game)result[gameId]=game.revision;
+    }
+    return result;
+  }
+  function teamSpaceRenderControls(){
+    const select=$("teamSpaceSelect"),before=teamSpaceSelectedId;
+    select.replaceChildren();
+    select.add(new Option("Team Space auswählen",""));
+    for(const connection of teamSpaces.values())
+      select.add(new Option(connection.name||"Team Space",connection.spaceId));
+    select.value=teamSpaces.has(before)?before:"";
+    const connection=teamActiveConnection();
+    $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
+    $("teamSpacePublish").hidden=connection?.role!=="trainer";
+    $("teamSpaceRotateReader").hidden=connection?.role!=="trainer";
+    $("teamSpaceCopyInvite").disabled=connection?.role!=="trainer";
+    $("teamSpaceInviteLink").value=connection?.role==="trainer"
+      ?makeTeamSpaceInvite(location.origin+location.pathname,connection):"";
+    if(connection?.api&&!$("teamSpaceApi").value)
+      $("teamSpaceApi").value=connection.api;
+    if(connection?.name&&!$("teamSpaceName").value)
+      $("teamSpaceName").value=connection.name;
+    const target=$("teamSpaceTargetSeason"),last=target.value;
+    target.replaceChildren();
+    target.add(new Option("Als eigenständiges Einzelspiel",""));
+    for(const season of homeSeasonRecords())
+      target.add(new Option(season.name,season.id));
+    target.value=[...target.options].some(option=>option.value===last)?last:"";
+    const chooser=$("teamSpacePublishSeason"),lastSeason=chooser.value;
+    chooser.replaceChildren();
+    for(const season of homeSeasonRecords())
+      if(season.games.length)chooser.add(new Option(season.name,season.id));
+    if([...chooser.options].some(opt=>opt.value===lastSeason))chooser.value=lastSeason;
+    const games=$("teamSpacePublishGame"),lastGame=games.value;
+    games.replaceChildren();
+    if(homeHasSession&&!activeSeasonGameId)
+      games.add(new Option("Aktuelles Einzelspiel: "+state.gameName,"current"));
+    for(const single of teamStandaloneGames)
+      games.add(new Option(single.gameName||single.fileName,single.id));
+    for(const season of homeSeasonRecords())
+      for(const game of season.games)
+        games.add(new Option(season.name+" · "+homeGameTitle(game),
+          season.id+"|"+game.id));
+    if([...games.options].some(opt=>opt.value===lastGame))games.value=lastGame;
+    const remote=$("teamSpacePublishTargetSeason"),lastRemote=remote.value;
+    remote.replaceChildren();remote.add(new Option("Ohne Saisonzuordnung",""));
+    for(const season of teamSpaceCatalogData?.seasons||[])
+      remote.add(new Option(season.name,season.id));
+    if([...remote.options].some(opt=>opt.value===lastRemote))remote.value=lastRemote;
+  }
+  function teamSpaceRenderCatalog(){
+    teamSpaceRenderControls();
+    const catalog=teamSpaceCatalogData,seasonHost=$("teamSpaceSeasons"),
+      gameHost=$("teamSpaceGames");
+    seasonHost.replaceChildren();gameHost.replaceChildren();
+    if(!catalog)return;
+    for(const season of catalog.seasons){
+      const local=teamSpaceLocalSeason(season.id);
+      const outdated=local&&Number(local.revision)<season.revision;
+      const status=local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
+      const actions=[{title:outdated?"Aktualisieren":local?"Öffnen":"Importieren",
+        primary:true,action:async()=>{
+          if(local&&!outdated){
+            if(local.localSeasonId!==seasonLibraryId)await switchSeasonLibrary(local.localSeasonId);
+            homeShow("dashboard","season");
+          }else await teamSpaceImportSeason(season);
+        }}];
+      seasonHost.append(homeRow(season.name,status+" · "+season.gameCount+
+        " Spiele · Version "+season.revision,actions,"season"));
+    }
+    if(!catalog.seasons.length)
+      seasonHost.textContent="Noch keine Saison veröffentlicht.";
+    for(const game of catalog.games){
+      const local=teamSpaceLocalGame(game),outdated=local&&local.revision<game.revision;
+      const status=local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
+      const actions=[{title:outdated?"Aktualisieren":local?"Öffnen":"Importieren",
+        primary:true,action:()=>teamSpaceImportGame(game)}];
+      if(!local&&homeSeasonRecords().length)
+        actions.push({title:"Zur Saison",action:()=>teamSpaceImportGame(game,true)});
+      gameHost.append(homeRow(game.name,
+        [game.date,status,"Version "+game.revision,
+          game.seasonIds.length?"Saisonspiel":"Einzelspiel"].filter(Boolean).join(" · "),
+        actions,"game"));
+    }
+    if(!catalog.games.length)gameHost.textContent="Noch keine Spiele veröffentlicht.";
+  }
+  async function teamSpaceRefreshCatalog(){
+    const connection=teamActiveConnection();
+    if(!connection){teamSpaceCatalogData=null;teamSpaceRenderControls();return;}
+    const id=connection.spaceId;
+    teamStatus("Team-Space-Katalog wird abgerufen …");
+    try{
+      const catalog=await teamSpaceCatalog(connection);
+      if(teamSpaceSelectedId!==id)return;
+      teamSpaceCatalogData=catalog;
+      teamSpaceRenderCatalog();
+      const updates=catalog.seasons.filter(s=>{
+        const link=teamSpaceLocalSeason(s.id);
+        return link&&link.revision<s.revision;
+      }).length+catalog.games.filter(g=>{
+        const link=teamSpaceLocalGame(g);
+        return link&&link.revision<g.revision;
+      }).length;
+      teamStatus(catalog.name+" · "+catalog.seasons.length+" Saisons · "+
+        catalog.games.length+" Spiele"+(updates?" · "+updates+" Updates verfügbar":" · Stand aktuell"));
+    }catch(error){
+      teamSpaceCatalogData=null;teamSpaceRenderControls();
+      teamStatus("Team Space nicht erreichbar: "+error.message);
+    }
+  }
+  async function teamSpaceOpen(){
+    try{
+      await teamSpaceRestore();
+      if(homeView!=="teamspace")return;
+      teamSpaceRenderControls();
+      await teamSpaceRefreshCatalog();
+    }catch(error){teamStatus("Team Space kann nicht geöffnet werden: "+error.message)}
+  }
+  async function saveTeamSpaceConnection(connection){
+    await writeInternalRecord(INTERNAL_SEASON_STORE,{
+      id:teamLinkId(connection.spaceId),connection,
+      updatedAt:new Date().toISOString()
+    });
+    teamSpaces.set(connection.spaceId,connection);
+    teamSpaceSelectedId=connection.spaceId;
+    localStorage.setItem("handballSpielanalyse.teamSpace",connection.spaceId);
+    teamSpaceCatalogData=null;
+    teamSpaceRenderControls();
+  }
+  async function teamSpaceJoin(connection){
+    const current=teamSpaces.get(connection.spaceId);
+    const joined=current?.role==="trainer"?current:{
+      ...connection,name:current?.name||"Team Space",role:"reader"
+    };
+    const catalog=await teamSpaceCatalog(joined);
+    joined.name=catalog.name;
+    await saveTeamSpaceConnection(joined);
+    homeShow("teamspace","teamspace");
+  }
+  async function teamSpaceImportSeason(season){
+    if(teamSpaceBusy)return;
+    teamSpaceBusy=true;
+    try{
+      const connection=teamActiveConnection();
+      if(!connection)throw Error("Team Space nicht verbunden.");
+      const response=await downloadTeamSpaceSeason(connection,season.id);
+      if(response.revision!==season.revision)
+        throw Error("Die Saison wurde während des Downloads geändert. Bitte erneut prüfen.");
+      const archive=response.data;
+      const parsed=normalizeSeasonArchive(archive,archive.preferredTeam||"");
+      const source={...parsed,createdAt:archive.createdAt||null,
+        preferredTeam:archive.preferredTeam||"",
+        archiveTeam:archive.archiveTeam||"",playerAliases:archive.playerAliases||{},
+        lastEditedGameId:archive.lastEditedGameId||""};
+      let local=teamSpaceLocalSeason(season.id);
+      if(!local){
+        const ids=new Set(parsed.games.map(g=>g.id));
+        const matches=homeSeasonRecords().filter(s=>s.games.some(g=>ids.has(g.id)));
+        if(matches.length===1&&confirm("Die Saison „"+matches[0].name+
+          "“ enthält bereits Spiele dieser Veröffentlichung.\n\n"+
+          "Soll der Team Space diese vorhandene Saison aktualisieren statt ein Duplikat anzulegen?"))
+          local={localSeasonId:matches[0].id};
+        else if(matches.length>1)
+          throw Error("Mehrere lokale Saisons enthalten diese Spiele. Bitte erst eine Saison eindeutig auswählen.");
+      }
+      const meta={spaceId:connection.spaceId,seasonId:season.id,
+        revision:response.revision,gameRevisions:teamSpaceCurrentCatalogGameRevisions(season)};
+      if(local){
+        if(local.localSeasonId!==seasonLibraryId)
+          await switchSeasonLibrary(local.localSeasonId);
+        openSeasonRefreshPreview(archive,"Team Space · "+season.name,null,meta);
+        teamStatus("Vorschau geöffnet. Bitte die Übernahme der Aktualisierung bestätigen.");
+      }else{
+        if(!confirm("Saison „"+season.name+"“ mit "+parsed.games.length+
+          " Spielen lokal hinzufügen?\n\nBestehende Saisons bleiben erhalten."))return;
+        await activateNewSeason({...archive,...parsed},parsed.name);
+        const now=new Date().toISOString();
+        await writeInternalRecords(INTERNAL_SEASON_STORE,[
+          {id:"source-"+seasonLibraryId,source,updatedAt:now},
+          {id:teamSeasonLinkId(connection.spaceId,season.id),
+            localSeasonId:seasonLibraryId,revision:response.revision,
+            gameRevisions:meta.gameRevisions,updatedAt:now}
+        ]);
+        seasonPublishedSource=source;
+        teamSpaceLinks.set(teamSeasonLinkId(connection.spaceId,season.id),{
+          id:teamSeasonLinkId(connection.spaceId,season.id),
+          localSeasonId:seasonLibraryId,revision:response.revision,
+          gameRevisions:meta.gameRevisions});
+        homeShow("dashboard","season");
+        toast("Saison importiert. Spätere Updates ändern denselben lokalen Eintrag.");
+      }
+    }catch(error){teamStatus("Saison nicht übernommen: "+error.message)}
+    finally{teamSpaceBusy=false}
+  }
+  function teamSpaceExistingSeasonGame(remoteGame){
+    const match=remoteGame.matchId;
+    const hits=[];
+    for(const entry of homeSeasonRecords())
+      for(const game of entry.games)
+        if(game.id===remoteGame.id||
+          (match&&String(game.state?.officialSource?.matchId||"")===match))
+          hits.push({seasonId:entry.id,gameId:game.id});
+    return hits.length===1?hits[0]:hits.length>1?{ambiguous:true}:null;
+  }
+  async function teamSpaceImportGame(game,forceSeason=false){
+    if(teamSpaceBusy)return;
+    teamSpaceBusy=true;
+    try{
+      const connection=teamActiveConnection();
+      if(!connection)throw Error("Team Space nicht verbunden.");
+      const link=teamSpaceLocalGame(game),outdated=link&&link.revision<game.revision;
+      if(link&&!outdated){
+        if(link.mode==="single"){
+          const record=await readInternalRecord(INTERNAL_GAME_STORE,link.record.id);
+          if(!record)throw Error("Lokales Spiel fehlt.");
+          applyLoadedGameText(record.text,false,record.fileName);
+          teamStandaloneActiveId=record.id;
+          persistSession();
+        }else await homeOpenSeasonGame(link.link.localSeasonId,
+          link.link.localGameId,true);
+        return;
+      }
+      const release=await downloadTeamSpaceGame(connection,game.id);
+      if(release.revision!==game.revision||release.sha256!==game.sha256)
+        throw Error("Das Spiel wurde inzwischen geändert. Bitte erneut prüfen.");
+      const existing=teamSpaceExistingSeasonGame(game);
+      if(existing?.ambiguous)
+        throw Error("Dieses Spiel kommt in mehreren lokalen Saisons vor. Bitte Duplikate zunächst klären.");
+      const localSeason=link?.mode==="season"
+        ?{seasonId:link.link.localSeasonId,gameId:link.link.localGameId}
+        :existing?existing:null;
+      const target=localSeason?.seasonId||
+        ((forceSeason||$("teamSpaceTargetSeason").value)
+          ?($("teamSpaceTargetSeason").value||seasonLibraryId):null);
+      if(target){
+        if(target!==seasonLibraryId)await switchSeasonLibrary(target);
+        persistSession();
+        const fileName=game.id+".json";
+        const incoming=normalizeSeasonGame(release.data,fileName,seasonPreferredTeam||"");
+        incoming.id=game.id;
+        const index=seasonGames.findIndex(g=>g.id===incoming.id||
+          (game.matchId&&g.state?.officialSource?.matchId===game.matchId));
+        let imported=incoming;
+        if(index>=0){
+          const previous=seasonGames[index];
+          const baseline=teamSpaceLinks.get(teamGameLinkId(connection.spaceId,game.id))?.source||
+            seasonPublishedSource?.games.find(g=>g.id===previous.id)||null;
+          const merged=preparePublishedGameRefresh(previous,incoming,baseline);
+          imported=merged.game;
+        }
+        if(!confirm((index>=0?"Bestehendes Spiel aktualisieren?":"Neues Spiel zu „"+seasonName+"“ hinzufügen?")+
+          "\n\n"+game.name+"\nPersönliche Kommentare und Zeichnungen bleiben erhalten."))return;
+        const now=new Date().toISOString();
+        clearTimeout(seasonPersistTimer);
+        await seasonWriteQueue;
+        const before=seasonSnapshot();
+        const next=seasonGames.map(g=>structuredClone(g));
+        if(index>=0)next[index]=imported;
+        else next.push(imported);
+        const source=seasonPublishedSource?structuredClone(seasonPublishedSource):
+          {...before,games:[]};
+        const sourceIndex=source.games.findIndex(g=>g.id===imported.id);
+        if(sourceIndex>=0)source.games[sourceIndex]=incoming;
+        else source.games.push(incoming);
+        source.createdAt=now;
+        const snapshot={...buildSeasonRecord({name:seasonName,games:next}),
+          preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,
+          playerAliases:seasonPlayerAliases,lastEditedGameId:seasonLastEditedGameId};
+        const record={...snapshot,id:seasonLibraryId,updatedAt:now};
+        const map={id:teamGameLinkId(connection.spaceId,game.id),
+          localSeasonId:seasonLibraryId,localGameId:imported.id,
+          revision:release.revision,source:incoming,updatedAt:now};
+        await writeInternalRecords(INTERNAL_SEASON_STORE,[
+          {...before,id:"backup-"+seasonLibraryId,updatedAt:now},
+          record,{...snapshot,id:INTERNAL_SEASON_KEY,updatedAt:now},
+          {id:"source-"+seasonLibraryId,source,updatedAt:now},map
+        ]);
+        teamSpaceLinks.set(map.id,map);
+        seasonPublishedSource=source;seasonGames=next;
+        if(activeSeasonGameId){
+          activeSeasonGameId=null;
+          persistSession();
+        }
+        updateSeasonLibraryCache(record);renderSeason();
+        toast("Spiel in bestehender Saison aktualisiert.");
+      }else{
+        const key=teamSingleId(connection.spaceId,game.id);
+        const old=await readInternalRecord(INTERNAL_GAME_STORE,key);
+        let data=release.data;
+        if(old){
+          const previous=normalizeSeasonGame(JSON.parse(old.text),old.fileName);
+          previous.id=game.id;
+          const incoming=normalizeSeasonGame(release.data,old.fileName);
+          incoming.id=game.id;
+          const base=old.source?normalizeSeasonGame(old.source,old.fileName):null;
+          const merged=preparePublishedGameRefresh(previous,incoming,base);
+          data=merged.game.state;
+        }
+        if(!confirm((old?"Einzelspiel aktualisieren?":"Einzelspiel lokal hinzufügen?")+
+          "\n\n"+game.name+"\nLokale Kommentare bleiben erhalten."))return;
+        const record={...old,id:key,spaceId:connection.spaceId,remoteGameId:game.id,
+          fileName:old?.fileName||game.id+".json",gameName:game.name,
+          text:JSON.stringify(data),source:release.data,revision:release.revision,
+          sha256:release.sha256,savedAt:new Date().toISOString()};
+        const records=[record];
+        if(old)records.push({...old,id:"backup-"+key});
+        await writeInternalRecords(INTERNAL_GAME_STORE,records);
+        teamStandaloneGames=teamStandaloneGames.filter(item=>item.id!==key);
+        teamStandaloneGames.push(record);
+        if(teamStandaloneActiveId===key){
+          applyLoadedGameText(record.text,false,record.fileName);
+          teamStandaloneActiveId=key;persistSession();
+        }
+        toast(old?"Einzelspiel aktualisiert.":"Einzelspiel lokal hinzugefügt.");
+      }
+      teamSpaceRenderCatalog();
+    }catch(error){teamStatus("Spiel nicht übernommen: "+error.message)}
+    finally{teamSpaceBusy=false}
+  }
+  async function teamSpacePublish(type){
+    if(teamSpaceBusy)return;teamSpaceBusy=true;
+    try{
+      const connection=teamActiveConnection(),secret=$("teamSpaceAdminToken").value.trim();
+      if(connection?.role!=="trainer")throw Error("Nur Trainer können veröffentlichen.");
+      if(!secret)throw Error("Trainer-Schlüssel fehlt.");
+      // Always refresh catalog before a write. A concurrent publication is
+      // rejected by the server's expectedRevision precondition.
+      const catalog=await teamSpaceCatalog(connection);
+      let result;
+      if(type==="season"){
+        const localId=$("teamSpacePublishSeason").value;
+        if(!localId)throw Error("Bitte lokale Saison auswählen.");
+        if(localId!==seasonLibraryId)await switchSeasonLibrary(localId);
+        persistSession();
+        const archive=seasonExportObject({includePersonal:true});
+        if(!confirm("Saison „"+archive.name+"“ mit "+archive.games.length+
+          " Spielen für alle Mitglieder dieses Team Space veröffentlichen?"))return;
+        const old=[...teamSpaceLinks.values()].find(row=>row.id?.startsWith(
+          teamSeasonLinkId(connection.spaceId,""))&&row.localSeasonId===localId);
+        result=await publishTeamSpaceSeason(connection,archive,secret,catalog.revision,old?.id?.slice(
+          teamSeasonLinkId(connection.spaceId,"").length)||null);
+        const link={id:teamSeasonLinkId(connection.spaceId,result.seasonId),
+          localSeasonId:localId,revision:result.itemRevision,gameRevisions:{},
+          updatedAt:new Date().toISOString()};
+        await writeInternalRecord(INTERNAL_SEASON_STORE,link);teamSpaceLinks.set(link.id,link);
+      }else{
+        const selected=$("teamSpacePublishGame").value;
+        if(!selected)throw Error("Bitte ein Einzelspiel auswählen.");
+        let game=null,gameId=null,fileName="Spiel.json";
+        if(selected==="current"){
+          if(activeSeasonGameId)throw Error("Aktuelles Spiel gehört zu einer Saison.");
+          game=structuredClone(state);fileName=currentGameFileName||fileName;
+        }else if(selected.startsWith("teamspace-localgame-")){
+          const record=await readInternalRecord(INTERNAL_GAME_STORE,selected);
+          if(!record)throw Error("Spiel nicht gefunden.");
+          game=JSON.parse(record.text);gameId=record.remoteGameId;fileName=record.fileName;
+        }else{
+          const [localSeason,localGame]=selected.split("|");
+          const entry=homeSeasonRecords().find(s=>s.id===localSeason);
+          const item=entry?.games.find(g=>g.id===localGame);
+          if(!item)throw Error("Spiel nicht gefunden.");
+          game=structuredClone(item.state);gameId=item.id;fileName=item.fileName;
+        }
+        const assigned=$("teamSpacePublishTargetSeason").value||null;
+        if(!confirm("Spiel „"+game.gameName+
+          "“ im Team Space veröffentlichen?"))return;
+        result=await publishTeamSpaceGame(connection,game,secret,catalog.revision,{
+          gameId,seasonId:assigned,fileName});
+      }
+      toast("Team Space aktualisiert. Version "+result.revision+" veröffentlicht.");
+      await teamSpaceRefreshCatalog();
+    }catch(error){teamStatus("Veröffentlichung fehlgeschlagen: "+error.message)}
+    finally{teamSpaceBusy=false}
+  }
+  $("teamSpaceSelect").onchange=event=>{
+    teamSpaceSelectedId=event.target.value;
+    localStorage.setItem("handballSpielanalyse.teamSpace",teamSpaceSelectedId);
+    teamSpaceCatalogData=null;teamSpaceRenderControls();
+    void teamSpaceRefreshCatalog();
+  };
+  $("teamSpaceRefresh").onclick=()=>void teamSpaceOpen();
+  $("teamSpaceJoin").onclick=async()=>{
+    try{
+      const raw=$("teamSpaceJoinInput").value.trim();
+      const invite=parseTeamSpaceInvite(raw.startsWith("#")?raw:new URL(raw).hash);
+      if(!invite)throw Error("Bitte gültigen Team-Space-Einladungslink einfügen.");
+      await teamSpaceJoin(invite);
+      $("teamSpaceJoinInput").value="";
+    }catch(error){teamStatus("Einladung fehlgeschlagen: "+error.message)}
+  };
+  $("teamSpaceCreate").onclick=async()=>{
+    try{
+      const name=$("teamSpaceName").value.trim();
+      const connection=await createTeamSpace($("teamSpaceApi").value,
+        name,$("teamSpaceAdminToken").value.trim());
+      await saveTeamSpaceConnection(connection);
+      await teamSpaceRefreshCatalog();
+      toast("Team Space angelegt. Einladungslink an die Mannschaft senden.");
+    }catch(error){teamStatus("Team Space konnte nicht erstellt werden: "+error.message)}
+  };
+  $("teamSpaceCopyInvite").onclick=async()=>{
+    const link=$("teamSpaceInviteLink").value;
+    if(!link)return;
+    try{await navigator.clipboard.writeText(link);toast("Team-Space-Leselink kopiert. Nur an die Mannschaft weitergeben.")}
+    catch{$("teamSpaceInviteLink").select();toast("Link markiert; bitte kopieren.")}
+  };
+  $("teamSpaceRotateReader").onclick=async()=>{
+    const connection=teamActiveConnection();
+    if(connection?.role!=="trainer")return;
+    if(!confirm("Bisherige Team-Space-Einladungen widerrufen?\n\nNeue Leselinks müssen erneut an die Mannschaft verteilt werden."))return;
+    try{
+      const next=await rotateTeamSpaceReadToken(connection,
+        $("teamSpaceAdminToken").value.trim());
+      await saveTeamSpaceConnection(next);
+      await teamSpaceRefreshCatalog();
+      toast("Leseschlüssel wurde erneuert.");
+    }catch(error){teamStatus("Leseschlüssel nicht erneuert: "+error.message)}
+  };
+  $("teamSpacePublishSeasonBtn").onclick=()=>void teamSpacePublish("season");
+  $("teamSpacePublishGameBtn").onclick=()=>void teamSpacePublish("game");
+
   let internalAutosaveTimer=null;
   async function readInternalGame(){try{return await readInternalRecord(INTERNAL_GAME_STORE,INTERNAL_GAME_KEY)}catch{return null}}
   async function storeInternalGame(text,fileName=defaultGameFileName()){const record=buildInternalGameRecord({text,fileName,gameName:state.gameName||"Handball-Spiel"});return writeInternalRecord(INTERNAL_GAME_STORE,record)}
