@@ -137,6 +137,7 @@ export function buildHandball360SeasonGame(raw, matchId, teamId, scheduleMatch =
     format: "handball-spielanalyse", version: 1,
     gameName: dateLabel + x.teams.home + " - " + x.teams.away,
     gameDate: x.matchDate || null,
+    gameTimeOfDay: handball360Kickoff(x.matchDate)?.time || "",
     competition: x.competition || "",
     ownTeam, analysisPerspective: ownTeam,
     home: { name: x.teams.home, players: x.homePlayers },
