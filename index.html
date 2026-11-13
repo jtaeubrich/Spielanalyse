@@ -5862,14 +5862,22 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           teamSeasonLinkId(connection.spaceId,""))&&row.localSeasonId===localId);
         result=await publishTeamSpaceSeason(connection,archive,secret,catalog.revision,old?.id?.slice(
           teamSeasonLinkId(connection.spaceId,"").length)||null);
+        const refreshed=await teamSpaceCatalog(connection);
+        const remote=refreshed.seasons.find(s=>s.id===result.seasonId);
+        const versions={};
+        for(const gameId of remote?.gameIds||[]){
+          const published=refreshed.games.find(g=>g.id===gameId);
+          if(published)versions[gameId]=published.revision;
+        }
         const link={id:teamSeasonLinkId(connection.spaceId,result.seasonId),
-          localSeasonId:localId,revision:result.itemRevision,gameRevisions:{},
+          localSeasonId:localId,revision:result.itemRevision,gameRevisions:versions,
           updatedAt:new Date().toISOString()};
         await writeInternalRecord(INTERNAL_SEASON_STORE,link);teamSpaceLinks.set(link.id,link);
       }else{
         const selected=$("teamSpacePublishGame").value;
         if(!selected)throw Error("Bitte ein Einzelspiel auswählen.");
-        let game=null,gameId=null,fileName="Spiel.json";
+        let game=null,gameId=null,fileName="Spiel.json",
+          localSourceSeasonId=null,localSourceGameId=null;
         if(selected==="current"){
           if(activeSeasonGameId)throw Error("Aktuelles Spiel gehört zu einer Saison.");
           game=structuredClone(state);fileName=currentGameFileName||fileName;
@@ -5884,12 +5892,23 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           const item=entry?.games.find(g=>g.id===localGame);
           if(!item)throw Error("Spiel nicht gefunden.");
           game=structuredClone(item.state);gameId=item.id;fileName=item.fileName;
+          localSourceSeasonId=localSeason;localSourceGameId=item.id;
         }
         const assigned=$("teamSpacePublishTargetSeason").value||null;
         if(!confirm("Spiel „"+game.gameName+
           "“ im Team Space veröffentlichen?"))return;
         result=await publishTeamSpaceGame(connection,game,secret,catalog.revision,{
           gameId,seasonId:assigned,fileName});
+        if(localSourceSeasonId){
+          const now=new Date().toISOString();
+          const source=coreNormalizeSeasonGame(game,fileName);
+          source.id=localSourceGameId;
+          const link={id:teamGameLinkId(connection.spaceId,result.gameId),
+            localSeasonId:localSourceSeasonId,localGameId:localSourceGameId,
+            revision:result.itemRevision,source,updatedAt:now};
+          await writeInternalRecord(INTERNAL_SEASON_STORE,link);
+          teamSpaceLinks.set(link.id,link);
+        }
       }
       toast("Team Space aktualisiert. Version "+result.revision+" veröffentlicht.");
       await teamSpaceRefreshCatalog();
