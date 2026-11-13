@@ -1,5 +1,6 @@
 import { hbPrepare } from "./handball360.js";
 import { normalizeSeasonGame } from "./season-files.js";
+import { handball360Kickoff } from "./handball360-kickoff.js";
 
 export function parseHandball360TeamId(input) {
   const value = String(input ?? "").trim();
@@ -48,30 +49,16 @@ export function seasonMatchUrl(game) {
 
 // Synchronise fixture metadata only. Player lists, goalkeeper flags, events,
 // comments, videos and manual preparation fields are not re-imported.
-function berlinKickoff(value) {
-  const raw=String(value||"");
-  if(!/^\d{4}-\d{2}-\d{2}/.test(raw))return null;
-  if(!raw.includes("T"))return {date:raw.slice(0,10),time:""};
-  const timestamp=new Date(raw);
-  if(!Number.isFinite(timestamp.getTime()))return null;
-  const parts=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{
-    timeZone:"Europe/Berlin",year:"numeric",month:"2-digit",day:"2-digit",
-    hour:"2-digit",minute:"2-digit",hourCycle:"h23"
-  }).formatToParts(timestamp).filter(part=>part.type!=="literal")
-    .map(part=>[part.type,part.value]));
-  return {date:parts.year+"-"+parts.month+"-"+parts.day,time:parts.hour+":"+parts.minute};
-}
-
 export function syncSeasonFixtureSchedule(game,match,updatedAt=new Date().toISOString()) {
   const id=seasonMatchIdentity(game);
   if(!id||id!==String(match?.id??""))throw new Error("Match-ID passt nicht zum Saisonspiel.");
   const incoming=String(match?.date||"").trim();
-  const next=berlinKickoff(incoming);
+  const next=handball360Kickoff(incoming);
   if(!next)throw new Error("Kein gültiger offizieller Spieltermin verfügbar.");
   const result=structuredClone(game);
   const state=result.state;
   const oldOfficial=String(state.officialSource?.matchDate||"").trim();
-  const previous=berlinKickoff(oldOfficial);
+  const previous=handball360Kickoff(oldOfficial);
   const previousLocalDate=previous?.date||"";
   const previousTime=previous?.time||"";
   const currentGameDate=String(state.gameDate||"");
@@ -98,8 +85,9 @@ export function syncSeasonFixtureSchedule(game,match,updatedAt=new Date().toISOS
     competition:state.officialSource?.competition||match.phase?.competition?.name||null,
     scheduleCheckedAt:updatedAt
   };
-  return {game:result,changed:oldOfficial!==incoming,manualDatePreserved:!wasOfficialDate,
-    manualTimePreserved:!wasOfficialTime};
+  return {game:result,changed:oldOfficial!==incoming||
+    state.gameDate!==game.state.gameDate||state.gameTimeOfDay!==game.state.gameTimeOfDay,
+    manualDatePreserved:!wasOfficialDate,manualTimePreserved:!wasOfficialTime};
 }
 
 function sameDate(a, b) {
