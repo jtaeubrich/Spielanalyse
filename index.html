@@ -18,7 +18,7 @@
     // Remove the read-only invitation capability from the visible URL before
     // any third-party compatibility libraries are loaded.
     try{
-      if(location.hash.includes("saison=")){
+      if(location.hash.includes("saison=")||location.hash.includes("teamspace=")){
         sessionStorage.setItem("handballSpielanalyse.pendingSeasonInvite",location.hash);
         history.replaceState(null,"",location.pathname+location.search);
       }
@@ -4813,16 +4813,18 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   };
   // Capture the invite and remove its bearer capability from browser history
   // before starting any asynchronous network activity or persistence.
-  let pendingCloudInvite=null;
+  let pendingCloudInvite=null,pendingTeamSpaceInvite=null;
   try{
     const candidate=sessionStorage.getItem("handballSpielanalyse.pendingSeasonInvite")||location.hash;
     sessionStorage.removeItem("handballSpielanalyse.pendingSeasonInvite");
     pendingCloudInvite=parseSeasonInvite(candidate);
-    if(pendingCloudInvite)history.replaceState(null,"",location.pathname+location.search);
-  }catch(error){
-    if(location.hash.includes("saison="))
+    pendingTeamSpaceInvite=parseTeamSpaceInvite(candidate);
+    if(pendingCloudInvite||pendingTeamSpaceInvite)
       history.replaceState(null,"",location.pathname+location.search);
-    console.warn("Ungültiger Saison-Einladungslink:",error.message);
+  }catch(error){
+    if(location.hash.includes("saison=")||location.hash.includes("teamspace="))
+      history.replaceState(null,"",location.pathname+location.search);
+    console.warn("Ungültiger Saison- oder Team-Space-Link:",error.message);
   }
   $("seasonRefreshOpen").onclick=openSeasonRefreshPicker;
   $("homeSeasonRefresh").onclick=async()=>{
@@ -5225,6 +5227,20 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         host.append(homeRow(state.gameName||"Letztes Spiel",
           "Zuletzt bearbeitet · "+(state.events?.length||0)+" Ereignisse",
           [{title:state.isHistorical?"Analyse öffnen":"Fortsetzen",primary:true,action:()=>{enterStandaloneWorkspace();showSetupMode("single",{focused:true});showTab(state.isHistorical?"analysis":"match")}}],"game"));
+      }
+      for(const record of teamStandaloneGames){
+        const current=teamStandaloneActiveId===record.id;
+        host.append(homeRow(record.gameName||record.fileName,
+          "Team Space · lokal gespeichert · "+(current?"Zuletzt geöffnet":"Einzelspiel"),[
+            {title:"Öffnen",primary:true,action:()=>{
+              applyLoadedGameText(record.text,false,record.fileName);
+              teamStandaloneActiveId=record.id;persistSession();
+            }},
+            {title:"Analysieren",action:()=>{
+              applyLoadedGameText(record.text,true,record.fileName);
+              teamStandaloneActiveId=record.id;persistSession();
+            }}
+          ],"game"));
       }
       for(const entry of homeSeasonRecords()){
         for(const game of entry.games||[]){
@@ -8232,8 +8248,10 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   $('numberTeam').onchange=renderNumbers;
   $('closeNumbers').onclick=()=>$('numbersDialog').close();
   $('numbersForm').onsubmit=e=>{e.preventDefault();for(const [key,value] of Object.entries(numberEdits)){if(value!==''&&(!/^\\d{1,2}$/.test(value))){$('numberError').textContent='Bitte Nummern zwischen 0 und 99 eintragen.';return;}}for(const team of ['home','away'])for(const p of state[team].players){const value=numberEdits[team+':'+p.id];if(value!==undefined)p.nr=value===''?'':Number(value);}document.querySelectorAll('.player-label').forEach(label=>{const p=getPlayer(label.dataset.playerId);if(p)playerLabel(label.parentElement,p);});showStep(currentStep);$('numbersDialog').close();toast('Rückennummern übernommen');};
-  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical)setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;homeShow("choose",null);showTab("home");if(pendingCloudInvite)await joinSeasonCloud(pendingCloudInvite).catch(error=>{
+  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical)setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;await teamSpaceRestore().catch(error=>console.warn("Team Space konnte nicht geladen werden",error));homeShow("choose",null);showTab("home");if(pendingCloudInvite)await joinSeasonCloud(pendingCloudInvite).catch(error=>{
   toast("Saison-Einladung konnte nicht geöffnet werden: "+error.message);
+});if(pendingTeamSpaceInvite)await teamSpaceJoin(pendingTeamSpaceInvite).catch(error=>{
+  toast("Team-Space-Einladung konnte nicht geöffnet werden: "+error.message);
 });if(restoredSession)toast("Letzter Spielstand automatisch wiederhergestellt");else if(restoredSeason)toast(`Saison „${seasonName}“ automatisch wiederhergestellt`);
 })();
 </script>
