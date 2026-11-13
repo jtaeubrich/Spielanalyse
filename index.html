@@ -1569,7 +1569,18 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
 .season-cloud-card label{display:block;font-size:13px;margin:8px 0}
 .season-cloud-card .field{width:100%;box-sizing:border-box;margin-top:4px}
 #seasonCloudInvite{font-family:monospace;font-size:12px}
-</style>
+
+    .home-main-choices{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .teamspace-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:end;gap:12px;margin:12px 0}
+    .teamspace-fields label,.teamspace-connect label{display:block;min-width:0}
+    .teamspace-fields .field,.teamspace-connect .field{display:block;box-sizing:border-box;width:100%;margin-top:6px}
+    #homeTeamSpace .home-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    #homeTeamSpace h3{margin:20px 0 10px}
+    .teamspace-connect,.teamspace-publish{padding:14px;border:1px solid var(--line);border-radius:14px;margin-top:18px}
+    .teamspace-connect hr{margin:15px 0;border:0;border-top:1px solid var(--line)}
+    #teamSpaceInviteLink{font-family:monospace;font-size:12px}
+    @media(max-width:620px){.home-main-choices{grid-template-columns:1fr}.home-big-choice{min-height:100px;flex-direction:row;text-align:left;gap:12px;justify-content:flex-start;flex-wrap:wrap}.home-big-choice small{max-width:none;width:100%;margin:-9px 0 0 65px}.home-choice-icon{flex-shrink:0}}
+  </style>
 </head>
 <body>
 <div class="app">
@@ -1607,6 +1618,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         <div class="home-main-choices">
           <button class="home-big-choice" type="button" id="homeChooseSeason"><span class="home-choice-icon" data-entry-icon="season" aria-hidden="true"></span><strong>Saison</strong><small>Spiele verwalten, fortsetzen und gemeinsam auswerten</small></button>
           <button class="home-big-choice" type="button" id="homeChooseGame"><span class="home-choice-icon" data-entry-icon="game" aria-hidden="true"></span><strong>Einzelspiel</strong><small>Ein Spiel erfassen, fortsetzen oder analysieren</small></button>
+          <button class="home-big-choice" type="button" id="homeChooseTeamSpace"><span class="home-choice-icon" data-entry-icon="teamspace" aria-hidden="true"></span><strong>Team Space</strong><small>Gemeinsame Saisons und Spiele online entdecken</small></button>
         </div>
         <div class="home-recent panel" id="homeRecent" hidden>
           <h2>Schneller Wiedereinstieg</h2>
@@ -1630,6 +1642,79 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         <h3>Spiele dieser Saison</h3>
         <div class="home-search-row"><label for="homeGameSearch">Spiel suchen</label><input class="field" type="search" id="homeGameSearch" placeholder="Mannschaft oder Datum" autocomplete="off"></div>
         <div id="homeSeasonGames" class="home-list"></div>
+      </div>
+      <div id="homeTeamSpace" class="home-view panel home-library" hidden>
+        <div class="home-section-head">
+          <h2>Team Space</h2>
+          <button type="button" class="btn" id="teamSpaceRefresh">Updates prüfen</button>
+        </div>
+        <p class="number-help">Gemeinsame Online-Inhalte der Mannschaft. Saisons und einzelne Spiele bleiben nach dem Import lokal nutzbar. Eigene Kommentare und Markierungen werden nicht hochgeladen.</p>
+        <div class="teamspace-fields">
+          <label>Team Space auswählen
+            <select class="field" id="teamSpaceSelect" aria-label="Team Space auswählen"><option value="">Noch kein Team Space verbunden</option></select>
+          </label>
+          <label>Ziel für einzelne Spiele
+            <select class="field" id="teamSpaceTargetSeason" aria-label="Importziel für Spiele">
+              <option value="">Als eigenständiges Einzelspiel</option>
+            </select>
+          </label>
+        </div>
+        <p id="teamSpaceStatus" class="number-help" role="status">Noch kein Team Space verbunden.</p>
+        <div id="teamSpaceCatalog" hidden>
+          <h3>Freigegebene Saisons</h3>
+          <div class="home-list" id="teamSpaceSeasons"></div>
+          <h3>Freigegebene Einzelspiele und Saisonspiele</h3>
+          <div class="home-list" id="teamSpaceGames"></div>
+        </div>
+        <details class="season-games-details teamspace-connect" id="teamSpaceConnect">
+          <summary>Team Space verbinden oder verwalten</summary>
+          <label>Einladungslink
+            <input class="field" type="text" id="teamSpaceJoinInput" autocomplete="off" placeholder="Einladungslink vom Trainer einfügen">
+          </label>
+          <div class="season-tools">
+            <button type="button" class="btn primary" id="teamSpaceJoin">Mit Team Space verbinden</button>
+          </div>
+          <hr>
+          <p class="number-help">Trainerbereich: eigenständiger Saison-Cloud-Run-Dienst und persönlicher Veröffentlichungs-Schlüssel. Der Schlüssel wird nicht gespeichert.</p>
+          <div class="teamspace-fields">
+            <label>Cloud-Run-Dienst
+              <input type="url" class="field" id="teamSpaceApi" autocomplete="off" spellcheck="false" placeholder="https://handball-season-sync-…run.app">
+            </label>
+            <label>Teamname
+              <input type="text" class="field" id="teamSpaceName" placeholder="TSV Kronshagen">
+            </label>
+            <label>Trainer-Schlüssel
+              <input type="password" class="field" id="teamSpaceAdminToken" autocomplete="off" placeholder="Nur auf Trainergerät eingeben">
+            </label>
+          </div>
+          <div class="season-tools">
+            <button type="button" class="btn" id="teamSpaceCreate">Team Space erstellen</button>
+            <button type="button" class="btn" id="teamSpaceRotateReader">Leseschlüssel erneuern</button>
+          </div>
+          <label>Einladungslink für die Mannschaft
+            <input class="field" id="teamSpaceInviteLink" type="text" readonly>
+          </label>
+          <button type="button" class="btn" id="teamSpaceCopyInvite">Link kopieren</button>
+        </details>
+        <details class="season-games-details teamspace-publish" id="teamSpacePublish" hidden>
+          <summary>Saisons und Spiele veröffentlichen · Trainer</summary>
+          <p class="number-help">Veröffentlicht werden nur Daten aus deinem lokalen Trainerstand. Ein Spieler-Lesezugang darf niemals veröffentlichen.</p>
+          <div class="teamspace-fields">
+            <label>Lokale Saison veröffentlichen
+              <select class="field" id="teamSpacePublishSeason"></select>
+            </label>
+            <button class="btn primary" id="teamSpacePublishSeasonBtn" type="button">Saison veröffentlichen</button>
+          </div>
+          <div class="teamspace-fields">
+            <label>Einzelnes Spiel veröffentlichen
+              <select class="field" id="teamSpacePublishGame"></select>
+            </label>
+            <label>Online-Saisonzuordnung (optional)
+              <select class="field" id="teamSpacePublishTargetSeason"><option value="">Ohne Saisonzuordnung</option></select>
+            </label>
+            <button class="btn primary" id="teamSpacePublishGameBtn" type="button">Einzelspiel veröffentlichen</button>
+          </div>
+        </details>
       </div>
     </div>
   </section>
@@ -2360,6 +2445,8 @@ import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterSta
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
+import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken} from "./src/team-space-client.js?v=1";
+import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
