@@ -143,7 +143,8 @@ test("Home can switch between locally saved seasons without replacing the open s
 
 test("Home uses distinct self-contained SVG icons for seasons and games",async({page})=>{
   await page.goto("/");
-  await expect(page.locator("#homeChoose .home-choice-icon svg")).toHaveCount(2);
+  await expect(page.locator("#homeChoose .home-choice-icon svg")).toHaveCount(3);
+  await expect(page.locator('[data-entry-icon="teamspace"] svg')).toHaveCount(1);
   await expect(page.locator('[data-entry-icon="season"] svg')).toHaveCount(1);
   await expect(page.locator('[data-entry-icon="game"] svg')).toHaveCount(1);
   await page.locator("#homeChooseSeason").click();
