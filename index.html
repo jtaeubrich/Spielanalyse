@@ -5718,7 +5718,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         if(target!==seasonLibraryId)await switchSeasonLibrary(target);
         persistSession();
         const fileName=game.id+".json";
-        const incoming=normalizeSeasonGame(release.data,fileName,seasonPreferredTeam||"");
+        const incoming=coreNormalizeSeasonGame(release.data,fileName,seasonPreferredTeam||"");
         incoming.id=game.id;
         const index=seasonGames.findIndex(g=>g.id===incoming.id||
           (game.matchId&&g.state?.officialSource?.matchId===game.matchId));
@@ -5770,11 +5770,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const old=await readInternalRecord(INTERNAL_GAME_STORE,key);
         let data=release.data;
         if(old){
-          const previous=normalizeSeasonGame(JSON.parse(old.text),old.fileName);
+          const previous=coreNormalizeSeasonGame(JSON.parse(old.text),old.fileName);
           previous.id=game.id;
-          const incoming=normalizeSeasonGame(release.data,old.fileName);
+          const incoming=coreNormalizeSeasonGame(release.data,old.fileName);
           incoming.id=game.id;
-          const base=old.source?normalizeSeasonGame(old.source,old.fileName):null;
+          const base=old.source?coreNormalizeSeasonGame(old.source,old.fileName):null;
           const merged=preparePublishedGameRefresh(previous,incoming,base);
           data=merged.game.state;
         }
