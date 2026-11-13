@@ -5074,8 +5074,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   // Home entry is navigation only. It never resets state, season storage or
   // the active game; saved games are always opened via existing handlers.
   let homeKind=null,homeView="choose",homeHasSession=false;
-  const homePanels={choose:"homeChoose",actions:"homeActions",library:"homeLibrary",dashboard:"homeSeasonDashboard"};
-  const homeKinds={season:"Saison",game:"Einzelspiel"};
+  const homePanels={choose:"homeChoose",actions:"homeActions",library:"homeLibrary",dashboard:"homeSeasonDashboard",teamspace:"homeTeamSpace"};
+  const homeKinds={season:"Saison",game:"Einzelspiel",teamspace:"Team Space"};
   const homeButton=(label,callback,primary=false)=>{
     const button=document.createElement("button");
     button.className="btn"+(primary?" primary":"");
@@ -5085,7 +5085,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function homeIconSvg(kind){
     const season='<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="6" y="12" width="52" height="46" rx="8"/><path d="M6 25h52M20 7v11M44 7v11"/><circle cx="23" cy="40" r="7"/><path d="M17 37l11 6M17 43l11-6M39 36h10M39 44h10"/></svg>';
     const game='<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="5" y="13" width="54" height="38" rx="6"/><path d="M32 13v38"/><circle cx="32" cy="32" r="7"/><path d="M5 23h5c7 0 12 4 12 9s-5 9-12 9H5M59 23h-5c-7 0-12 4-12 9s5 9 12 9h5"/></svg>';
-    return kind==="season"?season:game;
+    const teamspace='<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M18 40h-2a10 10 0 0 1-1-20 18 18 0 0 1 34 3 10 10 0 0 1-1 20H22"/><circle cx="24" cy="28" r="4"/><circle cx="41" cy="28" r="4"/><path d="M16 44c1-7 14-8 16 0m2 0c1-7 14-8 16 0"/></svg>';
+    return kind==="teamspace"?teamspace:kind==="season"?season:game;
   }
   for(const tile of document.querySelectorAll("[data-entry-icon]")){
     tile.innerHTML=homeIconSvg(tile.dataset.entryIcon);
@@ -5146,12 +5147,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("homeSeasonIdentity").hidden=!dashboard;
     $("homeTitle").parentElement.classList.toggle("with-season",dashboard);
     $("homeTitle").textContent=view==="choose"?"Was möchtest du heute machen?":area;
-    $("homeSubtitle").textContent=view==="choose"?"Wähle Saison oder Einzelspiel. Deine gespeicherten Daten bleiben erhalten.":
+    $("homeSubtitle").textContent=view==="choose"?"Wähle Saison, Einzelspiel oder Team Space. Deine gespeicherten Daten bleiben erhalten.":
       view==="actions"?"Was möchtest du tun?":
       view==="library"?"Wähle einen gespeicherten Eintrag auf diesem Gerät.":"";
     if(view==="choose")homeRenderRecent();
     if(view==="library")homeRenderLibrary();
     if(view==="dashboard"){showSetupMode("season",{focused:true});homeRenderSeasonDashboard();renderSeasonPreviewHeader();}
+    if(view==="teamspace")void teamSpaceOpen();
   }
   function homeRenderRecent(){
     const host=$("homeRecentOptions");host.replaceChildren();
@@ -5385,8 +5387,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   $("homeChooseSeason").onclick=()=>homeShow("actions","season");
   $("homeChooseGame").onclick=()=>homeShow("actions","game");
+  $("homeChooseTeamSpace").onclick=()=>homeShow("teamspace","teamspace");
   $("homeBack").onclick=()=>{
-    if(homeView==="dashboard")homeShow("library","season");
+    if(homeView==="teamspace")homeShow("choose",null);
+    else if(homeView==="dashboard")homeShow("library","season");
     else if(homeView==="library")homeShow("actions",homeKind);
     else homeShow("choose",null);
   };
