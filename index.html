@@ -2359,6 +2359,7 @@ import { rowsToPlayers as coreRowsToPlayers, parseRosterJson, rosterTeamKey, mer
 import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterStats } from "./src/team-rosters.js";
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
+import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
@@ -5590,12 +5591,25 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const source=String(state.officialSource?.matchDate||state.gameDate||"").trim();
     let date=String(state.gameDate||"").slice(0,10),time=String(state.gameTimeOfDay||"");
     if(source){
-      const parsed=new Date(source);
-      if(!Number.isNaN(parsed.getTime())&&source.includes("T")){
-        const parts=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Berlin",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(parsed).filter(part=>part.type!=="literal").map(part=>[part.type,part.value]));
-        if(!date)date=parts.year+"-"+parts.month+"-"+parts.day;
-        if(!time)time=parts.hour+":"+parts.minute;
-      }else if(!date&&source.length>=10)date=source.slice(0,10);
+      if(state.officialSource?.provider==="handball.net"){
+        // handball.net fixture hours are already the published local kickoff.
+        // Never add the Berlin UTC offset a second time. Explicitly edited
+        // gameTimeOfDay takes precedence and is not overwritten.
+        const kickoff=handball360Kickoff(source);
+        if(kickoff){
+          if(!date)date=kickoff.date;
+          if(!time)time=kickoff.time;
+        }
+      }else{
+        // Other sources may contain genuine UTC instants; retain the existing
+        // conversion for those and for manually provided timestamp values.
+        const parsed=new Date(source);
+        if(!Number.isNaN(parsed.getTime())&&source.includes("T")){
+          const parts=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Berlin",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(parsed).filter(part=>part.type!=="literal").map(part=>[part.type,part.value]));
+          if(!date)date=parts.year+"-"+parts.month+"-"+parts.day;
+          if(!time)time=parts.hour+":"+parts.minute;
+        }else if(!date&&source.length>=10)date=source.slice(0,10);
+      }
     }
     return {date,time,venue:String(state.gameVenue||state.officialSource?.venue||"").trim()};
   }
