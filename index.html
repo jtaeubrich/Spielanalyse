@@ -4838,7 +4838,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     seasonRefreshDraft=null;
     $("seasonRefreshStatus").textContent="";
   });
-  function openSeasonRefreshPreview(raw,label,cloudMeta=null){
+  function openSeasonRefreshPreview(raw,label,cloudMeta=null,teamSpaceMeta=null){
     if(!seasonLibraryId||!seasonGames.length)
       throw Error("Keine bestehende Saison für die Aktualisierung ausgewählt.");
     persistSession();
@@ -4854,7 +4854,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const prepared=prepareSeasonRefresh(existing,incoming,seasonPublishedSource||seasonInitialImportSource);
       const fingerprint=JSON.stringify({id:seasonLibraryId,preferredTeam:seasonPreferredTeam,games:seasonGames});
       seasonRefreshDraft={...prepared,libraryId:seasonLibraryId,fingerprint,fileName:label,
-        cloudMeta};
+        cloudMeta,teamSpaceMeta};
       $("seasonRefreshIdentity").textContent=seasonName+
         " · Datei: "+label+" · "+prepared.shared+" gemeinsame Spiele";
       const metrics=[
@@ -4930,11 +4930,25 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           lastPublishedAt:draft.cloudMeta.publishedAt||null};
         records.push({id:"sync-"+id,connection,updatedAt:now});
       }
+      if(draft.teamSpaceMeta){
+        records.push({
+          id:teamSeasonLinkId(draft.teamSpaceMeta.spaceId,draft.teamSpaceMeta.seasonId),
+          localSeasonId:id,revision:draft.teamSpaceMeta.revision,
+          gameRevisions:draft.teamSpaceMeta.gameRevisions,updatedAt:now
+        });
+      }
       seasonWriteQueue=seasonWriteQueue.then(()=>writeInternalRecords(
         INTERNAL_SEASON_STORE,records));
       await seasonWriteQueue;
       seasonGames=structuredClone(draft.games);
       seasonPublishedSource=structuredClone(draft.source);
+      if(draft.teamSpaceMeta){
+        const link={id:teamSeasonLinkId(draft.teamSpaceMeta.spaceId,draft.teamSpaceMeta.seasonId),
+          localSeasonId:id,revision:draft.teamSpaceMeta.revision,
+          gameRevisions:draft.teamSpaceMeta.gameRevisions};
+        teamSpaceLinks.set(link.id,link);
+        teamSpaceRenderCatalog();
+      }
       if(draft.cloudMeta)seasonCloudConfig={
         ...draft.cloudMeta.connection,revision:draft.cloudMeta.revision,
         sha256:draft.cloudMeta.sha256,
