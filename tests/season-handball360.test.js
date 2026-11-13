@@ -70,6 +70,7 @@ describe("Handball360 team season import", () => {
     expect(seasonMatchIdentity(game)).toBe("378107");
     expect(seasonMatchUrl(game)).toBe("https://www.handball.net/match/378107");
     expect(game.state.officialSource.matchUrl).toBe(seasonMatchUrl(game));
+    expect(game.state.gameTimeOfDay).toBe("16:00");
     expect(() => buildHandball360SeasonGame(raw, "378107", "99999", summary)).toThrow();
     expect(() => buildHandball360SeasonGame(raw, "999999", "85814", summary)).toThrow();
   });
@@ -94,12 +95,12 @@ describe("Handball360 team season import", () => {
     game.state.home.players[0].isTW=true;
     game.state.home.players[0].isTWOverride=true;
     game.state.video.youtubeUrl="https://www.youtube.com/watch?v=personal";
-    game.state.gameTimeOfDay="18:00"; // previous official start: 18:00 Berlin
+    game.state.gameTimeOfDay="16:00"; // previous published local kickoff, without UTC offset
     const changed={...summary,date:"2026-11-07T15:00:00Z"};
     const result=syncSeasonFixtureSchedule(game,changed,"2026-10-28T00:00:00Z");
     expect(result.changed).toBe(true);
     expect(result.game.state.gameDate).toBe("2026-11-07");
-    expect(result.game.state.gameTimeOfDay).toBe("16:00");
+    expect(result.game.state.gameTimeOfDay).toBe("15:00");
     expect(result.game.state.officialSource.matchDate).toBe(changed.date);
     expect(result.game.state.events).toEqual(game.state.events);
     expect(result.game.state.home.players).toEqual(game.state.home.players);
@@ -107,6 +108,42 @@ describe("Handball360 team season import", () => {
     expect(result.game.id).toBe(game.id);
     expect(result.game.fileName).toBe(game.fileName);
     expect(() => syncSeasonFixtureSchedule(game,{...changed,id:"999999"})).toThrow(/Match-ID/);
+  });
+
+  test("corrects unfilled autumn and winter times without changing the official timestamp",()=>{
+    const fixture=buildHandball360SeasonGame(raw,"378107","85814",summary);
+    fixture.state.gameTimeOfDay="";
+    const winter={...summary,date:"2026-11-22T12:45:00+00:00"};
+    const result=syncSeasonFixtureSchedule(fixture,winter);
+    expect(result.changed).toBe(true);
+    expect(result.manualTimePreserved).toBe(false);
+    expect(result.game.state.gameTimeOfDay).toBe("12:45");
+    expect(result.game.state.gameDate).toBe("2026-11-22");
+    expect(result.game.state.officialSource.matchDate).toBe(winter.date);
+    const again=syncSeasonFixtureSchedule(result.game,winter);
+    expect(again.changed).toBe(false);
+    expect(again.game.state.gameTimeOfDay).toBe("12:45");
+    const summer={...summary,date:"2026-09-27T17:00:00+00:00"};
+    const summerResult=syncSeasonFixtureSchedule(again.game,summer);
+    expect(summerResult.game.state.gameTimeOfDay).toBe("17:00");
+    expect(summerResult.game.state.gameDate).toBe("2026-09-27");
+  });
+
+  test("respects a manually corrected upcoming kickoff even when its metadata is unchanged",()=>{
+    const fixture=buildHandball360SeasonGame(raw,"378107","85814",summary);
+    fixture.state.gameTimeOfDay="11:30";
+    const result=syncSeasonFixtureSchedule(fixture,{...summary,date:"2026-11-15T11:30:00+00:00"});
+    expect(result.game.state.gameTimeOfDay).toBe("11:30");
+    expect(result.game.state.officialSource.matchDate).toBe("2026-11-15T11:30:00+00:00");
+    expect(result.game.state.events).toEqual(fixture.state.events);
+  });
+
+  test("does not replace an existing explicit kickoff on uncertain imported data",()=>{
+    const fixture=buildHandball360SeasonGame(raw,"378107","85814",summary);
+    fixture.state.gameTimeOfDay="18:00"; // May be manually set; do not assume.
+    const result=syncSeasonFixtureSchedule(fixture,{...summary,date:"2026-11-15T11:30:00+00:00"});
+    expect(result.manualTimePreserved).toBe(true);
+    expect(result.game.state.gameTimeOfDay).toBe("18:00");
   });
 
   test("preserves manually set match preparation date/time when schedule changes",()=>{
