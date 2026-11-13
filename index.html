@@ -5775,7 +5775,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const sourceIndex=source.games.findIndex(g=>g.id===imported.id);
         if(sourceIndex>=0)source.games[sourceIndex]=incoming;
         else source.games.push(incoming);
-        source.createdAt=now;
+        // Keep the previous published season timestamp: a separately updated
+        // game must not make future legitimate season releases appear stale.
         const snapshot={...buildSeasonRecord({name:seasonName,games:next}),
           preferredTeam:seasonPreferredTeam,archiveTeam:seasonArchiveTeam,
           playerAliases:seasonPlayerAliases,lastEditedGameId:seasonLastEditedGameId};
