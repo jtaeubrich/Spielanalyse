@@ -29,7 +29,9 @@ export function parseSeasonInvite(hash){
   const text=String(hash||"").replace(/^#/,"");
   if(!text)return null;
   const params=new URLSearchParams(text);
-  if(!params.has("saison")&&!params.has("key"))return null;
+  // A Team Space invitation also uses a read-only "key". Only the
+  // explicit "saison" parameter identifies a legacy season invitation.
+  if(!params.has("saison"))return null;
   const seasonId=params.get("saison"),readToken=params.get("key");
   if(!validSeasonCloudId(seasonId)||!validSeasonCloudToken(readToken))
     throw Error("Ungültiger Saison-Einladungslink.");
