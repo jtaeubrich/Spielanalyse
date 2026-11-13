@@ -17,7 +17,7 @@ jobs:
           node --check cloud-run-season-sync/index.js
           node --check cloud-run-season-sync/api.js
           node --check cloud-run-season-sync/storage.js
-          node --test cloud-run-season-sync/api.test.js
+          node --test cloud-run-season-sync/api.test.js cloud-run-season-sync/team-space-api.test.js
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
