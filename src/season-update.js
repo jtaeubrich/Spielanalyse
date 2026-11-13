@@ -234,6 +234,23 @@ export function prepareSeasonRefresh(existing,incoming,previousSource=null){
   }
   return {games,summary,shared,source:copy(incoming)};
 }
+// Merge a separately published game into an existing local game.
+// Keep the local stable ID and preserve user-created comments/events via the
+// last publisher snapshot. Never merge two different official matches.
+export function preparePublishedGameRefresh(local,published,previousSource=null){
+  if(!local?.state||!published?.state)
+    throw Error("Spielstände für die Aktualisierung fehlen.");
+  assertGameIdentity(local,published);
+  const next=copy(published),changes=mergeEvents(local,next,previousSource);
+  next.state.events=changes.events;
+  next.id=local.id;
+  next.selected=local.selected!==false;
+  return {game:next,source:copy(published),summary:{
+    personalAnnotations:changes.annotations,
+    personalEvents:changes.localEvents,
+    recoveredAnnotations:changes.recovered
+  }};
+}
 export function exportPublishedSeason(source){
   if(!source?.games)return null;
   return copy(source);
