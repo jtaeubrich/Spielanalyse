@@ -5623,6 +5623,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   async function teamSpaceOpen(){
     try{
+      // Do not show an older cached game when the user has just annotated it.
+      await teamSpaceSaveStandaloneNow();
+      await teamStandaloneWriteQueue;
       await teamSpaceRestore();
       if(homeView!=="teamspace")return;
       teamSpaceRenderControls();
@@ -5870,6 +5873,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         if(selected==="current"){
           if(activeSeasonGameId)throw Error("Aktuelles Spiel gehört zu einer Saison.");
           game=structuredClone(state);fileName=currentGameFileName||fileName;
+          gameId=coreSeasonGameId(fileName,game);
         }else if(selected.startsWith("teamspace-localgame-")){
           const record=await readInternalRecord(INTERNAL_GAME_STORE,selected);
           if(!record)throw Error("Spiel nicht gefunden.");
