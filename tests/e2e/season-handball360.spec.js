@@ -181,7 +181,7 @@ test("season-wide sync updates postponed fixtures and fills missing logos withou
   const exported=JSON.parse(await readFile(await download.path(),"utf8"));
   const result=exported.games.find(item=>item.data.officialSource?.matchId==="378107");
   expect(result.data.gameDate).toBe("2026-11-07");
-  expect(result.data.gameTimeOfDay).toBe("16:00");
+  expect(result.data.gameTimeOfDay).toBe("15:00"); // published local kickoff, no second UTC offset
   expect(result.data.officialSource.matchDate).toBe("2026-11-07T15:00:00Z");
   expect(result.data.events[0].comment).toBe("Meine Videoanalyse bleibt");
   expect(result.data.video.youtubeUrl).toContain("owned");
