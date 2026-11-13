@@ -6,6 +6,10 @@ export function createGcsSeasonStore({bucketName,storage=new Storage()}={}){
     throw Error("SEASON_SYNC_BUCKET fehlt oder ist ungültig.");
   const bucket=storage.bucket(bucketName);
   const filename=id=>"seasons/"+id+"/metadata.json";
+  // Space metadata follows the same generation-pinned CAS discipline as
+  // season metadata, avoiding lost updates when two trainers publish at once.
+  const spaceName=id=>"spaces/"+id+"/metadata.json";
+  const spaceGameKey=/^spaces\/[0-9a-f-]{36}\/games\/sg-[a-z0-9_-]{1,80}\/\d+-[0-9a-f-]{36}\.json$/i;
   return {
     async create(id,metadata){
       const file=bucket.file(filename(id));
@@ -49,6 +53,45 @@ export function createGcsSeasonStore({bucketName,storage=new Storage()}={}){
       if(!/^seasons\/[0-9a-f-]{36}\/versions\/[0-9]+-[0-9a-f-]{36}\.json$/i.test(name))
         throw Error("Invalid archive path");
       const [bytes]=await bucket.file(name).download();
+      return bytes;
+    },
+    async createSpace(id,meta){
+      await bucket.file(spaceName(id)).save(Buffer.from(JSON.stringify(meta),"utf8"),{
+        resumable:false,contentType:"application/json",
+        preconditionOpts:{ifGenerationMatch:0},
+        metadata:{cacheControl:"private,no-store"}
+      });
+    },
+    async readSpace(id){
+      try{
+        const file=bucket.file(spaceName(id));
+        const [details]=await file.getMetadata();
+        const [buffer]=await bucket.file(spaceName(id),{generation:details.generation}).download();
+        return {metadata:JSON.parse(buffer.toString("utf8")),generation:details.generation};
+      }catch(error){
+        if(error?.code===404)return {metadata:null,generation:null};
+        throw error;
+      }
+    },
+    async updateSpace(id,meta,generation){
+      if(!generation)throw Error("Space metadata generation missing");
+      await bucket.file(spaceName(id)).save(Buffer.from(JSON.stringify(meta),"utf8"),{
+        resumable:false,contentType:"application/json",
+        preconditionOpts:{ifGenerationMatch:Number(generation)},
+        metadata:{cacheControl:"private,no-store"}
+      });
+    },
+    async writeSpaceGame(path,bytes){
+      if(!spaceGameKey.test(path))throw Error("Invalid space game path");
+      await bucket.file(path).save(bytes,{
+        resumable:false,contentType:"application/json",
+        preconditionOpts:{ifGenerationMatch:0},
+        metadata:{cacheControl:"private,no-store"}
+      });
+    },
+    async readSpaceGame(path){
+      if(!spaceGameKey.test(path))throw Error("Invalid space game path");
+      const [bytes]=await bucket.file(path).download();
       return bytes;
     }
   };
