@@ -74,7 +74,7 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
         data:JSON.parse(bytes.toString("utf8"))};
     }));
     const archive={format:"handball-spielanalyse-season",version:1,
-      name:season.name,createdAt:stamp,preferredTeam:season.preferredTeam||"",
+      name:season.name,createdAt:season.publishedAt,preferredTeam:season.preferredTeam||"",
       archiveTeam:season.archiveTeam||"",playerAliases:season.playerAliases||{},
       lastEditedGameId:season.lastEditedGameId||"",games};
     const bytes=Buffer.from(JSON.stringify(archive),"utf8");
@@ -130,6 +130,7 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
       throw err(409,"CATALOG_FULL","Team Space enthält zu viele Spiele.");
     const ids=[];
     for(const game of archive.games){
+      if(!GAME.test(game?.id||""))throw err(400,"INVALID_GAME_ID","Ungültige Spielkennung in Saison.");
       const result=await upsert(game?.id,game?.data,game?.fileName,game?.selected,id);
       ids.push(result.id);
     }
