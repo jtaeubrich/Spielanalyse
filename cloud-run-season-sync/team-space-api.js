@@ -90,6 +90,8 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
       throw err(400,"INVALID_GAME","Ungültige Spiel-JSON.");
     const existingMatch=matchId(data);
     const collision=existingMatch&&Object.values(meta.games).find(g=>g.matchId===existingMatch);
+    if(collision&&inputId&&inputId!==collision.id&&meta.games[inputId])
+      throw err(409,"MATCH_CONFLICT","Offizielles Spiel und angegebene Spielkennung widersprechen sich.");
     const id=collision?.id||inputId||"sg-"+idFactory().replaceAll("-","");
     if(!GAME.test(id))throw err(400,"INVALID_GAME_ID","Ungültige Spielkennung.");
     if(used.has(id))throw err(409,"DUPLICATE_GAME","Dasselbe Spiel ist mehrfach enthalten.");
@@ -97,6 +99,10 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
     const old=meta.games[id];
     if(old?.matchId&&existingMatch&&old.matchId!==existingMatch)
       throw err(409,"MATCH_CONFLICT","Spielkennung gehört zu einer anderen Begegnung.");
+    // Guard against accidental hash-ID collisions even without official IDs.
+    if(old&&!old.matchId&&!existingMatch&&old.date&&date(data)&&
+      old.date!==date(data)&&old.name!==title(data))
+      throw err(409,"GAME_ID_CONFLICT","Spielkennung ist bereits für eine andere Begegnung vergeben.");
     const bytes=Buffer.from(JSON.stringify(data),"utf8");
     if(bytes.length>25*1024*1024)throw err(413,"TOO_LARGE","Spiel übersteigt 25 MB.");
     const hash=sha(bytes),changed=!old||old.sha256!==hash;
