@@ -23,8 +23,8 @@ jobs:
           node --check cloud-run-season-sync/index.js
           node --check cloud-run-season-sync/api.js
           node --check cloud-run-season-sync/storage.js
-          node --test cloud-run-season-sync/api.test.js
+          node --test cloud-run-season-sync/api.test.js cloud-run-season-sync/team-space-api.test.js
       - name: Run browser-client unit tests
         run: |
           npm install --no-audit --no-fund
-          npx vitest run tests/season-sync-client.test.js
+          npx vitest run tests/season-sync-client.test.js tests/team-space-client.test.js
