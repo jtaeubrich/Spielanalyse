@@ -64,7 +64,8 @@ export function buildSessionRecord({
   gameBase = 0,
   analysisMode = "live",
   currentGameFileName = null,
-  seasonGameId = null
+  seasonGameId = null,
+  teamSpaceSingleId = null
 }) {
   return {
     state,
@@ -73,7 +74,8 @@ export function buildSessionRecord({
     gameBase: Number(gameBase) || 0,
     analysisMode: analysisMode === "video" ? "video" : "live",
     currentGameFileName: currentGameFileName || null,
-    ...(seasonGameId ? { seasonGameId: String(seasonGameId) } : {})
+    ...(seasonGameId ? { seasonGameId: String(seasonGameId) } : {}),
+    ...(teamSpaceSingleId ? {teamSpaceSingleId: String(teamSpaceSingleId)} : {})
   };
 }
 
