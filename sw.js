@@ -1,4 +1,4 @@
-const CACHE_NAME = "handball-spielanalyse-network-first-v35";
+const CACHE_NAME = "handball-spielanalyse-network-first-v36";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -35,6 +35,7 @@ const APP_SHELL = [
   "./src/instagram-html-renderer.js",
   "./src/instagram-workflow.js",
   "./src/handball360.js",
+  "./src/handball360-kickoff.js?v=1",
   "./src/analysis-core.js",
   "./src/season-core.js",
   "./src/season-trends.js",
