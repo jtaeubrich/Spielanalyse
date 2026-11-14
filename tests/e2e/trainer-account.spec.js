@@ -243,8 +243,8 @@ test("Cancelling registration clears passwords and restores sign-in without conf
   await expect(page.locator("#trainerAccountPassword")).toHaveAttribute("autocomplete","current-password");
 });
 
-test("Approved Firebase trainer can register team and empty season without publish-game access",async({page})=>{
-  const cloud={spaces:[],seasons:[],writes:[],firebasePassword:null};
+test("Approved Firebase trainer can create a Team Space and publish local season into an existing cloud season",async({page})=>{
+  const cloud={spaces:[],seasons:[],writes:[],firebasePassword:null,lastPublish:null};
   await page.route("https://identitytoolkit.googleapis.com/**",route=>{
     const req=route.request(),data=req.postDataJSON();
     cloud.firebasePassword=data.password;
@@ -255,6 +255,18 @@ test("Approved Firebase trainer can register team and empty season without publi
     if(route.request().headers().authorization!=="Bearer "+KEY)
       return route.fulfill(success({error:{message:"not authorized"}},401));
     return route.fulfill(success(catalog(cloud.seasons)));
+  });
+  await page.route(API+"/spaces/"+SPACE+"/publish-season",route=>{
+    const request=route.request();
+    if(request.headers().authorization!=="Bearer "+ID_TOKEN)
+      return route.fulfill(success({error:{message:"not authorized"}},401));
+    cloud.lastPublish=request.postDataJSON();
+    const uploaded=cloud.lastPublish.archive.games;
+    cloud.seasons[0].gameCount=uploaded.length;
+    cloud.seasons[0].gameIds=uploaded.map(g=>g.id);
+    cloud.seasons[0].revision=2;
+    return route.fulfill(success({spaceId:SPACE,seasonId:SEASON,
+      revision:2,itemRevision:2,gameCount:uploaded.length}));
   });
   await page.route(API+"/trainer-auth/**",async route=>{
     const request=route.request(),url=new URL(request.url()),path=url.pathname;
@@ -297,7 +309,7 @@ test("Approved Firebase trainer can register team and empty season without publi
   await page.locator("#trainerAccountCreateSeason").click();
   await expect(page.locator("#teamSpaceSeasons")).toContainText("B-Jugend 2027/28");
   await expect(page.locator("#teamSpaceSeasons")).toContainText("Noch keine Spiele");
-  await expect(page.locator("#teamSpacePublish")).toBeHidden();
+  await expect(page.locator("#teamSpacePublish")).toBeVisible();
   const invite=await page.locator("#teamSpaceInviteLink").inputValue();
   expect(invite).toContain("#teamspace=");
   expect(invite).not.toContain(ID_TOKEN);
@@ -306,6 +318,28 @@ test("Approved Firebase trainer can register team and empty season without publi
   ]);
   expect(cloud.writes[1].body.expectedRevision).toBe(0);
   expect(cloud.firebasePassword).toBe("super-secret");
+  // A trainer may publish into the empty cloud season directly, using their
+  // authenticated account and without a second publisher credential.
+  page.on("dialog",dialog=>dialog.accept());
+  const match={gameName:"Kronshagen gegen Gegner",gameDate:"2026-11-14",
+    home:{name:"TSV Kronshagen"},away:{name:"Gegner"},events:[]};
+  const existing={format:"handball-spielanalyse-season",version:1,
+    name:"B-Jugend 2027/28",
+    games:[{id:"sg-existing",fileName:"spiel.json",selected:true,data:match}]};
+  await page.locator("#seasonImportInput").setInputFiles({
+    name:"bestehende-saison.json",mimeType:"application/json",
+    buffer:Buffer.from(JSON.stringify(existing))
+  });
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#teamSpacePublish summary").click();
+  await page.locator("#teamSpacePublishSeasonTarget").selectOption(SEASON);
+  await page.locator("#teamSpacePublishSeasonBtn").click();
+  await expect.poll(()=>cloud.lastPublish).not.toBeNull();
+  expect(cloud.lastPublish.seasonId).toBe(SEASON);
+  expect(cloud.lastPublish.archive.games).toHaveLength(1);
+  expect(cloud.seasons).toHaveLength(1);
+  await expect(page.locator("#teamSpacePublish")).toBeVisible();
   const stored=await page.evaluate(()=>Object.keys(sessionStorage).map(k=>sessionStorage.getItem(k)));
   expect(JSON.stringify(stored)).not.toContain("super-secret");
   expect(JSON.stringify(stored)).not.toContain(ID_TOKEN);
