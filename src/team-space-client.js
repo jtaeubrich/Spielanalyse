@@ -35,9 +35,17 @@ async function request(connection,suffix,{fetcher=fetch,method="GET",data,adminT
 export async function createTeamSpace(api,teamName,registrationToken,{fetcher=fetch}={}){
   const root=seasonCloudEndpoint(api);
   if(!String(teamName||"").trim())throw Error("Teamname fehlt.");
-  const res=await seasonCloudCall({api:root},"/spaces",{
-    fetcher,method:"POST",authToken:registrationToken,data:{name:String(teamName).trim(),authVersion:2}
-  });
+  let res;
+  try{
+    res=await seasonCloudCall({api:root},"/spaces/v2",{
+      fetcher,method:"POST",authToken:registrationToken,
+      data:{name:String(teamName).trim(),authVersion:2}
+    });
+  }catch(error){
+    if(error.status===404)
+      throw Error("Der Cloud-Run-Dienst unterstützt neue Team-Space-Schlüssel noch nicht. Bitte zuerst das Backend aktualisieren.");
+    throw error;
+  }
   const data=await res.json();
   if(!validSeasonCloudId(data.spaceId)||!validSeasonCloudToken(data.readToken)||
     !validSeasonCloudToken(data.trainerToken))
