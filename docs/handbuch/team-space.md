@@ -52,21 +52,25 @@ nachdem Firebase Authentication in der Google Cloud eingerichtet ist.
    ohne Firebase-UIDs oder Cloud-Run-Variablen manuell einzutragen. Der
    Schlüssel darf nicht mit anderen Trainern geteilt werden. Weitere
    Administratorübernahmen über diesen Weg sind gesperrt.
-5. Als freigegebener Trainer kannst du **einen Team Space selbst anlegen**
-   und darin **leere Saisons (z. B. B-Jugend 2027/28)** erstellen.
-6. Du bekommst den üblichen **Einladungslink für Spieler**, aber
-   **keinen Spiel-Veröffentlichungsschlüssel**. Das neue Trainerkonto
-   darf keine Spiele erstellen oder in die Cloud hochladen.
-7. In derselben Oberfläche können Administratoren Traineranträge
-   freigeben und Konten sperren.
-8. Falls später Spiele in eine Saison geladen werden sollen, kann ein
-   Administrator über die **Team-Space-ID** einen gesonderten
-   **Veröffentlichungs-Schlüssel** für eine zentrale Redaktion ausstellen.
-   Dieser Schlüssel ist nicht Bestandteil des normalen Trainerkontos und
-   muss separat sicher aufbewahrt werden.
+5. Als freigegebener Trainer kannst du **deine Team Spaces** anlegen und darin
+   **leere Saisons (z. B. B-Jugend 2027/28)** erstellen.
+6. Unter **Team Space → Saisons und Spiele veröffentlichen** kannst du
+   **lokale Saisons und Einzelspiele** direkt mit dem angemeldeten
+   E-Mail-Trainerkonto in **deine eigenen Team Spaces** hochladen.
+   Ein zusätzlicher Veröffentlichungsschlüssel ist dafür nicht nötig.
+7. Beim Hochladen einer bestehenden Saison eine **Online-Zielsaison**
+   auswählen, falls im Space schon eine leere Saison angelegt wurde.
+   Andernfalls wird ein neuer Saisoneintrag erstellt. Für Einzelspiele
+   kann ebenfalls eine bestehende Online-Saison als Ziel gewählt werden.
+8. In derselben Oberfläche können Administratoren Traineranträge
+   freigeben und Konten sperren. Für Sonderfälle und externe Redaktions-
+   Workflows kann ein Administrator weiterhin einen separaten
+   **Veröffentlichungs-Schlüssel** ausstellen.
 
 Der Firebase-Zugang und die bisherigen schlüsselbasierten Team Spaces
-bleiben getrennt. Schon vorhandene Einladungen, lokale Spiele und
+bleiben getrennt. Die Firebase-Schreibberechtigung wird auf dem Server für
+jeden Upload anhand der freigegebenen Identität und der Space-Zuordnung
+geprüft; Spieler-Einladungen verleihen weiterhin nur Leserechte. Schon vorhandene Einladungen, lokale Spiele und
 Kommentare werden nicht verändert.
 
 Das Passwort wird in der Spielanalyse nicht gespeichert. Ein
