@@ -20,7 +20,7 @@ export function publicTeamCatalog(meta){
     })).sort((a,b)=>String(b.date).localeCompare(String(a.date)))};
 }
 export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactory,readerFactory,
-  trainerFactory,trainer,trainerSpace,reader,send,err,bodyJson,sha}){
+  trainerFactory,trainer,trainerSpace,reader,send,err,bodyJson,sha,trainerAccounts=null}){
   if(url.pathname!=="/spaces"&&!url.pathname.startsWith("/spaces/"))return false;
   if(url.pathname==="/spaces"||url.pathname==="/spaces/v2"){
     if(req.method!=="POST")throw err(405,"METHOD_NOT_ALLOWED","POST erforderlich.");
@@ -64,8 +64,20 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
       authVersion:2,updatedAt:now().toISOString()},generation);
     send(res,200,{spaceId,trainerToken});return true;
   }
-  if(write)trainerSpace(req,stored,adminToken);
-  else reader(req,stored);
+  if(write){
+    // Approved Firebase trainers can publish only to their own account Team Spaces.
+    // Administrators can also publish to account Team Spaces. All other actions
+    // keep the existing individual/legacy key authorization.
+    const isAccountUpload=stored.authMode==="firebase"&&trainerAccounts&&
+      ["publish-season","publish-game"].includes(action)&&
+      /^Bearer [A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(
+        req.headers.authorization||"");
+    if(isAccountUpload){
+      const account=await trainerAccounts.identity(req,{approved:true});
+      if(!account.isAdmin&&stored.ownerUid!==account.uid)
+        throw err(403,"SPACE_NOT_OWNED","Dieser Team Space gehört nicht zu deinem Trainerkonto.");
+    }else trainerSpace(req,stored,adminToken);
+  }else reader(req,stored);
   if(action==="verify-trainer"){
     send(res,200,{spaceId,trainerAccess:stored.trainerHash?"individual":"legacy"});
     return true;
