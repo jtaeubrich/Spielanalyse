@@ -1757,7 +1757,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
                 <button type="button" class="btn primary" id="trainerAccountCreateSeason">Saison anlegen</button>
                 <button type="button" class="btn" id="trainerAccountCopySpaceId">Team-Space-ID kopieren</button>
               </div>
-              <p class="number-help">Neue Saisons starten mit 0 Spielen. Das Erstellen oder Hochladen von Spielen ist mit diesem Trainerkonto nicht erlaubt.</p>
+              <p class="number-help">Neue Saisons starten mit 0 Spielen. Für Spiele anschließend unten „Saisons und Spiele veröffentlichen“ öffnen und die passende Online-Zielsaison auswählen. Die gewählte Team-Space-Kennung muss übereinstimmen.</p>
             </div>
             <div id="trainerAccountAdmin" hidden>
               <hr>
@@ -6347,6 +6347,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("teamSpaceSelect").onchange=event=>{
     teamSpaceSelectedId=event.target.value;
     localStorage.setItem("handballSpielanalyse.teamSpace",teamSpaceSelectedId);
+    if([...$("trainerAccountSpaces").options].some(o=>o.value===teamSpaceSelectedId))
+      $("trainerAccountSpaces").value=teamSpaceSelectedId;
     $("teamSpaceAdminToken").value="";
     $("teamSpaceNewTrainerCredentials").hidden=true;
     $("teamSpaceNewTrainerToken").value="";
@@ -6560,6 +6562,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     try{await navigator.clipboard.writeText(secret);toast("Veröffentlichungsschlüssel kopiert.")}
     catch{$("trainerAccountPublisherToken").select();toast("Schlüssel markiert; bitte kopieren.")}
   };
+  $("trainerAccountSpaces").onchange=()=>{
+    const spaceId=$("trainerAccountSpaces").value;
+    if(!teamSpaces.has(spaceId))return;
+    teamSpaceSelectedId=spaceId;
+    localStorage.setItem("handballSpielanalyse.teamSpace",spaceId);
+    teamSpaceCatalogData=null;
+    void teamSpaceRefreshCatalog();
+  };
   $("trainerAccountCopySpaceId").onclick=async()=>{
     const spaceId=$("trainerAccountSpaces").value;
     if(!spaceId)return;
@@ -6699,8 +6709,17 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     await service.createSeason(spaceId,name,catalog.revision);
     $("trainerAccountSeasonName").value="";
     await trainerAccountLoadSpaces();
-    if(teamSpaceSelectedId===spaceId)await teamSpaceRefreshCatalog();
-    trainerAccountStatus("Saison „"+name+"“ ohne Spiele angelegt. Das Hochladen von Spielen ist mit dem Trainerkonto gesperrt.");
+    // Keep the trainer management selection and the top Team Space catalog
+    // in sync. Otherwise "Updates prüfen" can show zero items from a
+    // different Team Space even after a successful season creation.
+    if(teamSpaces.has(spaceId)){
+      teamSpaceSelectedId=spaceId;
+      localStorage.setItem("handballSpielanalyse.teamSpace",spaceId);
+      teamSpaceCatalogData=null;
+      await teamSpaceRefreshCatalog();
+    }
+    trainerAccountStatus("Saison „"+name+"“ ohne Spiele angelegt · Team Space ID …"+
+      spaceId.slice(-8)+". Für ein Spiel unten „Saisons und Spiele veröffentlichen“ öffnen.");
     toast("Leere Saison erstellt.");
   });
   $("teamSpaceRotateReader").onclick=async()=>{
