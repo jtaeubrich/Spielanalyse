@@ -305,10 +305,14 @@ test("Approved Firebase trainer can create a Team Space and publish local season
   await page.locator("#trainerAccountSpaceName").fill("TSV Kronshagen");
   await page.locator("#trainerAccountCreateSpace").click();
   await expect(page.locator("#trainerAccountSpaces")).toHaveValue(SPACE);
+  await expect(page.locator("#teamSpaceSelect")).toHaveValue(SPACE);
   await page.locator("#trainerAccountSeasonName").fill("B-Jugend 2027/28");
   await page.locator("#trainerAccountCreateSeason").click();
   await expect(page.locator("#teamSpaceSeasons")).toContainText("B-Jugend 2027/28");
   await expect(page.locator("#teamSpaceSeasons")).toContainText("Noch keine Spiele");
+  await expect(page.locator("#teamSpaceSelect")).toHaveValue(SPACE);
+  await expect(page.locator("#teamSpaceSelectedIdInfo")).toContainText(SPACE);
+  await expect(page.locator("#trainerAccountStatus")).toContainText("ID …"+SPACE.slice(-8));
   await expect(page.locator("#teamSpacePublish")).toBeVisible();
   const invite=await page.locator("#teamSpaceInviteLink").inputValue();
   expect(invite).toContain("#teamspace=");
@@ -340,6 +344,10 @@ test("Approved Firebase trainer can create a Team Space and publish local season
   expect(cloud.lastPublish.archive.games).toHaveLength(1);
   expect(cloud.seasons).toHaveLength(1);
   await expect(page.locator("#teamSpacePublish")).toBeVisible();
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("Im Cloud-Katalog bestätigt: Saison");
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("Cloud-Version 2");
   const stored=await page.evaluate(()=>Object.keys(sessionStorage).map(k=>sessionStorage.getItem(k)));
   expect(JSON.stringify(stored)).not.toContain("super-secret");
   expect(JSON.stringify(stored)).not.toContain(ID_TOKEN);
