@@ -1,7 +1,7 @@
 // Optional trainer account registry using Firebase ID token verification.
 // Firebase accounts authenticate persons; the GCS registry grants trainer roles.
 // This module has no firebase-admin dependency so backend tests can inject a verifier.
-import {randomBytes,randomUUID,createHash} from "node:crypto";
+import {randomBytes,randomUUID,createHash,timingSafeEqual} from "node:crypto";
 
 const validUid=uid=>/^[A-Za-z0-9_-]{1,128}$/.test(String(uid||""));
 const validSpace=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id||""));
@@ -9,7 +9,7 @@ const hash=value=>createHash("sha256").update(value).digest("hex");
 const clean=value=>String(value||"").trim();
 
 export function createTrainerAccountRegistry({
-  store,verifyIdToken=null,adminUids=[],projectId="",webApiKey="",
+  store,verifyIdToken=null,adminUids=[],adminToken="",projectId="",webApiKey="",
   now=()=>new Date(),idFactory=randomUUID,
   readTokenFactory=()=>randomBytes(32).toString("base64url"),
   trainerTokenFactory=()=>"trainer_"+randomBytes(32).toString("base64url")
@@ -32,14 +32,18 @@ export function createTrainerAccountRegistry({
       throwError(401,"INVALID_ID_TOKEN","Die Anmeldung enthält keine gültige Benutzeridentität.");
     if(decoded.email_verified!==true)
       throwError(403,"EMAIL_NOT_VERIFIED","Bitte zuerst die E-Mail-Adresse bestätigen.");
-    const isAdmin=adminSet.has(uid);
     const record=await store.readTrainerUser(uid);
     const user=record.metadata?.email===email?record.metadata:null;
+    // The first admin is claimed exactly once and persisted in the private
+    // bucket. A changed verified email or a suspended account loses this role.
+    const bootstrap=adminSet.size?null:(await store.readTrainerAdminBootstrap()).metadata;
+    const isAdmin=adminSet.has(uid)||(bootstrap?.uid===uid&&
+      bootstrap?.email===email&&user?.status!=="suspended");
     if(administrator&&!isAdmin)
       throwError(403,"ADMIN_REQUIRED","Nur Administratoren dürfen Trainer freigeben.");
     if(approved&&!isAdmin&&user?.status!=="approved")
       throwError(403,"TRAINER_NOT_APPROVED","Trainerkonto ist noch nicht freigegeben oder wurde gesperrt.");
-    return {uid,email,isAdmin,user,record};
+    return {uid,email,isAdmin,user,record,bootstrap};
   }
   async function owner(req,spaceId){
     const user=await identity(req,{approved:true});
@@ -60,7 +64,9 @@ export function createTrainerAccountRegistry({
     if(path==="/trainer-auth/me"&&method==="GET"){
       const user=await identity(req);
       send(res,200,{uid:user.uid,email:user.email,isAdmin:user.isAdmin,
-        status:user.isAdmin?"approved":user.user?.status||"not_registered"});
+        status:user.isAdmin?"approved":user.user?.status||"not_registered",
+        adminBootstrapAvailable:!adminSet.size&&!user.bootstrap&&!user.isAdmin&&
+          user.user?.status==="pending"&&typeof adminToken==="string"&&adminToken.length>=32});
       return true;
     }
     if(path==="/trainer-auth/register"&&method==="POST"){
@@ -78,7 +84,34 @@ export function createTrainerAccountRegistry({
       else await store.createTrainerUser(user.uid,record);
       send(res,201,{status:"pending"});return true;
     }
-    // Only bootstrap administrators can issue a separate upload capability.
+    // A verified trainer with a pending application can become the first
+    // administrator by proving knowledge of the existing central registration
+    // credential. The immutable GCS object makes this globally one-time,
+    // even for simultaneous calls to separate Cloud Run instances.
+    if(path==="/trainer-auth/admin/bootstrap"&&method==="POST"){
+      const applicant=await identity(req);
+      if(adminSet.size||applicant.bootstrap)
+        throwError(409,"ADMIN_ALREADY_CONFIGURED","Ein Administrator ist bereits eingerichtet.");
+      if(applicant.user?.status!=="pending")
+        throwError(403,"TRAINER_APPLICATION_REQUIRED","Bitte zuerst die Trainerfreigabe beantragen.");
+      const body=await bodyJson(req);
+      const submitted=String(body?.registrationToken||"").trim();
+      if(!/^[A-Za-z0-9_-]{32,256}$/.test(submitted)||
+        typeof adminToken!=="string"||adminToken.length<32||
+        !timingSafeEqual(Buffer.from(hash(submitted),"hex"),Buffer.from(hash(adminToken),"hex")))
+        throwError(403,"INVALID_REGISTRATION_TOKEN","Der zentrale Registrierungsschlüssel ist ungültig.");
+      const stamp=now().toISOString();
+      await store.createTrainerAdminBootstrap({uid:applicant.uid,
+        email:applicant.email,claimedAt:stamp});
+      // Persist the approved status for an accurate trainer list. Even if this
+      // update races, the immutable bootstrap document remains authoritative.
+      await store.updateTrainerUser(applicant.uid,{...applicant.user,
+        status:"approved",updatedAt:stamp,approvedAt:stamp,
+        approvedBy:applicant.uid},applicant.record.generation);
+      send(res,200,{uid:applicant.uid,isAdmin:true,status:"approved"});
+      return true;
+    }
+    // Only administrators can issue a separate upload capability.
     // Ordinary Firebase-approved trainers never receive this secret and
     // therefore cannot publish games in their Team Spaces.
     const publisher=/^\/trainer-auth\/admin\/spaces\/([^/]+)\/publisher-key$/.exec(path);
