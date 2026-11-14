@@ -5231,6 +5231,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   // Home entry is navigation only. It never resets state, season storage or
   // the active game; saved games are always opened via existing handlers.
   let homeKind=null,homeView="choose",homeHasSession=false,homeSessionDeleted=false;
+  let homeTeamSpaceNotice="";
   const homePanels={choose:"homeChoose",actions:"homeActions",library:"homeLibrary",dashboard:"homeSeasonDashboard",teamspace:"homeTeamSpace"};
   const homeKinds={season:"Saison",game:"Einzelspiel",teamspace:"Team Space"};
   const homeButton=(label,callback,primary=false)=>{
@@ -5453,13 +5454,25 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("homeSubtitle").textContent=view==="choose"?"Wähle Saison, Einzelspiel oder Team Space. Deine gespeicherten Daten bleiben erhalten.":
       view==="actions"?"Was möchtest du tun?":
       view==="library"?"Wähle einen gespeicherten Eintrag auf diesem Gerät.":"";
-    if(view==="choose")homeRenderRecent();
+    if(view!=="choose")homeTeamSpaceNotice="";
+    if(view==="choose"){
+      $("homeTeamSpaceJoined").textContent=homeTeamSpaceNotice;
+      $("homeTeamSpaceJoined").hidden=!homeTeamSpaceNotice;
+      homeRenderRecent();
+    }
     if(view==="library")homeRenderLibrary();
     if(view==="dashboard"){showSetupMode("season",{focused:true});homeRenderSeasonDashboard();renderSeasonPreviewHeader();}
     if(view==="teamspace")void teamSpaceOpen();
   }
   function homeRenderRecent(){
     const host=$("homeRecentOptions");host.replaceChildren();
+    const lastSpace=teamSpaces.get(teamSpaceSelectedId);
+    if(lastSpace){
+      host.append(homeRow(lastSpace.name||"Team Space",
+        "Team Space verbunden · Online-Saisons und Spiele verfügbar",[
+          {title:"Laden",primary:true,action:()=>homeShow("teamspace","teamspace")}
+        ],"teamspace"));
+    }
     if(homeHasSession){
       const subtitle=(activeSeasonGameId?"Mit Saison verknüpft · ":"")+
         (state.events?.length||0)+" Ereignisse · "+homeGameStatus({state});
@@ -5917,7 +5930,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const outdated=local&&Number(local.revision)<season.revision;
       const status=season.gameCount===0?"Noch keine Spiele":
         local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
-      const actions=season.gameCount===0?[]:[{title:outdated?"Aktualisieren":local?"Öffnen":"Importieren",
+      const actions=season.gameCount===0?[]:[{title:outdated?"Aktualisieren":local?"Saison öffnen":"Saison laden",
         primary:true,action:async()=>{
           if(local&&!outdated){
             if(local.localSeasonId!==seasonLibraryId)await switchSeasonLibrary(local.localSeasonId);
@@ -5942,6 +5955,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         actions,"game"));
     }
     if(!catalog.games.length)gameHost.textContent="Noch keine Spiele veröffentlicht.";
+    $("teamSpaceGamesSummary").textContent="Einzelspiele anzeigen ("+catalog.games.length+")";
   }
   async function teamSpaceRefreshCatalog(){
     const connection=teamActiveConnection();
@@ -6012,7 +6026,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const catalog=await teamSpaceCatalog(joined);
     joined.name=catalog.name;
     await saveTeamSpaceConnection(joined);
-    homeShow("teamspace","teamspace");
+    homeTeamSpaceNotice="Team Space „"+joined.name+"“ erfolgreich hinzugefügt. "+
+      "Du findest ihn jetzt unter „Schneller Wiedereinstieg“ mit „Laden“. "+
+      "Saisons kannst du bei Bedarf vollständig herunterladen.";
+    homeShow("choose",null);
   }
   async function teamSpaceImportSeason(season){
     if(teamSpaceBusy)return;
@@ -6048,8 +6065,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         openSeasonRefreshPreview(archive,"Team Space · "+season.name,null,meta);
         teamStatus("Vorschau geöffnet. Bitte die Übernahme der Aktualisierung bestätigen.");
       }else{
-        if(!confirm("Saison „"+season.name+"“ mit "+parsed.games.length+
-          " Spielen lokal hinzufügen?\n\nBestehende Saisons bleiben erhalten."))return;
+        // "Saison laden" is an explicit action. A new local archive is created
+        // without overwriting any existing season, so no extra dialog is needed.
         await activateNewSeason({...archive,...parsed},parsed.name);
         const now=new Date().toISOString();
         await writeInternalRecords(INTERNAL_SEASON_STORE,[
