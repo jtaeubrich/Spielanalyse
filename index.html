@@ -6211,6 +6211,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   async function teamSpacePublish(type){
     if(teamSpaceBusy)return;teamSpaceBusy=true;
+    $("teamSpacePublishStatus").textContent="Veröffentlichung wird vorbereitet. Noch keine Serverbestätigung.";
     try{
       const connection=teamActiveConnection(),secret=$("teamSpaceAdminToken").value.trim();
       const account=connection?.role==="account";
@@ -6228,7 +6229,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         persistSession();
         const archive=seasonExportObject({includePersonal:true});
         if(!confirm("Saison „"+archive.name+"“ mit "+archive.games.length+
-          " Spielen für alle Mitglieder dieses Team Space veröffentlichen?"))return;
+          " Spielen für alle Mitglieder dieses Team Space veröffentlichen?")){
+          $("teamSpacePublishStatus").textContent="Veröffentlichung abgebrochen. Keine Daten übertragen.";
+          return;
+        }
         const prefix=teamSeasonLinkId(connection.spaceId,"");
         const old=[...teamSpaceLinks.values()].find(row=>
           row.id?.startsWith(prefix)&&row.localSeasonId===localId);
@@ -6244,20 +6248,33 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           " Spiele. Ihre Spielzuordnung durch den lokalen Saisonstand ersetzen?"))return;
         if(!targetId&&catalog.seasons.some(season=>season.name===archive.name)&&
           !confirm("Eine Online-Saison mit diesem Namen existiert bereits. Trotzdem eine weitere Saison anlegen?"))return;
+        $("teamSpacePublishStatus").textContent="Saison wird an den Server übertragen …";
         result=account
           ?await trainerAccountApi().publishSeason(connection.spaceId,archive,catalog.revision,targetId)
           :await publishTeamSpaceSeason(connection,archive,secret,catalog.revision,targetId);
-        const refreshed=await teamSpaceCatalog(connection);
-        const remote=refreshed.seasons.find(s=>s.id===result.seasonId);
-        const versions={};
-        for(const gameId of remote?.gameIds||[]){
-          const published=refreshed.games.find(g=>g.id===gameId);
-          if(published)versions[gameId]=published.revision;
+        // The successful server response is authoritative. Store it before
+        // any optional local bookkeeping so a local IndexedDB error cannot
+        // misreport a completed publication as a failed upload.
+        teamSpaceRememberPublication(connection,"season",result,archive.name);
+        try{
+          const refreshed=await teamSpaceCatalog(connection);
+          const remote=refreshed.seasons.find(s=>s.id===result.seasonId);
+          const versions={};
+          for(const gameId of remote?.gameIds||[]){
+            const published=refreshed.games.find(g=>g.id===gameId);
+            if(published)versions[gameId]=published.revision;
+          }
+          const link={id:teamSeasonLinkId(connection.spaceId,result.seasonId),
+            localSeasonId:localId,revision:result.itemRevision,gameRevisions:versions,
+            updatedAt:new Date().toISOString()};
+          await writeInternalRecord(INTERNAL_SEASON_STORE,link);
+          teamSpaceLinks.set(link.id,link);
+        }catch(localError){
+          teamSpaceLastPublish.localWarning=localError?.message||"Fehler beim lokalen Verknüpfen";
+          localStorage.setItem(TEAM_SPACE_LAST_PUBLISH_KEY,
+            JSON.stringify(teamSpaceLastPublish));
+          teamSpaceShowPublication();
         }
-        const link={id:teamSeasonLinkId(connection.spaceId,result.seasonId),
-          localSeasonId:localId,revision:result.itemRevision,gameRevisions:versions,
-          updatedAt:new Date().toISOString()};
-        await writeInternalRecord(INTERNAL_SEASON_STORE,link);teamSpaceLinks.set(link.id,link);
       }else{
         const selected=$("teamSpacePublishGame").value;
         if(!selected)throw Error("Bitte ein Einzelspiel auswählen.");
@@ -6281,26 +6298,43 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         }
         const assigned=$("teamSpacePublishTargetSeason").value||null;
         if(!confirm("Spiel „"+game.gameName+
-          "“ im Team Space veröffentlichen?"))return;
+          "“ im Team Space veröffentlichen?")){
+          $("teamSpacePublishStatus").textContent="Veröffentlichung abgebrochen. Keine Daten übertragen.";
+          return;
+        }
+        $("teamSpacePublishStatus").textContent="Spiel wird an den Server übertragen …";
         result=account
           ?await trainerAccountApi().publishGame(connection.spaceId,game,catalog.revision,{
             gameId,seasonId:assigned,fileName})
           :await publishTeamSpaceGame(connection,game,secret,catalog.revision,{
             gameId,seasonId:assigned,fileName});
+        teamSpaceRememberPublication(connection,"game",result,game.gameName||fileName);
         if(localSourceSeasonId){
-          const now=new Date().toISOString();
-          const source=coreNormalizeSeasonGame(game,fileName);
-          source.id=localSourceGameId;
-          const link={id:teamGameLinkId(connection.spaceId,result.gameId),
-            localSeasonId:localSourceSeasonId,localGameId:localSourceGameId,
-            revision:result.itemRevision,source,updatedAt:now};
-          await writeInternalRecord(INTERNAL_SEASON_STORE,link);
-          teamSpaceLinks.set(link.id,link);
+          try{
+            const now=new Date().toISOString();
+            const source=coreNormalizeSeasonGame(game,fileName);
+            source.id=localSourceGameId;
+            const link={id:teamGameLinkId(connection.spaceId,result.gameId),
+              localSeasonId:localSourceSeasonId,localGameId:localSourceGameId,
+              revision:result.itemRevision,source,updatedAt:now};
+            await writeInternalRecord(INTERNAL_SEASON_STORE,link);
+            teamSpaceLinks.set(link.id,link);
+          }catch(localError){
+            teamSpaceLastPublish.localWarning=localError?.message||"Fehler beim lokalen Verknüpfen";
+            localStorage.setItem(TEAM_SPACE_LAST_PUBLISH_KEY,
+              JSON.stringify(teamSpaceLastPublish));
+            teamSpaceShowPublication();
+          }
         }
       }
-      toast("Team Space aktualisiert. Version "+result.revision+" veröffentlicht.");
+      toast("Cloud-Server hat Version "+result.revision+" bestätigt.");
       await teamSpaceRefreshCatalog();
-    }catch(error){teamStatus("Veröffentlichung fehlgeschlagen: "+error.message)}
+    }catch(error){
+      const message="Veröffentlichung nicht bestätigt: "+(error?.message||String(error))+
+        ". Bitte den ausgewählten Team Space und den Cloud-Katalog prüfen.";
+      $("teamSpacePublishStatus").textContent=message;
+      teamStatus(message);
+    }
     finally{teamSpaceBusy=false}
   }
   $("teamSpaceSelect").onchange=event=>{
