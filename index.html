@@ -1848,6 +1848,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             <label>Online-Saisonzuordnung (optional)
               <select class="field" id="teamSpacePublishTargetSeason"><option value="">Ohne Saisonzuordnung</option></select>
             </label>
+            <p class="number-help">Ohne Online-Saisonzuordnung erscheint das Spiel nur unter „Freigegebene Einzelspiele und Saisonspiele“, nicht innerhalb einer Saison.</p>
             <button class="btn primary" id="teamSpacePublishGameBtn" type="button">Einzelspiel veröffentlichen</button>
           </div>
           <p id="teamSpacePublishStatus" class="number-help" role="status" aria-live="polite">Noch keine Veröffentlichung von diesem Gerät bestätigt.</p>
@@ -6236,7 +6237,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         persistSession();
         const archive=seasonExportObject({includePersonal:true});
         if(!confirm("Saison „"+archive.name+"“ mit "+archive.games.length+
-          " Spielen für alle Mitglieder dieses Team Space veröffentlichen?")){
+          " Spielen im Team Space „"+(connection.name||"Team Space")+
+          "“ (ID …"+connection.spaceId.slice(-8)+") veröffentlichen?")){
           $("teamSpacePublishStatus").textContent="Veröffentlichung abgebrochen. Keine Daten übertragen.";
           return;
         }
@@ -6305,8 +6307,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           localSourceSeasonId=localSeason;localSourceGameId=item.id;
         }
         const assigned=$("teamSpacePublishTargetSeason").value||null;
-        if(!confirm("Spiel „"+game.gameName+
-          "“ im Team Space veröffentlichen?")){
+        const targetSeason=assigned?catalog.seasons.find(row=>row.id===assigned):null;
+        if(!confirm("Spiel „"+game.gameName+"“ im Team Space „"+
+          (connection.name||"Team Space")+"“ (ID …"+connection.spaceId.slice(-8)+
+          ") veröffentlichen?\n\nOnline-Saison: "+
+          (targetSeason?.name||"Ohne Saisonzuordnung"))){
           $("teamSpacePublishStatus").textContent="Veröffentlichung abgebrochen. Keine Daten übertragen.";
           return;
         }
