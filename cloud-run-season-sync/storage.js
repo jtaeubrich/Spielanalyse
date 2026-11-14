@@ -147,7 +147,7 @@ export function createGcsSeasonStore({bucketName,storage=new Storage()}={}){
     async listTrainerSpaceLinks(uid){
       if(!validUid(uid))throw Error("Invalid trainer UID");
       const [files]=await bucket.getFiles({prefix:"trainer-registry/links/"+uid+"/"});
-      return files.map(f=>f.name.split("/").pop().replace(/\\.json$/,""))
+      return files.map(f=>f.name.split("/").pop().replace(/\.json$/,""))
         .filter(validSpaceId);
     }
   };
