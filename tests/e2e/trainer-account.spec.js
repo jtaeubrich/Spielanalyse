@@ -51,7 +51,33 @@ test("Safari and password managers receive correctly mapped login fields, Enter 
   await password.press("Enter");
   await expect(page.locator("#trainerAccountStatus")).toContainText("Freigabe beantragt");
   expect(loginRequests).toBe(1);
+  // A successful login must not leave the now-blank password box visible.
+  await expect(form).toBeHidden();
+  await expect(page.locator("#trainerAccountDashboard")).toBeVisible();
+  await expect(page.locator("#trainerAccountSessionActions")).toBeVisible();
+  await expect(page.locator("#trainerAccountSignOut")).toBeVisible();
   await expect(password).toHaveValue("");
+  await page.locator("#trainerAccountSignOut").click();
+  await expect(form).toBeVisible();
+  await expect(page.locator("#trainerAccountSessionActions")).toBeHidden();
+  await expect(page.locator("#trainerAccountDashboard")).toBeHidden();
+  expect(loginRequests).toBe(1);
+});
+
+test("Autofilled credentials stay present until a user submits the form",async({page})=>{
+  await page.route(API+"/trainer-auth/config",route=>route.fulfill(success(firebase)));
+  await openTrainerAccount(page);
+  const username=page.locator("#trainerAccountEmail");
+  const password=page.locator("#trainerAccountPassword");
+  await username.fill("trainer@example.org");
+  await password.fill("stored-password");
+  // Equivalent to input/change events triggered by password autofill.
+  await password.dispatchEvent("input");
+  await password.dispatchEvent("change");
+  await expect(username).toHaveValue("trainer@example.org");
+  await expect(password).toHaveValue("stored-password");
+  await expect(page.locator("#trainerAccountLogin")).toBeVisible();
+  await expect(page.locator("#trainerAccountSessionActions")).toBeHidden();
 });
 
 test("Pending trainer becomes first admin once using a central key without Cloud Console",async({page})=>{
