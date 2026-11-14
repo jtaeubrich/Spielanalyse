@@ -5665,6 +5665,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     teamSpaceRenderControls();
   }
   async function teamSpaceJoin(connection){
+    if(connection.spaceId!==teamSpaceSelectedId){
+      $("teamSpaceAdminToken").value="";
+      $("teamSpaceNewTrainerCredentials").hidden=true;
+      $("teamSpaceNewTrainerToken").value="";
+    }
     const current=teamSpaces.get(connection.spaceId);
     const joined=current?.role==="trainer"?current:{
       ...connection,name:current?.name||"Team Space",role:"reader"
@@ -6003,7 +6008,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       await saveTeamSpaceConnection({...connection,role:"trainer"});
       await teamSpaceRefreshCatalog();
       teamStatus("Trainerzugang aktiviert"+(info.trainerAccess==="legacy"
-        ?". Bitte diesen Team Space auf einen individuellen Schlüssel umstellen.":".")+"");
+        ?". Bitte diesen Team Space auf einen individuellen Schlüssel umstellen.":"."));
     }catch(error){teamStatus("Trainerzugang nicht aktiviert: "+error.message)}
   };
   $("teamSpaceRotateTrainer").onclick=async()=>{
