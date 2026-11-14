@@ -66,7 +66,7 @@ describe("Firebase trainer browser client",()=>{
     expect(JSON.parse(verification.options.body).idToken).toBe(jwt);
     expect(JSON.stringify(session.entries())).not.toContain("safe-password-123");
   });
-  it("allows approved clients to request empty season while keeping games unavailable",async()=>{
+  it("allows approved clients to create seasons and publish existing games using their Firebase session",async()=>{
     const session=memoryStorage(),calls=[];
     const fetcher=vi.fn(async(url,opts={})=>{
       calls.push({url,opts});
@@ -76,6 +76,12 @@ describe("Firebase trainer browser client",()=>{
       if(url.endsWith("/trainer-auth/spaces/"+SPACE+"/seasons"))return new Response(JSON.stringify({
         spaceId:SPACE,seasonId:SPACE,name:"2027/28",gameCount:0,revision:1
       }),{status:201});
+      if(url.endsWith("/spaces/"+SPACE+"/publish-season"))return new Response(JSON.stringify({
+        spaceId:SPACE,seasonId:SPACE,revision:2,itemRevision:2,gameCount:1
+      }));
+      if(url.endsWith("/spaces/"+SPACE+"/publish-game"))return new Response(JSON.stringify({
+        spaceId:SPACE,gameId:"sg-1",revision:3,itemRevision:1
+      }));
       throw Error("Unexpected "+url);
     });
     const client=createTrainerAuthClient(API,{session,fetcher});
@@ -85,7 +91,25 @@ describe("Firebase trainer browser client",()=>{
     const createCall=calls.find(c=>c.url.endsWith("/seasons"));
     expect(createCall.opts.headers.Authorization).toBe("Bearer "+jwt);
     expect(JSON.parse(createCall.opts.body)).toEqual({name:"2027/28",expectedRevision:0});
-    expect(client.publishGame).toBeUndefined();
+    const archive={format:"handball-spielanalyse-season",version:1,
+      name:"2027/28",games:[]};
+    const published=await client.publishSeason(SPACE,archive,1,SPACE);
+    expect(published.seasonId).toBe(SPACE);
+    const seasonCall=calls.find(c=>c.url.endsWith("/publish-season"));
+    expect(seasonCall.opts.headers.Authorization).toBe("Bearer "+jwt);
+    expect(JSON.parse(seasonCall.opts.body).seasonId).toBe(SPACE);
+    expect(JSON.parse(seasonCall.opts.body).archive).toEqual(archive);
+    const single={gameName:"Test",home:{},away:{},events:[]};
+    const result=await client.publishGame(SPACE,single,2,{
+      gameId:"sg-1",seasonId:SPACE,fileName:"spiel.json"
+    });
+    expect(result.gameId).toBe("sg-1");
+    const gameCall=calls.find(c=>c.url.endsWith("/publish-game"));
+    expect(gameCall.opts.headers.Authorization).toBe("Bearer "+jwt);
+    expect(JSON.parse(gameCall.opts.body)).toEqual({
+      expectedRevision:2,game:single,gameId:"sg-1",seasonId:SPACE,fileName:"spiel.json"
+    });
+    expect(JSON.stringify(session.entries())).not.toContain(jwt);
   });
   it("claims first administrator once without saving or exposing central registration credential",async()=>{
     const registrationToken="trainer_"+("s".repeat(44));
