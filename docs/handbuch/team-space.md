@@ -32,22 +32,45 @@ zurückgeschrieben.
 gespeichert. Für einen Gerätewechsel oder eine Neuinstallation zusätzlich
 regelmäßig eine **private Sicherung** erstellen.
 
-## Für Trainer
+## Für Trainer – neuen Team Space erstellen
 
 1. **Start → Team Space → Team Space verbinden oder verwalten** öffnen.
-2. Die URL des getrennten Handball-Saison-Cloud-Run-Dienstes,
-   Teamnamen und den eigenen **Trainer-Schlüssel** eingeben.
-3. **Team Space erstellen** anklicken und den erzeugten
-   **Einladungslink** ausschließlich an die Mannschaft verteilen.
-4. **Saisons und Spiele veröffentlichen** aufklappen:
-   - Eine lokal gespeicherte Saison wählen und veröffentlichen.
-   - Ein einzelnes lokales Spiel auswählen und separat veröffentlichen.
-   - Optional ein Einzelspiel einer bereits im Team Space
-     veröffentlichten Saison zuordnen.
-5. Spätere Veröffentlichungen desselben Spiels bekommen einen neuen
-   Versionsstand. Die Saison, zu der es gehört, meldet ebenfalls ein Update.
-6. **Leseschlüssel erneuern** sperrt alle bisherigen Einladungen. Danach
-   muss der neue Link an alle Spieler verteilt werden.
+2. Den Cloud-Run-Dienst, Teamnamen und den **zentralen Registrierungsschlüssel**
+   eingeben. Dieser Schlüssel wird nur zur Erstellung neuer Team Spaces benutzt
+   (bei älteren Saison-Cloud-Bereichen bleibt er vorerst auch deren Legacy-Schlüssel).
+3. **Team Space erstellen** anklicken. Der Server erzeugt zwei **unterschiedliche,
+   zufällige Schlüssel**: einen Trainer-Schlüssel (Schreibrechte für genau diesen
+   Space) und einen Spieler-Schlüssel (Leserechte für genau diesen Space).
+4. Den **neuen Trainer-Schlüssel sofort in einem Passwortmanager sichern**.
+   Er wird nur bei der Erstellung bzw. Rotation ausgegeben und **nicht dauerhaft
+   in der Spielanalyse gespeichert**. Wird er verloren, ist ohne administrativen
+   Eingriff keine weitere Veröffentlichung möglich.
+5. Den **Einladungslink** mit dem Spieler-Leseschlüssel nur an berechtigte
+   Mannschaftsmitglieder geben. Der Trainer-Schlüssel darf niemals in den
+   Spieler-Link eingefügt werden.
+6. Im Abschnitt **Saisons und Spiele veröffentlichen** den individuellen
+   Trainer-Schlüssel eingeben und die gewünschte Saison bzw. das Einzelspiel
+   veröffentlichen. Das funktioniert unabhängig von anderen Team Spaces.
+7. Mit **Trainer-Schlüssel erneuern** kann ein alter Trainerschlüssel ungültig
+   gemacht werden; die Leseschlüssel der Spieler bleiben dabei gültig.
+   Mit **Leseschlüssel erneuern** werden dagegen alte Einladungen ungültig.
+
+## Bestehende Team Spaces migrieren oder auf einem weiteren Gerät verwalten
+
+- Alte Team Spaces ohne individuellen Trainer-Schlüssel werden im Katalog als
+  Legacy-Zugang erkannt. **Vorhandenen Team Space übernehmen** erzeugt nach
+  Eingabe des zentralen Registrierungsschlüssels einmalig einen eigenen
+  Trainer-Schlüssel. Danach kann der alte zentrale Schlüssel **nicht mehr**
+  für diesen Team Space veröffentlichen. Einladungen, IDs, Saisons, Spiele
+  und lokale Kommentare bleiben dabei unverändert.
+- Auf einem **zweiten Trainergerät** zunächst den normalen Spieler-Link öffnen,
+  danach den individuellen Trainer-Schlüssel eingeben und auf
+  **Trainerzugang aktivieren** klicken. Der Trainer-Schlüssel wird nicht
+  auf dem Gerät gespeichert; er muss zum Veröffentlichen wieder eingegeben werden.
+- Bis zur Übernahme können alte Team Spaces vorübergehend noch mit dem
+  bisherigen zentralen Schlüssel beschrieben werden. Deshalb ist die Migration
+  für alle vorhandenen Team Spaces empfehlenswert.
+
 
 **Hinweis zur Freigabe:** Veröffentlicht wird der vom Trainer ausdrücklich
 ausgewählte Spielstand. Der Trainer sollte prüfen, ob darin Informationen
@@ -57,9 +80,12 @@ Spieler-Lesezugänge besitzen keinerlei Veröffentlichungsberechtigung.
 ## Technischer Stand und Grenzen
 
 - Originales Spiel-JSON v1 und Saison-JSON v1 bleiben unverändert.
-- Die Cloud-Schnittstelle führt einen privaten Katalog mit stabilen
-  Spiel-IDs, separaten Versionsnummern pro Spiel und Saison und einem
-  widerrufbaren Team-Leseschlüssel.
+- Die Cloud-Schnittstelle führt pro Space einen privaten Katalog mit stabilen
+  Spiel-IDs, separaten Versionsnummern pro Spiel und Saison, einem
+  widerrufbaren Leser- und einem widerrufbaren Trainer-Schlüssel.
+- In Google Cloud Storage werden **nur SHA-256-Hashes** beider Space-Schlüssel
+  gespeichert. Die ursprünglichen Schlüssel erscheinen einmalig in der
+  verschlüsselten HTTPS-API-Antwort bzw. im Einladungslink, nicht im Metadatensatz.
 - Auf den Endgeräten speichert die App nur die jeweiligen Zuordnungen
   und den letzten veröffentlichten Vergleichsstand.
 - Der Team Space lädt beim Öffnen und auf **Updates prüfen** die
