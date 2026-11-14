@@ -75,7 +75,7 @@ async function environment(callback){
 test("Team Space requires a trainer to create/publish, reader for catalog",()=>environment(async({call})=>{
   const bad=await call("POST","/spaces","reader_"+("r".repeat(40)),{name:"TSV"});
   assert.equal(bad.status,401);
-  const created=(await call("POST","/spaces",ADMIN,{authVersion:2,name:"TSV Kronshagen"})).data;
+  const created=(await call("POST","/spaces/v2",ADMIN,{authVersion:2,name:"TSV Kronshagen"})).data;
   assert.equal(created.spaceId,SPACE_ID);
   const root="/spaces/"+SPACE_ID;
   assert.equal((await call("GET",root+"/catalog")).status,401);
@@ -91,7 +91,7 @@ test("Team Space requires a trainer to create/publish, reader for catalog",()=>e
 }));
 test("One game can be published separately and inside a season without duplicates",()=>environment(async({call,store})=>{
   const root="/spaces/"+SPACE_ID;
-  const created=(await call("POST","/spaces",ADMIN,{authVersion:2,name:"TSV"})).data;
+  const created=(await call("POST","/spaces/v2",ADMIN,{authVersion:2,name:"TSV"})).data;
   const standalone=await call("POST",root+"/publish-game",created.trainerToken,
     {expectedRevision:0,game:game(),fileName:"spiel.json"});
   assert.equal(standalone.status,200);
@@ -117,7 +117,7 @@ test("One game can be published separately and inside a season without duplicate
 }));
 test("Single-game publication advances the linked season, stale writes are rejected",()=>environment(async({call})=>{
   const root="/spaces/"+SPACE_ID;
-  const created=(await call("POST","/spaces",ADMIN,{authVersion:2,name:"TSV"})).data;
+  const created=(await call("POST","/spaces/v2",ADMIN,{authVersion:2,name:"TSV"})).data;
   const published=(await call("POST",root+"/publish-season",created.trainerToken,
     {expectedRevision:0,archive:season()})).data;
   const first=(await call("GET",root+"/catalog",created.readToken)).data;
@@ -139,7 +139,7 @@ test("Single-game publication advances the linked season, stale writes are rejec
 }));
 test("Revoking team invite stops old reader without affecting published records",()=>environment(async({call})=>{
   const root="/spaces/"+SPACE_ID;
-  const created=(await call("POST","/spaces",ADMIN,{authVersion:2,name:"TSV"})).data;
+  const created=(await call("POST","/spaces/v2",ADMIN,{authVersion:2,name:"TSV"})).data;
   assert.equal((await call("POST",root+"/publish-game",created.trainerToken,
     {expectedRevision:0,game:{not:"a game"}})).status,400);
   const rotated=await call("POST",root+"/rotate-reader",created.trainerToken);
@@ -151,13 +151,15 @@ test("Revoking team invite stops old reader without affecting published records"
 
 test("Older client cannot create a Team Space without support for one-time trainer keys",()=>environment(async({call})=>{
   const old=await call("POST","/spaces",ADMIN,{name:"Old app"});
+  const notAware=await call("POST","/spaces/v2",ADMIN,{name:"Old app"});
+  assert.equal(notAware.status,426);
   assert.equal(old.status,426);
   assert.equal(old.data.error.code,"CLIENT_UPDATE_REQUIRED");
 }));
 
 test("Independent trainer keys isolate writes across two Team Spaces",()=>environment(async({call,store})=>{
-  const first=(await call("POST","/spaces",ADMIN,{authVersion:2,name:"TSV Kronshagen"})).data;
-  const second=(await call("POST","/spaces",ADMIN,{authVersion:2,name:"HC Bremen"})).data;
+  const first=(await call("POST","/spaces/v2",ADMIN,{authVersion:2,name:"TSV Kronshagen"})).data;
+  const second=(await call("POST","/spaces/v2",ADMIN,{authVersion:2,name:"HC Bremen"})).data;
   assert.notEqual(first.spaceId,second.spaceId);
   assert.notEqual(first.trainerToken,second.trainerToken);
   assert.notEqual(first.readToken,second.readToken);
@@ -188,8 +190,8 @@ test("Independent trainer keys isolate writes across two Team Spaces",()=>enviro
 }));
 
 test("Trainer rotation invalidates only the previous key, retaining reader access",()=>environment(async({call})=>{
-  const first=(await call("POST","/spaces",ADMIN,{authVersion:2,name:"TSV"})).data;
-  const other=(await call("POST","/spaces",ADMIN,{authVersion:2,name:"HC Bremen"})).data;
+  const first=(await call("POST","/spaces/v2",ADMIN,{authVersion:2,name:"TSV"})).data;
+  const other=(await call("POST","/spaces/v2",ADMIN,{authVersion:2,name:"HC Bremen"})).data;
   const root="/spaces/"+first.spaceId;
   assert.equal((await call("POST",root+"/rotate-trainer",ADMIN)).status,401);
   assert.equal((await call("POST",root+"/rotate-trainer",other.trainerToken)).status,401);
