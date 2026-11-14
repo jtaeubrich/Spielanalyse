@@ -9,6 +9,7 @@ on:
       - "tests/season-sync-client.test.js"
       - "tests/team-space-client.test.js"
       - ".github/workflows/test-season-sync.yml"
+      - ".github/workflows/deploy-season-sync.yml"
   pull_request:
     branches: [main]
     paths:
@@ -18,6 +19,7 @@ on:
       - "tests/season-sync-client.test.js"
       - "tests/team-space-client.test.js"
       - ".github/workflows/test-season-sync.yml"
+      - ".github/workflows/deploy-season-sync.yml"
   workflow_dispatch:
 permissions:
   contents: read
