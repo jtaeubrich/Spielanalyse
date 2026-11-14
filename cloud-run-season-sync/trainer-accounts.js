@@ -38,7 +38,7 @@ export function createTrainerAccountRegistry({
     // bucket. A changed verified email or a suspended account loses this role.
     const bootstrap=(await store.readTrainerAdminBootstrap()).metadata;
     const isAdmin=adminSet.has(uid)||(bootstrap?.uid===uid&&
-      bootstrap?.email===email&&user?.status!=="suspended");
+      bootstrap?.email===email&&Boolean(user)&&user.status!=="suspended");
     if(administrator&&!isAdmin)
       throwError(403,"ADMIN_REQUIRED","Nur Administratoren dürfen Trainer freigeben.");
     if(approved&&!isAdmin&&user?.status!=="approved")
