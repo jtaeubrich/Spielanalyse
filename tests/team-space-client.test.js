@@ -34,7 +34,7 @@ describe("Team Space API client",()=>{
     expect(created.trainerToken).toBe(PERSONAL);
     expect(created.trainerToken).not.toBe(ADMIN);
     expect(JSON.parse(fetcher.mock.calls[0][1].body).authVersion).toBe(2);
-    expect(fetcher.mock.calls[0][0]).toBe(API+"/spaces");
+    expect(fetcher.mock.calls[0][0]).toBe(API+"/spaces/v2");
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe("Bearer "+ADMIN);
     expect(fetcher.mock.calls[0][0]).not.toContain(ADMIN);
   });
@@ -43,6 +43,13 @@ describe("Team Space API client",()=>{
       spaceId:SPACE,readToken:TOKEN,name:"TSV",revision:0
     }),{status:201}));
     await expect(createTeamSpace(API,"TSV",ADMIN,{fetcher})).rejects.toThrow();
+  });
+  it("refuses registration on outdated Cloud Run deployments",async()=>{
+    const fetcher=vi.fn(async()=>new Response(JSON.stringify({
+      error:{code:"NOT_FOUND",message:"Endpoint not found"}
+    }),{status:404}));
+    await expect(createTeamSpace(API,"TSV",ADMIN,{fetcher}))
+      .rejects.toThrow("zuerst das Backend aktualisieren");
   });
   it("validates version catalog and authenticates read requests",async()=>{
     const fetcher=vi.fn(async()=>new Response(JSON.stringify({
