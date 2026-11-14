@@ -1666,6 +1666,59 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
           <h3>Freigegebene Einzelspiele und Saisonspiele</h3>
           <div class="home-list" id="teamSpaceGames"></div>
         </div>
+        <details class="season-games-details teamspace-connect" id="trainerAccountPanel">
+          <summary>Trainerkonto · Registrierung und Saisonverwaltung</summary>
+          <p class="number-help">Mit bestätigter E-Mail-Adresse kannst du eine Trainerfreigabe beantragen. Freigegebene Trainer dürfen neue Team Spaces und leere Saisons anlegen, aber keine Spiele veröffentlichen. Die Spieler benötigen weiterhin nur ihren Einladungslink.</p>
+          <p id="trainerAccountStatus" class="number-help" role="status">Traineranmeldung wird beim Öffnen geprüft.</p>
+          <div id="trainerAccountLogin" hidden>
+            <div class="teamspace-fields">
+              <label>E-Mail-Adresse
+                <input class="field" type="email" id="trainerAccountEmail" autocomplete="email" placeholder="trainer@verein.de">
+              </label>
+              <label>Passwort (mindestens sechs Zeichen)
+                <input class="field" type="password" id="trainerAccountPassword" autocomplete="current-password" minlength="6" placeholder="Nicht im Browser speichern">
+              </label>
+            </div>
+            <div class="season-tools">
+              <button type="button" class="btn primary" id="trainerAccountSignIn">Anmelden</button>
+              <button type="button" class="btn" id="trainerAccountSignUp">Registrieren</button>
+              <button type="button" class="btn" id="trainerAccountVerifyMail">Bestätigungs-E-Mail senden</button>
+              <button type="button" class="btn" id="trainerAccountCheckMail">E-Mail-Bestätigung prüfen</button>
+              <button type="button" class="btn" id="trainerAccountPasswordReset">Passwort zurücksetzen</button>
+              <button type="button" class="btn" id="trainerAccountSignOut">Abmelden</button>
+            </div>
+          </div>
+          <div id="trainerAccountDashboard" hidden>
+            <div class="season-tools">
+              <button type="button" class="btn" id="trainerAccountRequestApproval">Trainerfreigabe beantragen</button>
+              <button type="button" class="btn" id="trainerAccountRefresh">Status aktualisieren</button>
+            </div>
+            <div id="trainerAccountCreator" hidden>
+              <hr>
+              <h3>Team Space erstellen</h3>
+              <label>Teamname
+                <input class="field" id="trainerAccountSpaceName" type="text" placeholder="TSV Kronshagen B-Jugend">
+              </label>
+              <button type="button" class="btn primary" id="trainerAccountCreateSpace">Team Space erstellen</button>
+              <h3>Leere Saison anlegen</h3>
+              <div class="teamspace-fields">
+                <label>Team Space
+                  <select class="field" id="trainerAccountSpaces" aria-label="Team Space für die neue Saison"></select>
+                </label>
+                <label>Saisonname
+                  <input class="field" id="trainerAccountSeasonName" type="text" placeholder="B-Jugend 2027/28">
+                </label>
+              </div>
+              <button type="button" class="btn primary" id="trainerAccountCreateSeason">Saison anlegen</button>
+              <p class="number-help">Neue Saisons starten mit 0 Spielen. Das Erstellen oder Hochladen von Spielen ist mit diesem Trainerkonto nicht erlaubt.</p>
+            </div>
+            <div id="trainerAccountAdmin" hidden>
+              <hr>
+              <h3>Trainerfreigaben verwalten · Administrator</h3>
+              <div class="home-list" id="trainerAccountUserList"></div>
+            </div>
+          </div>
+        </details>
         <details class="season-games-details teamspace-connect" id="teamSpaceConnect">
           <summary>Team Space verbinden oder verwalten</summary>
           <label>Einladungslink
@@ -1678,7 +1731,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
           <p class="number-help">Trainerbereich: Mit dem zentralen Registrierungsschlüssel wird ein neuer Team Space eingerichtet. Jeder Space erhält danach einen eigenen Trainer-Schlüssel und einen Leseschlüssel für Spieler. Schlüssel werden nicht dauerhaft im Browser gespeichert.</p>
           <div class="teamspace-fields">
             <label>Cloud-Run-Dienst
-              <input type="url" class="field" id="teamSpaceApi" autocomplete="off" spellcheck="false" placeholder="https://handball-season-sync-…run.app">
+              <input type="url" class="field" id="teamSpaceApi" autocomplete="off" spellcheck="false" value="https://handball-season-sync-235703972531.europe-west1.run.app" placeholder="https://handball-season-sync-…run.app">
             </label>
             <label>Teamname
               <input type="text" class="field" id="teamSpaceName" placeholder="TSV Kronshagen">
@@ -2462,6 +2515,7 @@ import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handbal
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
 import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=2";
+import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=1";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
@@ -5547,8 +5601,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("teamSpaceClaimTrainer").hidden=!connection||
       teamSpaceCatalogData?.trainerAccess!=="legacy";
     $("teamSpaceActivateTrainer").hidden=!connection||connection.role==="trainer";
-    $("teamSpaceCopyInvite").disabled=connection?.role!=="trainer";
-    $("teamSpaceInviteLink").value=connection?.role==="trainer"
+    $("teamSpaceCopyInvite").disabled=!["trainer","account"].includes(connection?.role);
+    $("teamSpaceInviteLink").value=["trainer","account"].includes(connection?.role)
       ?makeTeamSpaceInvite(location.origin+location.pathname,connection):"";
     if(connection?.api&&!$("teamSpaceApi").value)
       $("teamSpaceApi").value=connection.api;
@@ -5671,7 +5725,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       $("teamSpaceNewTrainerToken").value="";
     }
     const current=teamSpaces.get(connection.spaceId);
-    const joined=current?.role==="trainer"?current:{
+    const joined=["trainer","account"].includes(current?.role)?current:{
       ...connection,name:current?.name||"Team Space",role:"reader"
     };
     const catalog=await teamSpaceCatalog(joined);
