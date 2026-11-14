@@ -27,6 +27,69 @@ test("Account registration stays unavailable until Firebase is configured, legac
   await page.locator("#teamSpaceConnect summary").click();
   await expect(page.locator("#teamSpaceRegistrationToken")).toBeVisible();
 });
+test("Registration requires matching passwords before contacting Firebase and clears credentials",async({page})=>{
+  const calls=[];
+  await page.route(API+"/trainer-auth/config",route=>route.fulfill(success(firebase)));
+  await page.route("https://identitytoolkit.googleapis.com/**",route=>{
+    calls.push({url:route.request().url(),body:route.request().postDataJSON()});
+    return route.fulfill(success({idToken:ID_TOKEN,refreshToken:"mock-refresh",expiresIn:"3600"}));
+  });
+  await openTrainerAccount(page);
+  const password=page.locator("#trainerAccountPassword");
+  const confirmation=page.locator("#trainerAccountPasswordConfirm");
+  await expect(confirmation).toBeHidden();
+  await expect(password).toHaveAttribute("autocomplete","current-password");
+  await page.locator("#trainerAccountEmail").fill("trainer@example.org");
+  await password.fill("secure test password");
+  await page.locator("#trainerAccountSignUp").click();
+  await expect(confirmation).toBeVisible();
+  expect(calls).toEqual([]);
+  await expect(password).toHaveAttribute("autocomplete","new-password");
+  await expect(confirmation).toHaveAttribute("autocomplete","new-password");
+  await page.getByRole("button",{name:"Konto erstellen",exact:true}).click();
+  await expect(page.locator("#trainerAccountStatus")).toContainText("stimmen nicht überein");
+  expect(calls).toEqual([]);
+  await confirmation.fill("different password");
+  await page.getByRole("button",{name:"Konto erstellen",exact:true}).click();
+  await expect(page.locator("#trainerAccountStatus")).toContainText("stimmen nicht überein");
+  expect(calls).toEqual([]);
+  await page.getByRole("button",{name:"Passwort anzeigen",exact:true}).click();
+  await expect(password).toHaveAttribute("type","text");
+  await expect(confirmation).toHaveAttribute("type","text");
+  await expect(page.locator("#trainerAccountShowPassword")).toHaveAttribute("aria-pressed","true");
+  await confirmation.fill("secure test password");
+  await page.getByRole("button",{name:"Konto erstellen",exact:true}).click();
+  await expect(page.locator("#trainerAccountStatus")).toContainText("Registriert. Bitte den Bestätigungslink");
+  expect(calls).toHaveLength(2);
+  expect(calls[0].url).toContain("accounts:signUp?");
+  expect(calls[0].body.password).toBe("secure test password");
+  expect(calls[0].body).not.toHaveProperty("passwordConfirm");
+  expect(calls[1].body.requestType).toBe("VERIFY_EMAIL");
+  await expect(password).toHaveValue("");
+  await expect(confirmation).toHaveValue("");
+  await expect(confirmation).toBeHidden();
+  await expect(password).toHaveAttribute("type","password");
+  const stored=await page.evaluate(()=>JSON.stringify([Object.values(localStorage),Object.values(sessionStorage)]));
+  expect(stored).not.toContain("secure test password");
+});
+
+test("Cancelling registration clears passwords and restores sign-in without confirmation",async({page})=>{
+  await page.route(API+"/trainer-auth/config",route=>route.fulfill(success(firebase)));
+  await openTrainerAccount(page);
+  await page.locator("#trainerAccountSignUp").click();
+  await page.locator("#trainerAccountPassword").fill("test password");
+  await page.locator("#trainerAccountPasswordConfirm").fill("test password");
+  await page.locator("#trainerAccountShowPassword").click();
+  await page.getByRole("button",{name:"Zur Anmeldung",exact:true}).click();
+  await expect(page.locator("#trainerAccountSignIn")).toBeVisible();
+  await expect(page.locator("#trainerAccountPasswordConfirm")).toBeHidden();
+  for(const id of ["trainerAccountPassword","trainerAccountPasswordConfirm"]){
+    await expect(page.locator("#"+id)).toHaveValue("");
+    await expect(page.locator("#"+id)).toHaveAttribute("type","password");
+  }
+  await expect(page.locator("#trainerAccountPassword")).toHaveAttribute("autocomplete","current-password");
+});
+
 test("Approved Firebase trainer can register team and empty season without publish-game access",async({page})=>{
   const cloud={spaces:[],seasons:[],writes:[],firebasePassword:null};
   await page.route("https://identitytoolkit.googleapis.com/**",route=>{

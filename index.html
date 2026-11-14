@@ -1573,6 +1573,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
     .home-main-choices{grid-template-columns:repeat(3,minmax(0,1fr))}
     .teamspace-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:end;gap:12px;margin:12px 0}
     .teamspace-fields label,.teamspace-connect label{display:block;min-width:0}
+    #trainerAccountLogin [hidden]{display:none!important}
     .teamspace-fields .field,.teamspace-connect .field{display:block;box-sizing:border-box;width:100%;margin-top:6px}
     #homeTeamSpace .home-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
     #homeTeamSpace h3{margin:20px 0 10px}
@@ -1677,12 +1678,17 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
                 <input class="field" type="email" id="trainerAccountEmail" autocomplete="email" placeholder="trainer@verein.de">
               </label>
               <label>Passwort (mindestens sechs Zeichen)
-                <input class="field" type="password" id="trainerAccountPassword" autocomplete="current-password" minlength="6" placeholder="Nicht im Browser speichern">
+                <input class="field" type="password" id="trainerAccountPassword" autocomplete="current-password" minlength="6">
+              </label>
+              <label id="trainerAccountPasswordConfirmLabel" hidden>Passwort wiederholen
+                <input class="field" type="password" id="trainerAccountPasswordConfirm" autocomplete="new-password" minlength="6">
               </label>
             </div>
+            <button type="button" class="btn" id="trainerAccountShowPassword" aria-pressed="false" aria-controls="trainerAccountPassword trainerAccountPasswordConfirm">Passwort anzeigen</button>
             <div class="season-tools">
               <button type="button" class="btn primary" id="trainerAccountSignIn">Anmelden</button>
               <button type="button" class="btn" id="trainerAccountSignUp">Registrieren</button>
+              <button type="button" class="btn" id="trainerAccountCancelSignUp" hidden>Zur Anmeldung</button>
               <button type="button" class="btn" id="trainerAccountVerifyMail">Bestätigungs-E-Mail senden</button>
               <button type="button" class="btn" id="trainerAccountCheckMail">E-Mail-Bestätigung prüfen</button>
               <button type="button" class="btn" id="trainerAccountPasswordReset">Passwort zurücksetzen</button>
@@ -6217,12 +6223,53 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("trainerAccountPanel").addEventListener("toggle",()=>{
     if($("trainerAccountPanel").open)trainerAccountAction(trainerAccountRefresh);
   });
+  let trainerAccountRegistering=false;
+  function trainerAccountHidePassword(){
+    $("trainerAccountPassword").type="password";
+    $("trainerAccountPasswordConfirm").type="password";
+    $("trainerAccountShowPassword").textContent="Passwort anzeigen";
+    $("trainerAccountShowPassword").setAttribute("aria-pressed","false");
+  }
+  function trainerAccountRegistrationMode(registering){
+    trainerAccountRegistering=registering;
+    $("trainerAccountPasswordConfirmLabel").hidden=!registering;
+    $("trainerAccountPasswordConfirm").value="";
+    $("trainerAccountPassword").autocomplete=registering?"new-password":"current-password";
+    $("trainerAccountSignIn").hidden=registering;
+    $("trainerAccountCancelSignUp").hidden=!registering;
+    $("trainerAccountSignUp").textContent=registering?"Konto erstellen":"Registrieren";
+    trainerAccountHidePassword();
+  }
+  $("trainerAccountShowPassword").onclick=()=>{
+    const show=$("trainerAccountPassword").type==="password";
+    for(const id of ["trainerAccountPassword","trainerAccountPasswordConfirm"])
+      $(id).type=show?"text":"password";
+    $("trainerAccountShowPassword").textContent=show?"Passwort verbergen":"Passwort anzeigen";
+    $("trainerAccountShowPassword").setAttribute("aria-pressed",String(show));
+  };
+  $("trainerAccountCancelSignUp").onclick=()=>{
+    $("trainerAccountPassword").value="";
+    trainerAccountRegistrationMode(false);
+    trainerAccountStatus("Mit E-Mail und Passwort anmelden oder ein neues Trainerkonto registrieren.");
+  };
   $("trainerAccountSignUp").onclick=()=>trainerAccountAction(async()=>{
+    if(!trainerAccountRegistering){
+      trainerAccountRegistrationMode(true);
+      trainerAccountStatus("Für ein neues Trainerkonto das Passwort zweimal eingeben und „Konto erstellen“ wählen.");
+      $("trainerAccountPasswordConfirm").focus();
+      return;
+    }
+    const password=$("trainerAccountPassword").value;
+    if(password.length<6)throw Error("Das Passwort muss mindestens sechs Zeichen enthalten.");
+    if(password!==$("trainerAccountPasswordConfirm").value){
+      $("trainerAccountPasswordConfirm").focus();
+      throw Error("Die Passwörter stimmen nicht überein. Bitte beide Eingaben prüfen.");
+    }
     trainerAccountClearPublisher();
     const service=trainerAccountApi();
-    await service.signup($("trainerAccountEmail").value.trim(),
-      $("trainerAccountPassword").value);
+    await service.signup($("trainerAccountEmail").value.trim(),password);
     $("trainerAccountPassword").value="";
+    trainerAccountRegistrationMode(false);
     trainerAccountStatus("Registriert. Bitte den Bestätigungslink in der E-Mail öffnen und danach „E-Mail-Bestätigung prüfen“ wählen.");
   });
   $("trainerAccountSignIn").onclick=()=>trainerAccountAction(async()=>{
@@ -6231,6 +6278,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     await service.login($("trainerAccountEmail").value.trim(),
       $("trainerAccountPassword").value);
     $("trainerAccountPassword").value="";
+    trainerAccountRegistrationMode(false);
     await trainerAccountRefresh();
   });
   $("trainerAccountVerifyMail").onclick=()=>trainerAccountAction(async()=>{
@@ -6251,6 +6299,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     trainerAccountClearPublisher();
     trainerAccountApi().logout();
     $("trainerAccountPassword").value="";
+    trainerAccountRegistrationMode(false);
     await trainerAccountRefresh();
   });
   $("trainerAccountRequestApproval").onclick=()=>trainerAccountAction(async()=>{
