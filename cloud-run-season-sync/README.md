@@ -242,9 +242,11 @@ Das ist kein Ersatz für Authentifizierung.
 
 - Backend: node --test cloud-run-season-sync/api.test.js cloud-run-season-sync/team-space-api.test.js
 - Client: npx vitest run tests/season-sync-client.test.js tests/team-space-client.test.js
-- Browser: npx playwright test tests/e2e/season-cloud.spec.js tests/e2e/team-space.spec.js
-- GitHub-Workflow *Test Season Sync* führt Backend/Client-Tests aus;
-  Deploy Season Sync wird nur manuell ausgelöst.
+- Browser: npx playwright test tests/e2e/season-cloud.spec.js tests/e2e/team-space.spec.js tests/e2e/trainer-account.spec.js
+- GitHub-Workflow *Test Season Sync* führt Backend/Client-Tests aus.
+  Nach erfolgreichen Push-Tests auf `main` startet *Deploy Season Sync*
+  automatisch; ein manueller Deployment-Start bleibt möglich.
+  Die GitHub-Pages-Pipeline prüft die Browser-Tests für Desktop und Mobile.
 
 Nicht enthalten: automatische Hintergrundupdates, individuelle
 Spielerkonten, Videodatei-Synchronisierung und ein Produktionsnachweis
