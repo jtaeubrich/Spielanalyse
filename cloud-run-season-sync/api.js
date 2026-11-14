@@ -72,6 +72,9 @@ function cors(req,res,allowed){
 }
 function safeError(error){
   if(error instanceof ApiError)return error;
+  if(Number.isInteger(error?.status)&&[400,401,403,404,409,426,503].includes(error.status)&&
+    /^[A-Z_]{3,40}$/.test(error.code||""))
+    return err(error.status,error.code,error.message);
   if(error?.code===412||error?.code==="412")
     return err(409,"REVISION_CONFLICT","Veröffentlichungsstand ist zwischenzeitlich geändert worden.");
   if(error?.code===404||error?.code==="404")return err(404,"NOT_FOUND","Saison nicht gefunden.");
@@ -80,7 +83,8 @@ function safeError(error){
 }
 export function createSeasonSyncHandler({store,adminToken,allowedOrigins=[],
   now=()=>new Date(),idFactory=randomUUID,readerFactory=()=>randomBytes(32).toString("base64url"),
-  trainerFactory=()=>"trainer_"+randomBytes(32).toString("base64url")}){
+  trainerFactory=()=>"trainer_"+randomBytes(32).toString("base64url"),
+  trainerAccounts=null}){
   const allowed=new Set(allowedOrigins);
   return async(req,res)=>{
     try{
@@ -99,6 +103,7 @@ export function createSeasonSyncHandler({store,adminToken,allowedOrigins=[],
       }
       const url=new URL(req.url||"/","http://localhost");
       if(url.pathname==="/health"&&req.method==="GET")return send(res,200,{status:"ok"});
+      if(trainerAccounts&&await trainerAccounts.handle(req,res,url,{send,bodyJson}))return;
       if(await handleTeamSpace(req,res,url,{store,adminToken,now,idFactory,readerFactory,
         trainerFactory,trainer,trainerSpace,reader,send,err,bodyJson,sha}))return;
       if(url.pathname==="/seasons"&&req.method==="POST"){
