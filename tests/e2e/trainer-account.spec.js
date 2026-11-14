@@ -80,6 +80,28 @@ test("Autofilled credentials stay present until a user submits the form",async({
   await expect(page.locator("#trainerAccountSessionActions")).toBeHidden();
 });
 
+test("Unverified Firebase session keeps verification and sign-out controls available",async({page})=>{
+  await page.route(API+"/trainer-auth/config",route=>route.fulfill(success(firebase)));
+  await page.route("https://identitytoolkit.googleapis.com/**",route=>{
+    if(route.request().url().includes("signInWithPassword"))
+      return route.fulfill(success({idToken:ID_TOKEN,refreshToken:"unverified-session",expiresIn:"3600"}));
+    return route.fulfill(success({error:{message:"Unexpected request"}},400));
+  });
+  await page.route(API+"/trainer-auth/me",route=>route.fulfill(
+    success({error:{code:"EMAIL_NOT_VERIFIED",message:"Bitte zuerst die E-Mail-Adresse bestätigen."}},403)));
+  await openTrainerAccount(page);
+  await page.locator("#trainerAccountEmail").fill("trainer@example.org");
+  await page.locator("#trainerAccountPassword").fill("secret-password");
+  await page.locator("#trainerAccountSignIn").click();
+  await expect(page.locator("#trainerAccountStatus")).toContainText("E-Mail-Adresse bestätigen");
+  await expect(page.locator("#trainerAccountLogin")).toBeVisible();
+  await expect(page.locator("#trainerAccountSessionActions")).toBeVisible();
+  await expect(page.locator("#trainerAccountVerifyMail")).toBeVisible();
+  await page.locator("#trainerAccountSignOut").click();
+  await expect(page.locator("#trainerAccountSessionActions")).toBeHidden();
+  await expect(page.locator("#trainerAccountLogin")).toBeVisible();
+});
+
 test("Pending trainer becomes first admin once using a central key without Cloud Console",async({page})=>{
   const registrationToken="trainer_"+("s".repeat(44));
   let claimed=false,requests=0;
