@@ -9,6 +9,7 @@ const SEASON="88735513-5e3e-4a95-aa70-6a1a2fe94bfa";
 const GAME="sg-first";
 const READER="reader_"+("q".repeat(40));
 const ADMIN="trainer_"+("t".repeat(44));
+const PERSONAL="trainer_"+("p".repeat(44));
 const original=JSON.parse(await readFile(path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),"../fixtures/hkn_reference.json"),"utf8"));
 const hash=text=>createHash("sha256").update(text).digest("hex");
@@ -32,7 +33,7 @@ const upload=(name,value)=>({name,mimeType:"application/json",
 function apiData(revision){
   const data=game(revision),season=archive(revision);
   return {catalog:{
-    spaceId:SPACE,name:"TSV Kronshagen",revision,
+    spaceId:SPACE,name:"TSV Kronshagen",revision,trainerAccess:"individual",
     seasons:[{id:SEASON,name:"Saison 2026/27",revision,gameCount:1,gameIds:[GAME]}],
     games:[{id:GAME,name:"Kronshagen gegen Gegner",date:"2026-11-09",
       revision,sha256:hash(JSON.stringify(data)),matchId:"",seasonIds:[SEASON]}]
@@ -51,9 +52,9 @@ async function mockSpace(page){
     if(url.pathname==="/spaces"&&method==="POST")
       return route.fulfill({status:201,headers,
         body:JSON.stringify({spaceId:SPACE,name:"TSV Kronshagen",
-          readToken:READER,revision:0})});
+          readToken:READER,trainerToken:PERSONAL,revision:0})});
     const isWrite=method==="POST";
-    if(request.headers().authorization!=="Bearer "+(isWrite?ADMIN:READER))
+    if(request.headers().authorization!=="Bearer "+(isWrite?PERSONAL:READER))
       return route.fulfill({status:401,headers,
         body:JSON.stringify({error:{message:"Unauthorized"}})});
     const data=apiData(cloud.revision);
@@ -199,8 +200,14 @@ test("trainer can publish a season without exposing the admin token in the invit
   await page.locator("#teamSpaceConnect summary").click();
   await page.locator("#teamSpaceApi").fill(API);
   await page.locator("#teamSpaceName").fill("TSV Kronshagen");
-  await page.locator("#teamSpaceAdminToken").fill(ADMIN);
+  await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
   await page.locator("#teamSpaceCreate").click();
+  await expect(page.locator("#teamSpaceNewTrainerToken")).toHaveValue(PERSONAL);
+  await expect(page.locator("#teamSpaceAdminToken")).toHaveValue(PERSONAL);
+  await expect(page.locator("#teamSpaceRegistrationToken")).toHaveValue("");
+  const stored=await readStore(page,"seasons","teamspace-link-"+SPACE);
+  expect(stored.connection).not.toHaveProperty("trainerToken");
+  expect(JSON.stringify(stored)).not.toContain(PERSONAL);
   await expect(page.locator("#teamSpaceInviteLink")).toHaveValue(/#teamspace=/);
   const invite=await page.locator("#teamSpaceInviteLink").inputValue();
   expect(invite).not.toContain(ADMIN);
@@ -210,5 +217,5 @@ test("trainer can publish a season without exposing the admin token in the invit
   expect(cloud.lastPublish.archive.version).toBe(1);
   expect(cloud.lastPublish.archive.games).toHaveLength(1);
   expect(cloud.calls.filter(call=>call.path.endsWith("/publish-season"))[0].auth)
-    .toBe("Bearer "+ADMIN);
+    .toBe("Bearer "+PERSONAL);
 });
