@@ -159,7 +159,7 @@
     .home-search-row{max-width:540px;margin:0 0 10px}
     .home-search-row label{font-size:13px;color:var(--muted)}
     .home-search-row .field{margin:3px 0 4px}
-    #homeStartSearchResults[hidden],#homeLibraryGameSearchWrap[hidden]{display:none!important}
+    #homeLibraryGameSearchWrap[hidden]{display:none!important}
     .home-view[hidden],.home-toolbar [hidden],.home-recent[hidden]{display:none!important}
     @media(max-width:620px){.home-shell{margin:6px auto}.home-main-choices{gap:9px}.home-big-choice{padding:15px 8px;min-height:173px;border-radius:16px}.home-choice-icon{width:52px;height:52px;font-size:32px}.home-big-choice small{font-size:11px}.home-action-grid{grid-template-columns:1fr}.home-action-choice{flex-direction:row;justify-content:flex-start;text-align:left;min-height:88px;gap:14px;flex-wrap:wrap}.home-action-icon{font-size:34px;min-width:42px}.home-action-choice small{font-size:11px;width:100%;padding-left:56px;margin-top:-17px}.home-action-choice strong{font-size:19px}.home-list-row{align-items:flex-start}}
     #setupTab.focused-setup .setup-mode-tabs{display:none!important}
@@ -1637,11 +1637,6 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
           <button class="home-big-choice" type="button" id="homeChooseGame"><span class="home-choice-icon" data-entry-icon="game" aria-hidden="true"></span><strong>Einzelspiel</strong><small>Ein Spiel erfassen, fortsetzen oder analysieren</small></button>
           <button class="home-big-choice" type="button" id="homeChooseTeamSpace"><span class="home-choice-icon" data-entry-icon="teamspace" aria-hidden="true"></span><strong>Team Space</strong><small>Gemeinsame Saisons und Spiele online entdecken</small></button>
         </div>
-        <div class="home-search-row" id="homeStartSearchWrap">
-          <label for="homeStartGameSearch">Spiel suchen</label>
-          <input class="field" type="search" id="homeStartGameSearch" placeholder="Mannschaft, Datum oder Saison" autocomplete="off">
-        </div>
-        <div id="homeStartSearchResults" class="home-list" hidden></div>
         <div class="home-recent panel" id="homeRecent" hidden>
           <h2>Schneller Wiedereinstieg</h2>
           <div id="homeRecentOptions" class="home-recent-options"></div>
@@ -5341,20 +5336,6 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       icon:"trash",action:()=>void homeDeleteGame(entry)});
     return actions;
   }
-  function homeRenderStartSearch(){
-    const host=$("homeStartSearchResults"),term=$("homeStartGameSearch").value.trim().toLocaleLowerCase("de");
-    host.replaceChildren();host.hidden=!term;
-    if(!term){$("homeRecent").hidden=!$("homeRecentOptions").childElementCount;return;}
-    $("homeRecent").hidden=true;
-    for(const entry of homeLocalGames()){
-      if(homeGameMatches(entry,term))host.append(homeRow(entry.title,entry.subtitle,homeGameActions(entry),"game"));
-    }
-    if(!host.childElementCount){
-      const empty=document.createElement("div");empty.className="empty";
-      empty.textContent="Keine passenden lokal gespeicherten Spiele gefunden.";
-      host.append(empty);
-    }
-  }
   async function homeClearCurrentSession(){
     homeSessionDeleted=true;
     homeHasSession=false;
@@ -5421,7 +5402,6 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         }
       }
       homeRenderRecent();
-      if(homeView==="choose")homeRenderStartSearch();
       if(homeView==="library")homeRenderLibrary();
       if(homeView==="dashboard")homeRenderSeasonDashboard();
       toast("Spiel lokal gelöscht.");
@@ -5468,7 +5448,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("homeSubtitle").textContent=view==="choose"?"Wähle Saison, Einzelspiel oder Team Space. Deine gespeicherten Daten bleiben erhalten.":
       view==="actions"?"Was möchtest du tun?":
       view==="library"?"Wähle einen gespeicherten Eintrag auf diesem Gerät.":"";
-    if(view==="choose"){homeRenderRecent();homeRenderStartSearch();}
+    if(view==="choose")homeRenderRecent();
     if(view==="library")homeRenderLibrary();
     if(view==="dashboard"){showSetupMode("season",{focused:true});homeRenderSeasonDashboard();renderSeasonPreviewHeader();}
     if(view==="teamspace")void teamSpaceOpen();
@@ -5742,7 +5722,6 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("homeSeasonManage").onclick=()=>homeAdvancedSetup("season");
   $("homeSeasonAnalyze").onclick=()=>showTab("season");
   $("homeGameSearch").oninput=homeRenderSeasonDashboard;
-  $("homeStartGameSearch").oninput=homeRenderStartSearch;
   $("homeLibraryGameSearch").oninput=homeRenderLibrary;
 
 
