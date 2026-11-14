@@ -22,9 +22,13 @@ export function publicTeamCatalog(meta){
 export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactory,readerFactory,
   trainerFactory,trainer,trainerSpace,reader,send,err,bodyJson,sha}){
   if(url.pathname!=="/spaces"&&!url.pathname.startsWith("/spaces/"))return false;
-  if(url.pathname==="/spaces"){
+  if(url.pathname==="/spaces"||url.pathname==="/spaces/v2"){
     if(req.method!=="POST")throw err(405,"METHOD_NOT_ALLOWED","POST erforderlich.");
     trainer(req,adminToken);
+    // Dedicated v2 endpoint: a newer app cannot accidentally create a space
+    // on an older Cloud Run deployment that cannot issue a trainer key.
+    if(url.pathname==="/spaces")
+      throw err(426,"CLIENT_UPDATE_REQUIRED","Bitte die Spielanalyse-App aktualisieren, bevor du einen Team Space erstellst.");
     const body=await bodyJson(req);
     // Old PWA clients do not display the new trainer credential. Reject them
     // instead of creating a space whose trainer key would be lost.
