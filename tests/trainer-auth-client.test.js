@@ -110,4 +110,27 @@ describe("Firebase trainer browser client",()=>{
     expect(approval.opts.headers.Authorization).toBe("Bearer "+jwt);
     expect(JSON.parse(approval.opts.body)).toEqual({status:"approved"});
   });
+  it("issues one-time publisher keys only through admin authenticated route",async()=>{
+    const session=memoryStorage(),calls=[];
+    const secret="trainer_"+("z".repeat(43));
+    const fetcher=vi.fn(async(url,opts={})=>{
+      calls.push({url,opts});
+      if(url.endsWith("/trainer-auth/config"))return new Response(JSON.stringify(firebase));
+      if(url.includes("signInWithPassword"))return new Response(JSON.stringify({
+        idToken:jwt,refreshToken:"admin-session",expiresIn:"3600"
+      }));
+      if(url.endsWith("/trainer-auth/admin/spaces/"+SPACE+"/publisher-key"))
+        return new Response(JSON.stringify({spaceId:SPACE,trainerToken:secret}));
+      throw Error("Unexpected "+url);
+    });
+    const client=createTrainerAuthClient(API,{session,fetcher});
+    await client.login("admin@example.org","adminpass");
+    const issued=await client.issuePublisherKey(SPACE);
+    expect(issued.trainerToken).toBe(secret);
+    const call=calls.find(x=>x.url.endsWith("/publisher-key"));
+    expect(call.opts.headers.Authorization).toBe("Bearer "+jwt);
+    expect(call.url).not.toContain(secret);
+    expect(JSON.stringify(session.entries())).not.toContain(secret);
+  });
+
 });
