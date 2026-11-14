@@ -5989,7 +5989,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     try{
       const connection=teamActiveConnection();
       if(!connection)throw Error("Bitte einen Team Space auswählen.");
-      if(!confirm("Bestehenden Team Space auf individuelle Trainer-Schlüssel umstellen?\\n\\nDanach funktioniert der zentrale Registrierungsschlüssel nicht mehr zum Veröffentlichen in diesem Team Space."))return;
+      if(!confirm("Bestehenden Team Space auf individuelle Trainer-Schlüssel umstellen?\n\nDanach funktioniert der zentrale Registrierungsschlüssel nicht mehr zum Veröffentlichen in diesem Team Space."))return;
       const trainerToken=await claimTeamSpaceTrainerToken(connection,
         $("teamSpaceRegistrationToken").value.trim());
       showNewTeamSpaceTrainerKey(trainerToken);
@@ -6014,7 +6014,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("teamSpaceRotateTrainer").onclick=async()=>{
     const connection=teamActiveConnection();
     if(connection?.role!=="trainer")return;
-    if(!confirm("Trainer-Schlüssel erneuern?\\n\\nDer bisherige Schlüssel wird ungültig. Du musst den neuen Schlüssel unbedingt sichern."))return;
+    if(!confirm("Trainer-Schlüssel erneuern?\n\nDer bisherige Schlüssel wird ungültig. Du musst den neuen Schlüssel unbedingt sichern."))return;
     try{
       const trainerToken=await rotateTeamSpaceTrainerToken(connection,
         $("teamSpaceAdminToken").value.trim());
