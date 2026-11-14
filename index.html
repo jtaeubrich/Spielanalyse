@@ -1814,11 +1814,17 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         </details>
         <details class="season-games-details teamspace-publish" id="teamSpacePublish" hidden>
           <summary>Saisons und Spiele veröffentlichen · Trainer</summary>
-          <p class="number-help">Veröffentlicht werden nur Daten aus deinem lokalen Trainerstand. Ein Spieler-Lesezugang darf niemals veröffentlichen.</p>
+          <p class="number-help">Freigegebene Trainer veröffentlichen eigene Saisons und Spiele direkt über ihr E-Mail-Konto. Bei älteren Team Spaces ist weiterhin der individuelle Trainer-Schlüssel erforderlich. Prüfe vor der Freigabe, welche Spieldaten für die Mannschaft sichtbar werden.</p>
           <div class="teamspace-fields">
             <label>Lokale Saison veröffentlichen
               <select class="field" id="teamSpacePublishSeason"></select>
             </label>
+            <label>Online-Zielsaison
+              <select class="field" id="teamSpacePublishSeasonTarget">
+                <option value="">Neue Saison im Team Space anlegen</option>
+              </select>
+            </label>
+            <p class="number-help">Wenn du bereits eine leere Saison im Team Space angelegt hast, wähle sie hier aus. Ihre vorhandene Spielzuordnung wird durch den veröffentlichten lokalen Saisonstand ersetzt.</p>
             <button class="btn primary" id="teamSpacePublishSeasonBtn" type="button">Saison veröffentlichen</button>
           </div>
           <div class="teamspace-fields">
@@ -5784,7 +5790,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     select.value=teamSpaces.has(before)?before:"";
     const connection=teamActiveConnection();
     $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
-    $("teamSpacePublish").hidden=connection?.role!=="trainer";
+    $("teamSpacePublish").hidden=!["trainer","account"].includes(connection?.role);
     $("teamSpaceRotateReader").hidden=connection?.role!=="trainer";
     $("teamSpaceRotateTrainer").hidden=connection?.role!=="trainer"||
       teamSpaceCatalogData?.trainerAccess==="legacy";
@@ -5809,6 +5815,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const season of homeSeasonRecords())
       if(season.games.length)chooser.add(new Option(season.name,season.id));
     if([...chooser.options].some(opt=>opt.value===lastSeason))chooser.value=lastSeason;
+    const cloudTarget=$("teamSpacePublishSeasonTarget"),lastTarget=cloudTarget.value;
+    cloudTarget.replaceChildren();
+    cloudTarget.add(new Option("Neue Saison im Team Space anlegen",""));
+    for(const remoteSeason of teamSpaceCatalogData?.seasons||[])
+      cloudTarget.add(new Option(remoteSeason.name+" · "+remoteSeason.gameCount+" Spiele",remoteSeason.id));
+    const prefix=teamSeasonLinkId(teamSpaceSelectedId,"");
+    const linked=[...teamSpaceLinks.values()].find(row=>
+      row.id?.startsWith(prefix)&&row.localSeasonId===chooser.value);
+    const chosenId=linked?linked.id.slice(prefix.length):lastTarget;
+    cloudTarget.value=[...cloudTarget.options].some(opt=>opt.value===chosenId)?chosenId:"";
     const games=$("teamSpacePublishGame"),lastGame=games.value;
     games.replaceChildren();
     if(homeHasSession&&!activeSeasonGameId)
@@ -6115,8 +6131,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(teamSpaceBusy)return;teamSpaceBusy=true;
     try{
       const connection=teamActiveConnection(),secret=$("teamSpaceAdminToken").value.trim();
-      if(connection?.role!=="trainer")throw Error("Nur Trainer können veröffentlichen.");
-      if(!secret)throw Error("Trainer-Schlüssel fehlt.");
+      const account=connection?.role==="account";
+      if(!["trainer","account"].includes(connection?.role))
+        throw Error("Nur freigegebene Trainer können veröffentlichen.");
+      if(!account&&!secret)throw Error("Trainer-Schlüssel fehlt.");
       // Always refresh catalog before a write. A concurrent publication is
       // rejected by the server's expectedRevision precondition.
       const catalog=await teamSpaceCatalog(connection);
@@ -6129,10 +6147,24 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const archive=seasonExportObject({includePersonal:true});
         if(!confirm("Saison „"+archive.name+"“ mit "+archive.games.length+
           " Spielen für alle Mitglieder dieses Team Space veröffentlichen?"))return;
-        const old=[...teamSpaceLinks.values()].find(row=>row.id?.startsWith(
-          teamSeasonLinkId(connection.spaceId,""))&&row.localSeasonId===localId);
-        result=await publishTeamSpaceSeason(connection,archive,secret,catalog.revision,old?.id?.slice(
-          teamSeasonLinkId(connection.spaceId,"").length)||null);
+        const prefix=teamSeasonLinkId(connection.spaceId,"");
+        const old=[...teamSpaceLinks.values()].find(row=>
+          row.id?.startsWith(prefix)&&row.localSeasonId===localId);
+        const linkedId=old?.id?.slice(prefix.length)||null;
+        const selectedId=$("teamSpacePublishSeasonTarget").value||null;
+        if(linkedId&&selectedId&&linkedId!==selectedId)
+          throw Error("Diese lokale Saison ist bereits mit einer anderen Online-Saison verknüpft.");
+        const targetId=selectedId||linkedId;
+        const target=targetId?catalog.seasons.find(season=>season.id===targetId):null;
+        if(targetId&&!target)throw Error("Die ausgewählte Online-Saison wurde nicht gefunden. Bitte aktualisieren.");
+        if(target?.gameCount>0&&!confirm("Die Online-Saison „"+target.name+
+          "“ enthält bereits "+target.gameCount+
+          " Spiele. Ihre Spielzuordnung durch den lokalen Saisonstand ersetzen?"))return;
+        if(!targetId&&catalog.seasons.some(season=>season.name===archive.name)&&
+          !confirm("Eine Online-Saison mit diesem Namen existiert bereits. Trotzdem eine weitere Saison anlegen?"))return;
+        result=account
+          ?await trainerAccountApi().publishSeason(connection.spaceId,archive,catalog.revision,targetId)
+          :await publishTeamSpaceSeason(connection,archive,secret,catalog.revision,targetId);
         const refreshed=await teamSpaceCatalog(connection);
         const remote=refreshed.seasons.find(s=>s.id===result.seasonId);
         const versions={};
@@ -6168,8 +6200,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const assigned=$("teamSpacePublishTargetSeason").value||null;
         if(!confirm("Spiel „"+game.gameName+
           "“ im Team Space veröffentlichen?"))return;
-        result=await publishTeamSpaceGame(connection,game,secret,catalog.revision,{
-          gameId,seasonId:assigned,fileName});
+        result=account
+          ?await trainerAccountApi().publishGame(connection.spaceId,game,catalog.revision,{
+            gameId,seasonId:assigned,fileName})
+          :await publishTeamSpaceGame(connection,game,secret,catalog.revision,{
+            gameId,seasonId:assigned,fileName});
         if(localSourceSeasonId){
           const now=new Date().toISOString();
           const source=coreNormalizeSeasonGame(game,fileName);
@@ -6553,6 +6588,15 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       await teamSpaceRefreshCatalog();
       toast("Leseschlüssel wurde erneuert.");
     }catch(error){teamStatus("Leseschlüssel nicht erneuert: "+error.message)}
+  };
+  $("teamSpacePublishSeason").onchange=()=>{
+    const prefix=teamSeasonLinkId(teamSpaceSelectedId,"");
+    const localId=$("teamSpacePublishSeason").value;
+    const old=[...teamSpaceLinks.values()].find(row=>
+      row.id?.startsWith(prefix)&&row.localSeasonId===localId);
+    const target=$("teamSpacePublishSeasonTarget");
+    const linkedId=old?.id?.slice(prefix.length)||"";
+    target.value=[...target.options].some(opt=>opt.value===linkedId)?linkedId:"";
   };
   $("teamSpacePublishSeasonBtn").onclick=()=>void teamSpacePublish("season");
   $("teamSpacePublishGameBtn").onclick=()=>void teamSpacePublish("game");
