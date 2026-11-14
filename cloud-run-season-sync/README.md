@@ -80,18 +80,26 @@ konfigurieren. Das ist **nicht** Bestandteil des normalen Anmeldeablaufs.
 
 **Berechtigungen:** Jede bestätigte E-Mail kann einen Antrag stellen. Erst
 die manuelle Freigabe gestattet das Anlegen von maximal fünf Team Spaces pro
-Trainer. Darin lassen sich maximal 20 leere Saisons je Space anlegen.
-Die normale Trainerkonto-API besitzt **keinen Endpunkt zur Erstellung oder Veröffentlichung
-von Spielen**. Auch der zentrale Registrierungsschlüssel wird den neuen
-Konten **nicht** ausgehändigt.
+Trainer. Darin lassen sich maximal 20 Saisons je Space anlegen.
+Freigegebene Trainer können mit ihrem Firebase-ID-Token lokale Saisons
+und Spiele in **ihre eigenen Konto-Team-Spaces** veröffentlichen. Die
+bestehenden Team-Space-Endpunkte `/spaces/:id/publish-season` und
+`/spaces/:id/publish-game` prüfen dafür serverseitig die freigegebene
+Identität sowie die Space-Zuordnung; Administratoren dürfen ebenfalls
+in Konto-Team-Spaces veröffentlichen. Andere Team Spaces sind nicht
+zugänglich. Spieler-Leseschlüssel und gesperrte Konten berechtigen
+nicht zum Schreiben. Der zentrale Registrierungsschlüssel wird
+Trainerkonten weiterhin **nicht** ausgehändigt.
 
-**Spätere Spielpflege:** Ein Administrator kann im Adminbereich für einen
-konkreten Konto-Team-Space über die Team-Space-ID einmalig einen separaten
-**Veröffentlichungs-Schlüssel** ausstellen oder erneuern. Dies geschieht nur
-mit einer autorisierten Administrator-UID. Der Schlüssel wird nie dem normalen
-Trainerkonto zugeschrieben oder in der Cloud im Klartext gespeichert.
-Eine zentrale Redaktion kann damit die bestehenden Team-Space-Endpunkte zum
-Hochladen von Spielen nutzen; die Trainer bleiben bei Saisonrechten.
+**Spätere Spielpflege:** Im Abschnitt **Saisons und Spiele veröffentlichen**
+wählt der angemeldete Trainer eine lokale Saison und bei Bedarf eine
+bereits angelegte **Online-Zielsaison** aus; Einzelspiele können
+ebenfalls einer bestehenden Online-Saison zugeordnet werden.
+Ein zweiter Veröffentlichungsschlüssel ist dafür nicht erforderlich.
+Für externe Redaktionsworkflows kann ein Administrator weiterhin einen
+separaten **Veröffentlichungs-Schlüssel** ausstellen oder erneuern.
+Er wird nie im normalen Trainerkonto gespeichert und nicht im Klartext
+in der Cloud abgelegt.
 Eine neue Ausstellung macht den früheren Veröffentlichungsschlüssel ungültig. Die bisherigen Team Spaces (Schlüssel v2) behalten
 ihre bisherigen Funktionen und werden nicht stillschweigend umgewandelt.
 
@@ -105,14 +113,15 @@ Persönliche Kommentare und Video-Material werden durch die Anmeldung
 nicht automatisch hochgeladen.
 
 **Migrations-/Einladungsverhalten:** Neue Konto-Team-Spaces verwenden
-authMode firebase und ein nicht ausgegebenes Trainer-Schlüsselgeheimnis,
-wodurch weder der zentrale Schlüssel noch das einfache Trainerkonto
-publish-game erreichen kann. Der einmalig erzeugte **Spieler-Leseschlüssel**
+authMode firebase und ein nicht ausgegebenes Trainer-Schlüsselgeheimnis.
+Das normale Trainerkonto veröffentlicht stattdessen über den
+geprüften Firebase-ID-Token. Der zentrale Registrierungsschlüssel
+und Spieler-Einladungen können keine Spiele veröffentlichen. Der einmalig erzeugte **Spieler-Leseschlüssel**
 wird wie bisher auf dem Erstellungsgerät als Einladung gespeichert.
 Auf weiteren Trainergeräten ist die Saisonverwaltung per E-Mail möglich;
 das alte Einladungsgeheimnis wird nicht serverseitig im Klartext wiederhergestellt.
-Leere Saisons sind im Team-Space-Katalog sichtbar, können aber erst mit
-Inhalten sinnvoll lokal importiert werden.
+Leere Saisons sind im Team-Space-Katalog sichtbar; der Trainer kann sie
+später über **Online-Zielsaison** mit lokal gescouteten Spielen befüllen.
 
 **Fehlerbilder:** AUTH_NOT_CONFIGURED bei fehlender Konfiguration;
 EMAIL_NOT_VERIFIED vor der E-Mail-Bestätigung;
