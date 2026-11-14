@@ -1716,6 +1716,18 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
               <hr>
               <h3>Trainerfreigaben verwalten · Administrator</h3>
               <div class="home-list" id="trainerAccountUserList"></div>
+              <h3>Spielveröffentlichung zentral freigeben</h3>
+              <p class="number-help">Nur Administratoren können für einen Konto-Team-Space einen separaten Veröffentlichungs-Schlüssel ausstellen. Beim Erneuern wird der bisherige Schlüssel ungültig. Den Schlüssel nicht an normale Trainerkonten weitergeben.</p>
+              <label>Team-Space-ID
+                <input class="field" id="trainerAccountPublisherSpace" type="text" autocomplete="off" placeholder="UUID des Team Space">
+              </label>
+              <button type="button" class="btn" id="trainerAccountIssuePublisher">Veröffentlichungs-Schlüssel erzeugen / erneuern</button>
+              <div id="trainerAccountPublisherCredentials" hidden>
+                <label>Einmalig ausgegebener Veröffentlichungsschlüssel
+                  <input class="field" id="trainerAccountPublisherToken" type="password" readonly autocomplete="off" spellcheck="false">
+                </label>
+                <button type="button" class="btn" id="trainerAccountCopyPublisher">Schlüssel kopieren</button>
+              </div>
             </div>
           </div>
         </details>
