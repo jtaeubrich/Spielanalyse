@@ -5600,7 +5600,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       teamSpaceCatalogData?.trainerAccess==="legacy";
     $("teamSpaceClaimTrainer").hidden=!connection||
       teamSpaceCatalogData?.trainerAccess!=="legacy";
-    $("teamSpaceActivateTrainer").hidden=!connection||connection.role==="trainer";
+    $("teamSpaceActivateTrainer").hidden=!connection||["trainer","account"].includes(connection.role);
     $("teamSpaceCopyInvite").disabled=!["trainer","account"].includes(connection?.role);
     $("teamSpaceInviteLink").value=["trainer","account"].includes(connection?.role)
       ?makeTeamSpaceInvite(location.origin+location.pathname,connection):"";
