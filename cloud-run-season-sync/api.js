@@ -105,7 +105,7 @@ export function createSeasonSyncHandler({store,adminToken,allowedOrigins=[],
       if(url.pathname==="/health"&&req.method==="GET")return send(res,200,{status:"ok"});
       if(trainerAccounts&&await trainerAccounts.handle(req,res,url,{send,bodyJson}))return;
       if(await handleTeamSpace(req,res,url,{store,adminToken,now,idFactory,readerFactory,
-        trainerFactory,trainer,trainerSpace,reader,send,err,bodyJson,sha}))return;
+        trainerFactory,trainer,trainerSpace,reader,send,err,bodyJson,sha,trainerAccounts}))return;
       if(url.pathname==="/seasons"&&req.method==="POST"){
         trainer(req,adminToken);
         const seasonId=idFactory(),readToken=readerFactory();
