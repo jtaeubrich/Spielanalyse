@@ -28,7 +28,7 @@ Einzelwiderruf pro Spieler ist noch nicht implementiert.
 Die `/spaces`-API dient mehreren unabhängigen Team Spaces auf derselben
 Cloud-Run-Instanz und demselben **privaten** GCS-Bucket.
 
-- **Registrierung:** `POST /spaces` erfordert den zentralen
+- **Registrierung:** `POST /spaces/v2` erfordert den zentralen
   `TRAINER_PUBLISH_TOKEN` (aus dem Secret Manager) und
   `{"name":"...","authVersion":2}`. Die Registrierung ist bewusst
   **nicht anonym**; andernfalls wären beliebige kostenpflichtige
@@ -60,8 +60,8 @@ Cloud-Run-Instanz und demselben **privaten** GCS-Bucket.
   weiterhin als zentraler Veröffentlichungsschlüssel. Für Team Spaces ist er
   ein Registrierungsschlüssel bzw. ein temporärer Migrationsschlüssel.
 - **Schutz alter App-Versionen:** `/spaces` akzeptiert ausschließlich
-  `authVersion:2`. Ältere App-Versionen könnten den einmaligen
-  Trainer-Schlüssel nicht anzeigen und erhalten deshalb HTTP 426 statt
+  `authVersion:2` und den v2-Endpunkt. Ältere App-Versionen könnten den einmaligen
+  Trainer-Schlüssel nicht anzeigen und erhalten deshalb auf `/spaces` HTTP 426 statt
   einen unerreichbaren Space anzulegen.
 
 **Wichtig:** Der Trainer-Schlüssel wird nur bei Erstellung, Migration oder
