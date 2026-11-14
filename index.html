@@ -5956,15 +5956,78 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       $("teamSpaceJoinInput").value="";
     }catch(error){teamStatus("Einladung fehlgeschlagen: "+error.message)}
   };
+  function showNewTeamSpaceTrainerKey(token){
+    // Present once for backup. Never write the trainer secret into IndexedDB,
+    // LocalStorage, invitations, game JSON or the URL.
+    $("teamSpaceNewTrainerToken").value=token;
+    $("teamSpaceNewTrainerToken").type="password";
+    $("teamSpaceRevealTrainerToken").textContent="Schlüssel anzeigen";
+    $("teamSpaceNewTrainerCredentials").hidden=false;
+    $("teamSpaceAdminToken").value=token;
+  }
   $("teamSpaceCreate").onclick=async()=>{
     try{
       const name=$("teamSpaceName").value.trim();
-      const connection=await createTeamSpace($("teamSpaceApi").value,
-        name,$("teamSpaceAdminToken").value.trim());
+      const created=await createTeamSpace($("teamSpaceApi").value,
+        name,$("teamSpaceRegistrationToken").value.trim());
+      // Extract before persistence to avoid leaking the trainer credential.
+      const {trainerToken,...connection}=created;
+      showNewTeamSpaceTrainerKey(trainerToken);
+      $("teamSpaceRegistrationToken").value="";
       await saveTeamSpaceConnection(connection);
       await teamSpaceRefreshCatalog();
-      toast("Team Space angelegt. Einladungslink an die Mannschaft senden.");
+      teamStatus("Team Space erstellt. Trainer-Schlüssel jetzt sicher speichern; er wird nur einmal ausgegeben.");
+      toast("Team Space angelegt. Trainer-Schlüssel sichern und Spieler einladen.");
     }catch(error){teamStatus("Team Space konnte nicht erstellt werden: "+error.message)}
+  };
+  $("teamSpaceClaimTrainer").onclick=async()=>{
+    try{
+      const connection=teamActiveConnection();
+      if(!connection)throw Error("Bitte einen Team Space auswählen.");
+      if(!confirm("Bestehenden Team Space auf individuelle Trainer-Schlüssel umstellen?\\n\\nDanach funktioniert der zentrale Registrierungsschlüssel nicht mehr zum Veröffentlichen in diesem Team Space."))return;
+      const trainerToken=await claimTeamSpaceTrainerToken(connection,
+        $("teamSpaceRegistrationToken").value.trim());
+      showNewTeamSpaceTrainerKey(trainerToken);
+      $("teamSpaceRegistrationToken").value="";
+      await saveTeamSpaceConnection({...connection,role:"trainer"});
+      await teamSpaceRefreshCatalog();
+      teamStatus("Team Space übernommen. Neuen Trainer-Schlüssel jetzt sicher speichern.");
+    }catch(error){teamStatus("Umstellung fehlgeschlagen: "+error.message)}
+  };
+  $("teamSpaceActivateTrainer").onclick=async()=>{
+    try{
+      const connection=teamActiveConnection();
+      if(!connection)throw Error("Bitte einen Team Space auswählen.");
+      const token=$("teamSpaceAdminToken").value.trim();
+      const info=await verifyTeamSpaceTrainerToken(connection,token);
+      await saveTeamSpaceConnection({...connection,role:"trainer"});
+      await teamSpaceRefreshCatalog();
+      teamStatus("Trainerzugang aktiviert"+(info.trainerAccess==="legacy"
+        ?". Bitte diesen Team Space auf einen individuellen Schlüssel umstellen.":".")+"");
+    }catch(error){teamStatus("Trainerzugang nicht aktiviert: "+error.message)}
+  };
+  $("teamSpaceRotateTrainer").onclick=async()=>{
+    const connection=teamActiveConnection();
+    if(connection?.role!=="trainer")return;
+    if(!confirm("Trainer-Schlüssel erneuern?\\n\\nDer bisherige Schlüssel wird ungültig. Du musst den neuen Schlüssel unbedingt sichern."))return;
+    try{
+      const trainerToken=await rotateTeamSpaceTrainerToken(connection,
+        $("teamSpaceAdminToken").value.trim());
+      showNewTeamSpaceTrainerKey(trainerToken);
+      teamStatus("Trainer-Schlüssel erneuert. Den neuen Schlüssel jetzt sicher speichern.");
+      toast("Trainer-Schlüssel wurde erneuert.");
+    }catch(error){teamStatus("Trainer-Schlüssel nicht erneuert: "+error.message)}
+  };
+  $("teamSpaceCopyTrainerToken").onclick=async()=>{
+    const value=$("teamSpaceNewTrainerToken").value;
+    if(!value)return;
+    try{await navigator.clipboard.writeText(value);toast("Trainer-Schlüssel kopiert. Im Passwortmanager sichern.")}
+    catch{$("teamSpaceNewTrainerToken").select();toast("Trainer-Schlüssel markiert; bitte kopieren.")}
+  };
+  $("teamSpaceRevealTrainerToken").onclick=()=>{
+    const field=$("teamSpaceNewTrainerToken"),show=field.type==="password";
+    field.type=show?"text":"password";
+    $("teamSpaceRevealTrainerToken").textContent=show?"Schlüssel verbergen":"Schlüssel anzeigen";
   };
   $("teamSpaceCopyInvite").onclick=async()=>{
     const link=$("teamSpaceInviteLink").value;
