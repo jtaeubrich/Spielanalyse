@@ -40,7 +40,7 @@ function apiData(revision){
   },season,game:data};
 }
 async function mockSpace(page){
-  const cloud={revision:1,calls:[],lastPublish:null};
+  const cloud={revision:1,calls:[],lastPublish:null,failUpload:false,hidePublished:false};
   await page.route(API+"/**",async route=>{
     const request=route.request(),url=new URL(request.url()),method=request.method();
     cloud.calls.push({path:url.pathname,method,auth:request.headers().authorization});
@@ -58,9 +58,16 @@ async function mockSpace(page){
       return route.fulfill({status:401,headers,
         body:JSON.stringify({error:{message:"Unauthorized"}})});
     const data=apiData(cloud.revision);
-    if(url.pathname.endsWith("/catalog"))
+    if(url.pathname.endsWith("/catalog")){
+      if(cloud.hidePublished&&cloud.lastPublish){
+        data.catalog.seasons=[];data.catalog.games=[];
+      }
       return route.fulfill({status:200,headers,body:JSON.stringify(data.catalog)});
+    }
     if(url.pathname.endsWith("/publish-season")&&isWrite){
+      if(cloud.failUpload)return route.fulfill({status:403,headers,
+        body:JSON.stringify({error:{code:"NOT_AUTHORIZED",
+          message:"Keine Veröffentlichungsberechtigung"}})});
       cloud.lastPublish=request.postDataJSON();
       return route.fulfill({status:200,headers,
         body:JSON.stringify({spaceId:SPACE,seasonId:SEASON,revision:2,
@@ -218,4 +225,65 @@ test("trainer can publish a season without exposing the admin token in the invit
   expect(cloud.lastPublish.archive.games).toHaveLength(1);
   expect(cloud.calls.filter(call=>call.path.endsWith("/publish-season"))[0].auth)
     .toBe("Bearer "+PERSONAL);
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("Im Cloud-Katalog bestätigt: Saison");
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("Cloud-Version 2");
+  await expect(page.locator("#teamSpaceSelectedIdInfo")).toContainText(SPACE);
+  // Reload must not erase a successful server receipt or its catalog proof.
+  await page.reload();
+  await page.locator("#homeChooseTeamSpace").click();
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("Im Cloud-Katalog bestätigt: Saison");
+});
+
+
+test("Server publication failure remains visible with the selected Team Space",async({page})=>{
+  const cloud=await mockSpace(page);
+  cloud.failUpload=true;
+  page.on("dialog",dialog=>dialog.accept());
+  await page.goto("/");
+  await page.locator("#seasonImportInput").setInputFiles(upload("season.json",archive()));
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#teamSpaceConnect summary").click();
+  await page.locator("#teamSpaceApi").fill(API);
+  await page.locator("#teamSpaceName").fill("TSV Kronshagen");
+  await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
+  await page.locator("#teamSpaceCreate").click();
+  await page.locator("#teamSpacePublish summary").click();
+  await page.locator("#teamSpacePublishSeasonBtn").click();
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("Veröffentlichung nicht bestätigt");
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("Keine Veröffentlichungsberechtigung");
+  await page.locator("#teamSpaceVerifyPublish").click();
+  await expect(page.locator("#teamSpaceStatus")).toContainText("1 Saisons");
+  expect(cloud.lastPublish).toBeNull();
+});
+
+test("A server accepted upload absent from the selected catalog is flagged, not falsely verified",async({page})=>{
+  const cloud=await mockSpace(page);
+  cloud.hidePublished=true;
+  page.on("dialog",dialog=>dialog.accept());
+  await page.goto("/");
+  await page.locator("#seasonImportInput").setInputFiles(upload("season.json",archive()));
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#teamSpaceConnect summary").click();
+  await page.locator("#teamSpaceApi").fill(API);
+  await page.locator("#teamSpaceName").fill("TSV Kronshagen");
+  await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
+  await page.locator("#teamSpaceCreate").click();
+  await page.locator("#teamSpacePublish summary").click();
+  await page.locator("#teamSpacePublishSeasonBtn").click();
+  await expect.poll(()=>cloud.lastPublish).not.toBeNull();
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("nicht nachweisbar");
+  await expect(page.locator("#teamSpaceStatus"))
+    .toContainText("0 Saisons · 0 Spiele");
+  await page.reload();
+  await page.locator("#homeChooseTeamSpace").click();
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("nicht nachweisbar");
 });
