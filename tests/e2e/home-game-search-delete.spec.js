@@ -21,7 +21,7 @@ async function newSeason(page,name){
   await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
   await page.locator("#homeSeasonManage").click();
 }
-test("Start searches saved season games; deleting one locally requires confirmation and persists",async({page})=>{
+test("Game search is shown only in Einzelspiel > Spiel laden; deleting one requires confirmation and persists",async({page})=>{
   await page.goto("/");
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
@@ -30,7 +30,10 @@ test("Start searches saved season games; deleting one locally requires confirmat
   ]);
   await expect(page.locator("#seasonGameCount")).toContainText("2 Spiele");
   await page.locator('[data-tab="home"]').click();
-  const search=page.locator("#homeStartGameSearch"),results=page.locator("#homeStartSearchResults");
+  await expect(page.getByLabel("Spiel suchen")).toHaveCount(0);
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeOpen").click();
+  const search=page.locator("#homeLibraryGameSearch"),results=page.locator("#homeLibraryList");
   await expect(search).toBeVisible();
   await search.fill("Gast A");
   await expect(results.locator(".home-list-row")).toHaveCount(1);
