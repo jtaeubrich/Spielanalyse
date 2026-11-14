@@ -1685,6 +1685,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             </select>
           </label>
         </div>
+        <p id="teamSpaceSelectedIdInfo" class="number-help">Noch kein Team Space ausgewählt.</p>
         <p id="teamSpaceStatus" class="number-help" role="status">Noch kein Team Space verbunden.</p>
         <div id="teamSpaceCatalog" hidden>
           <h3>Freigegebene Saisons</h3>
@@ -5794,8 +5795,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       title:String(title||"").slice(0,200),
       revision:result.revision,itemRevision:result.itemRevision,
       at:new Date().toISOString()};
-    localStorage.setItem(TEAM_SPACE_LAST_PUBLISH_KEY,
-      JSON.stringify(teamSpaceLastPublish));
+    try{localStorage.setItem(TEAM_SPACE_LAST_PUBLISH_KEY,
+      JSON.stringify(teamSpaceLastPublish))}
+    catch{/* A local storage restriction must not negate a successful upload. */}
     teamSpaceShowPublication();
   }
   const teamLinkId=id=>"teamspace-link-"+id;
@@ -5861,6 +5863,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         " · ID …"+connection.spaceId.slice(-8),connection.spaceId));
     select.value=teamSpaces.has(before)?before:"";
     const connection=teamActiveConnection();
+    $("teamSpaceSelectedIdInfo").textContent=connection
+      ?"Ausgewählter Team Space: "+(connection.name||"Team Space")+" · Kennung "+connection.spaceId
+      :"Noch kein Team Space ausgewählt.";
     $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
     $("teamSpacePublish").hidden=!["trainer","account"].includes(connection?.role);
     $("teamSpaceRotateReader").hidden=connection?.role!=="trainer";
@@ -6271,8 +6276,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           teamSpaceLinks.set(link.id,link);
         }catch(localError){
           teamSpaceLastPublish.localWarning=localError?.message||"Fehler beim lokalen Verknüpfen";
-          localStorage.setItem(TEAM_SPACE_LAST_PUBLISH_KEY,
-            JSON.stringify(teamSpaceLastPublish));
+          try{localStorage.setItem(TEAM_SPACE_LAST_PUBLISH_KEY,
+            JSON.stringify(teamSpaceLastPublish))}
+          catch{/* Local warning remains in memory. */}
           teamSpaceShowPublication();
         }
       }else{
@@ -6321,8 +6327,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
             teamSpaceLinks.set(link.id,link);
           }catch(localError){
             teamSpaceLastPublish.localWarning=localError?.message||"Fehler beim lokalen Verknüpfen";
-            localStorage.setItem(TEAM_SPACE_LAST_PUBLISH_KEY,
-              JSON.stringify(teamSpaceLastPublish));
+            try{localStorage.setItem(TEAM_SPACE_LAST_PUBLISH_KEY,
+              JSON.stringify(teamSpaceLastPublish))}
+            catch{/* Local warning remains in memory. */}
             teamSpaceShowPublication();
           }
         }
