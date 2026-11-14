@@ -118,7 +118,8 @@ test("Spiel laden removes current standalone session but never the source JSON f
   await row.getByRole("button",{name:/Spiel löschen/}).click();
   await expect(row).toHaveCount(0);
   await page.reload();
-  await expect(page.locator("#homeRecent")).toBeHidden();
+  // A season shortcut may remain visible; only the deleted game must be gone.
+  await expect(page.locator("#homeRecentOptions .home-list-row").filter({hasText:"Herzhorn"})).toHaveCount(0);
   await page.locator("#homeChooseGame").click();
   await page.locator("#homeOpen").click();
   await page.locator("#homeLibraryGameSearch").fill("Herzhorn");
