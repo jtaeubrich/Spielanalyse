@@ -23,6 +23,13 @@ function reader(req,meta){
   if(!equals(sha(bearer(req)),meta.readerHash))
     throw err(401,"NOT_AUTHORIZED","Saison-Zugang ungültig oder widerrufen.");
 }
+// New spaces use a different trainer credential per space. Only legacy spaces
+// without trainerHash temporarily accept the old shared publish token.
+function trainerSpace(req,meta,legacyToken){
+  if(!meta.trainerHash)return trainer(req,legacyToken);
+  if(!equals(sha(bearer(req)),meta.trainerHash))
+    throw err(401,"NOT_AUTHORIZED","Trainerzugang für diesen Team Space erforderlich.");
+}
 function send(res,status,data,headers={}){
   res.writeHead(status,{"Content-Type":"application/json; charset=utf-8",
     "Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff",...headers});
@@ -72,7 +79,8 @@ function safeError(error){
   return err(503,"STORAGE_FAILED","Cloud-Speicher ist nicht erreichbar.");
 }
 export function createSeasonSyncHandler({store,adminToken,allowedOrigins=[],
-  now=()=>new Date(),idFactory=randomUUID,readerFactory=()=>randomBytes(32).toString("base64url")}){
+  now=()=>new Date(),idFactory=randomUUID,readerFactory=()=>randomBytes(32).toString("base64url"),
+  trainerFactory=()=>"trainer_"+randomBytes(32).toString("base64url")}){
   const allowed=new Set(allowedOrigins);
   return async(req,res)=>{
     try{
@@ -92,7 +100,7 @@ export function createSeasonSyncHandler({store,adminToken,allowedOrigins=[],
       const url=new URL(req.url||"/","http://localhost");
       if(url.pathname==="/health"&&req.method==="GET")return send(res,200,{status:"ok"});
       if(await handleTeamSpace(req,res,url,{store,adminToken,now,idFactory,readerFactory,
-        trainer,reader,send,err,bodyJson,sha}))return;
+        trainerFactory,trainer,trainerSpace,reader,send,err,bodyJson,sha}))return;
       if(url.pathname==="/seasons"&&req.method==="POST"){
         trainer(req,adminToken);
         const seasonId=idFactory(),readToken=readerFactory();
