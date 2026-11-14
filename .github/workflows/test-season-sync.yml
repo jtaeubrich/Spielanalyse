@@ -5,7 +5,18 @@ on:
     paths:
       - "cloud-run-season-sync/**"
       - "src/season-sync-client.js"
+      - "src/team-space-client.js"
       - "tests/season-sync-client.test.js"
+      - "tests/team-space-client.test.js"
+      - ".github/workflows/test-season-sync.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "cloud-run-season-sync/**"
+      - "src/season-sync-client.js"
+      - "src/team-space-client.js"
+      - "tests/season-sync-client.test.js"
+      - "tests/team-space-client.test.js"
       - ".github/workflows/test-season-sync.yml"
   workflow_dispatch:
 permissions:
