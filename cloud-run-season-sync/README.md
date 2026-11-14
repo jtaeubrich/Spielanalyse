@@ -23,6 +23,78 @@ Der Leselink ist eine weitergebbare Berechtigung. Nicht öffentlich posten.
 Einzelwiderruf pro Spieler ist noch nicht implementiert.
 
 
+## Trainerregistrierung mit Firebase (optional, Version 3)
+
+Die Firebase-Anmeldung ist standardmäßig **deaktiviert**. Ohne die im Folgenden
+beschriebenen Einstellungen bleiben bisherige Cloud-Run-Dienste, Saison-Cloud-
+Zugänge und Team-Space-Schlüssel funktionsfähig.
+
+### Einrichtung im bestehenden GCP-Projekt
+
+1. In der [Firebase Console](https://console.firebase.google.com/) das bereits
+   vorhandene GCP-Projekt **spielanalyse-companion** zu Firebase hinzufügen,
+   falls noch nicht geschehen. Kein zweites GCP-Projekt anlegen.
+2. **Authentication → Sign-in method → E-Mail/Passwort** aktivieren.
+   Unter **Projekteinstellungen → Allgemein** den **Web API Key**
+   (Firebase Web API Key, öffentliches Konfigurationsmerkmal) ermitteln.
+3. Unter **Google Cloud Run → handball-season-sync → Container /
+   Variablen und Secrets** folgende **Runtime-Umgebungsvariablen** setzen:
+
+       FIREBASE_PROJECT_ID=spielanalyse-companion
+       FIREBASE_WEB_API_KEY=<Firebase Web API Key>
+
+   Es ist **kein Service-Account-JSON und kein Firebase-Admin-Passwort** nötig;
+   Firebase Admin SDK verwendet die bereits bestehende Runtime-Service-Identität.
+   Der GitHub-Deploy-Workflow verwendet update-env-vars statt set-env-vars,
+   damit diese Einstellungen bei weiteren Deployments erhalten bleiben.
+4. Die Spielanalyse öffnen: **Start → Team Space → Trainerkonto**. Dort mit
+   eigener E-Mail-Adresse registrieren, Bestätigungslink öffnen und
+   **E-Mail-Bestätigung prüfen** betätigen.
+5. In **Firebase Authentication → Users** die genaue **UID des eigenen
+   verifizierten Kontos** kopieren (nicht die E-Mail-Adresse). Im Cloud-Run-
+   Dienst zusätzlich folgende Variable setzen:
+
+       TRAINER_ADMIN_UIDS=<deine Firebase-UID>
+
+   Für mehrere Administratoren komma-getrennte Firebase-UIDs. Nur diese
+   serverseitig gesetzten UID(s) können Traineranträge freigeben. **Die
+   Registrierungsoberfläche weist niemals selbst Administratorrechte zu.**
+6. Mit dem Administratorkonto im Abschnitt **Trainerfreigaben verwalten**
+   Anträge prüfen und jeweils **Freigeben** oder **Sperren** auswählen.
+
+**Berechtigungen:** Jede bestätigte E-Mail kann einen Antrag stellen. Erst
+die manuelle Freigabe gestattet das Anlegen von maximal fünf Team Spaces pro
+Trainer. Darin lassen sich maximal 20 leere Saisons je Space anlegen.
+Die Trainerkonto-API besitzt **keinen Endpunkt zur Erstellung oder Veröffentlichung
+von Spielen**. Auch der zentrale Registrierungsschlüssel wird den neuen
+Konten **nicht** ausgehändigt. Die bisherigen Team Spaces (Schlüssel v2) behalten
+ihre bisherigen Funktionen und werden nicht stillschweigend umgewandelt.
+
+**Speicher und Datenschutz:** Firebase verwaltet das Login und die
+E-Mail-Bestätigung. Der private GCS-Bucket speichert E-Mail, Firebase-UID,
+Freigabestatus, Zeitstempel und Team-Space-Zuordnungen unter
+trainer-registry/. Die GCS-Objekte sind nicht öffentlich.
+Der Browser hält das Firebase-Refresh-Token nur im Tab-Sitzungsspeicher;
+das Passwort wird weder im Cloud-JSON noch im App-Speicher abgelegt.
+Persönliche Kommentare und Video-Material werden durch die Anmeldung
+nicht automatisch hochgeladen.
+
+**Migrations-/Einladungsverhalten:** Neue Konto-Team-Spaces verwenden
+authMode firebase und ein nicht ausgegebenes Trainer-Schlüsselgeheimnis,
+wodurch weder der zentrale Schlüssel noch das einfache Trainerkonto
+publish-game erreichen kann. Der einmalig erzeugte **Spieler-Leseschlüssel**
+wird wie bisher auf dem Erstellungsgerät als Einladung gespeichert.
+Auf weiteren Trainergeräten ist die Saisonverwaltung per E-Mail möglich;
+das alte Einladungsgeheimnis wird nicht serverseitig im Klartext wiederhergestellt.
+Leere Saisons sind im Team-Space-Katalog sichtbar, können aber erst mit
+Inhalten sinnvoll lokal importiert werden.
+
+**Fehlerbilder:** AUTH_NOT_CONFIGURED bei fehlender Konfiguration;
+EMAIL_NOT_VERIFIED vor der E-Mail-Bestätigung;
+TRAINER_NOT_APPROVED bei offenen/gesperrten Anträgen; 403 auf fremden
+Team Spaces. Der Firebase Web API Key ist für Web-Clients vorgesehen,
+nicht mit dem zentralen Secret-Manager-Token zu verwechseln.
+
 ## Team Spaces: getrennte Schlüssel pro Mannschaft (v2)
 
 Die `/spaces`-API dient mehreren unabhängigen Team Spaces auf derselben
