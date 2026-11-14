@@ -10,7 +10,7 @@ const APP_SHELL = [
   "./src/season-update.js?v=1",
   "./src/season-sync-client.js?v=1",
   "./src/team-space-client.js?v=2",
-  "./src/trainer-auth-client.js?v=2",
+  "./src/trainer-auth-client.js?v=3",
   "./src/video-official-reconcile.js?v=1",
   "./src/season-selection.js",
   "./src/analysis-perspective.js",
