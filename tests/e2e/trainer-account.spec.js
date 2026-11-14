@@ -211,6 +211,8 @@ test("Registration requires matching passwords before contacting Firebase and cl
   await confirmation.fill("secure test password");
   await page.getByRole("button",{name:"Konto erstellen",exact:true}).click();
   await expect(page.locator("#trainerAccountStatus")).toContainText("Registriert. Bitte den Bestätigungslink");
+  await expect(page.locator("#trainerAccountSessionActions")).toBeVisible();
+  await expect(page.locator("#trainerAccountLogin")).toBeVisible();
   expect(calls).toHaveLength(2);
   expect(calls[0].url).toContain("accounts:signUp?");
   expect(calls[0].body.password).toBe("secure test password");
