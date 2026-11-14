@@ -5248,6 +5248,153 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
     row.append(copy,controls);return row;
   }
+  // Local game sources are kept distinct: active session, downloaded Team
+  // Space single games, and games embedded inside a specific season archive.
+  function homeLocalGames(){
+    const entries=[];
+    if(homeHasSession&&!activeSeasonGameId){
+      entries.push({kind:"session",key:"current",
+        title:homeGameTitle({state}),
+        subtitle:"Zuletzt bearbeitet · "+(state.events?.length||0)+" Ereignisse",
+        gameState:state});
+    }
+    for(const record of teamStandaloneGames){
+      let saved=null;
+      try{saved=JSON.parse(record.text)}catch{}
+      entries.push({kind:"team",key:record.id,title:homeGameTitle({state:saved||{},fileName:record.fileName}),
+        subtitle:"Team Space · lokal gespeichert · "+(teamStandaloneActiveId===record.id?"Zuletzt geöffnet":"Einzelspiel"),
+        gameState:saved||{},record});
+    }
+    for(const season of homeSeasonRecords()){
+      for(const game of season.games||[]){
+        entries.push({kind:"season",key:season.id+"|"+game.id,
+          seasonId:season.id,gameId:game.id,title:homeGameTitle(game),
+          subtitle:season.name+" · "+(game.state?.events?.length||0)+" Ereignisse · "+homeGameStatus(game),
+          gameState:game.state,canContinue:seasonGameCanContinue(game)});
+      }
+    }
+    return entries;
+  }
+  function homeGameMatches(entry,term){
+    const text=[
+      entry.title,entry.subtitle,entry.gameState?.gameName,
+      entry.gameState?.home?.name,entry.gameState?.away?.name,
+      entry.gameState?.gameDate,entry.gameState?.officialSource?.matchDate
+    ].filter(Boolean).join(" ").toLocaleLowerCase("de");
+    return text.includes(term);
+  }
+  function homeGameActions(entry){
+    const actions=[];
+    if(entry.kind==="session"){
+      actions.push({title:entry.gameState?.isHistorical?"Analyse öffnen":"Fortsetzen",primary:true,
+        action:()=>{
+          enterStandaloneWorkspace();showSetupMode("single",{focused:true});
+          showTab(entry.gameState?.isHistorical?"analysis":"match");
+        }});
+    }else if(entry.kind==="team"){
+      const open=historical=>{
+        applyLoadedGameText(entry.record.text,historical,entry.record.fileName);
+        teamStandaloneActiveId=entry.record.id;persistSession();
+      };
+      actions.push({title:"Öffnen",primary:true,action:()=>open(false)});
+      actions.push({title:"Analysieren",action:()=>open(true)});
+    }else if(entry.kind==="season"){
+      if(entry.canContinue)actions.push({title:"Fortsetzen",primary:true,
+        action:()=>homeOpenSeasonGame(entry.seasonId,entry.gameId,false)});
+      actions.push({title:"Analysieren",primary:!entry.canContinue,
+        action:()=>homeOpenSeasonGame(entry.seasonId,entry.gameId,true)});
+    }
+    actions.push({title:"Löschen",ariaLabel:"Spiel löschen: "+entry.title,
+      icon:"trash",action:()=>void homeDeleteGame(entry)});
+    return actions;
+  }
+  function homeRenderStartSearch(){
+    const host=$("homeStartSearchResults"),term=$("homeStartGameSearch").value.trim().toLocaleLowerCase("de");
+    host.replaceChildren();host.hidden=!term;
+    if(!term){$("homeRecent").hidden=!$("homeRecentOptions").childElementCount;return;}
+    $("homeRecent").hidden=true;
+    for(const entry of homeLocalGames()){
+      if(homeGameMatches(entry,term))host.append(homeRow(entry.title,entry.subtitle,homeGameActions(entry),"game"));
+    }
+    if(!host.childElementCount){
+      const empty=document.createElement("div");empty.className="empty";
+      empty.textContent="Keine passenden lokal gespeicherten Spiele gefunden.";
+      host.append(empty);
+    }
+  }
+  async function homeClearCurrentSession(){
+    homeSessionDeleted=true;
+    homeHasSession=false;
+    clearTimeout(internalAutosaveTimer);
+    await teamStandaloneWriteQueue.catch(()=>{});
+    stopGame();mediaPause();resetLoadedVideo();
+    activeSeasonGameId=null;teamStandaloneActiveId=null;
+    analysisSelectedGameId="";seasonLastEditedGameId="";
+    state=structuredClone(baseState);ownTeam="away";myTeamLeft=true;
+    matchReviewMode=false;gameBase=videoBase=liveClockBase=0;
+    gameRunning=videoRunning=liveClockRunning=false;
+    currentGameFileHandle=null;currentGameFileName=null;
+    normalize();update();
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem(INDEPENDENT_SESSION_KEY);
+    await deleteInternalRecord(INTERNAL_GAME_STORE,INTERNAL_GAME_KEY);
+  }
+  let homeGameDeleteBusy=false;
+  async function homeDeleteGame(entry){
+    if(homeGameDeleteBusy||homeLibrarySwitchBusy)return;
+    const name=entry.title||"Spiel";
+    const source=entry.kind==="season"?"aus der Saison „"+
+      (homeSeasonRecords().find(s=>s.id===entry.seasonId)?.name||"Saison")+"“":
+      entry.kind==="team"?"aus dem lokalen Team-Space-Speicher":"aus der lokalen Spielanalyse";
+    if(!confirm("Spiel „"+name+"“ "+source+" dauerhaft entfernen?\n\n"+
+      "Dies betrifft nur Daten auf diesem Gerät. Cloud-Spiele und externe JSON-Dateien bleiben erhalten. "+
+      "Bei Bedarf vorher exportieren."))return;
+    homeGameDeleteBusy=true;
+    try{
+      if(entry.kind==="session"){
+        if(!homeHasSession||activeSeasonGameId)throw Error("Dieses Einzelspiel ist nicht mehr aktiv.");
+        await homeClearCurrentSession();
+      }else if(entry.kind==="team"){
+        if(!teamStandaloneGames.some(record=>record.id===entry.key))
+          throw Error("Lokales Team-Space-Spiel nicht mehr vorhanden.");
+        if(teamStandaloneActiveId===entry.key)await homeClearCurrentSession();
+        await teamStandaloneWriteQueue.catch(()=>{});
+        await deleteInternalRecord(INTERNAL_GAME_STORE,entry.key);
+        teamStandaloneGames=teamStandaloneGames.filter(record=>record.id!==entry.key);
+        if(homeView==="teamspace")teamSpaceRenderCatalog();
+      }else if(entry.kind==="season"){
+        const sourceSeason=homeSeasonRecords().find(s=>s.id===entry.seasonId);
+        if(!sourceSeason?.games?.some(game=>game.id===entry.gameId))
+          throw Error("Das Saisonspiel ist nicht mehr vorhanden.");
+        if(entry.seasonId===seasonLibraryId){
+          if(activeSeasonGameId===entry.gameId)await homeClearCurrentSession();
+          clearTimeout(seasonPersistTimer);
+          await seasonWriteQueue;
+          seasonGames=seasonGames.filter(game=>game.id!==entry.gameId);
+          if(seasonLastEditedGameId===entry.gameId)seasonLastEditedGameId="";
+          if(analysisSelectedGameId===entry.gameId)analysisSelectedGameId="";
+          renderSeason();
+          await storeInternalSeason();
+        }else{
+          await seasonWriteQueue;
+          const record=await readInternalRecord(INTERNAL_SEASON_STORE,entry.seasonId);
+          if(!record||!Array.isArray(record.games)||
+            !record.games.some(game=>game.id===entry.gameId))
+            throw Error("Gespeichertes Saisonspiel nicht mehr vorhanden.");
+          const updated={...record,games:record.games.filter(game=>game.id!==entry.gameId),
+            updatedAt:new Date().toISOString()};
+          await writeInternalRecord(INTERNAL_SEASON_STORE,updated);
+          updateSeasonLibraryCache(updated);
+        }
+      }
+      homeRenderRecent();
+      if(homeView==="choose")homeRenderStartSearch();
+      if(homeView==="library")homeRenderLibrary();
+      if(homeView==="dashboard")homeRenderSeasonDashboard();
+      toast("Spiel lokal gelöscht.");
+    }catch(error){toast("Spiel konnte nicht gelöscht werden: "+(error?.message||String(error)))}
+    finally{homeGameDeleteBusy=false}
+  }
   function homeSeasonRecords(){
     // IndexedDB stores compact season archives with games[].data, while the
     // active in-memory library uses games[].state. Normalize before listing
@@ -5298,13 +5445,21 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(homeHasSession){
       const subtitle=(activeSeasonGameId?"Mit Saison verknüpft · ":"")+
         (state.events?.length||0)+" Ereignisse · "+homeGameStatus({state});
-      host.append(homeRow(state.gameName||"Zuletzt geöffnetes Spiel",subtitle,[{
+      const actions=[{
         title:state.isHistorical?"Analyse öffnen":"Spiel fortsetzen",primary:true,
         action:()=>{
           if(!activeSeasonGameId){enterStandaloneWorkspace();showSetupMode("single",{focused:true})}
           showTab(state.isHistorical?"analysis":"match");
         }
-      }],"game"));
+      }];
+      const active=activeSeasonGameId&&homeSeasonRecords().find(s=>
+        s.games.some(game=>game.id===activeSeasonGameId));
+      const remove=active?{kind:"season",seasonId:active.id,
+        gameId:activeSeasonGameId,title:homeGameTitle({state})}:
+        {kind:"session",title:homeGameTitle({state})};
+      actions.push({title:"Löschen",icon:"trash",ariaLabel:"Spiel löschen: "+remove.title,
+        action:()=>void homeDeleteGame(remove)});
+      host.append(homeRow(state.gameName||"Zuletzt geöffnetes Spiel",subtitle,actions,"game"));
     }
     if(homeSeasonRecords().length){
       host.append(homeRow(seasonName||"Aktive Saison",seasonGames.length+" Spiele",[
@@ -5319,6 +5474,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("homeLibraryTitle").textContent=homeKind==="season"?"Gespeicherte Saisons":"Gespeicherte Spiele";
     $("homeLibraryHint").textContent=homeKind==="season"?
       "Jede Saison bleibt unabhängig im lokalen PWA-Speicher.":"Zuletzt geöffnetes Einzelspiel sowie Spiele der lokal gespeicherten Saisons.";
+    $("homeLibraryGameSearchWrap").hidden=homeKind!=="game";
     if(homeKind==="season"){
       for(const entry of homeSeasonRecords()){
         const actions=[{title:"Öffnen",
@@ -5344,40 +5500,17 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         host.append(homeRow(entry.name||"Saison",(entry.games||[]).length+" Spiele"+(entry.id===seasonLibraryId?" · Aktuell ausgewählt":"")+distinction,actions,"season"));
       }
     }else{
-      if(homeHasSession){
-        host.append(homeRow(state.gameName||"Letztes Spiel",
-          "Zuletzt bearbeitet · "+(state.events?.length||0)+" Ereignisse",
-          [{title:state.isHistorical?"Analyse öffnen":"Fortsetzen",primary:true,action:()=>{enterStandaloneWorkspace();showSetupMode("single",{focused:true});showTab(state.isHistorical?"analysis":"match")}}],"game"));
-      }
-      for(const record of teamStandaloneGames){
-        const current=teamStandaloneActiveId===record.id;
-        host.append(homeRow(record.gameName||record.fileName,
-          "Team Space · lokal gespeichert · "+(current?"Zuletzt geöffnet":"Einzelspiel"),[
-            {title:"Öffnen",primary:true,action:()=>{
-              applyLoadedGameText(record.text,false,record.fileName);
-              teamStandaloneActiveId=record.id;persistSession();
-            }},
-            {title:"Analysieren",action:()=>{
-              applyLoadedGameText(record.text,true,record.fileName);
-              teamStandaloneActiveId=record.id;persistSession();
-            }}
-          ],"game"));
-      }
-      for(const entry of homeSeasonRecords()){
-        for(const game of entry.games||[]){
-          const possible=seasonGameCanContinue(game);
-          const actions=[];
-          if(possible)actions.push({title:"Fortsetzen",primary:true,
-            action:()=>homeOpenSeasonGame(entry.id,game.id,false)});
-          actions.push({title:"Analysieren",primary:!possible,
-            action:()=>homeOpenSeasonGame(entry.id,game.id,true)});
-          host.append(homeRow(homeGameTitle(game),entry.name+" · "+(game.state?.events?.length||0)+" Ereignisse · "+homeGameStatus(game),actions,"game"));
-        }
+      const term=$("homeLibraryGameSearch").value.trim().toLocaleLowerCase("de");
+      for(const entry of homeLocalGames()){
+        if(term&&!homeGameMatches(entry,term))continue;
+        host.append(homeRow(entry.title,entry.subtitle,homeGameActions(entry),"game"));
       }
     }
     if(!host.childElementCount){
       const empty=document.createElement("div");empty.className="empty";
-      empty.textContent="Noch nichts gespeichert. Du kannst einen Eintrag importieren oder neu anlegen.";
+      empty.textContent=homeKind==="game"&&$("homeLibraryGameSearch").value.trim()?
+        "Keine passenden lokal gespeicherten Spiele gefunden.":
+        "Noch nichts gespeichert. Du kannst einen Eintrag importieren oder neu anlegen.";
       host.append(empty);
     }
   }
@@ -5524,6 +5657,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         action:()=>homeOpenSeasonGame(seasonLibraryId,game.id,false)});
       actions.push({title:"Analysieren",primary:!canContinue,
         action:()=>homeOpenSeasonGame(seasonLibraryId,game.id,true)});
+      actions.push({title:"Löschen",icon:"trash",ariaLabel:"Spiel löschen: "+title,
+        action:()=>void homeDeleteGame({kind:"season",seasonId:seasonLibraryId,
+          gameId:game.id,title})});
       host.append(homeRow(title,(game.state?.events?.length||0)+" Ereignisse · "+homeGameStatus(game),actions,"game"));
     }
     if(!count){
@@ -8730,7 +8866,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   $('numberTeam').onchange=renderNumbers;
   $('closeNumbers').onclick=()=>$('numbersDialog').close();
   $('numbersForm').onsubmit=e=>{e.preventDefault();for(const [key,value] of Object.entries(numberEdits)){if(value!==''&&(!/^\\d{1,2}$/.test(value))){$('numberError').textContent='Bitte Nummern zwischen 0 und 99 eintragen.';return;}}for(const team of ['home','away'])for(const p of state[team].players){const value=numberEdits[team+':'+p.id];if(value!==undefined)p.nr=value===''?'':Number(value);}document.querySelectorAll('.player-label').forEach(label=>{const p=getPlayer(label.dataset.playerId);if(p)playerLabel(label.parentElement,p);});showStep(currentStep);$('numbersDialog').close();toast('Rückennummern übernommen');};
-  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical)setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;await teamSpaceRestore().catch(error=>console.warn("Team Space konnte nicht geladen werden",error));homeShow("choose",null);showTab("home");if(pendingCloudInvite)await joinSeasonCloud(pendingCloudInvite).catch(error=>{
+  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical)setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;if(restoredSession)persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;await teamSpaceRestore().catch(error=>console.warn("Team Space konnte nicht geladen werden",error));homeShow("choose",null);showTab("home");if(pendingCloudInvite)await joinSeasonCloud(pendingCloudInvite).catch(error=>{
   toast("Saison-Einladung konnte nicht geöffnet werden: "+error.message);
 });if(pendingTeamSpaceInvite)await teamSpaceJoin(pendingTeamSpaceInvite).catch(error=>{
   toast("Team-Space-Einladung konnte nicht geöffnet werden: "+error.message);
