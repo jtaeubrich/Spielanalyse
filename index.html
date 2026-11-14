@@ -1847,6 +1847,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             </label>
             <button class="btn primary" id="teamSpacePublishGameBtn" type="button">Einzelspiel veröffentlichen</button>
           </div>
+          <p id="teamSpacePublishStatus" class="number-help" role="status" aria-live="polite">Noch keine Veröffentlichung in dieser Sitzung bestätigt.</p>
         </details>
       </div>
     </div>
@@ -5746,7 +5747,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   // solely to preserve personal annotations during later publications.
   const teamSpaces=new Map(),teamSpaceLinks=new Map();
   let teamSpaceSelectedId="",teamSpaceCatalogData=null,teamStandaloneGames=[],
-    teamSpaceBusy=false,teamStandaloneActiveId=null;
+    teamSpaceBusy=false,teamStandaloneActiveId=null,teamSpaceLastPublish=null;
   const teamLinkId=id=>"teamspace-link-"+id;
   const teamSeasonLinkId=(spaceId,seasonId)=>"teamspace-season-link-"+spaceId+"-"+seasonId;
   const teamGameLinkId=(spaceId,gameId)=>"teamspace-game-link-"+spaceId+"-"+gameId;
@@ -5806,7 +5807,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     select.replaceChildren();
     select.add(new Option("Team Space auswählen",""));
     for(const connection of teamSpaces.values())
-      select.add(new Option(connection.name||"Team Space",connection.spaceId));
+      select.add(new Option((connection.name||"Team Space")+
+        " · ID …"+connection.spaceId.slice(-8),connection.spaceId));
     select.value=teamSpaces.has(before)?before:"";
     const connection=teamActiveConnection();
     $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
@@ -5916,8 +5918,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const link=teamSpaceLocalGame(g);
         return link&&link.revision<g.revision;
       }).length;
-      teamStatus(catalog.name+" · "+catalog.seasons.length+" Saisons · "+
-        catalog.games.length+" Spiele"+(updates?" · "+updates+" Updates verfügbar":" · Stand aktuell"));
+      const published=teamSpaceLastPublish?.spaceId===id?teamSpaceLastPublish:null;
+      const last=published&&(published.type==="season"
+        ?catalog.seasons.find(row=>row.id===published.id)
+        :catalog.games.find(row=>row.id===published.id));
+      const confirmation=!published?"":last&&last.revision>=published.itemRevision
+        ?" · Letzter Upload im Katalog bestätigt (V"+published.itemRevision+")"
+        :" · Achtung: letzter Upload im Katalog nicht nachweisbar";
+      teamStatus(catalog.name+" · ID …"+id.slice(-8)+" · "+catalog.seasons.length+
+        " Saisons · "+catalog.games.length+" Spiele"+
+        (updates?" · "+updates+" Updates verfügbar":" · Stand aktuell")+confirmation);
     }catch(error){
       teamSpaceCatalogData=null;teamSpaceRenderControls();
       teamStatus("Team Space nicht erreichbar: "+error.message);
@@ -6362,7 +6372,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const data=await service.listSpaces(),select=$("trainerAccountSpaces");
     select.replaceChildren();
     for(const row of data.spaces)
-      select.add(new Option(row.name+" ("+row.seasonCount+" Saisons)",row.spaceId));
+      select.add(new Option(row.name+" ("+row.seasonCount+
+        " Saisons) · ID …"+row.spaceId.slice(-8),row.spaceId));
     if([...select.options].some(option=>option.value===previous))select.value=previous;
     if(!data.spaces.length)select.add(new Option("Zuerst Team Space erstellen",""));
   }
