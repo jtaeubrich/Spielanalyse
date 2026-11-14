@@ -1847,7 +1847,8 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             </label>
             <button class="btn primary" id="teamSpacePublishGameBtn" type="button">Einzelspiel veröffentlichen</button>
           </div>
-          <p id="teamSpacePublishStatus" class="number-help" role="status" aria-live="polite">Noch keine Veröffentlichung in dieser Sitzung bestätigt.</p>
+          <p id="teamSpacePublishStatus" class="number-help" role="status" aria-live="polite">Noch keine Veröffentlichung von diesem Gerät bestätigt.</p>
+          <button type="button" class="btn" id="teamSpaceVerifyPublish">Veröffentlichung im Cloud-Katalog prüfen</button>
         </details>
       </div>
     </div>
@@ -5748,6 +5749,55 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   const teamSpaces=new Map(),teamSpaceLinks=new Map();
   let teamSpaceSelectedId="",teamSpaceCatalogData=null,teamStandaloneGames=[],
     teamSpaceBusy=false,teamStandaloneActiveId=null,teamSpaceLastPublish=null;
+  const TEAM_SPACE_LAST_PUBLISH_KEY="handballSpielanalyse.lastTeamSpacePublication";
+  try{
+    const saved=JSON.parse(localStorage.getItem(TEAM_SPACE_LAST_PUBLISH_KEY)||"null");
+    if(saved?.spaceId&&["season","game"].includes(saved.type)&&saved.id)
+      teamSpaceLastPublish=saved;
+  }catch{/* Ignore damaged local receipts; never treat these as server proof. */}
+  function teamSpaceShowPublication(catalog=null){
+    const status=$("teamSpacePublishStatus"),connection=teamActiveConnection();
+    if(!connection){
+      status.textContent="Bitte zuerst einen Team Space auswählen.";
+      return;
+    }
+    const receipt=teamSpaceLastPublish;
+    if(!receipt||receipt.spaceId!==connection.spaceId){
+      status.textContent="Für diesen Team Space liegt auf diesem Gerät noch keine lokale Upload-Bestätigung vor. "+
+        "Der aktuelle Cloud-Katalog oben zeigt die tatsächlich veröffentlichten Inhalte. "+
+        "Ausgewählt: "+(connection.name||"Team Space")+" · ID …"+connection.spaceId.slice(-8)+".";
+      return;
+    }
+    const label=receipt.type==="season"?"Saison":"Spiel";
+    const head=label+" „"+(receipt.title||receipt.id)+"“ · "+
+      (connection.name||"Team Space")+" · ID …"+connection.spaceId.slice(-8)+
+      " · Cloud-Version "+receipt.revision+" · "+
+      new Date(receipt.at).toLocaleString("de-DE");
+    if(!catalog){
+      status.textContent="Server hat den Upload bestätigt: "+head+
+        ". Katalogprüfung noch ausstehend."+
+        (receipt.localWarning?" Lokale Zuordnung: "+receipt.localWarning:"");
+      return;
+    }
+    const found=receipt.type==="season"
+      ?catalog.seasons.find(item=>item.id===receipt.id)
+      :catalog.games.find(item=>item.id===receipt.id);
+    const verified=found&&found.revision>=receipt.itemRevision;
+    status.textContent=(verified?"Im Cloud-Katalog bestätigt: ":
+      "Achtung: Server bestätigte den Upload, aber er ist im aktuellen Katalog nicht nachweisbar: ")+
+      head+(verified?" · Eintragsversion "+found.revision:"")+
+      (receipt.localWarning?" · Lokale Zuordnung: "+receipt.localWarning:"");
+  }
+  function teamSpaceRememberPublication(connection,type,result,title){
+    teamSpaceLastPublish={spaceId:connection.spaceId,type,
+      id:type==="season"?result.seasonId:result.gameId,
+      title:String(title||"").slice(0,200),
+      revision:result.revision,itemRevision:result.itemRevision,
+      at:new Date().toISOString()};
+    localStorage.setItem(TEAM_SPACE_LAST_PUBLISH_KEY,
+      JSON.stringify(teamSpaceLastPublish));
+    teamSpaceShowPublication();
+  }
   const teamLinkId=id=>"teamspace-link-"+id;
   const teamSeasonLinkId=(spaceId,seasonId)=>"teamspace-season-link-"+spaceId+"-"+seasonId;
   const teamGameLinkId=(spaceId,gameId)=>"teamspace-game-link-"+spaceId+"-"+gameId;
