@@ -1,11 +1,13 @@
 import {describe,it,expect,vi} from "vitest";
 import {createHash} from "node:crypto";
 import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,
-  downloadTeamSpaceGame,publishTeamSpaceGame} from "../src/team-space-client.js";
+  downloadTeamSpaceGame,publishTeamSpaceGame,claimTeamSpaceTrainerToken,
+  verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "../src/team-space-client.js";
 const API="https://handball-season-sync-235703972531.europe-west1.run.app";
 const SPACE="88735513-5e3e-4a95-aa70-6a1a2fe94bf9";
 const TOKEN="reader_"+("q".repeat(40));
 const ADMIN="trainer_"+("t".repeat(44));
+const PERSONAL="trainer_"+("p".repeat(44));
 const conn={api:API,spaceId:SPACE,readToken:TOKEN,role:"reader"};
 describe("Team Space invitations",()=>{
   it("carries reader only in a removable hash, never a query or a trainer token",()=>{
@@ -23,15 +25,23 @@ describe("Team Space invitations",()=>{
   });
 });
 describe("Team Space API client",()=>{
-  it("creates workspace with trainer header but no token in the URL",async()=>{
+  it("creates workspace with registration header and returns a separate trainer token",async()=>{
     const fetcher=vi.fn(async(url,opts)=>new Response(JSON.stringify({
-      spaceId:SPACE,readToken:TOKEN,name:"TSV Kronshagen",revision:0
+      spaceId:SPACE,readToken:TOKEN,trainerToken:PERSONAL,name:"TSV Kronshagen",revision:0
     }),{status:201,headers:{"Content-Type":"application/json"}}));
     const created=await createTeamSpace(API,"TSV Kronshagen",ADMIN,{fetcher});
     expect(created.role).toBe("trainer");
+    expect(created.trainerToken).toBe(PERSONAL);
+    expect(created.trainerToken).not.toBe(ADMIN);
     expect(fetcher.mock.calls[0][0]).toBe(API+"/spaces");
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe("Bearer "+ADMIN);
     expect(fetcher.mock.calls[0][0]).not.toContain(ADMIN);
+  });
+  it("rejects any new Team Space response that lacks its trainer credential",async()=>{
+    const fetcher=vi.fn(async()=>new Response(JSON.stringify({
+      spaceId:SPACE,readToken:TOKEN,name:"TSV",revision:0
+    }),{status:201}));
+    await expect(createTeamSpace(API,"TSV",ADMIN,{fetcher})).rejects.toThrow();
   });
   it("validates version catalog and authenticates read requests",async()=>{
     const fetcher=vi.fn(async()=>new Response(JSON.stringify({
@@ -65,12 +75,42 @@ describe("Team Space API client",()=>{
     const fetcher=vi.fn(async()=>new Response(JSON.stringify({
       spaceId:SPACE,gameId:"sg-1",revision:4,itemRevision:1
     })));
-    await publishTeamSpaceGame(conn,{gameName:"Test"},ADMIN,3,{
+    await publishTeamSpaceGame(conn,{gameName:"Test"},PERSONAL,3,{
       gameId:"sg-1",seasonId:SPACE,fileName:"test.json"
     },{fetcher});
     const [url,opts]=fetcher.mock.calls[0];
     expect(url).toBe(API+"/spaces/"+SPACE+"/publish-game");
-    expect(opts.headers.Authorization).toBe("Bearer "+ADMIN);
+    expect(opts.headers.Authorization).toBe("Bearer "+PERSONAL);
     expect(JSON.parse(opts.body).expectedRevision).toBe(3);
   });
+  it("claims legacy spaces with registration key and verifies separate trainer access",async()=>{
+    const calls=[];
+    const fetcher=vi.fn(async(url,opts)=>{
+      calls.push({url,authorization:opts.headers.Authorization});
+      return new Response(JSON.stringify(url.endsWith("/claim-trainer")
+        ?{spaceId:SPACE,trainerToken:PERSONAL}
+        :{spaceId:SPACE,trainerAccess:"individual"}));
+    });
+    const acquired=await claimTeamSpaceTrainerToken(conn,ADMIN,{fetcher});
+    expect(acquired).toBe(PERSONAL);
+    const checked=await verifyTeamSpaceTrainerToken(conn,PERSONAL,{fetcher});
+    expect(checked.trainerAccess).toBe("individual");
+    expect(calls).toEqual([
+      {url:API+"/spaces/"+SPACE+"/claim-trainer",authorization:"Bearer "+ADMIN},
+      {url:API+"/spaces/"+SPACE+"/verify-trainer",authorization:"Bearer "+PERSONAL}
+    ]);
+    expect(calls.every(item=>!item.url.includes(PERSONAL)&&!item.url.includes(ADMIN))).toBe(true);
+  });
+  it("rotates a single trainer credential without putting it in URLs",async()=>{
+    const next="trainer_"+("n".repeat(43));
+    const fetcher=vi.fn(async()=>new Response(JSON.stringify({
+      spaceId:SPACE,trainerToken:next
+    })));
+    const updated=await rotateTeamSpaceTrainerToken(conn,PERSONAL,{fetcher});
+    expect(updated).toBe(next);
+    const [url,opts]=fetcher.mock.calls[0];
+    expect(url).toBe(API+"/spaces/"+SPACE+"/rotate-trainer");
+    expect(opts.headers.Authorization).toBe("Bearer "+PERSONAL);
+  });
+
 });
