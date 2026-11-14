@@ -1709,7 +1709,10 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
                   <input class="field" id="trainerAccountSeasonName" type="text" placeholder="B-Jugend 2027/28">
                 </label>
               </div>
-              <button type="button" class="btn primary" id="trainerAccountCreateSeason">Saison anlegen</button>
+              <div class="season-tools">
+                <button type="button" class="btn primary" id="trainerAccountCreateSeason">Saison anlegen</button>
+                <button type="button" class="btn" id="trainerAccountCopySpaceId">Team-Space-ID kopieren</button>
+              </div>
               <p class="number-help">Neue Saisons starten mit 0 Spielen. Das Erstellen oder Hochladen von Spielen ist mit diesem Trainerkonto nicht erlaubt.</p>
             </div>
             <div id="trainerAccountAdmin" hidden>
@@ -6119,6 +6122,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function trainerAccountStatus(message){
     $("trainerAccountStatus").textContent=message;
   }
+  function trainerAccountClearPublisher(){
+    $("trainerAccountPublisherToken").value="";
+    $("trainerAccountPublisherCredentials").hidden=true;
+  }
   async function trainerAccountLoadSpaces(){
     const service=trainerAccountApi();
     const previous=$("trainerAccountSpaces").value;
@@ -6184,10 +6191,33 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       trainerAccountStatus("Trainerkonto: "+error.message);
     });
   }
+  $("trainerAccountIssuePublisher").onclick=()=>trainerAccountAction(async()=>{
+    const spaceId=$("trainerAccountPublisherSpace").value.trim();
+    if(!spaceId)throw Error("Bitte die Team-Space-ID angeben.");
+    if(!confirm("Privilegierten Veröffentlichungsschlüssel ausstellen? Ein früherer Schlüssel dieses Team Space wird ungültig."))return;
+    const result=await trainerAccountApi().issuePublisherKey(spaceId);
+    trainerAccountClearPublisher();
+    $("trainerAccountPublisherToken").value=result.trainerToken;
+    $("trainerAccountPublisherCredentials").hidden=false;
+    trainerAccountStatus("Veröffentlichungsschlüssel ausgestellt. Jetzt im Passwortmanager sichern; normale Trainer erhalten ihn nicht.");
+  });
+  $("trainerAccountCopyPublisher").onclick=async()=>{
+    const secret=$("trainerAccountPublisherToken").value;
+    if(!secret)return;
+    try{await navigator.clipboard.writeText(secret);toast("Veröffentlichungsschlüssel kopiert.")}
+    catch{$("trainerAccountPublisherToken").select();toast("Schlüssel markiert; bitte kopieren.")}
+  };
+  $("trainerAccountCopySpaceId").onclick=async()=>{
+    const spaceId=$("trainerAccountSpaces").value;
+    if(!spaceId)return;
+    try{await navigator.clipboard.writeText(spaceId);toast("Team-Space-ID kopiert.")}
+    catch{toast("Team-Space-ID: "+spaceId)}
+  };
   $("trainerAccountPanel").addEventListener("toggle",()=>{
     if($("trainerAccountPanel").open)trainerAccountAction(trainerAccountRefresh);
   });
   $("trainerAccountSignUp").onclick=()=>trainerAccountAction(async()=>{
+    trainerAccountClearPublisher();
     const service=trainerAccountApi();
     await service.signup($("trainerAccountEmail").value.trim(),
       $("trainerAccountPassword").value);
@@ -6195,6 +6225,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     trainerAccountStatus("Registriert. Bitte den Bestätigungslink in der E-Mail öffnen und danach „E-Mail-Bestätigung prüfen“ wählen.");
   });
   $("trainerAccountSignIn").onclick=()=>trainerAccountAction(async()=>{
+    trainerAccountClearPublisher();
     const service=trainerAccountApi();
     await service.login($("trainerAccountEmail").value.trim(),
       $("trainerAccountPassword").value);
@@ -6216,6 +6247,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     trainerAccountStatus("Falls die Adresse registriert ist, erhält sie eine E-Mail zum Zurücksetzen des Passworts.");
   });
   $("trainerAccountSignOut").onclick=()=>trainerAccountAction(async()=>{
+    trainerAccountClearPublisher();
     trainerAccountApi().logout();
     $("trainerAccountPassword").value="";
     await trainerAccountRefresh();
