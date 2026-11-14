@@ -33,6 +33,7 @@ describe("Team Space API client",()=>{
     expect(created.role).toBe("trainer");
     expect(created.trainerToken).toBe(PERSONAL);
     expect(created.trainerToken).not.toBe(ADMIN);
+    expect(JSON.parse(fetcher.mock.calls[0][1].body).authVersion).toBe(2);
     expect(fetcher.mock.calls[0][0]).toBe(API+"/spaces");
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe("Bearer "+ADMIN);
     expect(fetcher.mock.calls[0][0]).not.toContain(ADMIN);
