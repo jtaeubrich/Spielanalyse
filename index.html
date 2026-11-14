@@ -1756,7 +1756,9 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
               <div class="season-tools">
                 <button type="button" class="btn primary" id="trainerAccountCreateSeason">Saison anlegen</button>
                 <button type="button" class="btn" id="trainerAccountCopySpaceId">Team-Space-ID kopieren</button>
+                <button type="button" class="btn" id="trainerAccountVerifyCatalog">Cloud-Katalog prüfen</button>
               </div>
+              <p id="trainerAccountCatalogStatus" class="number-help" role="status" aria-live="polite">Noch kein Cloud-Katalog geprüft.</p>
               <p class="number-help">Neue Saisons starten mit 0 Spielen. Für Spiele anschließend unten „Saisons und Spiele veröffentlichen“ öffnen und die passende Online-Zielsaison auswählen. Die gewählte Team-Space-Kennung muss übereinstimmen.</p>
             </div>
             <div id="trainerAccountAdmin" hidden>
@@ -6562,7 +6564,30 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     try{await navigator.clipboard.writeText(secret);toast("Veröffentlichungsschlüssel kopiert.")}
     catch{$("trainerAccountPublisherToken").select();toast("Schlüssel markiert; bitte kopieren.")}
   };
+  async function trainerAccountVerifyCatalog(){
+    const spaceId=$("trainerAccountSpaces").value;
+    if(!spaceId)throw Error("Bitte einen Team Space aus deinem Trainerkonto auswählen.");
+    $("trainerAccountCatalogStatus").textContent="Cloud-Katalog des Trainer-Team-Space wird geladen …";
+    try{
+      const catalog=await trainerAccountApi().catalog(spaceId);
+      const seasonList=catalog.seasons.map(s=>s.name+" ("+s.gameCount+" Spiele)").join("; ");
+      const gameList=catalog.games.slice(0,8).map(g=>g.name).join("; ");
+      $("trainerAccountCatalogStatus").textContent=
+        "Direkt vom Cloud-Server · Team Space "+catalog.name+" · Kennung "+spaceId+
+        " · Katalogversion "+catalog.revision+
+        " · "+catalog.seasons.length+" Saisons · "+catalog.games.length+" Spiele"+
+        (seasonList?" · Saisons: "+seasonList:" · Keine Saisons")+
+        (gameList?" · Spiele: "+gameList:"");
+      return catalog;
+    }catch(error){
+      $("trainerAccountCatalogStatus").textContent=
+        "Cloud-Katalog konnte nicht überprüft werden: "+error.message;
+      throw error;
+    }
+  }
+  $("trainerAccountVerifyCatalog").onclick=()=>trainerAccountAction(trainerAccountVerifyCatalog);
   $("trainerAccountSpaces").onchange=()=>{
+    $("trainerAccountCatalogStatus").textContent="Für diesen Team Space noch kein Cloud-Katalog geprüft.";
     const spaceId=$("trainerAccountSpaces").value;
     if(!teamSpaces.has(spaceId))return;
     teamSpaceSelectedId=spaceId;
@@ -6718,6 +6743,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       teamSpaceCatalogData=null;
       await teamSpaceRefreshCatalog();
     }
+    // Verify independently with the Firebase account, even if this device
+    // does not have the Team Space's local reader key.
+    try{await trainerAccountVerifyCatalog()}catch{/* Status above remains informative. */}
     trainerAccountStatus("Saison „"+name+"“ ohne Spiele angelegt · Team Space ID …"+
       spaceId.slice(-8)+". Für ein Spiel unten „Saisons und Spiele veröffentlichen“ öffnen.");
     toast("Leere Saison erstellt.");
