@@ -5645,8 +5645,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const season of catalog.seasons){
       const local=teamSpaceLocalSeason(season.id);
       const outdated=local&&Number(local.revision)<season.revision;
-      const status=local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
-      const actions=[{title:outdated?"Aktualisieren":local?"Öffnen":"Importieren",
+      const status=season.gameCount===0?"Noch keine Spiele":
+        local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
+      const actions=season.gameCount===0?[]:[{title:outdated?"Aktualisieren":local?"Öffnen":"Importieren",
         primary:true,action:async()=>{
           if(local&&!outdated){
             if(local.localSeasonId!==seasonLibraryId)await switchSeasonLibrary(local.localSeasonId);
