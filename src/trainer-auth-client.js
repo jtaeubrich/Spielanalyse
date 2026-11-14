@@ -133,6 +133,10 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
     if(!validSeasonCloudId(spaceId))throw Error("Team-Space-ID ungültig.");
     return call("/spaces/"+spaceId+"/catalog");
   }
+  async function issuePublisherKey(spaceId){
+    if(!validSeasonCloudId(spaceId))throw Error("Team-Space-ID ungültig.");
+    return call("/admin/spaces/"+spaceId+"/publisher-key",{method:"POST",data:{}});
+  }
   async function listUsers(){return call("/admin/users")}
   async function setApproval(uid,status){
     if(!/^[A-Za-z0-9_-]{1,128}$/.test(String(uid||"")))
@@ -143,5 +147,5 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
   }
   return {getConfig,signup,login,logout,requestVerification,resetPassword,
     refresh,me,register,listSpaces,createSpace,createSeason,catalog,
-    listUsers,setApproval,hasSession:()=>Boolean(refreshToken),api:endpoint};
+    listUsers,setApproval,issuePublisherKey,hasSession:()=>Boolean(refreshToken),api:endpoint};
 }
