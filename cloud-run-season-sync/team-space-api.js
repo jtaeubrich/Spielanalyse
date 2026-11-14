@@ -26,6 +26,10 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
     if(req.method!=="POST")throw err(405,"METHOD_NOT_ALLOWED","POST erforderlich.");
     trainer(req,adminToken);
     const body=await bodyJson(req);
+    // Old PWA clients do not display the new trainer credential. Reject them
+    // instead of creating a space whose trainer key would be lost.
+    if(body?.authVersion!==2)
+      throw err(426,"CLIENT_UPDATE_REQUIRED","Bitte die Spielanalyse-App aktualisieren, bevor du einen Team Space erstellst.");
     const name=label(body?.name);
     if(!name||name.length>200)throw err(400,"INVALID_NAME","Ungültiger Teamname.");
     const spaceId=idFactory(),readToken=readerFactory(),
