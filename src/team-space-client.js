@@ -36,7 +36,7 @@ export async function createTeamSpace(api,teamName,registrationToken,{fetcher=fe
   const root=seasonCloudEndpoint(api);
   if(!String(teamName||"").trim())throw Error("Teamname fehlt.");
   const res=await seasonCloudCall({api:root},"/spaces",{
-    fetcher,method:"POST",authToken:registrationToken,data:{name:String(teamName).trim()}
+    fetcher,method:"POST",authToken:registrationToken,data:{name:String(teamName).trim(),authVersion:2}
   });
   const data=await res.json();
   if(!validSeasonCloudId(data.spaceId)||!validSeasonCloudToken(data.readToken)||
