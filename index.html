@@ -6180,19 +6180,30 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   async function trainerAccountRefresh(){
     const service=trainerAccountApi(),config=await service.getConfig();
-    $("trainerAccountLogin").hidden=!config.enabled;
-    $("trainerAccountSessionActions").hidden=!config.enabled||!service.hasSession();
+    const hasSession=config.enabled&&service.hasSession();
+    // Hide the login immediately for an existing Firebase session, rather
+    // than briefly showing a blanked password while the profile loads.
+    $("trainerAccountLogin").hidden=!config.enabled||hasSession;
+    $("trainerAccountSessionActions").hidden=!hasSession;
     $("trainerAccountDashboard").hidden=true;
     $("trainerAccountBootstrap").hidden=true;
     if(!config.enabled){
       trainerAccountStatus("Die Firebase-Trainerregistrierung ist in Google Cloud noch nicht aktiviert. Die bisherigen Team-Space-Schlüssel bleiben nutzbar.");
       return;
     }
-    if(!service.hasSession()){
+    if(!hasSession){
       trainerAccountStatus("Mit E-Mail und Passwort anmelden oder ein neues Trainerkonto registrieren.");
       return;
     }
-    const me=await service.me();
+    let me;
+    try{me=await service.me()}
+    catch(error){
+      // Invalid or unverified sessions still need the sign-in and
+      // email-verification controls; do not trap them in a hidden form.
+      $("trainerAccountLogin").hidden=false;
+      $("trainerAccountSessionActions").hidden=!service.hasSession();
+      throw error;
+    }
     // Authentication succeeded: don't leave an empty password field visible
     // next to the already signed-in trainer account.
     $("trainerAccountLogin").hidden=true;
