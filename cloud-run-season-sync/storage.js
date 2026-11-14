@@ -9,6 +9,34 @@ export function createGcsSeasonStore({bucketName,storage=new Storage()}={}){
   // Space metadata follows the same generation-pinned CAS discipline as
   // season metadata, avoiding lost updates when two trainers publish at once.
   const spaceName=id=>"spaces/"+id+"/metadata.json";
+  const validUid=id=>/^[A-Za-z0-9_-]{1,128}$/.test(String(id||""));
+  const validSpaceId=id=>/^[0-9a-f-]{36}$/i.test(String(id||""));
+  const trainerName=id=>{
+    if(!validUid(id))throw Error("Invalid trainer UID");
+    return "trainer-registry/users/"+id+".json";
+  };
+  const trainerLink=(uid,spaceId)=>{
+    if(!validUid(uid)||!validSpaceId(spaceId))throw Error("Invalid trainer link");
+    return "trainer-registry/links/"+uid+"/"+spaceId+".json";
+  };
+  async function readJsonWithGeneration(path){
+    try{
+      const file=bucket.file(path);
+      const [info]=await file.getMetadata();
+      const [bytes]=await bucket.file(path,{generation:info.generation}).download();
+      return {metadata:JSON.parse(bytes.toString("utf8")),generation:info.generation};
+    }catch(error){
+      if(error?.code===404)return {metadata:null,generation:null};
+      throw error;
+    }
+  }
+  async function saveJson(path,data,generation){
+    await bucket.file(path).save(Buffer.from(JSON.stringify(data),"utf8"),{
+      resumable:false,contentType:"application/json",
+      preconditionOpts:{ifGenerationMatch:generation===null?0:Number(generation)},
+      metadata:{cacheControl:"private,no-store"}
+    });
+  }
   const spaceGameKey=/^spaces\/[0-9a-f-]{36}\/games\/sg-[a-z0-9_-]{1,80}\/\d+-[0-9a-f-]{36}\.json$/i;
   return {
     async create(id,metadata){
@@ -93,6 +121,34 @@ export function createGcsSeasonStore({bucketName,storage=new Storage()}={}){
       if(!spaceGameKey.test(path))throw Error("Invalid space game path");
       const [bytes]=await bucket.file(path).download();
       return bytes;
+    },
+    // Trainer records are private GCS objects. No Firestore or extra database.
+    async createTrainerUser(uid,data){
+      await saveJson(trainerName(uid),data,null);
+    },
+    async readTrainerUser(uid){
+      return readJsonWithGeneration(trainerName(uid));
+    },
+    async updateTrainerUser(uid,data,generation){
+      if(!generation)throw Error("Trainer generation precondition missing");
+      await saveJson(trainerName(uid),data,generation);
+    },
+    async listTrainerUsers(){
+      const [files]=await bucket.getFiles({prefix:"trainer-registry/users/"});
+      const rows=await Promise.all(files.filter(f=>f.name.endsWith(".json")).map(async f=>{
+        const [bytes]=await f.download();
+        return JSON.parse(bytes.toString("utf8"));
+      }));
+      return rows;
+    },
+    async createTrainerSpaceLink(uid,spaceId){
+      await saveJson(trainerLink(uid,spaceId),{spaceId},null);
+    },
+    async listTrainerSpaceLinks(uid){
+      if(!validUid(uid))throw Error("Invalid trainer UID");
+      const [files]=await bucket.getFiles({prefix:"trainer-registry/links/"+uid+"/"});
+      return files.map(f=>f.name.split("/").pop().replace(/\\.json$/,""))
+        .filter(validSpaceId);
     }
   };
 }
