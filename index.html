@@ -140,7 +140,18 @@
     .home-game-delete{width:34px;height:34px;padding:6px;flex:0 0 34px;display:grid;place-items:center;border:1px solid #88566b;background:#301d27;border-radius:9px;color:#ffe8ee;cursor:pointer}
     .home-game-delete:hover,.home-game-delete:focus-visible{border-color:#f1a0b4;background:#512733;outline:2px solid transparent}
     .home-game-delete svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .home-list-controls .home-game-delete{margin-left:auto}
+    /* Keep the delete action at the far right of each game row, independently
+       from the other actions and their wrapping behavior. */
+    .home-list-row-with-delete{display:grid;grid-template-columns:45px minmax(0,1fr) auto 34px;align-items:center}
+    .home-list-row-with-delete .home-list-controls{justify-content:flex-end}
+    .home-list-row-with-delete > .home-game-delete{grid-column:4;justify-self:end}
+    @media(max-width:760px){
+      .home-list-row-with-delete{grid-template-columns:45px minmax(0,1fr) 34px;align-items:start}
+      .home-list-row-with-delete > .home-list-icon{grid-column:1;grid-row:1}
+      .home-list-row-with-delete > .home-list-copy{grid-column:2;grid-row:1}
+      .home-list-row-with-delete > .home-game-delete{grid-column:3;grid-row:1}
+      .home-list-row-with-delete > .home-list-controls{grid-column:2 / -1;grid-row:2;justify-content:flex-start}
+    }
     .home-library{padding:17px}
     .home-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
     .home-section-head .number-help{margin:0 0 12px}
@@ -5243,6 +5254,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const small=document.createElement("small");small.textContent=subtitle;
     copy.append(strong,small);
     const controls=document.createElement("div");controls.className="home-list-controls";
+    let deleteButton=null;
     for(const item of actions){
       const button=homeButton(item.icon==="trash"?"":item.title,item.action,item.primary);
       if(item.icon==="trash"){
@@ -5250,10 +5262,18 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
         button.title=item.ariaLabel||"Spiel löschen";
         button.setAttribute("aria-label",item.ariaLabel||"Spiel löschen");
-      }else if(item.danger)button.classList.add("danger");
-      controls.append(button);
+        deleteButton=button;
+      }else{
+        if(item.danger)button.classList.add("danger");
+        controls.append(button);
+      }
     }
-    row.append(copy,controls);return row;
+    row.append(copy,controls);
+    if(deleteButton){
+      row.classList.add("home-list-row-with-delete");
+      row.append(deleteButton);
+    }
+    return row;
   }
   // Local game sources are kept distinct: active session, downloaded Team
   // Space single games, and games embedded inside a specific season archive.
