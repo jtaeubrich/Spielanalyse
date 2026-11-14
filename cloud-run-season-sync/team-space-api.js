@@ -36,11 +36,11 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
     // Raw credentials are returned once and are never stored in cloud metadata.
     send(res,201,{spaceId,name,readToken,trainerToken,revision:0});return true;
   }
-  const match=/^\/spaces\/([^/]+)\/(catalog|publish-season|publish-game|rotate-reader|rotate-trainer|claim-trainer|seasons\/([^/]+)\/download|games\/([^/]+)\/download)$/.exec(url.pathname);
+  const match=/^\/spaces\/([^/]+)\/(catalog|publish-season|publish-game|rotate-reader|rotate-trainer|claim-trainer|verify-trainer|seasons\/([^/]+)\/download|games\/([^/]+)\/download)$/.exec(url.pathname);
   if(!match||!ID.test(match[1]))throw err(404,"NOT_FOUND","Team Space nicht gefunden.");
   const [,spaceId,action,seasonId,gameId]=match;
   const write=["publish-season","publish-game","rotate-reader",
-    "rotate-trainer","claim-trainer"].includes(action);
+    "rotate-trainer","claim-trainer","verify-trainer"].includes(action);
   if(req.method!==(write?"POST":"GET"))
     throw err(405,"METHOD_NOT_ALLOWED",write?"POST erforderlich.":"GET erforderlich.");
   const {metadata:stored,generation}=await store.readSpace(spaceId);
@@ -58,6 +58,10 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
   }
   if(write)trainerSpace(req,stored,adminToken);
   else reader(req,stored);
+  if(action==="verify-trainer"){
+    send(res,200,{spaceId,trainerAccess:stored.trainerHash?"individual":"legacy"});
+    return true;
+  }
   const meta=structuredClone(stored);
   if(action==="catalog"){send(res,200,publicTeamCatalog(meta));return true;}
   const stamp=now().toISOString();
