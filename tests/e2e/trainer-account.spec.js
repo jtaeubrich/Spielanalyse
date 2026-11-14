@@ -17,6 +17,43 @@ async function openTrainerAccount(page){
   await page.locator("#trainerAccountPanel summary").click();
   await expect(page.locator("#trainerAccountLogin")).toBeVisible();
 }
+test("Safari and password managers receive correctly mapped login fields, Enter signs in",async({page})=>{
+  let loginRequests=0;
+  await page.route(API+"/trainer-auth/config",route=>route.fulfill(success(firebase)));
+  await page.route("https://identitytoolkit.googleapis.com/**",route=>{
+    const req=route.request();
+    if(req.url().includes("signInWithPassword")){
+      loginRequests++;
+      expect(req.postDataJSON().email).toBe("trainer@example.org");
+      expect(req.postDataJSON().password).toBe("test-password");
+      return route.fulfill(success({idToken:ID_TOKEN,refreshToken:"mock-session",expiresIn:"3600"}));
+    }
+    return route.fulfill(success({error:{message:"Unexpected request"}},400));
+  });
+  await page.route(API+"/trainer-auth/me",route=>{
+    expect(route.request().headers().authorization).toBe("Bearer "+ID_TOKEN);
+    return route.fulfill(success({uid:"trainer-1",email:"trainer@example.org",
+      status:"pending",isAdmin:false}));
+  });
+  await openTrainerAccount(page);
+  const form=page.locator("#trainerAccountLogin");
+  const email=page.locator("#trainerAccountEmail");
+  const password=page.locator("#trainerAccountPassword");
+  await expect(form).toHaveAttribute("method","post");
+  await expect(email).toHaveAttribute("type","email");
+  await expect(email).toHaveAttribute("name","username");
+  await expect(email).toHaveAttribute("autocomplete","username");
+  await expect(password).toHaveAttribute("type","password");
+  await expect(password).toHaveAttribute("name","password");
+  await expect(password).toHaveAttribute("autocomplete","current-password");
+  await email.fill("trainer@example.org");
+  await password.fill("test-password");
+  await password.press("Enter");
+  await expect(page.locator("#trainerAccountStatus")).toContainText("Freigabe beantragt");
+  expect(loginRequests).toBe(1);
+  await expect(password).toHaveValue("");
+});
+
 test("Account registration stays unavailable until Firebase is configured, legacy panel remains",async({page})=>{
   await page.route(API+"/trainer-auth/config",route=>route.fulfill(success({enabled:false})));
   await page.goto("/");
