@@ -32,6 +32,36 @@ zurückgeschrieben.
 gespeichert. Für einen Gerätewechsel oder eine Neuinstallation zusätzlich
 regelmäßig eine **private Sicherung** erstellen.
 
+## Neues Trainerkonto (E-Mail und Passwort)
+
+Zusätzlich zum bisherigen schlüsselbasierten Zugang gibt es einen
+**optionalen, zentral freigegebenen Trainerzugang**. Er ist erst nutzbar,
+nachdem Firebase Authentication in der Google Cloud eingerichtet ist.
+
+1. **Start → Team Space → Trainerkonto · Registrierung und Saisonverwaltung**
+   öffnen.
+2. Mit E-Mail-Adresse und Passwort **Registrieren**, anschließend die
+   Bestätigungs-E-Mail öffnen und auf **E-Mail-Bestätigung prüfen** klicken.
+3. **Trainerfreigabe beantragen**. Die bestätigte E-Mail-Adresse allein
+   berechtigt noch nicht zur Team- oder Saisonerstellung.
+4. Ein Administrator prüft den Antrag und gibt die Trainerrolle frei.
+5. Als freigegebener Trainer kannst du **einen Team Space selbst anlegen**
+   und darin **leere Saisons (z. B. B-Jugend 2027/28)** erstellen.
+6. Du bekommst den üblichen **Einladungslink für Spieler**, aber
+   **keinen Spiel-Veröffentlichungsschlüssel**. Das neue Trainerkonto
+   darf keine Spiele erstellen oder in die Cloud hochladen.
+7. In derselben Oberfläche können Administratoren Traineranträge
+   freigeben und Konten sperren.
+
+Der Firebase-Zugang und die bisherigen schlüsselbasierten Team Spaces
+bleiben getrennt. Schon vorhandene Einladungen, lokale Spiele und
+Kommentare werden nicht verändert.
+
+Das Passwort wird in der Spielanalyse nicht gespeichert. Ein
+Sitzungstoken wird nur bis zum Schließen der Browser-Registerkarte
+gespeichert. Die E-Mail-Identität wird durch Firebase überprüft,
+die Trainerfreigabe durch einen Administrator erteilt.
+
 ## Für Trainer – neuen Team Space erstellen
 
 1. **Start → Team Space → Team Space verbinden oder verwalten** öffnen.
