@@ -36,7 +36,7 @@ export function createTrainerAccountRegistry({
     const user=record.metadata?.email===email?record.metadata:null;
     // The first admin is claimed exactly once and persisted in the private
     // bucket. A changed verified email or a suspended account loses this role.
-    const bootstrap=adminSet.size?null:(await store.readTrainerAdminBootstrap()).metadata;
+    const bootstrap=(await store.readTrainerAdminBootstrap()).metadata;
     const isAdmin=adminSet.has(uid)||(bootstrap?.uid===uid&&
       bootstrap?.email===email&&user?.status!=="suspended");
     if(administrator&&!isAdmin)
