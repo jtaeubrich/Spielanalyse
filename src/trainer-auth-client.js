@@ -122,6 +122,11 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
   }
   async function me(){return call("/me")}
   async function register(){return call("/register",{method:"POST",data:{}})}
+  async function claimFirstAdmin(registrationToken){
+    if(!/^[A-Za-z0-9_-]{32,256}$/.test(String(registrationToken||"")))
+      throw Error("Bitte den zentralen Registrierungsschlüssel eingeben.");
+    return call("/admin/bootstrap",{method:"POST",data:{registrationToken}});
+  }
   async function listSpaces(){return call("/spaces")}
   async function createSpace(name){return call("/spaces",{method:"POST",data:{name}})}
   async function createSeason(spaceId,name,expectedRevision){
@@ -146,6 +151,6 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
     return call("/admin/users/"+uid,{method:"POST",data:{status}});
   }
   return {getConfig,signup,login,logout,requestVerification,resetPassword,
-    refresh,me,register,listSpaces,createSpace,createSeason,catalog,
+    refresh,me,register,claimFirstAdmin,listSpaces,createSpace,createSeason,catalog,
     listUsers,setApproval,issuePublisherKey,hasSession:()=>Boolean(refreshToken),api:endpoint};
 }
