@@ -6301,6 +6301,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     trainerAccountClearPublisher();
     const service=trainerAccountApi();
     await service.signup($("trainerAccountEmail").value.trim(),password);
+    // A new account has an active Firebase session, even while its email
+    // still awaits verification; sign-out must remain accessible.
+    $("trainerAccountSessionActions").hidden=false;
     $("trainerAccountPassword").value="";
     trainerAccountRegistrationMode(false);
     trainerAccountStatus("Registriert. Bitte den Bestätigungslink in der E-Mail öffnen und danach „E-Mail-Bestätigung prüfen“ wählen.");
