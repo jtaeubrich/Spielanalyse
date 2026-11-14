@@ -30,7 +30,8 @@ test("Game search is shown only in Einzelspiel > Spiel laden; deleting one requi
   ]);
   await expect(page.locator("#seasonGameCount")).toContainText("2 Spiele");
   await page.locator('[data-tab="home"]').click();
-  await expect(page.getByLabel("Spiel suchen")).toHaveCount(0);
+  await expect(page.locator("#homeStartGameSearch")).toHaveCount(0);
+  await expect(page.locator("#homeLibraryGameSearch")).toBeHidden();
   await page.locator("#homeChooseGame").click();
   await page.locator("#homeOpen").click();
   const search=page.locator("#homeLibraryGameSearch"),results=page.locator("#homeLibraryList");
