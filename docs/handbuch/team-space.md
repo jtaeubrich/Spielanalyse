@@ -9,24 +9,27 @@ zurückgeschrieben.
 
 ## Für Spieler
 
-1. **Start → Team Space** öffnen.
-2. Einmal den Einladungslink vom Trainer in **Team Space verbinden oder verwalten**
-   einfügen, oder den Link direkt öffnen. Der Zugang bleibt auf diesem Gerät.
-3. In der Liste sind für jede Saison und jedes Spiel drei Zustände möglich:
-   **Noch nicht importiert**, **Aktuell** oder **Update verfügbar**.
-4. Eine Saison über **Importieren** auf das Gerät übernehmen. Spätere
-   Veröffentlichungen erscheinen unter **Aktualisieren**. Vor der Übernahme
-   erscheint die Abgleichvorschau: persönliche Markierungen bleiben lokal.
-5. Ein einzelnes Spiel kann als **eigenständiges Einzelspiel** importiert
-   oder mit **Zur Saison** einer lokal gespeicherten Saison zugeordnet
-   werden. Bei erneutem Öffnen erkennt die App bereits importierte Spiele
-   an ihren Kennungen, damit keine unbeabsichtigte zweite Kopie entsteht.
-6. **Einzelspiel** und **Saison** auf der Startseite bleiben die gewohnten
-   Bereiche zur Analyse. Importierte Einzelspiele stehen unter
-   **Einzelspiel → Laden**.
-7. Mit **Updates prüfen** wird der Katalog erneut abgerufen. Dafür ist
-   eine Internetverbindung erforderlich. Lokal gespeicherte Spiele sind
-   auch offline nutzbar.
+1. Den Einladungslink des Trainers einmal auf dem Gerät öffnen oder unter
+   **Start → Team Space → Team Space verbinden oder verwalten** einfügen.
+   Die App prüft den Zugang, speichert die Verbindung und zeigt danach auf
+   der **Startseite** eine kurze Erfolgsmeldung. Es werden dabei noch keine
+   Spiele heruntergeladen oder vorhandene Daten überschrieben.
+2. Unter **Schneller Wiedereinstieg** wird der zuletzt ausgewählte Team Space
+   angezeigt – auch nach einem Neustart der App. Mit **Laden** direkt öffnen.
+3. Unter **Saison laden** die gewünschte veröffentlichte Saison auswählen.
+   Ein Klick auf **Saison laden** übernimmt die **gesamte Saison mit den
+   enthaltenen Spielen** als neue lokale Saison; andere lokale Saisons
+   bleiben bestehen. Die importierte Saison kann danach über **Saison**
+   geöffnet werden.
+4. Die Zustände **Aktuell** und **Update verfügbar** zeigen, ob neue Daten
+   bereitliegen. Bei Aktualisierungen erscheint eine Abgleichvorschau,
+   damit persönliche Kommentare und Markierungen erhalten bleiben.
+5. **Einzelspiele anzeigen** ist anfangs eingeklappt. Nur bei Bedarf öffnen,
+   um einzelne Spiele separat zu importieren oder einer lokalen Saison
+   zuzuordnen. Die zusätzliche Importziel-Auswahl erscheint erst dort.
+6. Mit **Updates prüfen** wird die Online-Übersicht erneut abgerufen.
+   Dafür ist eine Internetverbindung nötig; lokal importierte Saisons
+   und Spiele bleiben auch ohne Internet nutzbar.
 
 **Achtung:** Die persönlichen Ergänzungen werden nur auf dem Gerät
 gespeichert. Für einen Gerätewechsel oder eine Neuinstallation zusätzlich

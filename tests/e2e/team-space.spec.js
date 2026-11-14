@@ -121,10 +121,20 @@ test("invite opens catalog, season imports once and updates existing season",asy
   page.on("dialog",dialog=>dialog.accept());
   await page.goto("/#teamspace="+encodeURIComponent(SPACE)+
     "&key="+encodeURIComponent(READER)+"&api="+encodeURIComponent(API));
-  await expect(page.locator("#homeTeamSpace")).toBeVisible();
-  await expect(page.locator("#teamSpaceSeasons .home-list-row")).toHaveCount(1);
+  await expect(page.locator("#homeChoose")).toBeVisible();
+  await expect(page.locator("#homeTeamSpace")).toBeHidden();
+  await expect(page.locator("#homeTeamSpaceJoined"))
+    .toContainText("erfolgreich hinzugefügt");
+  await expect(page.locator("#homeRecentOptions .home-list-row").filter({hasText:"TSV Kronshagen"}))
+    .toContainText("Team Space verbunden");
   expect(await page.evaluate(()=>location.hash)).toBe("");
-  await page.locator("#teamSpaceSeasons").getByRole("button",{name:"Importieren"}).click();
+  // Joining an invite must not download or overwrite local games.
+  expect(cloud.calls.filter(call=>call.path.includes("/download"))).toHaveLength(0);
+  await page.locator("#homeRecentOptions .home-list-row").filter({hasText:"Team Space verbunden"})
+    .getByRole("button",{name:"Laden"}).click();
+  await expect(page.locator("#teamSpaceSeasons .home-list-row")).toHaveCount(1);
+  await expect(page.locator("#teamSpaceGamesDetails")).not.toHaveAttribute("open","");
+  await page.locator("#teamSpaceSeasons").getByRole("button",{name:"Saison laden"}).click();
   await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
   const localId=await page.locator("#seasonLibrarySelect").inputValue();
   expect(localId).toMatch(/^library-/);
@@ -148,11 +158,42 @@ test("invite opens catalog, season imports once and updates existing season",asy
   await expect(page.locator("#teamSpaceSeasons")).toContainText("Aktuell");
   expect(cloud.calls.filter(call=>call.method==="POST")).toHaveLength(0);
 });
+test("Connected Team Space reappears in quick entry after a new app launch",async({page})=>{
+  const cloud=await mockSpace(page);
+  await page.goto("/#teamspace="+encodeURIComponent(SPACE)+
+    "&key="+encodeURIComponent(READER)+"&api="+encodeURIComponent(API));
+  await expect(page.locator("#homeTeamSpaceJoined")).toContainText("erfolgreich hinzugefügt");
+  const stored=await readStore(page,"seasons","teamspace-link-"+SPACE);
+  expect(stored.connection.spaceId).toBe(SPACE);
+  expect(stored.connection.role).toBe("reader");
+  expect(stored.connection).not.toHaveProperty("trainerToken");
+  const downloads=cloud.calls.filter(call=>call.path.endsWith("/download"));
+  expect(downloads).toHaveLength(0);
+  await page.reload();
+  await expect(page.locator("#homeChoose")).toBeVisible();
+  await expect(page.locator("#homeTeamSpaceJoined")).toBeHidden();
+  const row=page.locator("#homeRecentOptions .home-list-row").filter({
+    hasText:"Team Space verbunden"
+  });
+  await expect(row).toHaveCount(1);
+  await expect(row).toContainText("TSV Kronshagen");
+  await row.getByRole("button",{name:"Laden"}).click();
+  await expect(page.locator("#homeTeamSpace")).toBeVisible();
+  await expect(page.locator("#teamSpaceSeasons")).toContainText("Saison 2026/27");
+  await expect(page.locator("#teamSpaceSeasons")).toContainText("1 Spiele");
+  await expect(page.locator("#teamSpaceGamesDetails")).not.toHaveAttribute("open","");
+  expect(cloud.calls.filter(call=>call.path.endsWith("/download"))).toHaveLength(0);
+});
 test("single game imports independently, preserves private note after update and survives reload",async({page})=>{
   const cloud=await mockSpace(page);
   page.on("dialog",dialog=>dialog.accept());
   await page.goto("/#teamspace="+encodeURIComponent(SPACE)+
     "&key="+encodeURIComponent(READER)+"&api="+encodeURIComponent(API));
+  await expect(page.locator("#homeChoose")).toBeVisible();
+  await page.locator("#homeRecentOptions .home-list-row").filter({hasText:"Team Space verbunden"})
+    .getByRole("button",{name:"Laden"}).click();
+  await expect(page.locator("#teamSpaceGamesDetails")).not.toHaveAttribute("open","");
+  await page.locator("#teamSpaceGamesDetails summary").click();
   await expect(page.locator("#teamSpaceGames .home-list-row")).toHaveCount(1);
   await page.locator("#teamSpaceGames").getByRole("button",{name:"Importieren"}).click();
   const key="teamspace-localgame-"+SPACE+"-"+GAME;
@@ -183,6 +224,7 @@ test("single game imports independently, preserves private note after update and
   cloud.revision=2;
   await page.locator("#teamSpaceRefresh").click();
   await expect(page.locator("#teamSpaceGames")).toContainText("Update verfügbar");
+  await page.locator("#teamSpaceGamesDetails summary").click();
   await page.locator("#teamSpaceGames").getByRole("button",{name:"Aktualisieren"}).click();
   await expect.poll(async()=>{
     const data=await readStore(page,"games",key);
