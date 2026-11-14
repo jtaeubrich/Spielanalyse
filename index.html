@@ -1573,7 +1573,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
     .home-main-choices{grid-template-columns:repeat(3,minmax(0,1fr))}
     .teamspace-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));align-items:end;gap:12px;margin:12px 0}
     .teamspace-fields label,.teamspace-connect label{display:block;min-width:0}
-    #trainerAccountLogin [hidden]{display:none!important}
+    #trainerAccountLogin [hidden],#trainerAccountSessionActions[hidden]{display:none!important}
     .teamspace-fields .field,.teamspace-connect .field{display:block;box-sizing:border-box;width:100%;margin-top:6px}
     #homeTeamSpace .home-section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
     #homeTeamSpace h3{margin:20px 0 10px}
@@ -1692,10 +1692,12 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
               <button type="button" class="btn" id="trainerAccountVerifyMail">Bestätigungs-E-Mail senden</button>
               <button type="button" class="btn" id="trainerAccountCheckMail">E-Mail-Bestätigung prüfen</button>
               <button type="button" class="btn" id="trainerAccountPasswordReset">Passwort zurücksetzen</button>
-              <button type="button" class="btn" id="trainerAccountSignOut">Abmelden</button>
             </div>
             <button type="submit" tabindex="-1" aria-hidden="true" hidden></button>
           </form>
+          <div id="trainerAccountSessionActions" hidden>
+            <button type="button" class="btn" id="trainerAccountSignOut">Abmelden</button>
+          </div>
           <div id="trainerAccountDashboard" hidden>
             <div id="trainerAccountBootstrap" hidden>
               <h3>Ersten Administrator freischalten</h3>
@@ -6179,6 +6181,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   async function trainerAccountRefresh(){
     const service=trainerAccountApi(),config=await service.getConfig();
     $("trainerAccountLogin").hidden=!config.enabled;
+    $("trainerAccountSessionActions").hidden=!config.enabled||!service.hasSession();
     $("trainerAccountDashboard").hidden=true;
     $("trainerAccountBootstrap").hidden=true;
     if(!config.enabled){
@@ -6190,6 +6193,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       return;
     }
     const me=await service.me();
+    // Authentication succeeded: don't leave an empty password field visible
+    // next to the already signed-in trainer account.
+    $("trainerAccountLogin").hidden=true;
     $("trainerAccountDashboard").hidden=false;
     $("trainerAccountBootstrap").hidden=!me.adminBootstrapAvailable;
     const approved=me.isAdmin||me.status==="approved";
