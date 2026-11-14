@@ -287,3 +287,37 @@ test("A server accepted upload absent from the selected catalog is flagged, not 
   await expect(page.locator("#teamSpacePublishStatus"))
     .toContainText("nicht nachweisbar");
 });
+
+
+test("Single-game upload identifies the selected Team Space and online season, and confirms catalog proof",async({page})=>{
+  const cloud=await mockSpace(page);
+  let confirmation="";
+  page.on("dialog",dialog=>{
+    if(dialog.message().includes("Online-Saison:"))confirmation=dialog.message();
+    return dialog.accept();
+  });
+  await page.goto("/");
+  await page.locator("#continueGameInput").setInputFiles(upload("spiel.json",game()));
+  await expect(page.locator("#matchTab")).toBeVisible();
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#teamSpaceConnect summary").click();
+  await page.locator("#teamSpaceApi").fill(API);
+  await page.locator("#teamSpaceName").fill("TSV Kronshagen");
+  await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
+  await page.locator("#teamSpaceCreate").click();
+  await expect(page.locator("#teamSpaceSelect")).toHaveValue(SPACE);
+  await page.locator("#teamSpacePublish summary").click();
+  await page.locator("#teamSpacePublishGame").selectOption("current");
+  await page.locator("#teamSpacePublishTargetSeason").selectOption(SEASON);
+  await page.locator("#teamSpacePublishGameBtn").click();
+  await expect.poll(()=>cloud.lastPublish).not.toBeNull();
+  expect(cloud.lastPublish.seasonId).toBe(SEASON);
+  expect(confirmation).toContain("TSV Kronshagen");
+  expect(confirmation).toContain("ID …"+SPACE.slice(-8));
+  expect(confirmation).toContain("Online-Saison: Saison 2026/27");
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("Im Cloud-Katalog bestätigt: Spiel");
+  await expect(page.locator("#teamSpacePublishStatus"))
+    .toContainText("Cloud-Version 2");
+});
