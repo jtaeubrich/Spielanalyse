@@ -52,6 +52,11 @@ nachdem Firebase Authentication in der Google Cloud eingerichtet ist.
    darf keine Spiele erstellen oder in die Cloud hochladen.
 7. In derselben Oberfläche können Administratoren Traineranträge
    freigeben und Konten sperren.
+8. Falls später Spiele in eine Saison geladen werden sollen, kann ein
+   Administrator über die **Team-Space-ID** einen gesonderten
+   **Veröffentlichungs-Schlüssel** für eine zentrale Redaktion ausstellen.
+   Dieser Schlüssel ist nicht Bestandteil des normalen Trainerkontos und
+   muss separat sicher aufbewahrt werden.
 
 Der Firebase-Zugang und die bisherigen schlüsselbasierten Team Spaces
 bleiben getrennt. Schon vorhandene Einladungen, lokale Spiele und
