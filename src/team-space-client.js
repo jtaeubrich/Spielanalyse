@@ -31,17 +31,19 @@ async function request(connection,suffix,{fetcher=fetch,method="GET",data,adminT
     method,data,authToken:adminToken,fetcher
   });
 }
-export async function createTeamSpace(api,teamName,adminToken,{fetcher=fetch}={}){
+// This token is the Cloud Run registration credential, never the per-space trainer token.
+export async function createTeamSpace(api,teamName,registrationToken,{fetcher=fetch}={}){
   const root=seasonCloudEndpoint(api);
   if(!String(teamName||"").trim())throw Error("Teamname fehlt.");
   const res=await seasonCloudCall({api:root},"/spaces",{
-    fetcher,method:"POST",authToken:adminToken,data:{name:String(teamName).trim()}
+    fetcher,method:"POST",authToken:registrationToken,data:{name:String(teamName).trim()}
   });
   const data=await res.json();
-  if(!validSeasonCloudId(data.spaceId)||!validSeasonCloudToken(data.readToken))
-    throw Error("Der Dienst hat ungültige Team-Space-Daten zurückgegeben.");
+  if(!validSeasonCloudId(data.spaceId)||!validSeasonCloudToken(data.readToken)||
+    !validSeasonCloudToken(data.trainerToken))
+    throw Error("Der Dienst hat ungültige Team-Space-Schlüssel zurückgegeben.");
   return {api:root,spaceId:data.spaceId,readToken:data.readToken,
-    name:data.name,role:"trainer",revision:data.revision||0};
+    trainerToken:data.trainerToken,name:data.name,role:"trainer",revision:data.revision||0};
 }
 export async function teamSpaceCatalog(connection,{fetcher=fetch}={}){
   const response=await request(connection,"/catalog",{fetcher});
@@ -108,6 +110,34 @@ export async function publishTeamSpaceGame(connection,game,adminToken,
       ...(seasonId?{seasonId}:{}),...(fileName?{fileName}:{})}
   });
   return response.json();
+}
+// A migrated space can be claimed exactly once with the registration credential.
+export async function claimTeamSpaceTrainerToken(connection,registrationToken,{fetcher=fetch}={}){
+  const response=await request(connection,"/claim-trainer",{
+    fetcher,method:"POST",adminToken:registrationToken
+  });
+  const data=await response.json();
+  if(data.spaceId!==connection.spaceId||!validSeasonCloudToken(data.trainerToken))
+    throw Error("Ungültiger neuer Team-Space-Trainer-Schlüssel.");
+  return data.trainerToken;
+}
+export async function verifyTeamSpaceTrainerToken(connection,trainerToken,{fetcher=fetch}={}){
+  const response=await request(connection,"/verify-trainer",{
+    fetcher,method:"POST",adminToken:trainerToken
+  });
+  const data=await response.json();
+  if(data.spaceId!==connection.spaceId||!["individual","legacy"].includes(data.trainerAccess))
+    throw Error("Trainerzugang konnte nicht überprüft werden.");
+  return data;
+}
+export async function rotateTeamSpaceTrainerToken(connection,trainerToken,{fetcher=fetch}={}){
+  const response=await request(connection,"/rotate-trainer",{
+    fetcher,method:"POST",adminToken:trainerToken
+  });
+  const data=await response.json();
+  if(data.spaceId!==connection.spaceId||!validSeasonCloudToken(data.trainerToken))
+    throw Error("Ungültiger neuer Team-Space-Trainer-Schlüssel.");
+  return data.trainerToken;
 }
 export async function rotateTeamSpaceReadToken(connection,adminToken,{fetcher=fetch}={}){
   const response=await request(connection,"/rotate-reader",{
