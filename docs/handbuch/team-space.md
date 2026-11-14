@@ -45,6 +45,13 @@ nachdem Firebase Authentication in der Google Cloud eingerichtet ist.
 3. **Trainerfreigabe beantragen**. Die bestätigte E-Mail-Adresse allein
    berechtigt noch nicht zur Team- oder Saisonerstellung.
 4. Ein Administrator prüft den Antrag und gibt die Trainerrolle frei.
+   **Ausnahme: erster Administrator.** Wenn noch keine Administration besteht,
+   erscheint nach dem Antrag **Ersten Administrator freischalten**. Dort kann
+   der erste Administrator einmalig mit dem **zentralen Team-Space-
+   Registrierungsschlüssel** sein bestätigtes E-Mail-Konto freischalten,
+   ohne Firebase-UIDs oder Cloud-Run-Variablen manuell einzutragen. Der
+   Schlüssel darf nicht mit anderen Trainern geteilt werden. Weitere
+   Administratorübernahmen über diesen Weg sind gesperrt.
 5. Als freigegebener Trainer kannst du **einen Team Space selbst anlegen**
    und darin **leere Saisons (z. B. B-Jugend 2027/28)** erstellen.
 6. Du bekommst den üblichen **Einladungslink für Spieler**, aber

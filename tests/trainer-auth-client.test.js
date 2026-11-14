@@ -87,6 +87,31 @@ describe("Firebase trainer browser client",()=>{
     expect(JSON.parse(createCall.opts.body)).toEqual({name:"2027/28",expectedRevision:0});
     expect(client.publishGame).toBeUndefined();
   });
+  it("claims first administrator once without saving or exposing central registration credential",async()=>{
+    const registrationToken="trainer_"+("s".repeat(44));
+    const session=memoryStorage(),calls=[];
+    const fetcher=vi.fn(async(url,opts={})=>{
+      calls.push({url,opts});
+      if(url.endsWith("/trainer-auth/config"))return new Response(JSON.stringify(firebase));
+      if(url.includes("signInWithPassword"))return new Response(JSON.stringify({
+        idToken:jwt,refreshToken:"session-refresh",expiresIn:"3600"
+      }));
+      if(url.endsWith("/trainer-auth/admin/bootstrap"))return new Response(JSON.stringify({
+        uid:"trainer-1",isAdmin:true,status:"approved"
+      }));
+      throw Error("Unexpected "+url);
+    });
+    const client=createTrainerAuthClient(API,{session,fetcher});
+    await client.login("trainer@example.org","password");
+    await expect(client.claimFirstAdmin("short")).rejects.toThrow("Registrierungsschlüssel");
+    const claim=await client.claimFirstAdmin(registrationToken);
+    expect(claim.isAdmin).toBe(true);
+    const req=calls.find(x=>x.url.endsWith("/admin/bootstrap"));
+    expect(req.opts.headers.Authorization).toBe("Bearer "+jwt);
+    expect(JSON.parse(req.opts.body)).toEqual({registrationToken});
+    expect(req.url).not.toContain(registrationToken);
+    expect(JSON.stringify(session.entries())).not.toContain(registrationToken);
+  });
   it("supports admin review and approval only through a separate authorized endpoint",async()=>{
     const session=memoryStorage(),calls=[];
     const fetcher=vi.fn(async(url,opts={})=>{

@@ -54,6 +54,72 @@ test("Safari and password managers receive correctly mapped login fields, Enter 
   await expect(password).toHaveValue("");
 });
 
+test("Pending trainer becomes first admin once using a central key without Cloud Console",async({page})=>{
+  const registrationToken="trainer_"+("s".repeat(44));
+  let claimed=false,requests=0;
+  await page.route("https://identitytoolkit.googleapis.com/**",route=>
+    route.fulfill(success({idToken:ID_TOKEN,refreshToken:"bootstrap-session",expiresIn:"3600"})));
+  await page.route(API+"/trainer-auth/**",route=>{
+    const req=route.request(),path=new URL(req.url()).pathname;
+    if(path==="/trainer-auth/config")return route.fulfill(success(firebase));
+    if(req.headers().authorization!=="Bearer "+ID_TOKEN)
+      return route.fulfill(success({error:{message:"Unauthenticated"}},401));
+    if(path==="/trainer-auth/me")
+      return route.fulfill(success({uid:"trainer-1",email:"trainer@example.org",
+        isAdmin:claimed,status:claimed?"approved":"pending",
+        adminBootstrapAvailable:!claimed}));
+    if(path==="/trainer-auth/admin/bootstrap"&&req.method()==="POST"){
+      requests++;
+      expect(req.postDataJSON()).toEqual({registrationToken});
+      claimed=true;
+      return route.fulfill(success({uid:"trainer-1",isAdmin:true,status:"approved"}));
+    }
+    if(path==="/trainer-auth/spaces")return route.fulfill(success({spaces:[]}));
+    if(path==="/trainer-auth/admin/users")return route.fulfill(success({users:[]}));
+    return route.fulfill(success({error:{message:"Unmocked path"}},404));
+  });
+  page.on("dialog",d=>d.accept());
+  await openTrainerAccount(page);
+  await page.locator("#trainerAccountEmail").fill("trainer@example.org");
+  await page.locator("#trainerAccountPassword").fill("secret-login");
+  await page.locator("#trainerAccountSignIn").click();
+  await expect(page.locator("#trainerAccountStatus")).toContainText("Freigabe beantragt");
+  await expect(page.locator("#trainerAccountBootstrap")).toBeVisible();
+  await expect(page.locator("#trainerAccountAdmin")).toBeHidden();
+  const input=page.locator("#trainerAccountBootstrapToken");
+  await expect(input).toHaveAttribute("type","password");
+  await expect(input).toHaveAttribute("autocomplete","off");
+  await input.fill(registrationToken);
+  await page.locator("#trainerAccountClaimAdmin").click();
+  await expect(page.locator("#trainerAccountStatus")).toContainText("Administratorkonto aktiviert");
+  await expect(page.locator("#trainerAccountAdmin")).toBeVisible();
+  await expect(page.locator("#trainerAccountBootstrap")).toBeHidden();
+  await expect(input).toHaveValue("");
+  expect(requests).toBe(1);
+  const persisted=await page.evaluate(()=>JSON.stringify([
+    Object.values(sessionStorage),Object.values(localStorage)]));
+  expect(persisted).not.toContain(registrationToken);
+});
+
+test("An existing administrator prevents the first-admin registration form appearing",async({page})=>{
+  await page.route("https://identitytoolkit.googleapis.com/**",route=>
+    route.fulfill(success({idToken:ID_TOKEN,refreshToken:"session",expiresIn:"3600"})));
+  await page.route(API+"/trainer-auth/**",route=>{
+    const req=route.request(),path=new URL(req.url()).pathname;
+    if(path==="/trainer-auth/config")return route.fulfill(success(firebase));
+    if(path==="/trainer-auth/me")return route.fulfill(success({
+      uid:"trainer-1",email:"trainer@example.org",isAdmin:false,status:"pending",
+      adminBootstrapAvailable:false
+    }));
+    return route.fulfill(success({error:{message:"Not found"}},404));
+  });
+  await openTrainerAccount(page);
+  await page.locator("#trainerAccountEmail").fill("trainer@example.org");
+  await page.locator("#trainerAccountPassword").fill("secret-login");
+  await page.locator("#trainerAccountSignIn").click();
+  await expect(page.locator("#trainerAccountStatus")).toContainText("Freigabe beantragt");
+  await expect(page.locator("#trainerAccountBootstrap")).toBeHidden();
+});
 test("Account registration stays unavailable until Firebase is configured, legacy panel remains",async({page})=>{
   await page.route(API+"/trainer-auth/config",route=>route.fulfill(success({enabled:false})));
   await page.goto("/");

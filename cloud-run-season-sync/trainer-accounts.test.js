@@ -14,7 +14,7 @@ const token=name=>"t"+name+("x".repeat(150));
 const T={admin:token("admin"),trainer:token("trainer"),other:token("other"),
   unverified:token("unverified"),changed:token("changed"),revoked:token("revoked")};
 class Store{
-  users=new Map();spaces=new Map();links=new Map();games=new Map();
+  users=new Map();spaces=new Map();links=new Map();games=new Map();bootstrap=null;
   async readTrainerUser(id){
     const row=this.users.get(id);
     return row?structuredClone(row):{metadata:null,generation:null};
@@ -30,6 +30,13 @@ class Store{
     this.users.set(id,{metadata:structuredClone(metadata),generation:prev.generation+1});
   }
   async listTrainerUsers(){return [...this.users.values()].map(x=>structuredClone(x.metadata))}
+  async readTrainerAdminBootstrap(){
+    return this.bootstrap?structuredClone(this.bootstrap):{metadata:null,generation:null};
+  }
+  async createTrainerAdminBootstrap(data){
+    if(this.bootstrap)throw Object.assign(Error("Already claimed"),{code:412});
+    this.bootstrap={metadata:structuredClone(data),generation:1};
+  }
   async createSpace(id,metadata){
     if(this.spaces.has(id))throw Object.assign(Error("conflict"),{code:412});
     this.spaces.set(id,{metadata:structuredClone(metadata),generation:1});
@@ -59,7 +66,7 @@ const users={
  [T.unverified]:{uid:"trainer-uid",email:"trainer@example.org",email_verified:false},
  [T.changed]:{uid:"trainer-uid",email:"changed@example.org",email_verified:true}
 };
-async function environment(callback,{enabled=true}={}){
+async function environment(callback,{enabled=true,adminUids=["admin-uid"],bootstrapToken=MASTER}={}){
   const store=new Store(),ids=[SPACE,SEASON,NEXT],idx={value:0};let keys=0;
   const registry=createTrainerAccountRegistry({
     store,projectId:enabled?"spielanalyse-companion":"",
@@ -69,7 +76,7 @@ async function environment(callback,{enabled=true}={}){
       if(!users[value])throw Error("invalid token");
       return users[value];
     }:null,
-    adminUids:["admin-uid"],
+    adminUids,adminToken:bootstrapToken,
     idFactory:()=>ids[idx.value++]||NEXT,
     trainerTokenFactory:()=>"trainer_"+String(++keys).padStart(43,"Q"),
     readTokenFactory:()=>"reader_"+("R".repeat(43)),
@@ -225,3 +232,82 @@ test("Only the bootstrap admin can issue a game publisher key; rotation revokes 
   assert.equal((await call("POST","/spaces/"+SPACE+"/verify-trainer",key)).status,401);
   assert.equal((await call("POST","/spaces/"+SPACE+"/verify-trainer",rotated)).status,200);
 }));
+
+test("First administrator can claim once using verified Firebase account and central token",()=>environment(async({call,store})=>{
+  const pending=await register(call,T.trainer);
+  assert.equal(pending.status,201);
+  const info=await call("GET","/trainer-auth/me",T.trainer);
+  assert.equal(info.data.status,"pending");
+  assert.equal(info.data.isAdmin,false);
+  assert.equal(info.data.adminBootstrapAvailable,true);
+  assert.equal((await call("POST","/trainer-auth/admin/bootstrap",T.unverified,
+    {registrationToken:MASTER})).status,403);
+  assert.equal((await call("POST","/trainer-auth/admin/bootstrap",T.other,
+    {registrationToken:MASTER})).status,403);
+  assert.equal((await call("POST","/trainer-auth/admin/bootstrap",T.trainer,
+    {registrationToken:"trainer_"+("x".repeat(44))})).status,403);
+  assert.equal((await call("POST","/trainer-auth/admin/bootstrap",T.trainer,
+    {registrationToken:"garbage"})).status,403);
+  assert.equal(store.bootstrap,null);
+  const claim=await call("POST","/trainer-auth/admin/bootstrap",T.trainer,
+    {registrationToken:MASTER});
+  assert.equal(claim.status,200);
+  assert.equal(claim.data.isAdmin,true);
+  assert.equal(claim.data.uid,"trainer-uid");
+  assert.equal(JSON.stringify(store.bootstrap).includes(MASTER),false);
+  assert.equal(store.bootstrap.metadata.email,"trainer@example.org");
+  assert.equal(store.users.get("trainer-uid").metadata.status,"approved");
+  const after=await call("GET","/trainer-auth/me",T.trainer);
+  assert.equal(after.data.status,"approved");
+  assert.equal(after.data.isAdmin,true);
+  assert.equal(after.data.adminBootstrapAvailable,false);
+  assert.equal((await call("GET","/trainer-auth/admin/users",T.trainer)).status,200);
+  assert.equal((await call("POST","/trainer-auth/admin/bootstrap",T.trainer,
+    {registrationToken:MASTER})).status,409);
+  assert.equal((await call("GET","/trainer-auth/me",T.other)).data.isAdmin,false);
+},{adminUids:[]}));
+
+test("A second and simultaneous first-administrator claim cannot take over",()=>environment(async({call,store})=>{
+  await register(call,T.trainer);
+  await register(call,T.other);
+  const results=await Promise.all([
+    call("POST","/trainer-auth/admin/bootstrap",T.trainer,{registrationToken:MASTER}),
+    call("POST","/trainer-auth/admin/bootstrap",T.other,{registrationToken:MASTER})
+  ]);
+  assert.deepEqual(results.map(x=>x.status).sort(),[200,409]);
+  assert.ok(["trainer-uid","other-uid"].includes(store.bootstrap.metadata.uid));
+  assert.equal(store.bootstrap.metadata.claimedAt,"2026-11-14T12:00:00.000Z");
+  const winner=store.bootstrap.metadata.uid==="trainer-uid"?T.trainer:T.other;
+  const loser=winner===T.trainer?T.other:T.trainer;
+  assert.equal((await call("GET","/trainer-auth/me",winner)).data.isAdmin,true);
+  assert.equal((await call("GET","/trainer-auth/me",loser)).data.isAdmin,false);
+  assert.equal((await call("POST","/trainer-auth/admin/users/other-uid",loser,
+    {status:"approved"})).status,403);
+},{adminUids:[]}));
+
+test("Existing configured admin prevents untrusted first-admin bootstrap",()=>environment(async({call})=>{
+  await register(call,T.trainer);
+  assert.equal((await call("GET","/trainer-auth/me",T.trainer))
+    .data.adminBootstrapAvailable,false);
+  assert.equal((await call("POST","/trainer-auth/admin/bootstrap",T.trainer,
+    {registrationToken:MASTER})).status,409);
+}));
+
+test("Missing central token disables bootstrap; email change removes bootstrap admin role",()=>environment(async({call,store})=>{
+  await register(call,T.trainer);
+  assert.equal((await call("GET","/trainer-auth/me",T.trainer))
+    .data.adminBootstrapAvailable,false);
+  assert.equal((await call("POST","/trainer-auth/admin/bootstrap",T.trainer,
+    {registrationToken:MASTER})).status,403);
+},{adminUids:[],bootstrapToken:""}));
+
+test("Persisted first-admin email cannot be changed to inherit administrator role",()=>environment(async({call})=>{
+  await register(call,T.trainer);
+  assert.equal((await call("POST","/trainer-auth/admin/bootstrap",T.trainer,
+    {registrationToken:MASTER})).status,200);
+  const changed=await call("GET","/trainer-auth/me",T.changed);
+  assert.equal(changed.status,200);
+  assert.equal(changed.data.isAdmin,false);
+  assert.equal(changed.data.status,"not_registered");
+  assert.equal((await call("GET","/trainer-auth/admin/users",T.changed)).status,403);
+},{adminUids:[]}));

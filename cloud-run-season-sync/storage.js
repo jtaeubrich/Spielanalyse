@@ -122,6 +122,14 @@ export function createGcsSeasonStore({bucketName,storage=new Storage()}={}){
       const [bytes]=await bucket.file(path).download();
       return bytes;
     },
+    // One immutable, globally unique administrator bootstrap record. A GCS
+    // generation-zero precondition prevents simultaneous first-admin claims.
+    async readTrainerAdminBootstrap(){
+      return readJsonWithGeneration("trainer-registry/admin-bootstrap.json");
+    },
+    async createTrainerAdminBootstrap(data){
+      await saveJson("trainer-registry/admin-bootstrap.json",data,null);
+    },
     // Trainer records are private GCS objects. No Firestore or extra database.
     async createTrainerUser(uid,data){
       await saveJson(trainerName(uid),data,null);

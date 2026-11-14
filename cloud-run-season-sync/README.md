@@ -50,17 +50,33 @@ Zugänge und Team-Space-Schlüssel funktionsfähig.
 4. Die Spielanalyse öffnen: **Start → Team Space → Trainerkonto**. Dort mit
    eigener E-Mail-Adresse registrieren, Bestätigungslink öffnen und
    **E-Mail-Bestätigung prüfen** betätigen.
-5. In **Firebase Authentication → Users** die genaue **UID des eigenen
-   verifizierten Kontos** kopieren (nicht die E-Mail-Adresse). Im Cloud-Run-
-   Dienst zusätzlich folgende Variable setzen:
+5. Nach bestätigter E-Mail-Adresse **Trainerfreigabe beantragen**. Wenn noch
+   kein Administrator eingerichtet ist, zeigt die Spielanalyse den Abschnitt
+   **Ersten Administrator freischalten**. Dort **einmalig** den vorhandenen,
+   zentralen Team-Space-Registrierungsschlüssel eingeben und die
+   Administratorübernahme bestätigen. Die UID und die E-Mail-Adresse werden
+   daraufhin in einer privaten GCS-Datei registriert. Der geheime Schlüssel
+   wird dabei **nicht gespeichert**. Weder eine Firebase-UID noch eine
+   Cloud-Run-Umgebungsvariable muss manuell kopiert werden.
+6. Unter **Trainerfreigaben verwalten** weitere Anträge direkt in der App
+   **Freigeben** oder **Sperren**. Spätere Administratorübernahmen mit dem
+   zentralen Schlüssel werden serverseitig abgelehnt.
 
-       TRAINER_ADMIN_UIDS=<deine Firebase-UID>
+**Sicherheit der Ersteinrichtung:** Ein bestehender zentraler Registrierungsschlüssel
+ist eine hochprivilegierte Berechtigung. Nur der gewünschte erste Administrator
+darf ihn kennen; wurde er früher mit Trainern oder Dritten geteilt, zuerst
+einen neuen geheimen Registrierungsschlüssel im Secret Manager setzen und
+anschließend die Cloud-Run-Revision aktualisieren. Die Erstanmeldung ist
+nur mit einem **verifizierten Firebase-Konto**, einem **bereits beantragten
+Trainerzugang** und dem **richtigen zentralen Schlüssel** möglich. Der erste
+Antrag wird per atomarer GCS-Objekterstellung festgeschrieben; weitere
+Versuche, auch parallele, können nicht erneut die erste Rolle beanspruchen.
+Ist bereits `TRAINER_ADMIN_UIDS` gesetzt, ist diese Einmalübernahme gesperrt.
 
-   Für mehrere Administratoren komma-getrennte Firebase-UIDs. Nur diese
-   serverseitig gesetzten UID(s) können Traineranträge freigeben. **Die
-   Registrierungsoberfläche weist niemals selbst Administratorrechte zu.**
-6. Mit dem Administratorkonto im Abschnitt **Trainerfreigaben verwalten**
-   Anträge prüfen und jeweils **Freigeben** oder **Sperren** auswählen.
+**Optionale Wiederherstellung:** Bei Verlust des ursprünglichen
+Administratorkontos kann eine berechtigte Person weiterhin
+`TRAINER_ADMIN_UIDS` als gesonderte, serverseitige Notfallfreigabe
+konfigurieren. Das ist **nicht** Bestandteil des normalen Anmeldeablaufs.
 
 **Berechtigungen:** Jede bestätigte E-Mail kann einen Antrag stellen. Erst
 die manuelle Freigabe gestattet das Anlegen von maximal fünf Team Spaces pro

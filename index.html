@@ -1697,6 +1697,14 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             <button type="submit" tabindex="-1" aria-hidden="true" hidden></button>
           </form>
           <div id="trainerAccountDashboard" hidden>
+            <div id="trainerAccountBootstrap" hidden>
+              <h3>Ersten Administrator freischalten</h3>
+              <p class="number-help">Einmalige Einrichtung: Verwende den bereits vorhandenen zentralen Team-Space-Registrierungsschlüssel. Danach kannst du andere Trainer direkt hier freigeben. Dieser Schlüssel wird nicht gespeichert und kann nur für den allerersten Administrator verwendet werden.</p>
+              <label>Zentraler Registrierungsschlüssel
+                <input type="password" class="field" id="trainerAccountBootstrapToken" name="bootstrap-token" autocomplete="off" spellcheck="false" placeholder="Zentralen Team-Space-Schlüssel eingeben">
+              </label>
+              <button type="button" class="btn primary" id="trainerAccountClaimAdmin">Administratorkonto einmalig aktivieren</button>
+            </div>
             <div class="season-tools">
               <button type="button" class="btn" id="trainerAccountRequestApproval">Trainerfreigabe beantragen</button>
               <button type="button" class="btn" id="trainerAccountRefresh">Status aktualisieren</button>
@@ -2538,7 +2546,7 @@ import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handbal
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
 import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=2";
-import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=1";
+import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=2";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
@@ -6172,6 +6180,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const service=trainerAccountApi(),config=await service.getConfig();
     $("trainerAccountLogin").hidden=!config.enabled;
     $("trainerAccountDashboard").hidden=true;
+    $("trainerAccountBootstrap").hidden=true;
     if(!config.enabled){
       trainerAccountStatus("Die Firebase-Trainerregistrierung ist in Google Cloud noch nicht aktiviert. Die bisherigen Team-Space-Schlüssel bleiben nutzbar.");
       return;
@@ -6182,6 +6191,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
     const me=await service.me();
     $("trainerAccountDashboard").hidden=false;
+    $("trainerAccountBootstrap").hidden=!me.adminBootstrapAvailable;
     const approved=me.isAdmin||me.status==="approved";
     $("trainerAccountCreator").hidden=!approved;
     $("trainerAccountRequestApproval").hidden=approved||me.status==="pending"||me.status==="suspended";
@@ -6307,6 +6317,20 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("trainerAccountPassword").value="";
     trainerAccountRegistrationMode(false);
     await trainerAccountRefresh();
+  });
+  $("trainerAccountClaimAdmin").onclick=()=>trainerAccountAction(async()=>{
+    const input=$("trainerAccountBootstrapToken");
+    const registrationToken=input.value.trim();
+    if(!registrationToken)throw Error("Bitte den zentralen Registrierungsschlüssel eingeben.");
+    if(!confirm("Dein bestätigtes Konto wird zum ersten Administrator der Spielanalyse. Das ist nur einmal möglich. Fortfahren?"))return;
+    try{
+      await trainerAccountApi().claimFirstAdmin(registrationToken);
+    }finally{
+      // Do not keep the central credential in the DOM beyond this request.
+      input.value="";
+    }
+    await trainerAccountRefresh();
+    trainerAccountStatus("Administratorkonto aktiviert. Du kannst Traineranträge jetzt hier freigeben.");
   });
   $("trainerAccountRequestApproval").onclick=()=>trainerAccountAction(async()=>{
     const result=await trainerAccountApi().register();
