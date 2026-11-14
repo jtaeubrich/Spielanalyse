@@ -14,7 +14,7 @@ const token=name=>"t"+name+("x".repeat(150));
 const T={admin:token("admin"),trainer:token("trainer"),other:token("other"),
   unverified:token("unverified"),changed:token("changed"),revoked:token("revoked")};
 class Store{
-  users=new Map();spaces=new Map();links=new Map();
+  users=new Map();spaces=new Map();links=new Map();games=new Map();
   async readTrainerUser(id){
     const row=this.users.get(id);
     return row?structuredClone(row):{metadata:null,generation:null};
@@ -49,6 +49,8 @@ class Store{
     list.add(id);this.links.set(uid,list);
   }
   async listTrainerSpaceLinks(uid){return [...(this.links.get(uid)||new Set())]}
+  async writeSpaceGame(key,bytes){this.games.set(key,Buffer.from(bytes))}
+  async readSpaceGame(key){return this.games.get(key)}
 }
 const users={
  [T.admin]:{uid:"admin-uid",email:"admin@example.org",email_verified:true},
@@ -58,7 +60,7 @@ const users={
  [T.changed]:{uid:"trainer-uid",email:"changed@example.org",email_verified:true}
 };
 async function environment(callback,{enabled=true}={}){
-  const store=new Store(),ids=[SPACE,SEASON,NEXT],idx={value:0};
+  const store=new Store(),ids=[SPACE,SEASON,NEXT],idx={value:0};let keys=0;
   const registry=createTrainerAccountRegistry({
     store,projectId:enabled?"spielanalyse-companion":"",
     webApiKey:enabled?"AIzaSyTestApiKeyForMockOnly":"",
@@ -69,7 +71,7 @@ async function environment(callback,{enabled=true}={}){
     }:null,
     adminUids:["admin-uid"],
     idFactory:()=>ids[idx.value++]||NEXT,
-    trainerTokenFactory:()=>"trainer_"+("Q".repeat(43)),
+    trainerTokenFactory:()=>"trainer_"+String(++keys).padStart(43,"Q"),
     readTokenFactory:()=>"reader_"+("R".repeat(43)),
     now:()=>new Date("2026-11-14T12:00:00Z")
   });
@@ -191,4 +193,35 @@ test("Registration status changes are idempotent and do not allow self-suspensio
   assert.equal((await register(call,T.trainer)).data.status,"approved");
   assert.equal((await call("POST","/trainer-auth/admin/users/admin-uid",T.admin,
     {status:"suspended"})).status,409);
+}));
+
+test("Only the bootstrap admin can issue a game publisher key; rotation revokes the old key",()=>environment(async({call,store})=>{
+  await register(call,T.trainer);await approve(call,"trainer-uid");
+  const created=(await call("POST","/trainer-auth/spaces",T.trainer,
+    {name:"TSV Kronshagen"})).data;
+  const path="/trainer-auth/admin/spaces/"+SPACE+"/publisher-key";
+  assert.equal((await call("POST",path,T.trainer,{})).status,403);
+  assert.equal((await call("POST",path,T.unverified,{})).status,403);
+  assert.equal((await call("POST",path,T.admin,{})).status,200);
+  // New key is returned only once, hash alone is stored.
+  const issued=await call("POST",path,T.admin,{});
+  assert.equal(issued.status,200);
+  const key=issued.data.trainerToken;
+  assert.match(key,/^trainer_[A-Za-z0-9_-]{32,256}$/);
+  const stored=(await store.readSpace(SPACE)).metadata;
+  assert.equal(stored.trainerHash,createHash("sha256").update(key).digest("hex"));
+  assert.equal(JSON.stringify(stored).includes(key),false);
+  assert.equal((await call("POST","/spaces/"+SPACE+"/verify-trainer",key)).status,200);
+  assert.equal((await call("POST","/spaces/"+SPACE+"/publish-game",T.trainer,
+    {expectedRevision:0,game:{home:{},away:{},events:[]}})).status,401);
+  const payload={expectedRevision:0,game:{
+    gameName:"Spiel",gameDate:"2026-11-14",home:{name:"TSV"},away:{name:"Gast"},events:[]
+  }};
+  const publication=await call("POST","/spaces/"+SPACE+"/publish-game",key,payload);
+  assert.equal(publication.status,200);
+  assert.equal((await call("GET","/spaces/"+SPACE+"/catalog",created.readToken)).data.games.length,1);
+  const rotated=(await call("POST",path,T.admin,{})).data.trainerToken;
+  assert.notEqual(rotated,key);
+  assert.equal((await call("POST","/spaces/"+SPACE+"/verify-trainer",key)).status,401);
+  assert.equal((await call("POST","/spaces/"+SPACE+"/verify-trainer",rotated)).status,200);
 }));
