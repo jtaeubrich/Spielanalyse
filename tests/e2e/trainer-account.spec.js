@@ -313,6 +313,13 @@ test("Approved Firebase trainer can create a Team Space and publish local season
   await expect(page.locator("#teamSpaceSelect")).toHaveValue(SPACE);
   await expect(page.locator("#teamSpaceSelectedIdInfo")).toContainText(SPACE);
   await expect(page.locator("#trainerAccountStatus")).toContainText("ID …"+SPACE.slice(-8));
+  await expect(page.locator("#trainerAccountCatalogStatus")).toContainText(
+    "Direkt vom Cloud-Server");
+  await expect(page.locator("#trainerAccountCatalogStatus")).toContainText(
+    "1 Saisons · 0 Spiele");
+  await page.locator("#trainerAccountVerifyCatalog").click();
+  await expect(page.locator("#trainerAccountCatalogStatus")).toContainText(
+    "B-Jugend 2027/28 (0 Spiele)");
   await expect(page.locator("#teamSpacePublish")).toBeVisible();
   const invite=await page.locator("#teamSpaceInviteLink").inputValue();
   expect(invite).toContain("#teamspace=");
