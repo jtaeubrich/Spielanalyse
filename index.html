@@ -6095,6 +6095,152 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     try{await navigator.clipboard.writeText(link);toast("Team-Space-Leselink kopiert. Nur an die Mannschaft weitergeben.")}
     catch{$("teamSpaceInviteLink").select();toast("Link markiert; bitte kopieren.")}
   };
+  // Optional account-based Team Space registration. Credentials are handled by
+  // Firebase; only the refresh token is kept in per-tab session storage.
+  let trainerAccountClient=null;
+  function trainerAccountApi(){
+    const api=seasonCloudEndpoint($("teamSpaceApi").value);
+    if(!trainerAccountClient||trainerAccountClient.api!==api)
+      trainerAccountClient=createTrainerAuthClient(api);
+    return trainerAccountClient;
+  }
+  function trainerAccountStatus(message){
+    $("trainerAccountStatus").textContent=message;
+  }
+  async function trainerAccountLoadSpaces(){
+    const service=trainerAccountApi();
+    const previous=$("trainerAccountSpaces").value;
+    const data=await service.listSpaces(),select=$("trainerAccountSpaces");
+    select.replaceChildren();
+    for(const row of data.spaces)
+      select.add(new Option(row.name+" ("+row.seasonCount+" Saisons)",row.spaceId));
+    if([...select.options].some(option=>option.value===previous))select.value=previous;
+    if(!data.spaces.length)select.add(new Option("Zuerst Team Space erstellen",""));
+  }
+  async function trainerAccountLoadAdmin(){
+    const service=trainerAccountApi(),container=$("trainerAccountUserList");
+    const data=await service.listUsers();
+    container.replaceChildren();
+    for(const user of data.users){
+      const row=document.createElement("div");row.className="home-list-row";
+      const name=document.createElement("div"),strong=document.createElement("strong"),
+        detail=document.createElement("small");
+      strong.textContent=user.email;detail.textContent="Status: "+user.status;
+      name.append(strong,detail);row.append(name);
+      const button=document.createElement("button");button.type="button";
+      button.className="btn";button.textContent=user.status==="approved"?"Sperren":"Freigeben";
+      button.onclick=async()=>{
+        try{
+          if(!confirm("Trainerkonto "+user.email+" "+(user.status==="approved"?"sperren":"freigeben")+"?"))return;
+          await service.setApproval(user.uid,user.status==="approved"?"suspended":"approved");
+          await trainerAccountLoadAdmin();
+          trainerAccountStatus("Freigabe für "+user.email+" aktualisiert.");
+        }catch(error){trainerAccountStatus("Freigabe fehlgeschlagen: "+error.message)}
+      };
+      row.append(button);container.append(row);
+    }
+    if(!data.users.length)container.textContent="Noch keine Traineranträge vorhanden.";
+  }
+  async function trainerAccountRefresh(){
+    const service=trainerAccountApi(),config=await service.getConfig();
+    $("trainerAccountLogin").hidden=!config.enabled;
+    $("trainerAccountDashboard").hidden=true;
+    if(!config.enabled){
+      trainerAccountStatus("Die Firebase-Trainerregistrierung ist in Google Cloud noch nicht aktiviert. Die bisherigen Team-Space-Schlüssel bleiben nutzbar.");
+      return;
+    }
+    if(!service.hasSession()){
+      trainerAccountStatus("Mit E-Mail und Passwort anmelden oder ein neues Trainerkonto registrieren.");
+      return;
+    }
+    const me=await service.me();
+    $("trainerAccountDashboard").hidden=false;
+    const approved=me.isAdmin||me.status==="approved";
+    $("trainerAccountCreator").hidden=!approved;
+    $("trainerAccountRequestApproval").hidden=approved||me.status==="pending"||me.status==="suspended";
+    $("trainerAccountAdmin").hidden=!me.isAdmin;
+    if(approved)await trainerAccountLoadSpaces();
+    if(me.isAdmin)await trainerAccountLoadAdmin();
+    const status=me.isAdmin?"Administrator":
+      me.status==="approved"?"Trainer freigegeben":
+      me.status==="pending"?"Freigabe beantragt":
+      me.status==="suspended"?"Trainerkonto gesperrt":"Freigabe noch nicht beantragt";
+    trainerAccountStatus(me.email+" · "+status);
+  }
+  function trainerAccountAction(promise){
+    Promise.resolve().then(promise).catch(error=>{
+      trainerAccountStatus("Trainerkonto: "+error.message);
+    });
+  }
+  $("trainerAccountPanel").addEventListener("toggle",()=>{
+    if($("trainerAccountPanel").open)trainerAccountAction(trainerAccountRefresh);
+  });
+  $("trainerAccountSignUp").onclick=()=>trainerAccountAction(async()=>{
+    const service=trainerAccountApi();
+    await service.signup($("trainerAccountEmail").value.trim(),
+      $("trainerAccountPassword").value);
+    $("trainerAccountPassword").value="";
+    trainerAccountStatus("Registriert. Bitte den Bestätigungslink in der E-Mail öffnen und danach „E-Mail-Bestätigung prüfen“ wählen.");
+  });
+  $("trainerAccountSignIn").onclick=()=>trainerAccountAction(async()=>{
+    const service=trainerAccountApi();
+    await service.login($("trainerAccountEmail").value.trim(),
+      $("trainerAccountPassword").value);
+    $("trainerAccountPassword").value="";
+    await trainerAccountRefresh();
+  });
+  $("trainerAccountVerifyMail").onclick=()=>trainerAccountAction(async()=>{
+    await trainerAccountApi().requestVerification();
+    trainerAccountStatus("Die Bestätigungs-E-Mail wurde angefordert. Postfach prüfen.");
+  });
+  $("trainerAccountCheckMail").onclick=()=>trainerAccountAction(async()=>{
+    await trainerAccountApi().refresh(true);
+    await trainerAccountRefresh();
+  });
+  $("trainerAccountPasswordReset").onclick=()=>trainerAccountAction(async()=>{
+    const email=$("trainerAccountEmail").value.trim();
+    if(!email)throw Error("Bitte eine E-Mail-Adresse eingeben.");
+    await trainerAccountApi().resetPassword(email);
+    trainerAccountStatus("Falls die Adresse registriert ist, erhält sie eine E-Mail zum Zurücksetzen des Passworts.");
+  });
+  $("trainerAccountSignOut").onclick=()=>trainerAccountAction(async()=>{
+    trainerAccountApi().logout();
+    $("trainerAccountPassword").value="";
+    await trainerAccountRefresh();
+  });
+  $("trainerAccountRequestApproval").onclick=()=>trainerAccountAction(async()=>{
+    const result=await trainerAccountApi().register();
+    await trainerAccountRefresh();
+    trainerAccountStatus("Trainerregistrierung: "+(result.status==="pending"
+      ?"Freigabe beantragt. Ein Administrator muss sie bestätigen.":"Freigegeben."));
+  });
+  $("trainerAccountRefresh").onclick=()=>trainerAccountAction(trainerAccountRefresh);
+  $("trainerAccountCreateSpace").onclick=()=>trainerAccountAction(async()=>{
+    const service=trainerAccountApi();
+    const name=$("trainerAccountSpaceName").value.trim();
+    if(!name)throw Error("Bitte Teamnamen eingeben.");
+    const created=await service.createSpace(name);
+    await saveTeamSpaceConnection({api:service.api,spaceId:created.spaceId,
+      name:created.name,readToken:created.readToken,role:"account",revision:0});
+    $("trainerAccountSpaceName").value="";
+    await teamSpaceRefreshCatalog();
+    await trainerAccountLoadSpaces();
+    $("trainerAccountSpaces").value=created.spaceId;
+    trainerAccountStatus("Team Space angelegt. Der Spieler-Einladungslink kann unter „Team Space verbinden oder verwalten“ kopiert werden.");
+    toast("Team Space erstellt. Du kannst jetzt eine Saison anlegen.");
+  });
+  $("trainerAccountCreateSeason").onclick=()=>trainerAccountAction(async()=>{
+    const service=trainerAccountApi(),spaceId=$("trainerAccountSpaces").value;
+    const name=$("trainerAccountSeasonName").value.trim();
+    if(!spaceId||!name)throw Error("Bitte Team Space und Saisonname auswählen.");
+    const catalog=await service.catalog(spaceId);
+    await service.createSeason(spaceId,name,catalog.revision);
+    $("trainerAccountSeasonName").value="";
+    await trainerAccountLoadSpaces();
+    if(teamSpaceSelectedId===spaceId)await teamSpaceRefreshCatalog();
+    trainerAccountStatus("Saison „"+name+"“ ohne Spiele angelegt. Das Hochladen von Spielen ist mit dem Trainerkonto gesperrt.");
+    toast("Leere Saison erstellt.");
+  });
   $("teamSpaceRotateReader").onclick=async()=>{
     const connection=teamActiveConnection();
     if(connection?.role!=="trainer")return;
