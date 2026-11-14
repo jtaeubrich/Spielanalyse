@@ -49,7 +49,7 @@ async function mockSpace(page){
       "Access-Control-Allow-Headers":"Authorization,Content-Type",
       "Access-Control-Expose-Headers":"X-Item-Revision,X-Content-Sha256"};
     if(method==="OPTIONS")return route.fulfill({status:204,headers});
-    if(url.pathname==="/spaces"&&method==="POST")
+    if(url.pathname==="/spaces/v2"&&method==="POST")
       return route.fulfill({status:201,headers,
         body:JSON.stringify({spaceId:SPACE,name:"TSV Kronshagen",
           readToken:READER,trainerToken:PERSONAL,revision:0})});
