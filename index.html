@@ -1672,16 +1672,16 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
           <p class="number-help">Mit bestätigter E-Mail-Adresse kannst du eine Trainerfreigabe beantragen. Freigegebene Trainer dürfen neue Team Spaces und leere Saisons anlegen, aber keine Spiele veröffentlichen. Die Spieler benötigen weiterhin nur ihren Einladungslink.</p>
           <p class="number-help">Die Anmeldung erfolgt über Google Firebase Authentication. Dabei wird deine E-Mail-Adresse auch außerhalb der EU verarbeitet. Das Passwort wird nicht in der Spielanalyse gespeichert.</p>
           <p id="trainerAccountStatus" class="number-help" role="status">Traineranmeldung wird beim Öffnen geprüft.</p>
-          <div id="trainerAccountLogin" hidden>
+          <form id="trainerAccountLogin" name="trainer-login" method="post" autocomplete="on" hidden>
             <div class="teamspace-fields">
               <label>E-Mail-Adresse
-                <input class="field" type="email" id="trainerAccountEmail" autocomplete="email" placeholder="trainer@verein.de">
+                <input class="field" type="email" id="trainerAccountEmail" name="username" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="trainer@verein.de">
               </label>
               <label>Passwort (mindestens sechs Zeichen)
-                <input class="field" type="password" id="trainerAccountPassword" autocomplete="current-password" minlength="6">
+                <input class="field" type="password" id="trainerAccountPassword" name="password" autocomplete="current-password" minlength="6">
               </label>
               <label id="trainerAccountPasswordConfirmLabel" hidden>Passwort wiederholen
-                <input class="field" type="password" id="trainerAccountPasswordConfirm" autocomplete="new-password" minlength="6">
+                <input class="field" type="password" id="trainerAccountPasswordConfirm" name="confirm-password" autocomplete="new-password" minlength="6">
               </label>
             </div>
             <button type="button" class="btn" id="trainerAccountShowPassword" aria-pressed="false" aria-controls="trainerAccountPassword trainerAccountPasswordConfirm">Passwort anzeigen</button>
@@ -1694,7 +1694,8 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
               <button type="button" class="btn" id="trainerAccountPasswordReset">Passwort zurücksetzen</button>
               <button type="button" class="btn" id="trainerAccountSignOut">Abmelden</button>
             </div>
-          </div>
+            <button type="submit" tabindex="-1" aria-hidden="true" hidden></button>
+          </form>
           <div id="trainerAccountDashboard" hidden>
             <div class="season-tools">
               <button type="button" class="btn" id="trainerAccountRequestApproval">Trainerfreigabe beantragen</button>
@@ -6224,6 +6225,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if($("trainerAccountPanel").open)trainerAccountAction(trainerAccountRefresh);
   });
   let trainerAccountRegistering=false;
+  $("trainerAccountLogin").addEventListener("submit",event=>{
+    event.preventDefault();
+    if($("trainerAccountLogin").hidden)return;
+    $(trainerAccountRegistering?"trainerAccountSignUp":"trainerAccountSignIn").click();
+  });
   function trainerAccountHidePassword(){
     $("trainerAccountPassword").type="password";
     $("trainerAccountPasswordConfirm").type="password";
