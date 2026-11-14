@@ -115,6 +115,8 @@ test("Bootstrap administrator can approve trainer requests, not create games on 
       status=request.postDataJSON().status;
       return route.fulfill(success({uid:"new-trainer",status}));
     }
+    if(path==="/trainer-auth/admin/spaces/"+SPACE+"/publisher-key"&&request.method()==="POST")
+      return route.fulfill(success({spaceId:SPACE,trainerToken:"trainer_"+("p".repeat(43))}));
     return route.fulfill(success({error:{message:"not found"}},404));
   });
   page.on("dialog",dialog=>dialog.accept());
@@ -127,4 +129,8 @@ test("Bootstrap administrator can approve trainer requests, not create games on 
   await page.locator("#trainerAccountUserList").getByRole("button",{name:"Freigeben"}).click();
   await expect(page.locator("#trainerAccountUserList")).toContainText("approved");
   expect(status).toBe("approved");
+  await page.locator("#trainerAccountPublisherSpace").fill(SPACE);
+  await page.locator("#trainerAccountIssuePublisher").click();
+  await expect(page.locator("#trainerAccountPublisherCredentials")).toBeVisible();
+  await expect(page.locator("#trainerAccountPublisherToken")).toHaveValue("trainer_"+("p".repeat(43)));
 });
