@@ -14,7 +14,9 @@ const admins=String(process.env.TRAINER_ADMIN_UIDS||"").split(",").map(x=>x.trim
 const authApp=projectId&&apiKey?initializeApp({credential:applicationDefault(),projectId}):null;
 const trainerAccounts=createTrainerAccountRegistry({
   store,projectId,webApiKey:apiKey,adminUids:admins,
-  verifyIdToken:authApp?token=>getAuth(authApp).verifyIdToken(token,true):null
+  // The account registry enforces immediate suspension; offline JWT verification
+  // avoids requiring Firebase Auth user-read IAM on the Cloud Run service account.
+  verifyIdToken:authApp?token=>getAuth(authApp).verifyIdToken(token):null
 });
 const handler=createSeasonSyncHandler({
   store,adminToken:process.env.TRAINER_PUBLISH_TOKEN,
