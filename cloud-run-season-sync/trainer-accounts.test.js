@@ -10,7 +10,7 @@ const SPACE="88735513-5e3e-4a95-aa70-6a1a2fe94bf9";
 const SEASON="88735513-5e3e-4a95-aa70-6a1a2fe94bfa";
 const NEXT="88735513-5e3e-4a95-aa70-6a1a2fe94bfb";
 const MASTER="trainer_"+("M".repeat(44));
-const token=name=>"t"+name+("x".repeat(150));
+const token=name=>"eyJhbGciOiJSUzI1NiJ9."+name+("x".repeat(120))+"."+("y".repeat(60));
 const T={admin:token("admin"),trainer:token("trainer"),other:token("other"),
   unverified:token("unverified"),changed:token("changed"),revoked:token("revoked")};
 class Store{
@@ -130,7 +130,7 @@ test("Only bootstrap administrator may approve; pending trainer cannot create sp
   assert.equal((await call("GET","/trainer-auth/me",T.trainer)).data.status,"approved");
 }));
 
-test("Approved Firebase trainer can create private Team Space and empty season, never games",()=>environment(async({call,store})=>{
+test("Approved Firebase trainer can create a private Team Space and publish games into its season",()=>environment(async({call,store})=>{
   await register(call,T.trainer);await approve(call,"trainer-uid");
   const created=await call("POST","/trainer-auth/spaces",T.trainer,{name:"TSV Kronshagen"});
   assert.equal(created.status,201);
@@ -144,12 +144,10 @@ test("Approved Firebase trainer can create private Team Space and empty season, 
   assert.equal(record.readerHash,createHash("sha256").update(created.data.readToken).digest("hex"));
   assert.equal(JSON.stringify(record).includes(created.data.readToken),false);
   assert.deepEqual((await call("GET","/trainer-auth/spaces",T.trainer)).data.spaces.map(x=>x.spaceId),[SPACE]);
-  assert.equal((await call("POST","/spaces/"+SPACE+"/publish-game",T.trainer,
-    {expectedRevision:0,game:{home:{},away:{},events:[]}})).status,401);
   assert.equal((await call("POST","/spaces/"+SPACE+"/publish-game",MASTER,
     {expectedRevision:0,game:{home:{},away:{},events:[]}})).status,401);
   assert.equal((await call("POST","/spaces/"+SPACE+"/publish-season",T.trainer,
-    {expectedRevision:0,archive:{}})).status,401);
+    {expectedRevision:0,archive:{}})).status,400);
   const createdSeason=await call("POST","/trainer-auth/spaces/"+SPACE+"/seasons",T.trainer,
     {name:"B-Jugend 2027/28",expectedRevision:0});
   assert.equal(createdSeason.status,201);
@@ -166,6 +164,15 @@ test("Approved Firebase trainer can create private Team Space and empty season, 
   assert.deepEqual(seasonDownload.data.games,[]);
   assert.equal((await call("POST","/trainer-auth/spaces/"+SPACE+"/seasons",T.trainer,
     {name:"Too late",expectedRevision:0})).status,409);
+  const game={gameName:"Kronshagen – Gast",gameDate:"2026-11-14",
+    home:{name:"Kronshagen"},away:{name:"Gast"},events:[]};
+  const published=await call("POST","/spaces/"+SPACE+"/publish-game",T.trainer,
+    {expectedRevision:1,seasonId:SEASON,game});
+  assert.equal(published.status,200);
+  assert.equal(published.data.gameId.startsWith("sg-"),true);
+  const updated=await call("GET","/spaces/"+SPACE+"/catalog",created.data.readToken);
+  assert.equal(updated.data.games.length,1);
+  assert.equal(updated.data.seasons[0].gameCount,1);
 }));
 
 test("Trainer account permissions are isolated by owner and approval may be revoked",()=>environment(async({call})=>{
@@ -175,11 +182,18 @@ test("Trainer account permissions are isolated by owner and approval may be revo
   assert.equal((await call("GET","/trainer-auth/spaces/"+SPACE+"/catalog",T.other)).status,403);
   assert.equal((await call("POST","/trainer-auth/spaces/"+SPACE+"/seasons",T.other,
     {name:"Unauthorized",expectedRevision:0})).status,403);
+  const game={gameName:"Fremdes Spiel",home:{name:"A"},away:{name:"B"},events:[]};
+  assert.equal((await call("POST","/spaces/"+SPACE+"/publish-game",T.other,
+    {expectedRevision:0,game})).status,403);
+  assert.equal((await call("POST","/spaces/"+SPACE+"/publish-game",T.unverified,
+    {expectedRevision:0,game})).status,403);
   assert.equal((await call("POST","/trainer-auth/admin/users/trainer-uid",T.admin,
     {status:"suspended"})).status,200);
   assert.equal((await call("GET","/trainer-auth/spaces",T.trainer)).status,403);
   assert.equal((await call("POST","/trainer-auth/spaces/"+SPACE+"/seasons",T.trainer,
     {name:"Suspended",expectedRevision:0})).status,403);
+  assert.equal((await call("POST","/spaces/"+SPACE+"/publish-game",T.trainer,
+    {expectedRevision:0,game})).status,403);
   assert.equal((await call("GET","/trainer-auth/me",T.trainer)).data.status,"suspended");
 }));
 
@@ -220,7 +234,7 @@ test("Only the bootstrap admin can issue a game publisher key; rotation revokes 
   assert.equal(JSON.stringify(stored).includes(key),false);
   assert.equal((await call("POST","/spaces/"+SPACE+"/verify-trainer",key)).status,200);
   assert.equal((await call("POST","/spaces/"+SPACE+"/publish-game",T.trainer,
-    {expectedRevision:0,game:{home:{},away:{},events:[]}})).status,401);
+    {expectedRevision:99,game:{home:{},away:{},events:[]}})).status,409);
   const payload={expectedRevision:0,game:{
     gameName:"Spiel",gameDate:"2026-11-14",home:{name:"TSV"},away:{name:"Gast"},events:[]
   }};
