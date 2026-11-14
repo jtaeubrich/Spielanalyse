@@ -5262,7 +5262,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const record of teamStandaloneGames){
       let saved=null;
       try{saved=JSON.parse(record.text)}catch{}
-      entries.push({kind:"team",key:record.id,title:homeGameTitle({state:saved||{},fileName:record.fileName}),
+      entries.push({kind:"team",key:record.id,title:record.gameName||record.fileName||homeGameTitle({state:saved||{},fileName:record.fileName}),
         subtitle:"Team Space · lokal gespeichert · "+(teamStandaloneActiveId===record.id?"Zuletzt geöffnet":"Einzelspiel"),
         gameState:saved||{},record});
     }
