@@ -1,29 +1,77 @@
-name: Deploy Season Sync (manual)
+name: Deploy Season Sync
 on:
   workflow_dispatch:
+  # Deploy only after tests of a push to main have succeeded.
+  workflow_run:
+    workflows: ["Test Season Sync"]
+    types: [completed]
+    branches: [main]
 permissions:
   contents: read
   id-token: write
+concurrency:
+  group: season-sync-production-deploy
+  cancel-in-progress: false
 jobs:
   deploy:
+    if: >-
+      ${{
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
+      }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+      - name: Avoid deploying superseded backend revisions
+        id: revision
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" != "workflow_run" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch origin main --quiet
+          # Documentation-only commits may advance main while CI is running.
+          # Deploy the tested revision only if the backend and this workflow
+          # have not changed since that test completed.
+          if git diff --quiet "$TESTED_SHA" FETCH_HEAD -- cloud-run-season-sync .github/workflows/deploy-season-sync.yml; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::A newer Season Sync revision exists on main; skipping stale deployment."
+          fi
       - uses: actions/setup-node@v4
+        if: steps.revision.outputs.deploy == 'true'
         with:
           node-version: 22
       - name: Test API and syntax
+        if: steps.revision.outputs.deploy == 'true'
         run: |
           node --check cloud-run-season-sync/index.js
           node --check cloud-run-season-sync/api.js
           node --check cloud-run-season-sync/storage.js
           node --test cloud-run-season-sync/api.test.js cloud-run-season-sync/team-space-api.test.js
       - uses: google-github-actions/auth@v2
+        if: steps.revision.outputs.deploy == 'true'
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
+        if: steps.revision.outputs.deploy == 'true'
       - name: Deploy separate Cloud Run service
+        if: steps.revision.outputs.deploy == 'true'
         env:
           PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
           BUCKET: ${{ vars.SEASON_SYNC_BUCKET }}
