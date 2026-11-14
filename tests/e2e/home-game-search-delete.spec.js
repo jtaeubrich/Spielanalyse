@@ -183,8 +183,10 @@ test("Spiel-Löschsymbol steht rechtsbündig bei breiten und schmalen Ansichten"
   await page.locator("#seasonGameInput").setInputFiles(gameFile("Gast A","Ausrichtungstest"));
   await expect(page.locator("#seasonGameCount")).toContainText("1 Spiel");
   await page.locator('[data-tab="home"]').click();
-  await page.locator("#homeStartGameSearch").fill("Gast A");
-  const row=page.locator("#homeStartSearchResults .home-list-row").first();
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeLibraryGameSearch").fill("Gast A");
+  const row=page.locator("#homeLibraryList .home-list-row").first();
   const del=row.getByRole("button",{name:/Spiel löschen/});
   await expect(del).toBeVisible();
   for(const width of [1120,390]){
