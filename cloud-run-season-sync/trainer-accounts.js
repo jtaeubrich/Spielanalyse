@@ -78,6 +78,22 @@ export function createTrainerAccountRegistry({
       else await store.createTrainerUser(user.uid,record);
       send(res,201,{status:"pending"});return true;
     }
+    // Only bootstrap administrators can issue a separate upload capability.
+    // Ordinary Firebase-approved trainers never receive this secret and
+    // therefore cannot publish games in their Team Spaces.
+    const publisher=/^\/trainer-auth\/admin\/spaces\/([^/]+)\/publisher-key$/.exec(path);
+    if(publisher&&method==="POST"){
+      await identity(req,{administrator:true});
+      const spaceId=publisher[1];
+      if(!validSpace(spaceId))throwError(404,"NOT_FOUND","Team Space nicht gefunden.");
+      const {metadata,generation}=await store.readSpace(spaceId);
+      if(!metadata||metadata.authMode!=="firebase")
+        throwError(404,"NOT_FOUND","Konto-Team-Space nicht gefunden.");
+      const trainerToken=trainerTokenFactory();
+      await store.updateSpace(spaceId,{...metadata,trainerHash:hash(trainerToken),
+        publisherKeyIssuedAt:now().toISOString()},generation);
+      send(res,200,{spaceId,trainerToken});return true;
+    }
     if(path==="/trainer-auth/admin/users"&&method==="GET"){
       await identity(req,{administrator:true});
       const users=await store.listTrainerUsers();
