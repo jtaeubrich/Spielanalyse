@@ -170,3 +170,30 @@ test("Spiel laden deletes only a locally stored Team Space single game, not anot
   await page.locator("#homeLibraryGameSearch").fill("Heim Zwei");
   await expect(page.locator("#homeLibraryList .home-list-row")).toHaveCount(1);
 });
+
+
+test("Spiel-Löschsymbol steht rechtsbündig bei breiten und schmalen Ansichten",async({page})=>{
+  await page.goto("/");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupModeSeason").click();
+  await page.locator("#seasonGameInput").setInputFiles(gameFile("Gast A","Ausrichtungstest"));
+  await expect(page.locator("#seasonGameCount")).toContainText("1 Spiel");
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeStartGameSearch").fill("Gast A");
+  const row=page.locator("#homeStartSearchResults .home-list-row").first();
+  const del=row.getByRole("button",{name:/Spiel löschen/});
+  await expect(del).toBeVisible();
+  for(const width of [1120,390]){
+    await page.setViewportSize({width,height:850});
+    const positions=await row.evaluate(element=>{
+      const box=element.getBoundingClientRect();
+      const deleteBox=element.querySelector(".home-game-delete").getBoundingClientRect();
+      const controlsBox=element.querySelector(".home-list-controls").getBoundingClientRect();
+      return {rowRight:box.right,deleteRight:deleteBox.right,
+        deleteTop:deleteBox.top,controlsTop:controlsBox.top};
+    });
+    expect(positions.rowRight-positions.deleteRight).toBeGreaterThanOrEqual(8);
+    expect(positions.rowRight-positions.deleteRight).toBeLessThanOrEqual(20);
+    if(width<=760)expect(positions.deleteTop).toBeLessThan(positions.controlsTop);
+  }
+});
