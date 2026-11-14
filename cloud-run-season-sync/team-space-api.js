@@ -8,6 +8,7 @@ const title=g=>label(g?.gameName)||[g?.home?.name,g?.away?.name].filter(Boolean)
 const date=g=>String(g?.gameDate||"").slice(0,10);
 export function publicTeamCatalog(meta){
   return {spaceId:meta.id,name:meta.name,revision:meta.revision,updatedAt:meta.updatedAt,
+    trainerAccess:meta.trainerHash?"individual":"legacy",
     seasons:Object.values(meta.seasons||{}).map(s=>({
       id:s.id,name:s.name,revision:s.revision,publishedAt:s.publishedAt,
       gameCount:s.gameIds.length,gameIds:s.gameIds,preferredTeam:s.preferredTeam||""
@@ -19,29 +20,56 @@ export function publicTeamCatalog(meta){
     })).sort((a,b)=>String(b.date).localeCompare(String(a.date)))};
 }
 export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactory,readerFactory,
-  trainer,reader,send,err,bodyJson,sha}){
+  trainerFactory,trainer,trainerSpace,reader,send,err,bodyJson,sha}){
   if(url.pathname!=="/spaces"&&!url.pathname.startsWith("/spaces/"))return false;
-  if(url.pathname==="/spaces"){
+  if(url.pathname==="/spaces"||url.pathname==="/spaces/v2"){
     if(req.method!=="POST")throw err(405,"METHOD_NOT_ALLOWED","POST erforderlich.");
     trainer(req,adminToken);
+    // Dedicated v2 endpoint: a newer app cannot accidentally create a space
+    // on an older Cloud Run deployment that cannot issue a trainer key.
+    if(url.pathname==="/spaces")
+      throw err(426,"CLIENT_UPDATE_REQUIRED","Bitte die Spielanalyse-App aktualisieren, bevor du einen Team Space erstellst.");
     const body=await bodyJson(req);
+    // Old PWA clients do not display the new trainer credential. Reject them
+    // instead of creating a space whose trainer key would be lost.
+    if(body?.authVersion!==2)
+      throw err(426,"CLIENT_UPDATE_REQUIRED","Bitte die Spielanalyse-App aktualisieren, bevor du einen Team Space erstellst.");
     const name=label(body?.name);
     if(!name||name.length>200)throw err(400,"INVALID_NAME","Ungültiger Teamname.");
-    const spaceId=idFactory(),readToken=readerFactory(),stamp=now().toISOString();
+    const spaceId=idFactory(),readToken=readerFactory(),
+      trainerToken=trainerFactory(),stamp=now().toISOString();
     await store.createSpace(spaceId,{id:spaceId,name,readerHash:sha(readToken),
+      trainerHash:sha(trainerToken),authVersion:2,
       revision:0,updatedAt:stamp,createdAt:stamp,seasons:{},games:{}});
-    send(res,201,{spaceId,name,readToken,revision:0});return true;
+    // Raw credentials are returned once and are never stored in cloud metadata.
+    send(res,201,{spaceId,name,readToken,trainerToken,revision:0});return true;
   }
-  const match=/^\/spaces\/([^/]+)\/(catalog|publish-season|publish-game|rotate-reader|seasons\/([^/]+)\/download|games\/([^/]+)\/download)$/.exec(url.pathname);
+  const match=/^\/spaces\/([^/]+)\/(catalog|publish-season|publish-game|rotate-reader|rotate-trainer|claim-trainer|verify-trainer|seasons\/([^/]+)\/download|games\/([^/]+)\/download)$/.exec(url.pathname);
   if(!match||!ID.test(match[1]))throw err(404,"NOT_FOUND","Team Space nicht gefunden.");
   const [,spaceId,action,seasonId,gameId]=match;
-  const write=["publish-season","publish-game","rotate-reader"].includes(action);
+  const write=["publish-season","publish-game","rotate-reader",
+    "rotate-trainer","claim-trainer","verify-trainer"].includes(action);
   if(req.method!==(write?"POST":"GET"))
     throw err(405,"METHOD_NOT_ALLOWED",write?"POST erforderlich.":"GET erforderlich.");
-  if(write)trainer(req,adminToken);
   const {metadata:stored,generation}=await store.readSpace(spaceId);
   if(!stored)throw err(404,"NOT_FOUND","Team Space nicht gefunden.");
-  if(!write)reader(req,stored);
+  // One-time migration for spaces created before per-space trainer keys.
+  // The registration token cannot claim or write to a migrated/new space.
+  if(action==="claim-trainer"){
+    trainer(req,adminToken);
+    if(stored.trainerHash)
+      throw err(409,"ALREADY_CLAIMED","Dieser Team Space hat bereits einen eigenen Trainer-Schlüssel.");
+    const trainerToken=trainerFactory();
+    await store.updateSpace(spaceId,{...stored,trainerHash:sha(trainerToken),
+      authVersion:2,updatedAt:now().toISOString()},generation);
+    send(res,200,{spaceId,trainerToken});return true;
+  }
+  if(write)trainerSpace(req,stored,adminToken);
+  else reader(req,stored);
+  if(action==="verify-trainer"){
+    send(res,200,{spaceId,trainerAccess:stored.trainerHash?"individual":"legacy"});
+    return true;
+  }
   const meta=structuredClone(stored);
   if(action==="catalog"){send(res,200,publicTeamCatalog(meta));return true;}
   const stamp=now().toISOString();
@@ -50,6 +78,12 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
     meta.readerHash=sha(readToken);meta.updatedAt=stamp;
     await store.updateSpace(spaceId,meta,generation);
     send(res,200,{spaceId,readToken});return true;
+  }
+  if(action==="rotate-trainer"){
+    const trainerToken=trainerFactory();
+    meta.trainerHash=sha(trainerToken);meta.authVersion=2;meta.updatedAt=stamp;
+    await store.updateSpace(spaceId,meta,generation);
+    send(res,200,{spaceId,trainerToken});return true;
   }
   const headers=(revision,hash)=>({
     "Content-Type":"application/json; charset=utf-8",

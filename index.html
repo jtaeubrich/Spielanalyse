@@ -1675,7 +1675,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             <button type="button" class="btn primary" id="teamSpaceJoin">Mit Team Space verbinden</button>
           </div>
           <hr>
-          <p class="number-help">Trainerbereich: eigenständiger Saison-Cloud-Run-Dienst und persönlicher Veröffentlichungs-Schlüssel. Der Schlüssel wird nicht gespeichert.</p>
+          <p class="number-help">Trainerbereich: Mit dem zentralen Registrierungsschlüssel wird ein neuer Team Space eingerichtet. Jeder Space erhält danach einen eigenen Trainer-Schlüssel und einen Leseschlüssel für Spieler. Schlüssel werden nicht dauerhaft im Browser gespeichert.</p>
           <div class="teamspace-fields">
             <label>Cloud-Run-Dienst
               <input type="url" class="field" id="teamSpaceApi" autocomplete="off" spellcheck="false" placeholder="https://handball-season-sync-…run.app">
@@ -1683,13 +1683,29 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             <label>Teamname
               <input type="text" class="field" id="teamSpaceName" placeholder="TSV Kronshagen">
             </label>
-            <label>Trainer-Schlüssel
-              <input type="password" class="field" id="teamSpaceAdminToken" autocomplete="off" placeholder="Nur auf Trainergerät eingeben">
+            <label>Registrierungsschlüssel (nur zum Anlegen)
+              <input type="password" class="field" id="teamSpaceRegistrationToken" autocomplete="off" placeholder="Zentraler Schlüssel des Cloud-Dienstes">
+            </label>
+            <label>Trainer-Schlüssel (für ausgewählten Team Space)
+              <input type="password" class="field" id="teamSpaceAdminToken" autocomplete="off" placeholder="Individueller Schlüssel dieses Team Space">
             </label>
           </div>
           <div class="season-tools">
             <button type="button" class="btn" id="teamSpaceCreate">Team Space erstellen</button>
+            <button type="button" class="btn" id="teamSpaceClaimTrainer" hidden>Vorhandenen Team Space übernehmen</button>
+            <button type="button" class="btn" id="teamSpaceActivateTrainer" hidden>Trainerzugang aktivieren</button>
+            <button type="button" class="btn" id="teamSpaceRotateTrainer" hidden>Trainer-Schlüssel erneuern</button>
             <button type="button" class="btn" id="teamSpaceRotateReader">Leseschlüssel erneuern</button>
+          </div>
+          <div id="teamSpaceNewTrainerCredentials" hidden>
+            <p class="number-help"><strong>Neuer Trainer-Schlüssel – nur einmal sichtbar.</strong> Speichere ihn jetzt sicher in deinem Passwortmanager. Ohne diesen Schlüssel ist keine spätere Veröffentlichung möglich. Nicht an Spieler weitergeben.</p>
+            <label>Neu erzeugter Trainer-Schlüssel
+              <input class="field" id="teamSpaceNewTrainerToken" type="password" readonly autocomplete="off" spellcheck="false">
+            </label>
+            <div class="season-tools">
+              <button type="button" class="btn" id="teamSpaceCopyTrainerToken">Trainer-Schlüssel kopieren</button>
+              <button type="button" class="btn" id="teamSpaceRevealTrainerToken">Schlüssel anzeigen</button>
+            </div>
           </div>
           <label>Einladungslink für die Mannschaft
             <input class="field" id="teamSpaceInviteLink" type="text" readonly>
@@ -2445,7 +2461,7 @@ import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterSta
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
-import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken} from "./src/team-space-client.js?v=1";
+import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=2";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
@@ -5526,6 +5542,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
     $("teamSpacePublish").hidden=connection?.role!=="trainer";
     $("teamSpaceRotateReader").hidden=connection?.role!=="trainer";
+    $("teamSpaceRotateTrainer").hidden=connection?.role!=="trainer"||
+      teamSpaceCatalogData?.trainerAccess==="legacy";
+    $("teamSpaceClaimTrainer").hidden=!connection||
+      teamSpaceCatalogData?.trainerAccess!=="legacy";
+    $("teamSpaceActivateTrainer").hidden=!connection||connection.role==="trainer";
     $("teamSpaceCopyInvite").disabled=connection?.role!=="trainer";
     $("teamSpaceInviteLink").value=connection?.role==="trainer"
       ?makeTeamSpaceInvite(location.origin+location.pathname,connection):"";
@@ -5644,6 +5665,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     teamSpaceRenderControls();
   }
   async function teamSpaceJoin(connection){
+    if(connection.spaceId!==teamSpaceSelectedId){
+      $("teamSpaceAdminToken").value="";
+      $("teamSpaceNewTrainerCredentials").hidden=true;
+      $("teamSpaceNewTrainerToken").value="";
+    }
     const current=teamSpaces.get(connection.spaceId);
     const joined=current?.role==="trainer"?current:{
       ...connection,name:current?.name||"Team Space",role:"reader"
@@ -5918,6 +5944,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("teamSpaceSelect").onchange=event=>{
     teamSpaceSelectedId=event.target.value;
     localStorage.setItem("handballSpielanalyse.teamSpace",teamSpaceSelectedId);
+    $("teamSpaceAdminToken").value="";
+    $("teamSpaceNewTrainerCredentials").hidden=true;
+    $("teamSpaceNewTrainerToken").value="";
+    $("teamSpaceNewTrainerToken").type="password";
     teamSpaceCatalogData=null;teamSpaceRenderControls();
     void teamSpaceRefreshCatalog();
   };
@@ -5931,15 +5961,78 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       $("teamSpaceJoinInput").value="";
     }catch(error){teamStatus("Einladung fehlgeschlagen: "+error.message)}
   };
+  function showNewTeamSpaceTrainerKey(token){
+    // Present once for backup. Never write the trainer secret into IndexedDB,
+    // LocalStorage, invitations, game JSON or the URL.
+    $("teamSpaceNewTrainerToken").value=token;
+    $("teamSpaceNewTrainerToken").type="password";
+    $("teamSpaceRevealTrainerToken").textContent="Schlüssel anzeigen";
+    $("teamSpaceNewTrainerCredentials").hidden=false;
+    $("teamSpaceAdminToken").value=token;
+  }
   $("teamSpaceCreate").onclick=async()=>{
     try{
       const name=$("teamSpaceName").value.trim();
-      const connection=await createTeamSpace($("teamSpaceApi").value,
-        name,$("teamSpaceAdminToken").value.trim());
+      const created=await createTeamSpace($("teamSpaceApi").value,
+        name,$("teamSpaceRegistrationToken").value.trim());
+      // Extract before persistence to avoid leaking the trainer credential.
+      const {trainerToken,...connection}=created;
+      showNewTeamSpaceTrainerKey(trainerToken);
+      $("teamSpaceRegistrationToken").value="";
       await saveTeamSpaceConnection(connection);
       await teamSpaceRefreshCatalog();
-      toast("Team Space angelegt. Einladungslink an die Mannschaft senden.");
+      teamStatus("Team Space erstellt. Trainer-Schlüssel jetzt sicher speichern; er wird nur einmal ausgegeben.");
+      toast("Team Space angelegt. Trainer-Schlüssel sichern und Spieler einladen.");
     }catch(error){teamStatus("Team Space konnte nicht erstellt werden: "+error.message)}
+  };
+  $("teamSpaceClaimTrainer").onclick=async()=>{
+    try{
+      const connection=teamActiveConnection();
+      if(!connection)throw Error("Bitte einen Team Space auswählen.");
+      if(!confirm("Bestehenden Team Space auf individuelle Trainer-Schlüssel umstellen?\n\nDanach funktioniert der zentrale Registrierungsschlüssel nicht mehr zum Veröffentlichen in diesem Team Space."))return;
+      const trainerToken=await claimTeamSpaceTrainerToken(connection,
+        $("teamSpaceRegistrationToken").value.trim());
+      showNewTeamSpaceTrainerKey(trainerToken);
+      $("teamSpaceRegistrationToken").value="";
+      await saveTeamSpaceConnection({...connection,role:"trainer"});
+      await teamSpaceRefreshCatalog();
+      teamStatus("Team Space übernommen. Neuen Trainer-Schlüssel jetzt sicher speichern.");
+    }catch(error){teamStatus("Umstellung fehlgeschlagen: "+error.message)}
+  };
+  $("teamSpaceActivateTrainer").onclick=async()=>{
+    try{
+      const connection=teamActiveConnection();
+      if(!connection)throw Error("Bitte einen Team Space auswählen.");
+      const token=$("teamSpaceAdminToken").value.trim();
+      const info=await verifyTeamSpaceTrainerToken(connection,token);
+      await saveTeamSpaceConnection({...connection,role:"trainer"});
+      await teamSpaceRefreshCatalog();
+      teamStatus("Trainerzugang aktiviert"+(info.trainerAccess==="legacy"
+        ?". Bitte diesen Team Space auf einen individuellen Schlüssel umstellen.":"."));
+    }catch(error){teamStatus("Trainerzugang nicht aktiviert: "+error.message)}
+  };
+  $("teamSpaceRotateTrainer").onclick=async()=>{
+    const connection=teamActiveConnection();
+    if(connection?.role!=="trainer")return;
+    if(!confirm("Trainer-Schlüssel erneuern?\n\nDer bisherige Schlüssel wird ungültig. Du musst den neuen Schlüssel unbedingt sichern."))return;
+    try{
+      const trainerToken=await rotateTeamSpaceTrainerToken(connection,
+        $("teamSpaceAdminToken").value.trim());
+      showNewTeamSpaceTrainerKey(trainerToken);
+      teamStatus("Trainer-Schlüssel erneuert. Den neuen Schlüssel jetzt sicher speichern.");
+      toast("Trainer-Schlüssel wurde erneuert.");
+    }catch(error){teamStatus("Trainer-Schlüssel nicht erneuert: "+error.message)}
+  };
+  $("teamSpaceCopyTrainerToken").onclick=async()=>{
+    const value=$("teamSpaceNewTrainerToken").value;
+    if(!value)return;
+    try{await navigator.clipboard.writeText(value);toast("Trainer-Schlüssel kopiert. Im Passwortmanager sichern.")}
+    catch{$("teamSpaceNewTrainerToken").select();toast("Trainer-Schlüssel markiert; bitte kopieren.")}
+  };
+  $("teamSpaceRevealTrainerToken").onclick=()=>{
+    const field=$("teamSpaceNewTrainerToken"),show=field.type==="password";
+    field.type=show?"text":"password";
+    $("teamSpaceRevealTrainerToken").textContent=show?"Schlüssel verbergen":"Schlüssel anzeigen";
   };
   $("teamSpaceCopyInvite").onclick=async()=>{
     const link=$("teamSpaceInviteLink").value;
