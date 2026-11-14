@@ -65,9 +65,18 @@ Zugänge und Team-Space-Schlüssel funktionsfähig.
 **Berechtigungen:** Jede bestätigte E-Mail kann einen Antrag stellen. Erst
 die manuelle Freigabe gestattet das Anlegen von maximal fünf Team Spaces pro
 Trainer. Darin lassen sich maximal 20 leere Saisons je Space anlegen.
-Die Trainerkonto-API besitzt **keinen Endpunkt zur Erstellung oder Veröffentlichung
+Die normale Trainerkonto-API besitzt **keinen Endpunkt zur Erstellung oder Veröffentlichung
 von Spielen**. Auch der zentrale Registrierungsschlüssel wird den neuen
-Konten **nicht** ausgehändigt. Die bisherigen Team Spaces (Schlüssel v2) behalten
+Konten **nicht** ausgehändigt.
+
+**Spätere Spielpflege:** Ein Administrator kann im Adminbereich für einen
+konkreten Konto-Team-Space über die Team-Space-ID einmalig einen separaten
+**Veröffentlichungs-Schlüssel** ausstellen oder erneuern. Dies geschieht nur
+mit einer autorisierten Administrator-UID. Der Schlüssel wird nie dem normalen
+Trainerkonto zugeschrieben oder in der Cloud im Klartext gespeichert.
+Eine zentrale Redaktion kann damit die bestehenden Team-Space-Endpunkte zum
+Hochladen von Spielen nutzen; die Trainer bleiben bei Saisonrechten.
+Eine neue Ausstellung macht den früheren Veröffentlichungsschlüssel ungültig. Die bisherigen Team Spaces (Schlüssel v2) behalten
 ihre bisherigen Funktionen und werden nicht stillschweigend umgewandelt.
 
 **Speicher und Datenschutz:** Firebase verwaltet das Login und die
