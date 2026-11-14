@@ -1675,7 +1675,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             <button type="button" class="btn primary" id="teamSpaceJoin">Mit Team Space verbinden</button>
           </div>
           <hr>
-          <p class="number-help">Trainerbereich: eigenständiger Saison-Cloud-Run-Dienst und persönlicher Veröffentlichungs-Schlüssel. Der Schlüssel wird nicht gespeichert.</p>
+          <p class="number-help">Trainerbereich: Mit dem zentralen Registrierungsschlüssel wird ein neuer Team Space eingerichtet. Jeder Space erhält danach einen eigenen Trainer-Schlüssel und einen Leseschlüssel für Spieler. Schlüssel werden nicht dauerhaft im Browser gespeichert.</p>
           <div class="teamspace-fields">
             <label>Cloud-Run-Dienst
               <input type="url" class="field" id="teamSpaceApi" autocomplete="off" spellcheck="false" placeholder="https://handball-season-sync-…run.app">
@@ -1683,13 +1683,29 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             <label>Teamname
               <input type="text" class="field" id="teamSpaceName" placeholder="TSV Kronshagen">
             </label>
-            <label>Trainer-Schlüssel
-              <input type="password" class="field" id="teamSpaceAdminToken" autocomplete="off" placeholder="Nur auf Trainergerät eingeben">
+            <label>Registrierungsschlüssel (nur zum Anlegen)
+              <input type="password" class="field" id="teamSpaceRegistrationToken" autocomplete="off" placeholder="Zentraler Schlüssel des Cloud-Dienstes">
+            </label>
+            <label>Trainer-Schlüssel (für ausgewählten Team Space)
+              <input type="password" class="field" id="teamSpaceAdminToken" autocomplete="off" placeholder="Individueller Schlüssel dieses Team Space">
             </label>
           </div>
           <div class="season-tools">
             <button type="button" class="btn" id="teamSpaceCreate">Team Space erstellen</button>
+            <button type="button" class="btn" id="teamSpaceClaimTrainer" hidden>Vorhandenen Team Space übernehmen</button>
+            <button type="button" class="btn" id="teamSpaceActivateTrainer" hidden>Trainerzugang aktivieren</button>
+            <button type="button" class="btn" id="teamSpaceRotateTrainer" hidden>Trainer-Schlüssel erneuern</button>
             <button type="button" class="btn" id="teamSpaceRotateReader">Leseschlüssel erneuern</button>
+          </div>
+          <div id="teamSpaceNewTrainerCredentials" hidden>
+            <p class="number-help"><strong>Neuer Trainer-Schlüssel – nur einmal sichtbar.</strong> Speichere ihn jetzt sicher in deinem Passwortmanager. Ohne diesen Schlüssel ist keine spätere Veröffentlichung möglich. Nicht an Spieler weitergeben.</p>
+            <label>Neu erzeugter Trainer-Schlüssel
+              <input class="field" id="teamSpaceNewTrainerToken" type="password" readonly autocomplete="off" spellcheck="false">
+            </label>
+            <div class="season-tools">
+              <button type="button" class="btn" id="teamSpaceCopyTrainerToken">Trainer-Schlüssel kopieren</button>
+              <button type="button" class="btn" id="teamSpaceRevealTrainerToken">Schlüssel anzeigen</button>
+            </div>
           </div>
           <label>Einladungslink für die Mannschaft
             <input class="field" id="teamSpaceInviteLink" type="text" readonly>
@@ -2445,7 +2461,7 @@ import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterSta
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
-import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken} from "./src/team-space-client.js?v=1";
+import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=2";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
@@ -5526,6 +5542,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
     $("teamSpacePublish").hidden=connection?.role!=="trainer";
     $("teamSpaceRotateReader").hidden=connection?.role!=="trainer";
+    $("teamSpaceRotateTrainer").hidden=connection?.role!=="trainer"||
+      teamSpaceCatalogData?.trainerAccess==="legacy";
+    $("teamSpaceClaimTrainer").hidden=!connection||
+      teamSpaceCatalogData?.trainerAccess!=="legacy";
+    $("teamSpaceActivateTrainer").hidden=!connection||connection.role==="trainer";
     $("teamSpaceCopyInvite").disabled=connection?.role!=="trainer";
     $("teamSpaceInviteLink").value=connection?.role==="trainer"
       ?makeTeamSpaceInvite(location.origin+location.pathname,connection):"";
@@ -5918,6 +5939,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("teamSpaceSelect").onchange=event=>{
     teamSpaceSelectedId=event.target.value;
     localStorage.setItem("handballSpielanalyse.teamSpace",teamSpaceSelectedId);
+    $("teamSpaceAdminToken").value="";
+    $("teamSpaceNewTrainerCredentials").hidden=true;
+    $("teamSpaceNewTrainerToken").value="";
+    $("teamSpaceNewTrainerToken").type="password";
     teamSpaceCatalogData=null;teamSpaceRenderControls();
     void teamSpaceRefreshCatalog();
   };
