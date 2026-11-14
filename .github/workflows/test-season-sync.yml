@@ -36,8 +36,14 @@ jobs:
           node --check cloud-run-season-sync/index.js
           node --check cloud-run-season-sync/api.js
           node --check cloud-run-season-sync/storage.js
-          node --test cloud-run-season-sync/api.test.js cloud-run-season-sync/team-space-api.test.js
+          node --check cloud-run-season-sync/trainer-accounts.js
+          node --test cloud-run-season-sync/api.test.js cloud-run-season-sync/team-space-api.test.js cloud-run-season-sync/trainer-accounts.test.js
+      - name: Verify Firebase Admin runtime dependency
+        run: |
+          cd cloud-run-season-sync
+          npm install --omit=dev --no-audit --no-fund
+          node --input-type=module -e "await import('firebase-admin/app'); await import('firebase-admin/auth');"
       - name: Run browser-client unit tests
         run: |
           npm install --no-audit --no-fund
-          npx vitest run tests/season-sync-client.test.js tests/team-space-client.test.js
+          npx vitest run tests/season-sync-client.test.js tests/team-space-client.test.js tests/trainer-auth-client.test.js

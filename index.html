@@ -1666,6 +1666,75 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
           <h3>Freigegebene Einzelspiele und Saisonspiele</h3>
           <div class="home-list" id="teamSpaceGames"></div>
         </div>
+        <details class="season-games-details teamspace-connect" id="trainerAccountPanel">
+          <summary>Trainerkonto · Registrierung und Saisonverwaltung</summary>
+          <p class="number-help">Mit bestätigter E-Mail-Adresse kannst du eine Trainerfreigabe beantragen. Freigegebene Trainer dürfen neue Team Spaces und leere Saisons anlegen, aber keine Spiele veröffentlichen. Die Spieler benötigen weiterhin nur ihren Einladungslink.</p>
+          <p class="number-help">Die Anmeldung erfolgt über Google Firebase Authentication. Dabei wird deine E-Mail-Adresse auch außerhalb der EU verarbeitet. Das Passwort wird nicht in der Spielanalyse gespeichert.</p>
+          <p id="trainerAccountStatus" class="number-help" role="status">Traineranmeldung wird beim Öffnen geprüft.</p>
+          <div id="trainerAccountLogin" hidden>
+            <div class="teamspace-fields">
+              <label>E-Mail-Adresse
+                <input class="field" type="email" id="trainerAccountEmail" autocomplete="email" placeholder="trainer@verein.de">
+              </label>
+              <label>Passwort (mindestens sechs Zeichen)
+                <input class="field" type="password" id="trainerAccountPassword" autocomplete="current-password" minlength="6" placeholder="Nicht im Browser speichern">
+              </label>
+            </div>
+            <div class="season-tools">
+              <button type="button" class="btn primary" id="trainerAccountSignIn">Anmelden</button>
+              <button type="button" class="btn" id="trainerAccountSignUp">Registrieren</button>
+              <button type="button" class="btn" id="trainerAccountVerifyMail">Bestätigungs-E-Mail senden</button>
+              <button type="button" class="btn" id="trainerAccountCheckMail">E-Mail-Bestätigung prüfen</button>
+              <button type="button" class="btn" id="trainerAccountPasswordReset">Passwort zurücksetzen</button>
+              <button type="button" class="btn" id="trainerAccountSignOut">Abmelden</button>
+            </div>
+          </div>
+          <div id="trainerAccountDashboard" hidden>
+            <div class="season-tools">
+              <button type="button" class="btn" id="trainerAccountRequestApproval">Trainerfreigabe beantragen</button>
+              <button type="button" class="btn" id="trainerAccountRefresh">Status aktualisieren</button>
+            </div>
+            <div id="trainerAccountCreator" hidden>
+              <hr>
+              <h3>Team Space erstellen</h3>
+              <label>Teamname
+                <input class="field" id="trainerAccountSpaceName" type="text" placeholder="TSV Kronshagen B-Jugend">
+              </label>
+              <button type="button" class="btn primary" id="trainerAccountCreateSpace">Team Space erstellen</button>
+              <h3>Leere Saison anlegen</h3>
+              <div class="teamspace-fields">
+                <label>Team Space
+                  <select class="field" id="trainerAccountSpaces" aria-label="Team Space für die neue Saison"></select>
+                </label>
+                <label>Saisonname
+                  <input class="field" id="trainerAccountSeasonName" type="text" placeholder="B-Jugend 2027/28">
+                </label>
+              </div>
+              <div class="season-tools">
+                <button type="button" class="btn primary" id="trainerAccountCreateSeason">Saison anlegen</button>
+                <button type="button" class="btn" id="trainerAccountCopySpaceId">Team-Space-ID kopieren</button>
+              </div>
+              <p class="number-help">Neue Saisons starten mit 0 Spielen. Das Erstellen oder Hochladen von Spielen ist mit diesem Trainerkonto nicht erlaubt.</p>
+            </div>
+            <div id="trainerAccountAdmin" hidden>
+              <hr>
+              <h3>Trainerfreigaben verwalten · Administrator</h3>
+              <div class="home-list" id="trainerAccountUserList"></div>
+              <h3>Spielveröffentlichung zentral freigeben</h3>
+              <p class="number-help">Nur Administratoren können für einen Konto-Team-Space einen separaten Veröffentlichungs-Schlüssel ausstellen. Beim Erneuern wird der bisherige Schlüssel ungültig. Den Schlüssel nicht an normale Trainerkonten weitergeben.</p>
+              <label>Team-Space-ID
+                <input class="field" id="trainerAccountPublisherSpace" type="text" autocomplete="off" placeholder="UUID des Team Space">
+              </label>
+              <button type="button" class="btn" id="trainerAccountIssuePublisher">Veröffentlichungs-Schlüssel erzeugen / erneuern</button>
+              <div id="trainerAccountPublisherCredentials" hidden>
+                <label>Einmalig ausgegebener Veröffentlichungsschlüssel
+                  <input class="field" id="trainerAccountPublisherToken" type="password" readonly autocomplete="off" spellcheck="false">
+                </label>
+                <button type="button" class="btn" id="trainerAccountCopyPublisher">Schlüssel kopieren</button>
+              </div>
+            </div>
+          </div>
+        </details>
         <details class="season-games-details teamspace-connect" id="teamSpaceConnect">
           <summary>Team Space verbinden oder verwalten</summary>
           <label>Einladungslink
@@ -1678,7 +1747,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
           <p class="number-help">Trainerbereich: Mit dem zentralen Registrierungsschlüssel wird ein neuer Team Space eingerichtet. Jeder Space erhält danach einen eigenen Trainer-Schlüssel und einen Leseschlüssel für Spieler. Schlüssel werden nicht dauerhaft im Browser gespeichert.</p>
           <div class="teamspace-fields">
             <label>Cloud-Run-Dienst
-              <input type="url" class="field" id="teamSpaceApi" autocomplete="off" spellcheck="false" placeholder="https://handball-season-sync-…run.app">
+              <input type="url" class="field" id="teamSpaceApi" autocomplete="off" spellcheck="false" value="https://handball-season-sync-235703972531.europe-west1.run.app" placeholder="https://handball-season-sync-…run.app">
             </label>
             <label>Teamname
               <input type="text" class="field" id="teamSpaceName" placeholder="TSV Kronshagen">
@@ -2462,6 +2531,7 @@ import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handbal
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
 import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=2";
+import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=1";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
@@ -5546,9 +5616,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       teamSpaceCatalogData?.trainerAccess==="legacy";
     $("teamSpaceClaimTrainer").hidden=!connection||
       teamSpaceCatalogData?.trainerAccess!=="legacy";
-    $("teamSpaceActivateTrainer").hidden=!connection||connection.role==="trainer";
-    $("teamSpaceCopyInvite").disabled=connection?.role!=="trainer";
-    $("teamSpaceInviteLink").value=connection?.role==="trainer"
+    $("teamSpaceActivateTrainer").hidden=!connection||["trainer","account"].includes(connection.role);
+    $("teamSpaceCopyInvite").disabled=!["trainer","account"].includes(connection?.role);
+    $("teamSpaceInviteLink").value=["trainer","account"].includes(connection?.role)
       ?makeTeamSpaceInvite(location.origin+location.pathname,connection):"";
     if(connection?.api&&!$("teamSpaceApi").value)
       $("teamSpaceApi").value=connection.api;
@@ -5591,8 +5661,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const season of catalog.seasons){
       const local=teamSpaceLocalSeason(season.id);
       const outdated=local&&Number(local.revision)<season.revision;
-      const status=local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
-      const actions=[{title:outdated?"Aktualisieren":local?"Öffnen":"Importieren",
+      const status=season.gameCount===0?"Noch keine Spiele":
+        local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
+      const actions=season.gameCount===0?[]:[{title:outdated?"Aktualisieren":local?"Öffnen":"Importieren",
         primary:true,action:async()=>{
           if(local&&!outdated){
             if(local.localSeasonId!==seasonLibraryId)await switchSeasonLibrary(local.localSeasonId);
@@ -5671,7 +5742,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       $("teamSpaceNewTrainerToken").value="";
     }
     const current=teamSpaces.get(connection.spaceId);
-    const joined=current?.role==="trainer"?current:{
+    const joined=["trainer","account"].includes(current?.role)?current:{
       ...connection,name:current?.name||"Team Space",role:"reader"
     };
     const catalog=await teamSpaceCatalog(joined);
@@ -6040,6 +6111,181 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     try{await navigator.clipboard.writeText(link);toast("Team-Space-Leselink kopiert. Nur an die Mannschaft weitergeben.")}
     catch{$("teamSpaceInviteLink").select();toast("Link markiert; bitte kopieren.")}
   };
+  // Optional account-based Team Space registration. Credentials are handled by
+  // Firebase; only the refresh token is kept in per-tab session storage.
+  let trainerAccountClient=null;
+  function trainerAccountApi(){
+    const api=seasonCloudEndpoint($("teamSpaceApi").value);
+    if(!trainerAccountClient||trainerAccountClient.api!==api)
+      trainerAccountClient=createTrainerAuthClient(api);
+    return trainerAccountClient;
+  }
+  function trainerAccountStatus(message){
+    $("trainerAccountStatus").textContent=message;
+  }
+  function trainerAccountClearPublisher(){
+    $("trainerAccountPublisherToken").value="";
+    $("trainerAccountPublisherCredentials").hidden=true;
+  }
+  async function trainerAccountLoadSpaces(){
+    const service=trainerAccountApi();
+    const previous=$("trainerAccountSpaces").value;
+    const data=await service.listSpaces(),select=$("trainerAccountSpaces");
+    select.replaceChildren();
+    for(const row of data.spaces)
+      select.add(new Option(row.name+" ("+row.seasonCount+" Saisons)",row.spaceId));
+    if([...select.options].some(option=>option.value===previous))select.value=previous;
+    if(!data.spaces.length)select.add(new Option("Zuerst Team Space erstellen",""));
+  }
+  async function trainerAccountLoadAdmin(){
+    const service=trainerAccountApi(),container=$("trainerAccountUserList");
+    const data=await service.listUsers();
+    container.replaceChildren();
+    for(const user of data.users){
+      const row=document.createElement("div");row.className="home-list-row";
+      const name=document.createElement("div"),strong=document.createElement("strong"),
+        detail=document.createElement("small");
+      strong.textContent=user.email;detail.textContent="Status: "+user.status;
+      name.append(strong,detail);row.append(name);
+      const button=document.createElement("button");button.type="button";
+      button.className="btn";button.textContent=user.status==="approved"?"Sperren":"Freigeben";
+      button.onclick=async()=>{
+        try{
+          if(!confirm("Trainerkonto "+user.email+" "+(user.status==="approved"?"sperren":"freigeben")+"?"))return;
+          await service.setApproval(user.uid,user.status==="approved"?"suspended":"approved");
+          await trainerAccountLoadAdmin();
+          trainerAccountStatus("Freigabe für "+user.email+" aktualisiert.");
+        }catch(error){trainerAccountStatus("Freigabe fehlgeschlagen: "+error.message)}
+      };
+      row.append(button);container.append(row);
+    }
+    if(!data.users.length)container.textContent="Noch keine Traineranträge vorhanden.";
+  }
+  async function trainerAccountRefresh(){
+    const service=trainerAccountApi(),config=await service.getConfig();
+    $("trainerAccountLogin").hidden=!config.enabled;
+    $("trainerAccountDashboard").hidden=true;
+    if(!config.enabled){
+      trainerAccountStatus("Die Firebase-Trainerregistrierung ist in Google Cloud noch nicht aktiviert. Die bisherigen Team-Space-Schlüssel bleiben nutzbar.");
+      return;
+    }
+    if(!service.hasSession()){
+      trainerAccountStatus("Mit E-Mail und Passwort anmelden oder ein neues Trainerkonto registrieren.");
+      return;
+    }
+    const me=await service.me();
+    $("trainerAccountDashboard").hidden=false;
+    const approved=me.isAdmin||me.status==="approved";
+    $("trainerAccountCreator").hidden=!approved;
+    $("trainerAccountRequestApproval").hidden=approved||me.status==="pending"||me.status==="suspended";
+    $("trainerAccountAdmin").hidden=!me.isAdmin;
+    if(approved)await trainerAccountLoadSpaces();
+    if(me.isAdmin)await trainerAccountLoadAdmin();
+    const status=me.isAdmin?"Administrator":
+      me.status==="approved"?"Trainer freigegeben":
+      me.status==="pending"?"Freigabe beantragt":
+      me.status==="suspended"?"Trainerkonto gesperrt":"Freigabe noch nicht beantragt";
+    trainerAccountStatus(me.email+" · "+status);
+  }
+  function trainerAccountAction(promise){
+    Promise.resolve().then(promise).catch(error=>{
+      trainerAccountStatus("Trainerkonto: "+error.message);
+    });
+  }
+  $("trainerAccountIssuePublisher").onclick=()=>trainerAccountAction(async()=>{
+    const spaceId=$("trainerAccountPublisherSpace").value.trim();
+    if(!spaceId)throw Error("Bitte die Team-Space-ID angeben.");
+    if(!confirm("Privilegierten Veröffentlichungsschlüssel ausstellen? Ein früherer Schlüssel dieses Team Space wird ungültig."))return;
+    const result=await trainerAccountApi().issuePublisherKey(spaceId);
+    trainerAccountClearPublisher();
+    $("trainerAccountPublisherToken").value=result.trainerToken;
+    $("trainerAccountPublisherCredentials").hidden=false;
+    trainerAccountStatus("Veröffentlichungsschlüssel ausgestellt. Jetzt im Passwortmanager sichern; normale Trainer erhalten ihn nicht.");
+  });
+  $("trainerAccountCopyPublisher").onclick=async()=>{
+    const secret=$("trainerAccountPublisherToken").value;
+    if(!secret)return;
+    try{await navigator.clipboard.writeText(secret);toast("Veröffentlichungsschlüssel kopiert.")}
+    catch{$("trainerAccountPublisherToken").select();toast("Schlüssel markiert; bitte kopieren.")}
+  };
+  $("trainerAccountCopySpaceId").onclick=async()=>{
+    const spaceId=$("trainerAccountSpaces").value;
+    if(!spaceId)return;
+    try{await navigator.clipboard.writeText(spaceId);toast("Team-Space-ID kopiert.")}
+    catch{toast("Team-Space-ID: "+spaceId)}
+  };
+  $("trainerAccountPanel").addEventListener("toggle",()=>{
+    if($("trainerAccountPanel").open)trainerAccountAction(trainerAccountRefresh);
+  });
+  $("trainerAccountSignUp").onclick=()=>trainerAccountAction(async()=>{
+    trainerAccountClearPublisher();
+    const service=trainerAccountApi();
+    await service.signup($("trainerAccountEmail").value.trim(),
+      $("trainerAccountPassword").value);
+    $("trainerAccountPassword").value="";
+    trainerAccountStatus("Registriert. Bitte den Bestätigungslink in der E-Mail öffnen und danach „E-Mail-Bestätigung prüfen“ wählen.");
+  });
+  $("trainerAccountSignIn").onclick=()=>trainerAccountAction(async()=>{
+    trainerAccountClearPublisher();
+    const service=trainerAccountApi();
+    await service.login($("trainerAccountEmail").value.trim(),
+      $("trainerAccountPassword").value);
+    $("trainerAccountPassword").value="";
+    await trainerAccountRefresh();
+  });
+  $("trainerAccountVerifyMail").onclick=()=>trainerAccountAction(async()=>{
+    await trainerAccountApi().requestVerification();
+    trainerAccountStatus("Die Bestätigungs-E-Mail wurde angefordert. Postfach prüfen.");
+  });
+  $("trainerAccountCheckMail").onclick=()=>trainerAccountAction(async()=>{
+    await trainerAccountApi().refresh(true);
+    await trainerAccountRefresh();
+  });
+  $("trainerAccountPasswordReset").onclick=()=>trainerAccountAction(async()=>{
+    const email=$("trainerAccountEmail").value.trim();
+    if(!email)throw Error("Bitte eine E-Mail-Adresse eingeben.");
+    await trainerAccountApi().resetPassword(email);
+    trainerAccountStatus("Falls die Adresse registriert ist, erhält sie eine E-Mail zum Zurücksetzen des Passworts.");
+  });
+  $("trainerAccountSignOut").onclick=()=>trainerAccountAction(async()=>{
+    trainerAccountClearPublisher();
+    trainerAccountApi().logout();
+    $("trainerAccountPassword").value="";
+    await trainerAccountRefresh();
+  });
+  $("trainerAccountRequestApproval").onclick=()=>trainerAccountAction(async()=>{
+    const result=await trainerAccountApi().register();
+    await trainerAccountRefresh();
+    trainerAccountStatus("Trainerregistrierung: "+(result.status==="pending"
+      ?"Freigabe beantragt. Ein Administrator muss sie bestätigen.":"Freigegeben."));
+  });
+  $("trainerAccountRefresh").onclick=()=>trainerAccountAction(trainerAccountRefresh);
+  $("trainerAccountCreateSpace").onclick=()=>trainerAccountAction(async()=>{
+    const service=trainerAccountApi();
+    const name=$("trainerAccountSpaceName").value.trim();
+    if(!name)throw Error("Bitte Teamnamen eingeben.");
+    const created=await service.createSpace(name);
+    await saveTeamSpaceConnection({api:service.api,spaceId:created.spaceId,
+      name:created.name,readToken:created.readToken,role:"account",revision:0});
+    $("trainerAccountSpaceName").value="";
+    await teamSpaceRefreshCatalog();
+    await trainerAccountLoadSpaces();
+    $("trainerAccountSpaces").value=created.spaceId;
+    trainerAccountStatus("Team Space angelegt. Der Spieler-Einladungslink kann unter „Team Space verbinden oder verwalten“ kopiert werden.");
+    toast("Team Space erstellt. Du kannst jetzt eine Saison anlegen.");
+  });
+  $("trainerAccountCreateSeason").onclick=()=>trainerAccountAction(async()=>{
+    const service=trainerAccountApi(),spaceId=$("trainerAccountSpaces").value;
+    const name=$("trainerAccountSeasonName").value.trim();
+    if(!spaceId||!name)throw Error("Bitte Team Space und Saisonname auswählen.");
+    const catalog=await service.catalog(spaceId);
+    await service.createSeason(spaceId,name,catalog.revision);
+    $("trainerAccountSeasonName").value="";
+    await trainerAccountLoadSpaces();
+    if(teamSpaceSelectedId===spaceId)await teamSpaceRefreshCatalog();
+    trainerAccountStatus("Saison „"+name+"“ ohne Spiele angelegt. Das Hochladen von Spielen ist mit dem Trainerkonto gesperrt.");
+    toast("Leere Saison erstellt.");
+  });
   $("teamSpaceRotateReader").onclick=async()=>{
     const connection=teamActiveConnection();
     if(connection?.role!=="trainer")return;

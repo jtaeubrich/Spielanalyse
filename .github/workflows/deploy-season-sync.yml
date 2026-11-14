@@ -62,7 +62,8 @@ jobs:
           node --check cloud-run-season-sync/index.js
           node --check cloud-run-season-sync/api.js
           node --check cloud-run-season-sync/storage.js
-          node --test cloud-run-season-sync/api.test.js cloud-run-season-sync/team-space-api.test.js
+          node --check cloud-run-season-sync/trainer-accounts.js
+          node --test cloud-run-season-sync/api.test.js cloud-run-season-sync/team-space-api.test.js cloud-run-season-sync/trainer-accounts.test.js
       - uses: google-github-actions/auth@v2
         if: steps.revision.outputs.deploy == 'true'
         with:
@@ -84,6 +85,6 @@ jobs:
             --project "$PROJECT_ID" \
             --region europe-west1 \
             --service-account "$RUNTIME_SERVICE_ACCOUNT" \
-            --set-env-vars "SEASON_SYNC_BUCKET=$BUCKET,ALLOWED_ORIGINS=https://jtaeubrich.github.io" \
+            --update-env-vars "SEASON_SYNC_BUCKET=$BUCKET,ALLOWED_ORIGINS=https://jtaeubrich.github.io" \
             --set-secrets "TRAINER_PUBLISH_TOKEN=$TOKEN_SECRET:latest" \
             --allow-unauthenticated --quiet
