@@ -50,9 +50,12 @@ function sharedYoutubeVideo(video){
   if(!id)return null;
   const shared={
     youtubeId:id,youtubeUrl:"https://www.youtube.com/watch?v="+id,
-    analysisTimeBasis:"youtube-absolute-ms"
+    // Explicit units avoid legacy migration interpreting a video clock as ms.
+    syncUnit:video.syncUnit==="ms"?"ms":"seconds"
   };
-  if(["seconds","ms"].includes(video.syncUnit))shared.syncUnit=video.syncUnit;
+  if(["youtube-absolute-ms","video-absolute-ms","live-elapsed-ms"]
+    .includes(video.analysisTimeBasis))
+    shared.analysisTimeBasis=video.analysisTimeBasis;
   for(const key of ["h1SyncRealTime","h2SyncRealTime","kickoff",
     "h1LiveStartMs","h2LiveStartMs"]){
     if(video[key]===null||video[key]===undefined||video[key]==="")continue;
@@ -84,8 +87,9 @@ function publicEvent(event,{shareVideoTime=false}={}){
   const privacy=privateSettings(event);
   if(event.type==="keyMoment"&&privacy.moment===true)return null;
   const result=clean(event);
-  // In video-scouting games realTime is a confirmed YouTube video offset
-  // (milliseconds), not the wall-clock timestamp from live scouting.
+  // realTime is a relative millisecond offset: an absolute video position
+  // for video scouting, or the live timer position for a live-scouted game.
+  // H1/H2 synchronization anchors map either timeline to the YouTube video.
   if(shareVideoTime&&event.realTime!==null&&
     event.realTime!==undefined&&event.realTime!==""&&
     Number.isFinite(Number(event.realTime))&&Number(event.realTime)>=0)
@@ -127,7 +131,7 @@ export function publicGameForTeamSpace(game){
       source.timer={duration:value?.duration||25};
     }else if(key==="events"){
       source.events=value.map(event=>publicEvent(event,{
-        shareVideoTime:Boolean(youtubeVideo&&game.isVideoscoutingFile)
+        shareVideoTime:Boolean(youtubeVideo)
       })).filter(Boolean);
     }else source[key]=clean(value);
   }
