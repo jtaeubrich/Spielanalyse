@@ -1,4 +1,4 @@
-const CACHE_NAME = "handball-spielanalyse-network-first-v56";
+const CACHE_NAME = "handball-spielanalyse-network-first-v57";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -9,9 +9,9 @@ const APP_SHELL = [
   "./src/season-files.js",
   "./src/season-update.js?v=1",
   "./src/season-sync-client.js?v=1",
-  "./src/team-space-client.js?v=2",
+  "./src/team-space-client.js?v=3",
   "./src/team-space-publication.js?v=2",
-  "./src/trainer-auth-client.js?v=3",
+  "./src/trainer-auth-client.js?v=4",
   "./src/video-official-reconcile.js?v=1",
   "./src/season-selection.js",
   "./src/analysis-perspective.js",
