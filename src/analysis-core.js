@@ -31,6 +31,28 @@ export function defendingTeamOf(event, getPlayer = () => null) {
       : null;
 }
 
+/**
+ * Match an event to a game half. Explicitly recorded halves take precedence.
+ * For legacy events without a half, use cumulative game seconds and the
+ * configured minutes per half. Untimed events remain part of "all" only.
+ */
+export function matchesGameHalf(event, half = "all", durationMinutes = 25) {
+  if (half === "all") return true;
+  if (half !== "1" && half !== "2") return false;
+
+  const explicitHalf = event?.half;
+  if (explicitHalf !== null && explicitHalf !== undefined && explicitHalf !== "") {
+    const recorded = Number(explicitHalf);
+    if (recorded === 1 || recorded === 2) return recorded === Number(half);
+  }
+
+  if (event?.time === null || event?.time === undefined || event?.time === "") return false;
+  const seconds = Number(event.time);
+  const halfSeconds = Number(durationMinutes) * 60;
+  if (!Number.isFinite(seconds) || seconds < 0 || !Number.isFinite(halfSeconds) || halfSeconds <= 0) return false;
+  return (seconds < halfSeconds ? 1 : 2) === Number(half);
+}
+
 export function summarizeShots(shots = []) {
   const list = Array.isArray(shots) ? shots : [];
   const decided = list.filter((event) => event?.type !== "shot");

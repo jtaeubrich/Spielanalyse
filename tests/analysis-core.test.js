@@ -9,7 +9,8 @@ import {
   summarizeShots,
   teamMetrics,
   goalkeeperForGoal,
-  playerMetrics
+  playerMetrics,
+  matchesGameHalf
 } from "../src/analysis-core.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -29,6 +30,45 @@ describe("analysis core", () => {
     expect(percentage(3, 4)).toBe(75);
     expect(percentage(1, 3)).toBe(33);
     expect(percentage(4, 0)).toBe(0);
+  });
+
+  test("uses recorded halves before cumulative game seconds", () => {
+    expect(matchesGameHalf({ half: 1, time: 1800 }, "1", 25)).toBe(true);
+    expect(matchesGameHalf({ half: 1, time: 1800 }, "2", 25)).toBe(false);
+    expect(matchesGameHalf({ half: "2", time: 1200 }, "2", 25)).toBe(true);
+    expect(matchesGameHalf({ half: 2, time: 1200 }, "1", 25)).toBe(false);
+    expect(matchesGameHalf({ half: null, time: 1499 }, "1", 25)).toBe(true);
+    expect(matchesGameHalf({ time: 1500 }, "2", 25)).toBe(true);
+    expect(matchesGameHalf({ time: 1800 }, "1", 30)).toBe(false);
+    expect(matchesGameHalf({ time: 1799 }, "1", 30)).toBe(true);
+    expect(matchesGameHalf({ time: 1800 }, "2", 30)).toBe(true);
+  });
+
+  test("keeps untimed events in the full game without guessing a half", () => {
+    for (const event of [{}, { time: null }, { time: "" }, { time: "invalid" }, { time: -2 }]) {
+      expect(matchesGameHalf(event, "all")).toBe(true);
+      expect(matchesGameHalf(event, "1")).toBe(false);
+      expect(matchesGameHalf(event, "2")).toBe(false);
+    }
+    expect(matchesGameHalf({ half: 2, time: null }, "2")).toBe(true);
+    expect(matchesGameHalf({ time: 100 }, "3")).toBe(false);
+  });
+
+  test("repartitions a real match into consistent half-specific efficiency rates", () => {
+    const halves = [1, 2].map(half => {
+      const events = hkn.events.filter(event => matchesGameHalf(event, String(half), 25));
+      const shots = events.filter(event => ["shot", "goal", "miss", "save", "block"].includes(event.type));
+      const goals = shots.filter(event => event.type === "goal").length;
+      const decided = shots.filter(event => event.type !== "shot").length;
+      const errors = events.filter(event => event.type === "error").length;
+      return { goals, decided, errors, rate: percentage(goals, decided), attack: percentage(goals, decided + errors) };
+    });
+    expect(halves).toEqual([
+      { goals: 31, decided: 52, errors: 12, rate: 60, attack: 48 },
+      { goals: 30, decided: 45, errors: 13, rate: 67, attack: 52 }
+    ]);
+    expect(halves.reduce((sum, half) => sum + half.goals, 0)).toBe(61);
+    expect(halves.reduce((sum, half) => sum + half.errors, 0)).toBe(25);
   });
 
   test("resolves attacking and defending teams for saves", () => {
