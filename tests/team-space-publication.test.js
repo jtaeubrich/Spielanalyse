@@ -56,6 +56,25 @@ describe("Team Space public publication boundary",()=>{
     expect(archive).toEqual(copy);
   });
 
+  it("removes private metadata from seasons and game records, keeping source data intact",()=>{
+    const game=original();
+    const archive={format:"handball-spielanalyse-season",version:1,name:"2026/27",
+      comment:"Saison nur für Trainer",games:[
+        {id:"sg-one",fileName:"game.json",selected:true,
+         note:"Meine private Spielnotiz",
+         videoAnnotation:{shapes:[{type:"circle"}]},data:game}
+      ]};
+    const copy=structuredClone(archive);
+    const published=publicSeasonForTeamSpace(archive);
+    const json=JSON.stringify(published);
+    expect(json).not.toContain("Saison nur für Trainer");
+    expect(json).not.toContain("Meine private Spielnotiz");
+    expect(json).not.toContain("videoAnnotation");
+    expect(published.games[0].id).toBe("sg-one");
+    expect(published.games[0].data.events).toHaveLength(2);
+    expect(archive).toEqual(copy);
+  });
+
   it("changes to local private notes, highlights, videos or key moments never create false public updates",()=>{
     const remote=original(),local=structuredClone(remote);
     local.events[0].comment="Neuer privater Text";
