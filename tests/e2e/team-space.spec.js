@@ -652,3 +652,83 @@ test("Team Space warns when a separately published game is not part of its cloud
   await page.locator("#teamSpaceRefresh").click();
   await expect(status).toContainText("1 Einzelspiel ist keiner Online-Saison zugeordnet");
 });
+
+async function openModifiedTeamSpaceSeasonGame(page,eventCount){
+  await page.goto("/#teamspace="+encodeURIComponent(SPACE)+
+    "&key="+encodeURIComponent(READER)+"&api="+encodeURIComponent(API));
+  await expect(page.locator("#homeTeamSpaceJoined")).toContainText("erfolgreich hinzugefügt");
+  await page.locator("#homeRecentOptions .home-list-row").filter({
+    hasText:"Team Space verbunden"
+  }).getByRole("button",{name:"Laden"}).click();
+  await page.locator("#teamSpaceSeasons").getByRole("button",{name:"Saison laden"}).click();
+  const localId=await page.locator("#seasonLibrarySelect").inputValue();
+  await page.evaluate(async({localId,eventCount})=>{
+    const db=await new Promise((resolve,reject)=>{
+      const request=indexedDB.open("handball-spielanalyse",3);
+      request.onsuccess=()=>resolve(request.result);
+      request.onerror=()=>reject(request.error);
+    });
+    try{
+      await new Promise((resolve,reject)=>{
+        const tx=db.transaction("seasons","readwrite"),store=tx.objectStore("seasons");
+        for(const key of [localId,"current"]){
+          const get=store.get(key);
+          get.onsuccess=()=>{
+            const record=get.result;
+            if(!record?.games?.length)return;
+            for(const field of ["data","state"]){
+              const state=record.games[0][field];
+              if(!state)continue;
+              const baseline=state.events[0];
+              state.events=Array.from({length:eventCount},(_,i)=>({
+                ...baseline,id:123+i,time:60+i*6,scoreH:i+1
+              }));
+            }
+            store.put(record);
+          };
+        }
+        tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+      });
+    }finally{db.close()}
+  },{localId,eventCount});
+  await page.reload();
+  await loadConnectedTeamSpace(page);
+  await unlockExistingTrainerSpace(page);
+  await page.locator("#teamSpaceSeasons").getByRole("button",{name:"Saison öffnen"}).click();
+  await page.locator("#homeSeasonGames").getByRole("button",{name:"Fortsetzen"}).click();
+  await expect(page.locator("#publishOpenedGameBtn")).toBeVisible();
+  await expect(page.locator("#publishOpenedGameBtn")).toBeEnabled();
+  await expect(page.locator("#eventCount")).toHaveText(eventCount+" Ereignisse");
+}
+
+test("opened Team Space season game publishes its 75 local events into its existing online season",async({page})=>{
+  const cloud=await mockSpace(page);
+  const confirmations=[];
+  page.on("dialog",dialog=>{
+    confirmations.push(dialog.message());
+    return dialog.accept();
+  });
+  await openModifiedTeamSpaceSeasonGame(page,75);
+  await expect(page.locator("#publishOpenedGameBtn")).toContainText("Im Team Space veröffentlichen");
+  await page.locator("#publishOpenedGameBtn").click();
+  await expect.poll(()=>cloud.lastPublish).not.toBeNull();
+  expect(cloud.lastPublish.seasonId).toBe(SEASON);
+  expect(cloud.lastPublish.gameId).toBe(GAME);
+  expect(cloud.lastPublish.game.events).toHaveLength(75);
+  expect(confirmations.some(text=>text.includes("Online-Saison: Saison 2026/27")&&
+    text.includes("Ereignisse: 75 lokal, 1 online"))).toBe(true);
+  await expect(page.locator("#publishOpenedGameBtn")).toBeEnabled();
+  const local=await readStore(page,"seasons",await page.locator("#seasonLibrarySelect").inputValue());
+  expect(local.games[0].data.events).toHaveLength(75);
+});
+
+test("opened Team Space game cannot overwrite a cloud match containing more events",async({page})=>{
+  const cloud=await mockSpace(page);
+  page.on("dialog",dialog=>dialog.accept());
+  await openModifiedTeamSpaceSeasonGame(page,0);
+  await page.locator("#publishOpenedGameBtn").click();
+  await expect(page.locator("#teamSpaceStatus"))
+    .toContainText("Ein Spiel mit weniger Ereignissen darf nicht ungeprüft");
+  expect(cloud.lastPublish).toBeNull();
+  await expect(page.locator("#publishOpenedGameBtn")).toBeEnabled();
+});
