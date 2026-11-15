@@ -3,6 +3,7 @@ import {
   syncPointSeconds,
   eventHalf,
   syncForHalf,
+  halfSyncFromOfficialGoal,
   eventVideoSeconds,
   eventVideoPosition,
   estimateReviewGameTime,
@@ -12,6 +13,67 @@ import {
   reconstructedGameClock,
   scoreAtVideoPosition
 } from "../src/video-sync.js";
+
+
+describe("half-time video synchronization from an official goal",()=>{
+  const goal=(time,half=1)=>({
+    id:"official-goal",type:"goal",officialSource:"handball.net",
+    time,half,realTime:null,scoreH:1,scoreA:0
+  });
+  test("supports negative H1 sync when footage starts five seconds late",()=>{
+    const reference=goal(40),video={syncUnit:"seconds",h2SyncRealTime:1620};
+    const original=structuredClone(reference),before=structuredClone(video);
+    const result=halfSyncFromOfficialGoal(reference,35,{video,durationMinutes:25});
+    expect(result).toMatchObject({half:1,officialTime:40,offsetSeconds:-5});
+    expect(result.video.h1SyncRealTime).toBe(-5);
+    expect(result.video.kickoff).toBe(-5);
+    expect(result.video.h2SyncRealTime).toBe(1620);
+    expect(reference).toEqual(original);
+    expect(video).toEqual(before);
+    const early={type:"yellow",officialSource:"handball.net",time:3,half:1,realTime:null};
+    const beforeCamera={type:"goal",officialSource:"handball.net",time:6,half:1,realTime:null};
+    const later={type:"goal",officialSource:"handball.net",time:50,half:1,realTime:null};
+    const options={video:result.video,isVideoscoutingFile:true,
+      events:[early,beforeCamera,reference,later],durationMinutes:25};
+    expect(eventVideoPosition(early,options).status).toBe("unassigned");
+    expect(eventVideoPosition(beforeCamera,options)).toEqual({seconds:1,status:"estimated"});
+    expect(eventVideoPosition(reference,options)).toEqual({seconds:35,status:"estimated"});
+    expect(eventVideoPosition(later,options)).toEqual({seconds:45,status:"estimated"});
+  });
+  test("H2 sync is independent of H1 and accounts for the half's start time",()=>{
+    const video={syncUnit:"seconds",h1SyncRealTime:-5,kickoff:-5};
+    const result=halfSyncFromOfficialGoal(goal(1540,2),1620,{video,durationMinutes:25});
+    expect(result).toMatchObject({half:2,officialTime:1540,offsetSeconds:1580});
+    expect(result.video).toMatchObject({h1SyncRealTime:-5,h2SyncRealTime:1580});
+    expect(eventVideoPosition({
+      type:"goal",officialSource:"handball.net",time:1510,half:2,realTime:null
+    },{video:result.video,isVideoscoutingFile:true,durationMinutes:25}))
+      .toEqual({seconds:1590,status:"estimated"});
+  });
+  test("preserves confirmed video offsets and preexisting anchor metadata",()=>{
+    const confirmed=goal(52);
+    confirmed.realTime=49000;
+    const result=halfSyncFromOfficialGoal(goal(40),35,{
+      video:{syncUnit:"ms",h1SyncRealTime:0,reviewClockAnchors:[
+        {half:1,videoAt:23,gameAt:28,running:false}
+      ]},durationMinutes:25
+    });
+    expect(result.video.h1SyncRealTime).toBe(-5000);
+    expect(result.video.reviewClockAnchors).toHaveLength(1);
+    expect(eventVideoPosition(confirmed,{
+      events:[confirmed],video:result.video,isVideoscoutingFile:true
+    })).toEqual({seconds:49,status:"confirmed"});
+  });
+  test("requires an official goal and a real nonnegative video position",()=>{
+    expect(()=>halfSyncFromOfficialGoal({type:"goal",time:40},35))
+      .toThrow(/offiziellen/);
+    expect(()=>halfSyncFromOfficialGoal({...goal(40),type:"2min"},35))
+      .toThrow(/Tor/);
+    expect(()=>halfSyncFromOfficialGoal(goal(40),NaN)).toThrow(/Videoposition/);
+    expect(()=>halfSyncFromOfficialGoal(goal(40),-1)).toThrow(/Videoposition/);
+    expect(()=>halfSyncFromOfficialGoal(goal(0,2),5)).toThrow(/außerhalb/);
+  });
+});
 
 describe("video synchronization core", () => {
   test("normalizes sync points in seconds or legacy milliseconds", () => {
