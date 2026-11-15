@@ -1599,6 +1599,17 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
     .teamspace-connect,.teamspace-publish{padding:14px;border:1px solid var(--line);border-radius:14px;margin-top:18px}
     .teamspace-connect hr{margin:15px 0;border:0;border-top:1px solid var(--line)}
     #teamSpaceInviteLink{font-family:monospace;font-size:12px}
+    #teamSpaceJoinPanel[hidden],#teamSpaceTrainerTools[hidden],
+    #teamSpacePlayerSummary[hidden],#teamSpacePlayerStatus[hidden],
+    #teamSpaceJoinStatus[hidden],#teamSpaceRefresh[hidden]{display:none!important}
+    #teamSpaceJoinPanel{margin:8px 0 12px}
+    #teamSpaceJoinPanel label{display:block}
+    #teamSpaceJoinPanel .field{display:block;width:100%;box-sizing:border-box;margin:8px 0 12px}
+    #teamSpacePlayerSummary{margin:0 0 12px}
+    #teamSpaceTrainerTools{margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+    #teamSpaceTrainerTools>summary{cursor:pointer;font-weight:700;color:var(--muted)}
+    #teamSpaceTrainerTools .teamspace-connect{margin-top:12px}
+    #homeTeamSpace .home-list-row small{overflow-wrap:anywhere}
     @media(max-width:620px){.home-main-choices{grid-template-columns:1fr}.home-big-choice{min-height:100px;flex-direction:row;text-align:left;gap:12px;justify-content:flex-start;flex-wrap:wrap}.home-big-choice small{max-width:none;width:100%;margin:-9px 0 0 65px}.home-choice-icon{flex-shrink:0}}
   </style>
 </head>
@@ -1670,26 +1681,25 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
       </div>
       <div id="homeTeamSpace" class="home-view panel home-library" hidden>
         <div class="home-section-head">
-          <h2>Team Space</h2>
-          <button type="button" class="btn" id="teamSpaceRefresh">Updates prüfen</button>
+          <h2 id="teamSpaceTitle">Team Space</h2>
+          <button type="button" class="btn" id="teamSpaceRefresh">Aktualisieren</button>
         </div>
-        <p class="number-help">Gemeinsame Online-Inhalte der Mannschaft. Saisons und einzelne Spiele bleiben nach dem Import lokal nutzbar. Eigene Kommentare und Markierungen werden nicht hochgeladen.</p>
-        <div class="teamspace-fields">
-          <label>Team Space auswählen
-            <select class="field" id="teamSpaceSelect" aria-label="Team Space auswählen"><option value="">Noch kein Team Space verbunden</option></select>
-          </label>
-        </div>
-        <p id="teamSpaceSelectedIdInfo" class="number-help">Noch kein Team Space ausgewählt.</p>
-        <p id="teamSpaceStatus" class="number-help" role="status">Noch kein Team Space verbunden.</p>
-        <div id="teamSpaceAuditPanel" hidden>
-          <h3>Veröffentlichungsstand meiner Spiele</h3>
-          <p class="number-help">Vergleicht die Spiel- und Scoutingdaten auf diesem Gerät mit der Cloud. Private Notizen, Zeichnungen, Videozeiten und persönliche Schlüsselmomente werden weder veröffentlicht noch als Änderungen gezählt.</p>
-          <p id="teamSpaceAuditStatus" class="number-help" role="status" aria-live="polite">Noch nicht geprüft. Auf „Updates prüfen“ tippen.</p>
-          <details class="season-games-details" id="teamSpaceAuditDetails"><summary id="teamSpaceAuditSummary">Einzelne Spiele ansehen</summary><div id="teamSpaceAuditRows" class="home-list"></div></details>
-        </div>
+        <p id="teamSpacePlayerSummary" class="number-help" hidden></p>
+        <p id="teamSpacePlayerStatus" class="number-help" role="status" aria-live="polite" hidden></p>
+        <section id="teamSpaceJoinPanel" hidden>
+          <p class="number-help">Kopiere den Einladungslink aus einer Nachricht oder Safari und füge ihn hier ein.</p>
+          <label for="teamSpaceJoinInput">Einladungslink</label>
+          <input class="field" type="text" id="teamSpaceJoinInput" autocomplete="off" placeholder="Einladungslink vom Trainer einfügen">
+          <div class="season-tools">
+            <button type="button" class="btn primary" id="teamSpaceJoin">Mit Team Space verbinden</button>
+            <button type="button" class="btn" id="teamSpacePasteInvite">Link aus Zwischenablage einfügen</button>
+          </div>
+          <p id="teamSpaceJoinStatus" class="number-help" role="status" aria-live="polite" hidden></p>
+          <button type="button" class="btn" id="teamSpaceTrainerEntry">Trainer anmelden oder registrieren</button>
+        </section>
         <div id="teamSpaceCatalog" hidden>
-          <h3>Saison laden</h3>
-          <p class="number-help">Eine Saison vollständig auf diesem Gerät speichern – einschließlich aller darin veröffentlichten Spiele. Danach kannst du sie direkt über „Saison“ öffnen.</p>
+          <h3>Saisons</h3>
+          <p class="number-help">Wähle eine Saison zum Laden oder Öffnen. Deine eigenen Anmerkungen bleiben auf deinem Gerät.</p>
           <div class="home-list" id="teamSpaceSeasons"></div>
           <details class="season-games-details" id="teamSpaceGamesDetails">
             <summary id="teamSpaceGamesSummary">Einzelspiele anzeigen</summary>
@@ -1702,6 +1712,23 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             <div class="home-list" id="teamSpaceGames"></div>
           </details>
         </div>
+        <details class="season-games-details" id="teamSpaceTrainerTools" hidden>
+          <summary>Trainerwerkzeuge</summary>
+          <div id="teamSpaceTrainerDetails" hidden>
+          <div class="teamspace-fields">
+            <label>Team Space auswählen
+              <select class="field" id="teamSpaceSelect" aria-label="Team Space auswählen"><option value="">Noch kein Team Space verbunden</option></select>
+            </label>
+          </div>
+          <p id="teamSpaceSelectedIdInfo" class="number-help">Noch kein Team Space ausgewählt.</p>
+          <p id="teamSpaceStatus" class="number-help" role="status">Noch kein Team Space verbunden.</p>
+        <div id="teamSpaceAuditPanel" hidden>
+          <h3>Veröffentlichungsstand meiner Spiele</h3>
+          <p class="number-help">Vergleicht die Spiel- und Scoutingdaten auf diesem Gerät mit der Cloud. Private Notizen, Zeichnungen, Videozeiten und persönliche Schlüsselmomente werden weder veröffentlicht noch als Änderungen gezählt.</p>
+          <p id="teamSpaceAuditStatus" class="number-help" role="status" aria-live="polite">Noch nicht geprüft. Auf „Aktualisieren“ tippen.</p>
+          <details class="season-games-details" id="teamSpaceAuditDetails"><summary id="teamSpaceAuditSummary">Einzelne Spiele ansehen</summary><div id="teamSpaceAuditRows" class="home-list"></div></details>
+        </div>
+          </div>
         <details class="season-games-details teamspace-connect" id="trainerAccountPanel">
           <summary>Trainerkonto · Registrierung und Saisonverwaltung</summary>
           <p class="number-help">Mit bestätigter E-Mail-Adresse kannst du eine Trainerfreigabe beantragen. Freigegebene Trainer dürfen neue Team Spaces und leere Saisons anlegen, aber keine Spiele veröffentlichen. Die Spieler benötigen weiterhin nur ihren Einladungslink.</p>
@@ -1789,16 +1816,10 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             </div>
           </div>
         </details>
-        <details class="season-games-details teamspace-connect" id="teamSpaceConnect">
-          <summary>Team Space verbinden oder verwalten</summary>
-          <label>Einladungslink
-            <input class="field" type="text" id="teamSpaceJoinInput" autocomplete="off" placeholder="Einladungslink vom Trainer einfügen">
-          </label>
-          <div class="season-tools">
-            <button type="button" class="btn primary" id="teamSpaceJoin">Mit Team Space verbinden</button>
-            <button type="button" class="btn" id="teamSpacePasteInvite">Link aus Zwischenablage einfügen</button>
-          </div>
-          <hr>
+        <button type="button" class="btn" id="teamSpaceLegacyEntry" hidden>Klassische Schlüsselverwaltung öffnen</button>
+        <details class="season-games-details teamspace-connect" id="teamSpaceConnect" hidden>
+          <summary>Schlüssel und erweiterte Verwaltung</summary>
+          <p class="number-help" id="teamSpaceLegacyStatus" role="status" aria-live="polite"></p>
           <p class="number-help">Trainerbereich: Mit dem zentralen Registrierungsschlüssel wird ein neuer Team Space eingerichtet. Jeder Space erhält danach einen eigenen Trainer-Schlüssel und einen Leseschlüssel für Spieler. Schlüssel werden nicht dauerhaft im Browser gespeichert.</p>
           <div class="teamspace-fields">
             <label>Cloud-Run-Dienst
@@ -1815,6 +1836,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             </label>
           </div>
           <div class="season-tools">
+            <button type="button" class="btn" id="teamSpaceLegacyVerify">Trainer-Schlüssel prüfen</button>
             <button type="button" class="btn" id="teamSpaceCreate">Team Space erstellen</button>
             <button type="button" class="btn" id="teamSpaceClaimTrainer" hidden>Vorhandenen Team Space übernehmen</button>
             <button type="button" class="btn" id="teamSpaceActivateTrainer" hidden>Trainerzugang aktivieren</button>
@@ -1863,6 +1885,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
           </div>
           <p id="teamSpacePublishStatus" class="number-help" role="status" aria-live="polite">Noch keine Veröffentlichung von diesem Gerät bestätigt.</p>
           <button type="button" class="btn" id="teamSpaceVerifyPublish">Veröffentlichung im Cloud-Katalog prüfen</button>
+        </details>
         </details>
       </div>
     </div>
@@ -5513,14 +5536,23 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
     if(view==="library")homeRenderLibrary();
     if(view==="dashboard"){showSetupMode("season",{focused:true});homeRenderSeasonDashboard();renderSeasonPreviewHeader();}
-    if(view==="teamspace")void teamSpaceOpen();
+    if(view==="teamspace"){
+      document.activeElement?.blur?.();
+      if(homeTeamSpaceReturnView!=="actions"){
+        teamSpaceTrainerLoginVisible=false;
+        teamSpaceLegacyEntryVisible=false;
+        $("teamSpaceTrainerTools").open=false;
+      }
+      teamSpaceUpdateView();
+      void teamSpaceOpen();
+    }
   }
   function homeRenderRecent(){
     const host=$("homeRecentOptions");host.replaceChildren();
     const lastSpace=teamSpaces.get(teamSpaceSelectedId);
     if(lastSpace){
       host.append(homeRow(lastSpace.name||"Team Space",
-        "Team Space verbunden · "+teamSpaceAuditQuickSummary(lastSpace.spaceId),[
+        "Team Space verbunden · "+(teamSpaceCanPublish()?teamSpaceAuditQuickSummary(lastSpace.spaceId):"Online-Saisons und Spiele verfügbar"),[
           {title:"Laden",primary:true,action:()=>{
             homeTeamSpaceReturnView="choose";
             $("teamSpaceConnect").open=false;
@@ -5568,7 +5600,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(homeKind==="teamspace"){
       for(const connection of teamSpaces.values()){
         host.append(homeRow(connection.name||"Team Space",
-          "Verbunden · ID …"+connection.spaceId.slice(-8),
+          connection.spaceId===teamSpaceSelectedId?"Zuletzt verwendet":"Verbunden",
           [{title:"Laden",primary:true,action:()=>{
             if(teamSpaceSelectedId!==connection.spaceId){
               $("teamSpaceAdminToken").value="";
@@ -5790,9 +5822,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("homeChooseTeamSpace").onclick=()=>homeShow("actions","teamspace");
   function homeOpenTeamSpaceConnect(){
     homeTeamSpaceReturnView="actions";
-    $("teamSpaceConnect").open=true;
+    teamSpaceTrainerLoginVisible=false;
+    teamSpaceLegacyEntryVisible=false;
+    $("teamSpaceTrainerTools").open=false;
+    $("trainerAccountPanel").open=false;
+    teamSpaceJoinStatus("");
     homeShow("teamspace","teamspace");
-    $("teamSpaceJoinInput").focus();
   }
   $("homeBack").onclick=()=>{
     if(homeView==="teamspace")homeShow(homeTeamSpaceReturnView,
@@ -5842,6 +5877,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   const teamSpaces=new Map(),teamSpaceLinks=new Map();
   let teamSpaceSelectedId="",teamSpaceCatalogData=null,teamStandaloneGames=[],
     teamSpaceBusy=false,teamStandaloneActiveId=null,teamSpaceLastPublish=null;
+  // Only verified credentials unlock the trainer panel, not a stored role label.
+  let teamSpaceAccountAuthorized=false,teamSpaceTrainerLoginVisible=false,
+    teamSpaceLegacyEntryVisible=false;
+  const teamSpaceOwnedIds=new Set(),teamSpaceVerifiedLegacyIds=new Set();
   const TEAM_SPACE_LAST_PUBLISH_KEY="handballSpielanalyse.lastTeamSpacePublication";
   const TEAM_SPACE_AUDIT_KEY="handballSpielanalyse.lastTeamSpaceAudit";
   let teamSpaceAudit={spaceId:"",checkedAt:"",rows:[],summary:null},teamSpaceAuditRequest=0;
@@ -5911,7 +5950,44 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   const teamGameLinkId=(spaceId,gameId)=>"teamspace-game-link-"+spaceId+"-"+gameId;
   const teamSingleId=(spaceId,gameId)=>"teamspace-localgame-"+spaceId+"-"+gameId;
   const teamActiveConnection=()=>teamSpaces.get(teamSpaceSelectedId);
-  function teamStatus(message){$("teamSpaceStatus").textContent=message;}
+  function teamSpaceCanPublish(){
+    const connection=teamActiveConnection();
+    return !!connection&&(connection.role==="account"&&
+      teamSpaceAccountAuthorized&&teamSpaceOwnedIds.has(connection.spaceId)||
+      connection.role==="trainer"&&teamSpaceVerifiedLegacyIds.has(connection.spaceId));
+  }
+  function teamSpaceUpdateView(){
+    const inSpace=homeView==="teamspace";
+    const joining=inSpace&&homeTeamSpaceReturnView==="actions";
+    const connection=teamActiveConnection();
+    const confirmedTrainer=teamSpaceAccountAuthorized||
+      !!connection&&teamSpaceVerifiedLegacyIds.has(connection.spaceId);
+    const hasTrainerTools=teamSpaceTrainerLoginVisible||confirmedTrainer;
+    $("teamSpaceJoinPanel").hidden=!joining;
+    $("teamSpaceRefresh").hidden=!inSpace||joining;
+    $("teamSpaceTitle").textContent=joining?"Team Space verbinden":
+      connection?.name||"Team Space";
+    $("teamSpaceCatalog").hidden=!inSpace||joining||!connection||!teamSpaceCatalogData;
+    $("teamSpacePlayerSummary").hidden=!inSpace||joining||!teamSpaceCatalogData;
+    $("teamSpacePlayerStatus").hidden=!inSpace||joining;
+    $("teamSpaceTrainerTools").hidden=!inSpace||!hasTrainerTools;
+    if(!hasTrainerTools)$("teamSpaceTrainerTools").open=false;
+    $("teamSpaceTrainerDetails").hidden=!confirmedTrainer;
+    $("teamSpaceAuditPanel").hidden=!teamSpaceCanPublish();
+    $("teamSpaceLegacyEntry").hidden=!joining||!teamSpaceTrainerLoginVisible||
+      teamSpaceLegacyEntryVisible;
+    $("teamSpaceConnect").hidden=!confirmedTrainer&&!teamSpaceLegacyEntryVisible;
+    if($("teamSpaceConnect").hidden)$("teamSpaceConnect").open=false;
+    $("teamSpacePublish").hidden=!teamSpaceCanPublish();
+  }
+  function teamStatus(message){
+    $("teamSpaceStatus").textContent=message;
+    if(teamSpaceLegacyEntryVisible)$("teamSpaceLegacyStatus").textContent=message;
+  }
+  function teamSpaceJoinStatus(message){
+    $("teamSpaceJoinStatus").textContent=message;
+    $("teamSpaceJoinStatus").hidden=!message;
+  }
   async function teamSpaceRestore(){
     const records=await listInternalRecords(INTERNAL_SEASON_STORE);
     teamSpaces.clear();teamSpaceLinks.clear();
@@ -5974,9 +6050,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       :"Noch kein Team Space ausgewählt.";
     $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
     $("teamSpacePublish").hidden=!["trainer","account"].includes(connection?.role);
-    $("teamSpaceAuditPanel").hidden=!["trainer","account"].includes(connection?.role);
+    $("teamSpaceAuditPanel").hidden=!teamSpaceCanPublish();
     if(connection&&teamSpaceAudit.spaceId!==connection.spaceId)
-      $("teamSpaceAuditStatus").textContent="Noch nicht geprüft. Auf „Updates prüfen“ tippen.";
+      $("teamSpaceAuditStatus").textContent="Noch nicht geprüft. Auf „Aktualisieren“ tippen.";
     $("teamSpaceRotateReader").hidden=connection?.role!=="trainer";
     $("teamSpaceRotateTrainer").hidden=connection?.role!=="trainer"||
       teamSpaceCatalogData?.trainerAccess==="legacy";
@@ -6027,6 +6103,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const season of teamSpaceCatalogData?.seasons||[])
       remote.add(new Option(season.name,season.id));
     if([...remote.options].some(opt=>opt.value===lastRemote))remote.value=lastRemote;
+    teamSpaceUpdateView();
   }
   function teamSpaceAuditCandidates(){
     const candidates=[];
@@ -6225,7 +6302,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           }else await teamSpaceImportSeason(season);
         }}];
       seasonHost.append(homeRow(season.name,status+" · "+season.gameCount+
-        " Spiele · Version "+season.revision,actions,"season"));
+        (season.gameCount===1?" Spiel":" Spiele"),actions,"season"));
     }
     if(!catalog.seasons.length)
       seasonHost.textContent="Noch keine Saison veröffentlicht.";
@@ -6242,17 +6319,23 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(!local&&homeSeasonRecords().length)
         actions.push({title:"Zur Saison",action:()=>teamSpaceImportGame(game,true)});
       gameHost.append(homeRow(game.name,
-        [game.date,status,"Version "+game.revision,
-          game.seasonIds.length?"Saisonspiel":"Einzelspiel"].filter(Boolean).join(" · "),
+        [game.date,status].filter(Boolean).join(" · "),
         actions,"game"));
     }
     if(!catalog.games.length)gameHost.textContent="Noch keine Spiele veröffentlicht.";
     $("teamSpaceGamesSummary").textContent="Einzelspiele anzeigen ("+catalog.games.length+")";
+    teamSpaceUpdateView();
   }
   async function teamSpaceRefreshCatalog(){
     const connection=teamActiveConnection();
-    if(!connection){teamSpaceCatalogData=null;teamSpaceRenderControls();teamSpaceShowPublication();return;}
+    if(!connection){
+      teamSpaceCatalogData=null;teamSpaceRenderControls();teamSpaceShowPublication();
+      $("teamSpacePlayerSummary").textContent="";
+      $("teamSpacePlayerStatus").textContent="Kein Team Space ausgewählt.";
+      return;
+    }
     const id=connection.spaceId;
+    $("teamSpacePlayerStatus").textContent="Inhalte werden geladen …";
     teamStatus("Team-Space-Katalog wird abgerufen …");
     try{
       const catalog=await teamSpaceCatalog(connection);
@@ -6278,11 +6361,24 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         " Saisons · "+catalog.games.length+" Spiele"+
         (updates?" · "+updates+" Import-Updates verfügbar":" · Cloud-Katalog geladen")+confirmation);
       await teamSpaceAuditCompare(connection,catalog);
-      if(teamSpaceSelectedId===id)teamSpaceRenderCatalog();
+      if(teamSpaceSelectedId===id){
+        teamSpaceRenderCatalog();
+        $("teamSpacePlayerSummary").textContent=catalog.seasons.length+" "+
+          (catalog.seasons.length===1?"Saison":"Saisons")+" · "+catalog.games.length+" "+
+          (catalog.games.length===1?"Spiel":"Spiele");
+        $("teamSpacePlayerStatus").textContent=updates?
+          updates+" "+(updates===1?"Aktualisierung verfügbar":"Aktualisierungen verfügbar"):
+          "Alle Inhalte aktuell.";
+        teamSpaceUpdateView();
+      }
     }catch(error){
+      if(teamSpaceSelectedId!==id)return;
       teamSpaceCatalogData=null;teamSpaceRenderControls();
       teamSpaceShowPublication();
       teamStatus("Team Space nicht erreichbar: "+error.message);
+      $("teamSpacePlayerStatus").textContent="Der Team Space ist zurzeit nicht erreichbar. "+
+        "Bereits heruntergeladene Inhalte bleiben lokal verfügbar.";
+      teamSpaceUpdateView();
     }
   }
   async function teamSpaceOpen(){
@@ -6293,8 +6389,20 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       await teamSpaceRestore();
       if(homeView!=="teamspace")return;
       teamSpaceRenderControls();
+      if(trainerAccountApi().hasSession()){
+        try{await trainerAccountRefresh()}
+        catch(error){
+          teamSpaceAccountAuthorized=false;
+          teamSpaceOwnedIds.clear();
+          teamSpaceUpdateView();
+          trainerAccountStatus("Trainerzugang konnte nicht geprüft werden: "+error.message);
+        }
+      }
       await teamSpaceRefreshCatalog();
-    }catch(error){teamStatus("Team Space kann nicht geöffnet werden: "+error.message)}
+    }catch(error){
+      teamStatus("Team Space kann nicht geöffnet werden: "+error.message);
+      $("teamSpacePlayerStatus").textContent="Der Team Space konnte nicht geladen werden.";
+    }
   }
   async function saveTeamSpaceConnection(connection){
     await writeInternalRecord(INTERNAL_SEASON_STORE,{
@@ -6378,7 +6486,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         homeShow("dashboard","season");
         toast("Saison importiert. Spätere Updates ändern denselben lokalen Eintrag.");
       }
-    }catch(error){teamStatus("Saison nicht übernommen: "+error.message)}
+    }catch(error){
+      teamStatus("Saison nicht übernommen: "+error.message);
+      $("teamSpacePlayerStatus").textContent="Saison konnte nicht geladen werden: "+error.message;
+    }
     finally{teamSpaceBusy=false}
   }
   function teamSpaceExistingSeasonGame(remoteGame){
@@ -6510,7 +6621,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         toast(old?"Einzelspiel aktualisiert.":"Einzelspiel lokal hinzugefügt.");
       }
       teamSpaceRenderCatalog();
-    }catch(error){teamStatus("Spiel nicht übernommen: "+error.message)}
+    }catch(error){
+      teamStatus("Spiel nicht übernommen: "+error.message);
+      $("teamSpacePlayerStatus").textContent="Spiel konnte nicht geladen werden: "+error.message;
+    }
     finally{teamSpaceBusy=false}
   }
   async function teamSpacePublish(type){
@@ -6519,8 +6633,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     try{
       const connection=teamActiveConnection(),secret=$("teamSpaceAdminToken").value.trim();
       const account=connection?.role==="account";
-      if(!["trainer","account"].includes(connection?.role))
-        throw Error("Nur freigegebene Trainer können veröffentlichen.");
+      if(!teamSpaceCanPublish())
+        throw Error("Nur bestätigte Trainer mit Zugriff auf diesen Team Space können veröffentlichen.");
       if(!account&&!secret)throw Error("Trainer-Schlüssel fehlt.");
       // Always refresh catalog before a write. A concurrent publication is
       // rejected by the server's expectedRevision precondition.
@@ -6681,11 +6795,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const invite=(await navigator.clipboard.readText()).trim();
       if(!invite)throw Error("Zwischenablage ist leer.");
       $("teamSpaceJoinInput").value=invite;
-      $("teamSpaceJoinInput").focus();
+      teamSpaceJoinStatus("Link eingefügt. Bitte die Verbindung bestätigen.");
       toast("Einladungslink eingefügt. Bitte Verbindung bestätigen.");
     }catch(error){
-      teamStatus("Zwischenablage nicht verfügbar: "+error.message+
-        " Bitte den Link manuell in das Eingabefeld einfügen.");
+      teamSpaceJoinStatus("Einfügen nicht möglich. Bitte den Link manuell einfügen.");
     }
   };
   $("teamSpaceJoin").onclick=async()=>{
@@ -6695,7 +6808,34 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(!invite)throw Error("Bitte gültigen Team-Space-Einladungslink einfügen.");
       await teamSpaceJoin(invite);
       $("teamSpaceJoinInput").value="";
-    }catch(error){teamStatus("Einladung fehlgeschlagen: "+error.message)}
+      teamSpaceJoinStatus("");
+    }catch(error){teamSpaceJoinStatus("Verbindung fehlgeschlagen: "+error.message)}
+  };
+  $("teamSpaceTrainerEntry").onclick=()=>{
+    teamSpaceTrainerLoginVisible=true;
+    teamSpaceUpdateView();
+    $("teamSpaceTrainerTools").open=true;
+    $("trainerAccountPanel").open=true;
+  };
+  $("teamSpaceLegacyEntry").onclick=()=>{
+    teamSpaceLegacyEntryVisible=true;
+    teamSpaceUpdateView();
+    $("teamSpaceConnect").open=true;
+  };
+  $("teamSpaceLegacyVerify").onclick=async()=>{
+    try{
+      const connection=teamActiveConnection();
+      if(!connection)throw Error("Bitte zuerst einen Team Space verbinden.");
+      const token=$("teamSpaceAdminToken").value.trim();
+      if(!token)throw Error("Bitte Trainer-Schlüssel eingeben.");
+      const info=await verifyTeamSpaceTrainerToken(connection,token);
+      teamSpaceVerifiedLegacyIds.add(connection.spaceId);
+      await saveTeamSpaceConnection({...connection,role:"trainer"});
+      await teamSpaceRefreshCatalog();
+      teamStatus("Trainer-Schlüssel für "+(connection.name||"Team Space")+
+        " bestätigt ("+info.trainerAccess+").");
+      teamSpaceUpdateView();
+    }catch(error){teamStatus("Trainer-Schlüssel ungültig: "+error.message)}
   };
   function showNewTeamSpaceTrainerKey(token){
     // Present once for backup. Never write the trainer secret into IndexedDB,
@@ -6714,6 +6854,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       // Extract before persistence to avoid leaking the trainer credential.
       const {trainerToken,...connection}=created;
       showNewTeamSpaceTrainerKey(trainerToken);
+      teamSpaceVerifiedLegacyIds.add(connection.spaceId);
       $("teamSpaceRegistrationToken").value="";
       await saveTeamSpaceConnection(connection);
       await teamSpaceRefreshCatalog();
@@ -6729,6 +6870,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const trainerToken=await claimTeamSpaceTrainerToken(connection,
         $("teamSpaceRegistrationToken").value.trim());
       showNewTeamSpaceTrainerKey(trainerToken);
+      teamSpaceVerifiedLegacyIds.add(connection.spaceId);
       $("teamSpaceRegistrationToken").value="";
       await saveTeamSpaceConnection({...connection,role:"trainer"});
       await teamSpaceRefreshCatalog();
@@ -6741,6 +6883,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(!connection)throw Error("Bitte einen Team Space auswählen.");
       const token=$("teamSpaceAdminToken").value.trim();
       const info=await verifyTeamSpaceTrainerToken(connection,token);
+      teamSpaceVerifiedLegacyIds.add(connection.spaceId);
       await saveTeamSpaceConnection({...connection,role:"trainer"});
       await teamSpaceRefreshCatalog();
       teamStatus("Trainerzugang aktiviert"+(info.trainerAccess==="legacy"
@@ -6781,8 +6924,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   let trainerAccountClient=null;
   function trainerAccountApi(){
     const api=seasonCloudEndpoint($("teamSpaceApi").value);
-    if(!trainerAccountClient||trainerAccountClient.api!==api)
+    if(!trainerAccountClient||trainerAccountClient.api!==api){
       trainerAccountClient=createTrainerAuthClient(api);
+      teamSpaceAccountAuthorized=false;
+      teamSpaceOwnedIds.clear();
+    }
     return trainerAccountClient;
   }
   function trainerAccountStatus(message){
@@ -6802,6 +6948,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         " Saisons) · ID …"+row.spaceId.slice(-8),row.spaceId));
     if([...select.options].some(option=>option.value===previous))select.value=previous;
     if(!data.spaces.length)select.add(new Option("Zuerst Team Space erstellen",""));
+    return data.spaces;
   }
   async function trainerAccountLoadAdmin(){
     const service=trainerAccountApi(),container=$("trainerAccountUserList");
@@ -6830,6 +6977,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   async function trainerAccountRefresh(){
     const service=trainerAccountApi(),config=await service.getConfig();
     const hasSession=config.enabled&&service.hasSession();
+    teamSpaceAccountAuthorized=false;
+    teamSpaceOwnedIds.clear();
     // Hide the login immediately for an existing Firebase session, rather
     // than briefly showing a blanked password while the profile loads.
     $("trainerAccountLogin").hidden=!config.enabled||hasSession;
@@ -6838,10 +6987,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("trainerAccountBootstrap").hidden=true;
     if(!config.enabled){
       trainerAccountStatus("Die Firebase-Trainerregistrierung ist in Google Cloud noch nicht aktiviert. Die bisherigen Team-Space-Schlüssel bleiben nutzbar.");
+      teamSpaceUpdateView();
       return;
     }
     if(!hasSession){
       trainerAccountStatus("Mit E-Mail und Passwort anmelden oder ein neues Trainerkonto registrieren.");
+      teamSpaceUpdateView();
       return;
     }
     let me;
@@ -6851,6 +7002,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       // email-verification controls; do not trap them in a hidden form.
       $("trainerAccountLogin").hidden=false;
       $("trainerAccountSessionActions").hidden=!service.hasSession();
+      teamSpaceUpdateView();
       throw error;
     }
     // Authentication succeeded: don't leave an empty password field visible
@@ -6862,8 +7014,15 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("trainerAccountCreator").hidden=!approved;
     $("trainerAccountRequestApproval").hidden=approved||me.status==="pending"||me.status==="suspended";
     $("trainerAccountAdmin").hidden=!me.isAdmin;
-    if(approved)await trainerAccountLoadSpaces();
+    if(approved){
+      const owned=await trainerAccountLoadSpaces();
+      teamSpaceOwnedIds.clear();
+      for(const space of owned)teamSpaceOwnedIds.add(space.spaceId);
+      teamSpaceAccountAuthorized=true;
+    }
     if(me.isAdmin)await trainerAccountLoadAdmin();
+    teamSpaceRenderControls();
+    teamSpaceUpdateView();
     const status=me.isAdmin?"Administrator":
       me.status==="approved"?"Trainer freigegeben":
       me.status==="pending"?"Freigabe beantragt":
@@ -7014,6 +7173,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("trainerAccountSignOut").onclick=()=>trainerAccountAction(async()=>{
     trainerAccountClearPublisher();
     trainerAccountApi().logout();
+    teamSpaceAccountAuthorized=false;
+    teamSpaceOwnedIds.clear();
+    teamSpaceUpdateView();
     $("trainerAccountPassword").value="";
     trainerAccountRegistrationMode(false);
     await trainerAccountRefresh();
@@ -7044,12 +7206,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const name=$("trainerAccountSpaceName").value.trim();
     if(!name)throw Error("Bitte Teamnamen eingeben.");
     const created=await service.createSpace(name);
+    teamSpaceOwnedIds.add(created.spaceId);
     await saveTeamSpaceConnection({api:service.api,spaceId:created.spaceId,
       name:created.name,readToken:created.readToken,role:"account",revision:0});
     $("trainerAccountSpaceName").value="";
     await teamSpaceRefreshCatalog();
-    await trainerAccountLoadSpaces();
+    const owned=await trainerAccountLoadSpaces();
+    teamSpaceOwnedIds.clear();
+    for(const space of owned)teamSpaceOwnedIds.add(space.spaceId);
     $("trainerAccountSpaces").value=created.spaceId;
+    teamSpaceUpdateView();
     trainerAccountStatus("Team Space angelegt. Der Spieler-Einladungslink kann unter „Team Space verbinden oder verwalten“ kopiert werden.");
     toast("Team Space erstellt. Du kannst jetzt eine Saison anlegen.");
   });
@@ -9420,7 +9586,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=164",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=166",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);

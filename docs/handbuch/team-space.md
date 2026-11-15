@@ -21,7 +21,7 @@ zurückgeschrieben.
    mit **Laden** öffnen. Solange noch keine Verbindung besteht, wird
    ein Einstieg zum Verbinden angeboten. Unter **Schneller Wiedereinstieg**
    steht auch nach einem Neustart der zuletzt ausgewählte Team Space bereit.
-3. Unter **Saison laden** die gewünschte veröffentlichte Saison auswählen.
+3. Nach dem Öffnen eines Team Spaces zeigt die kompakte Spieleransicht nur den Teamnamen, verfügbare **Saisons** und auf Wunsch die einzelnen Spiele. IDs, Katalogversionen, Upload-Bestätigungen und Schlüssel werden dort nicht angezeigt. Unter **Saisons** die gewünschte veröffentlichte Saison auswählen.
    Ein Klick auf **Saison laden** übernimmt die **gesamte Saison mit den
    enthaltenen Spielen** als neue lokale Saison; andere lokale Saisons
    bleiben bestehen. Die importierte Saison kann danach über **Saison**
@@ -32,7 +32,7 @@ zurückgeschrieben.
 5. **Einzelspiele anzeigen** ist anfangs eingeklappt. Nur bei Bedarf öffnen,
    um einzelne Spiele separat zu importieren oder einer lokalen Saison
    zuzuordnen. Die zusätzliche Importziel-Auswahl erscheint erst dort.
-6. Mit **Updates prüfen** wird die Online-Übersicht erneut abgerufen.
+6. Mit **Aktualisieren** wird die Online-Übersicht erneut abgerufen.
    Dafür ist eine Internetverbindung nötig; lokal importierte Saisons
    und Spiele bleiben auch ohne Internet nutzbar.
 
@@ -46,8 +46,7 @@ Zusätzlich zum bisherigen schlüsselbasierten Zugang gibt es einen
 **optionalen, zentral freigegebenen Trainerzugang**. Er ist erst nutzbar,
 nachdem Firebase Authentication in der Google Cloud eingerichtet ist.
 
-1. **Start → Team Space → Team Space verbinden → Trainerkonto · Registrierung und Saisonverwaltung**
-   öffnen.
+1. **Start → Team Space → Team Space verbinden → Trainer anmelden oder registrieren → Trainerwerkzeuge → Trainerkonto · Registrierung und Saisonverwaltung** öffnen.
 2. Mit E-Mail-Adresse und Passwort **Registrieren**, anschließend die
    Bestätigungs-E-Mail öffnen und auf **E-Mail-Bestätigung prüfen** klicken.
 3. **Trainerfreigabe beantragen**. Die bestätigte E-Mail-Adresse allein
@@ -88,7 +87,7 @@ die Trainerfreigabe durch einen Administrator erteilt.
 
 ## Für Trainer – neuen Team Space erstellen
 
-1. **Start → Team Space → Team Space verbinden → Team Space verbinden oder verwalten** öffnen.
+1. **Start → Team Space → Team Space verbinden → Trainer anmelden oder registrieren → Klassische Schlüsselverwaltung öffnen** wählen. Die Schlüsselverwaltung ist nicht Bestandteil der normalen Spieleransicht.
 2. Den Cloud-Run-Dienst, Teamnamen und den **zentralen Registrierungsschlüssel**
    eingeben. Dieser Schlüssel wird nur zur Erstellung neuer Team Spaces benutzt
    (bei älteren Saison-Cloud-Bereichen bleibt er vorerst auch deren Legacy-Schlüssel).
@@ -128,7 +127,7 @@ die Trainerfreigabe durch einen Administrator erteilt.
 
 ## Versionsvergleich: Lokal gegen Team Space
 
-Unter **Start → Team Space → Team Space laden → Updates prüfen** wird der
+Unter **Start → Team Space → Team Space laden → Aktualisieren** wird der
 Cloud-Katalog abgerufen. Für Trainer wird zusätzlich **Veröffentlichungsstand
 meiner Spiele** berechnet. Dafür vergleicht die App lokale Spielstände auf
 diesem Gerät mit ihren veröffentlichten Gegenstücken, ohne private
@@ -144,10 +143,10 @@ Anmerkungen zu berücksichtigen. Sie zeigt:
 - **Abweichend – Zuordnung prüfen** – eine eindeutige Versionszuordnung
   ist nicht möglich. Die App bietet keine ungesicherte Schnellfreigabe an.
 
-Auf der Startseite erscheint beim verbundenen Team Space die
-**Zusammenfassung der letzten Prüfung mit Datum/Uhrzeit**. Diese Anzeige
+In der Traineransicht kann beim verbundenen Team Space die
+**Zusammenfassung der letzten Prüfung mit Datum/Uhrzeit** erscheinen. Diese Anzeige
 ist ein **gespeicherter Prüfstand**, keine automatische Hintergrundprüfung:
-für einen aktuellen Vergleich den Team Space öffnen und **Updates prüfen**
+für einen aktuellen Vergleich den Team Space öffnen und **Aktualisieren**
 verwenden. Der detaillierte Vergleich lädt bei Bedarf die Cloud-Spiele mit
 SHA-256-Prüfsumme, falls der Versions-Fingerabdruck nicht übereinstimmt.
 Einzelne Spiele können unter **Zur Veröffentlichung** im
@@ -180,6 +179,10 @@ Cloud-Objekte nicht automatisch.
 
 Spieler-Lesezugänge besitzen keinerlei Veröffentlichungsberechtigung.
 
+Die detaillierte Trainerverwaltung einschließlich Versionsvergleich bleibt
+Spielern verborgen. Lokal gespeicherte Rollenbezeichnungen allein genügen
+nicht zur Freigabe; Trainerrechte werden durch den Cloud-Dienst überprüft.
+
 ## Technischer Stand und Grenzen
 
 - Originales Spiel-JSON v1 und Saison-JSON v1 bleiben unverändert.
@@ -191,7 +194,7 @@ Spieler-Lesezugänge besitzen keinerlei Veröffentlichungsberechtigung.
   verschlüsselten HTTPS-API-Antwort bzw. im Einladungslink, nicht im Metadatensatz.
 - Auf den Endgeräten speichert die App nur die jeweiligen Zuordnungen
   und den letzten veröffentlichten Vergleichsstand.
-- Der Team Space lädt beim Öffnen und auf **Updates prüfen** die
+- Der Team Space lädt beim Öffnen und auf **Aktualisieren** die
   Versionsübersicht. Es gibt keine Hintergrund-/Push-Synchronisierung.
 - Noch nicht enthalten: individuelle Spielerkonten, Einzelwiderruf
   bestimmter Spieler, Videodatei-Upload und automatische Hintergrundupdates.
