@@ -441,6 +441,9 @@ test("Trainer sees unpublished scouting edits but not private note edits in Team
   await expect(page.locator("#teamSpaceAuditRows")).toContainText("Lokal geändert");
   await expect(page.locator("#teamSpaceAuditRows")).toContainText("1 korrigiert");
   await page.locator("#homeBack").click();
+  await page.locator("#homeBack").click();
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeChoose")).toBeVisible();
   await expect(page.locator("#homeRecentOptions")).toContainText("1 lokal geändert");
 });
 test("Server publication failure remains visible with the selected Team Space",async({page})=>{
