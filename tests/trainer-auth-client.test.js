@@ -238,4 +238,86 @@ describe("Firebase trainer browser client",()=>{
     expect(request.url).not.toContain(secret);
     expect(JSON.stringify(session.entries())).not.toContain(secret);
   });
+  it("remembers an explicitly trusted private device across new PWA sessions and rotates refresh credentials",async()=>{
+    const session1=memoryStorage(),session2=memoryStorage(),persistent=memoryStorage(),calls=[];
+    const fetcher=vi.fn(async(url,opts={})=>{
+      calls.push({url,opts});
+      if(url.endsWith("/trainer-auth/config"))return new Response(JSON.stringify(firebase));
+      if(url.includes("signInWithPassword"))return new Response(JSON.stringify({
+        idToken:jwt,refreshToken:"fresh-device-refresh",expiresIn:"3600"
+      }));
+      if(url.includes("securetoken.googleapis.com"))return new Response(JSON.stringify({
+        id_token:jwt,refresh_token:"rotated-device-refresh",expires_in:"3600"
+      }));
+      if(url.endsWith("/trainer-auth/me"))return new Response(JSON.stringify({
+        uid:"owner",email:"trainer@example.org",status:"approved",isAdmin:false
+      }));
+      throw Error("Unexpected "+url);
+    });
+    const trainer=createTrainerAuthClient(API,{fetcher,session:session1,persistent});
+    expect(trainer.rememberDevice()).toBe(false);
+    await trainer.login("trainer@example.org","only-in-memory-password");
+    expect(persistent.entries()).toHaveLength(0);
+    expect(trainer.setRememberDevice(true)).toBe(true);
+    expect(persistent.entries()).toHaveLength(1);
+    expect(JSON.stringify(persistent.entries())).toContain("fresh-device-refresh");
+    expect(JSON.stringify(persistent.entries())).not.toContain(jwt);
+    expect(JSON.stringify(persistent.entries())).not.toContain("only-in-memory-password");
+    const newPwaSession=createTrainerAuthClient(API,{fetcher,session:session2,persistent});
+    expect(newPwaSession.rememberDevice()).toBe(true);
+    expect(newPwaSession.hasSession()).toBe(true);
+    expect((await newPwaSession.me()).status).toBe("approved");
+    expect(JSON.stringify(persistent.entries())).toContain("rotated-device-refresh");
+    const tokenCall=calls.find(c=>c.url.includes("securetoken.googleapis.com"));
+    expect(String(tokenCall.opts.body)).toContain("refresh_token=fresh-device-refresh");
+    expect(session2.entries().length).toBe(1);
+    newPwaSession.logout();
+    expect(persistent.entries()).toEqual([]);
+    expect(session2.entries()).toEqual([]);
+    expect(createTrainerAuthClient(API,{fetcher,session:memoryStorage(),persistent}).hasSession())
+      .toBe(false);
+  });
+  it("can disable device remembrance without ending the current session",async()=>{
+    const session=memoryStorage(),persistent=memoryStorage();
+    const fetcher=vi.fn(async(url)=>{
+      if(url.endsWith("/trainer-auth/config"))return new Response(JSON.stringify(firebase));
+      if(url.includes("signInWithPassword"))return new Response(JSON.stringify({
+        idToken:jwt,refreshToken:"remember-me",expiresIn:"3600"
+      }));
+      throw Error("Unexpected "+url);
+    });
+    const trainer=createTrainerAuthClient(API,{fetcher,session,persistent});
+    trainer.setRememberDevice(true);
+    await trainer.login("trainer@example.org","password");
+    expect(trainer.rememberDevice()).toBe(true);
+    trainer.setRememberDevice(false);
+    expect(trainer.rememberDevice()).toBe(false);
+    expect(trainer.hasSession()).toBe(true);
+    expect(persistent.entries()).toEqual([]);
+    expect(createTrainerAuthClient(API,{fetcher,session:memoryStorage(),persistent}).hasSession())
+      .toBe(false);
+    trainer.logout();
+    expect(session.entries()).toEqual([]);
+  });
+  it("removes a remembered device token when Firebase rejects it",async()=>{
+    const session=memoryStorage(),persistent=memoryStorage();
+    const fetcher=vi.fn(async(url)=>{
+      if(url.endsWith("/trainer-auth/config"))return new Response(JSON.stringify(firebase));
+      if(url.includes("signInWithPassword"))return new Response(JSON.stringify({
+        idToken:jwt,refreshToken:"revoked-refresh",expiresIn:"3600"
+      }));
+      if(url.includes("securetoken.googleapis.com"))
+        return new Response(JSON.stringify({error:{message:"INVALID_REFRESH_TOKEN"}}),{status:400});
+      throw Error("Unexpected "+url);
+    });
+    const client=createTrainerAuthClient(API,{fetcher,session,persistent});
+    client.setRememberDevice(true);
+    await client.login("trainer@example.org","password");
+    await expect(client.refresh(true)).rejects.toThrow("abgelaufen");
+    expect(persistent.entries()).toEqual([]);
+    expect(session.entries()).toEqual([]);
+    expect(client.hasSession()).toBe(false);
+    expect(client.rememberDevice()).toBe(false);
+  });
+
 });
