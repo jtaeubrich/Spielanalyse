@@ -85,6 +85,25 @@ describe("Team Space: trainer content shared by default with explicit opt-out",(
     expect(pub.video).not.toHaveProperty("localFileName");
     expect(pub.video).not.toHaveProperty("localPath");
   });
+  it("keeps negative H1/H2 kickoff offsets when publishing an individual game or season",()=>{
+    const input=original();
+    input.video.h1SyncRealTime=-5;
+    input.video.kickoff=-5;
+    input.video.h2SyncRealTime=-2;
+    const copy=structuredClone(input);
+    const pub=publicGameForTeamSpace(input);
+    expect(pub.video).toMatchObject({
+      h1SyncRealTime:-5,h2SyncRealTime:-2,kickoff:-5
+    });
+    expect(input).toEqual(copy);
+    const archive=publicSeasonForTeamSpace({
+      name:"Kronshagen 2026/27",games:[{id:"sg-one",data:input}]
+    });
+    expect(archive.games[0].data.video).toMatchObject({
+      h1SyncRealTime:-5,h2SyncRealTime:-2,kickoff:-5
+    });
+    expect(comparePublicGames(input,pub).equal).toBe(true);
+  });
   it("keeps YouTube synchronization when publishing a season and detects link-only changes",()=>{
     const local=original(),archive={name:"2026/27",games:[{
       id:"sg-match",data:local,fileName:"match.json"
