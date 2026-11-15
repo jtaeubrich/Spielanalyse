@@ -1,6 +1,7 @@
 import {describe,it,expect} from "vitest";
 import {publicGameForTeamSpace,publicSeasonForTeamSpace,
   publicGameSignature,comparePublicGames,publicationSharingSummary} from "../src/team-space-publication.js";
+import {eventVideoSeconds} from "../src/video-sync.js";
 
 const original=()=>({
   format:"handball-match-flow",version:1,gameName:"Kronshagen gegen Gegner",
@@ -17,7 +18,15 @@ const original=()=>({
     {id:"3",time:90,type:"error",team:"away",scoreH:1,scoreA:0}
   ],
   gameTime:230,shotCapture:{active:true},videoFileName:"Privat.mov",
-  video:{youtubeId:"lokalerFilm",h1SyncRealTime:30000},
+  isVideoscoutingFile:true,
+  video:{
+    youtubeId:"sLAq3M30ZBY",youtubeUrl:"https://youtu.be/sLAq3M30ZBY",
+    syncUnit:"seconds",analysisTimeBasis:"youtube-absolute-ms",
+    h1SyncRealTime:30,h2SyncRealTime:1505,h1LiveStartMs:25000,
+    reviewClockAnchors:[{half:1,videoAt:84,gameAt:55,running:false}],
+    analysisClockMs:82000,localFileName:"Privat.mov",
+    localPath:"file:///private/recordings/Privat.mov",deviceSecret:"DO_NOT_SHARE"
+  },
   theme:"dark",ownTeam:"home",
   timer:{duration:25,active:true,secondsElapsed:231,half:1}
 });
@@ -35,15 +44,81 @@ describe("Team Space: trainer content shared by default with explicit opt-out",(
         shapes:[{tool:"arrow",points:[{x:0.1,y:0.2},{x:0.4,y:0.7}]}]}
     });
     expect(pub.events[1]).toMatchObject({id:"2",type:"keyMoment",note:"Wichtiger Moment"});
-    expect(pub.events[0]).not.toHaveProperty("realTime");
+    expect(pub.events[0].realTime).toBe(50000);
     expect(pub.events[0]).not.toHaveProperty("videoTime");
-    expect(pub).not.toHaveProperty("video");
+    expect(pub.isVideoscoutingFile).toBe(true);
+    expect(pub.video).toEqual({
+      youtubeId:"sLAq3M30ZBY",
+      youtubeUrl:"https://www.youtube.com/watch?v=sLAq3M30ZBY",
+      syncUnit:"seconds",analysisTimeBasis:"youtube-absolute-ms",
+      h1SyncRealTime:30,h2SyncRealTime:1505,h1LiveStartMs:25000,
+      reviewClockAnchors:[{half:1,videoAt:84,gameAt:55,running:false}]
+    });
     expect(pub).not.toHaveProperty("videoFileName");
+    expect(JSON.stringify(pub)).not.toContain("Privat.mov");
+    expect(JSON.stringify(pub)).not.toContain("DO_NOT_SHARE");
+    expect(eventVideoSeconds(pub.events[0],{
+      video:pub.video,isVideoscoutingFile:pub.isVideoscoutingFile
+    })).toBe(50);
     expect(pub.timer).toEqual({duration:25});
     expect(input).toEqual(copy);
     expect(publicationSharingSummary(input)).toMatchObject({
       games:1,comments:1,drawings:1,keyMoments:1,highlights:1,excluded:0
     });
+  });
+
+  it("sends a YouTube link and live clock anchors but never local file metadata",()=>{
+    const game=original();
+    game.isVideoscoutingFile=false;
+    game.video.analysisTimeBasis="live-elapsed-ms";
+    game.video.h1LiveStartMs=25000;
+    const pub=publicGameForTeamSpace(game);
+    expect(pub.video.youtubeUrl).toBe("https://www.youtube.com/watch?v=sLAq3M30ZBY");
+    expect(pub.video.h1LiveStartMs).toBe(25000);
+    expect(pub.video.reviewClockAnchors[0].running).toBe(false);
+    expect(pub.events[0].realTime).toBe(50000);
+    expect(eventVideoSeconds(pub.events[0],{
+      video:pub.video,isVideoscoutingFile:pub.isVideoscoutingFile
+    })).toBe(55);
+    expect(pub.isVideoscoutingFile).toBe(false);
+    expect(pub.video).not.toHaveProperty("analysisClockMs");
+    expect(pub.video).not.toHaveProperty("localFileName");
+    expect(pub.video).not.toHaveProperty("localPath");
+  });
+  it("keeps YouTube synchronization when publishing a season and detects link-only changes",()=>{
+    const local=original(),archive={name:"2026/27",games:[{
+      id:"sg-match",data:local,fileName:"match.json"
+    }]};
+    const cloud=publicSeasonForTeamSpace(archive);
+    const restored=cloud.games[0].data;
+    expect(restored.video.youtubeUrl).toBe("https://www.youtube.com/watch?v=sLAq3M30ZBY");
+    expect(restored.video.reviewClockAnchors).toEqual([
+      {half:1,videoAt:84,gameAt:55,running:false}
+    ]);
+    expect(restored.events[0].realTime).toBe(50000);
+    expect(comparePublicGames(local,restored).equal).toBe(true);
+    const updated=structuredClone(local);
+    updated.video.youtubeId="dQw4w9WgXcQ";
+    updated.video.youtubeUrl="https://youtu.be/dQw4w9WgXcQ";
+    const difference=comparePublicGames(updated,restored);
+    expect(difference).toMatchObject({
+      equal:false,localEvents:3,cloudEvents:3,added:0,removed:0,edited:0
+    });
+  });
+  it("never exports device-only video files or invalid YouTube links",()=>{
+    const local=original();
+    local.video={localFileName:"local.mov",localPath:"/private/local.mov",
+      playbackRate:1.5,reviewClockAnchors:[{half:1,videoAt:12,gameAt:4}]};
+    let shared=publicGameForTeamSpace(local);
+    expect(shared).not.toHaveProperty("video");
+    expect(shared.events[0]).not.toHaveProperty("realTime");
+    local.video.youtubeUrl="https://untrusted.example/watch?v=sLAq3M30ZBY";
+    shared=publicGameForTeamSpace(local);
+    expect(shared).not.toHaveProperty("video");
+    local.video.youtubeUrl="https://www.youtube.com/watch?v=sLAq3M30ZBY";
+    shared=publicGameForTeamSpace(local);
+    expect(shared.video.youtubeId).toBe("sLAq3M30ZBY");
+    expect(shared.video).not.toHaveProperty("localPath");
   });
   it("excludes only expressly private event content and shapes without mutating source",()=>{
     const input=original(),snapshot=structuredClone(input);
