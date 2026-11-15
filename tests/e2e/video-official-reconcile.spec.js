@@ -62,6 +62,12 @@ async function openGame(page,mode){
   });
   await page.locator('[data-tab="match"]').click();
   if(mode==="review")await page.locator("#matchReviewToggle").click();
+  // The official import belongs to Setup, not the Match capture workflow.
+  await expect(page.locator("#matchTab #videoOfficialOpen")).toHaveCount(0);
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSinglePanel details").filter({
+    has:page.locator("summary",{hasText:"Spieldaten übernehmen"})
+  }).locator("summary").click();
   await expect(page.locator("#videoOfficialOpen")).toBeVisible();
   await page.locator("#videoOfficialOpen").click();
   await expect(page.locator("#videoOfficialDialog")).toBeVisible();
@@ -88,7 +94,11 @@ for(const mode of ["video","review"]){
     await expect(page.locator("#videoOfficialEventRows .video-official-add:not(:disabled)")).toHaveCount(1);
     await page.locator("#videoOfficialNone").click();
     await expect(page.locator("#videoOfficialEventRows .video-official-add:checked")).toHaveCount(0);
-    await page.locator("#videoOfficialEventRows .video-official-add:not(:disabled)").check();
+    await expect(page.locator("#videoOfficialSelectMissing")).toBeEnabled();
+    await page.locator("#videoOfficialSelectMissing").click();
+    await expect(page.locator("#videoOfficialEventRows .video-official-add:checked")).toHaveCount(1);
+    await expect(page.locator("#videoOfficialSelectionStatus")).toContainText("1 von 1");
+    await expect(page.locator("#videoOfficialEventRows .video-official-add:disabled:checked")).toHaveCount(0);
     await page.locator("#videoOfficialSafe").click();
     await page.locator("#videoOfficialRosters").check();
     page.once("dialog",dlg=>dlg.accept());
@@ -111,6 +121,7 @@ for(const mode of ["video","review"]){
     page.once("dialog",dlg=>dlg.accept());
     await page.locator("#videoOfficialLoad").click();
     await expect(page.locator("#videoOfficialSummary")).toContainText("0 eindeutig fehlend");
+    await expect(page.locator("#videoOfficialSelectMissing")).toBeDisabled();
   });
   test(mode+": Handball360 compares existing goal and imports only the confirmed sanction",async({page})=>{
     await openGame(page,mode);
@@ -130,7 +141,8 @@ for(const mode of ["video","review"]){
     await expect(page.locator("#videoOfficialSummary")).toContainText("1 vorhanden");
     await expect(page.locator("#videoOfficialSummary")).toContainText("1 eindeutig fehlend");
     expect((await storedGame(page)).events).toEqual(initial.events);
-    await page.locator("#videoOfficialEventRows .video-official-add:not(:disabled)").check();
+    await page.locator("#videoOfficialSelectMissing").click();
+    await expect(page.locator("#videoOfficialEventRows .video-official-add:checked")).toHaveCount(1);
     page.once("dialog",dlg=>dlg.accept());
     await page.locator("#videoOfficialApply").click();
     await expect(page.locator("#videoOfficialStatus")).toContainText("Übernommen: 1 Ereignisse");
@@ -144,3 +156,50 @@ for(const mode of ["video","review"]){
     expect(state.officialSource.matchId).toBe("378107");
   });
 }
+
+
+test("Setup in live mode marks all missing events but never existing goals or ambiguous matches",async({page})=>{
+  await openGame(page,"live");
+  const initial=await storedGame(page);
+  const payload=structuredClone(hbPayload);
+  payload.events.data.push({
+    id:98703,minute:"07:00",block:"1. Halbzeit",
+    event_type:{name:"Verwarnung",sanction_class:"warning"},is_home:false,
+    team:{name:"HC Bremen"},
+    player:{id:"hb-away-7",first_name:"Hans",last_name:"Meyer"},
+    score:{local:0,visitor:1}
+  });
+  await page.route("**/handball360-proxy-235703972531.europe-west1.run.app/**",route=>{
+    const headers={"access-control-allow-origin":"*",
+      "access-control-allow-methods":"GET, OPTIONS",
+      "access-control-allow-headers":"Authorization"};
+    if(route.request().method()==="OPTIONS")
+      return route.fulfill({status:204,headers});
+    return route.fulfill({status:200,contentType:"application/json",headers,
+      body:JSON.stringify(payload)});
+  });
+  await page.locator("#videoOfficialUrl").fill("https://www.handball.net/match/378107");
+  await page.locator("#videoOfficialLoad").click();
+  await expect(page.locator("#videoOfficialSummary")).toContainText("1 vorhanden");
+  await expect(page.locator("#videoOfficialSummary")).toContainText("2 eindeutig fehlend");
+  await expect(page.locator("#videoOfficialEventRows .video-official-add:checked")).toHaveCount(0);
+  await page.locator("#videoOfficialSelectMissing").click();
+  await expect(page.locator("#videoOfficialEventRows .video-official-add:checked")).toHaveCount(2);
+  await expect(page.locator("#videoOfficialEventRows .video-official-add:disabled:checked")).toHaveCount(0);
+  await expect(page.locator("#videoOfficialSelectionStatus")).toContainText("2 von 2");
+  // No update happens until the user confirms, even with bulk selection.
+  expect((await storedGame(page)).events).toEqual(initial.events);
+  page.once("dialog",dialog=>dialog.dismiss());
+  await page.locator("#videoOfficialApply").click();
+  await expect(page.locator("#videoOfficialStatus")).toContainText("Übernahme abgebrochen");
+  expect((await storedGame(page)).events).toEqual(initial.events);
+  page.once("dialog",dialog=>dialog.accept());
+  await page.locator("#videoOfficialApply").click();
+  await expect(page.locator("#videoOfficialStatus")).toContainText("Übernommen: 2 Ereignisse");
+  const final=await storedGame(page);
+  expect(final.events).toHaveLength(initial.events.length+2);
+  expect(final.events.filter(e=>e.type==="goal")).toHaveLength(3);
+  expect(final.events.filter(e=>e.type==="2min")).toHaveLength(1);
+  expect(final.events.filter(e=>e.type==="yellow")).toHaveLength(1);
+  expect(final.events.find(e=>e.id==="own-1")).toEqual(initial.events[0]);
+});
