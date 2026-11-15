@@ -6188,8 +6188,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   async function teamSpaceAuditCompare(connection,catalog){
     const generation=++teamSpaceAuditRequest;
-    const trainer=["trainer","account"].includes(connection.role);
-    if(!trainer)return;
+    // A saved client-side role never authorizes a trainer-only comparison.
+    if(!teamSpaceCanPublish())return;
     const spaceId=connection.spaceId;
     const candidates=teamSpaceAuditCandidates();
     $("teamSpaceAuditStatus").textContent="Lokale Spielstände werden mit dem Team Space verglichen … ("+
