@@ -9,13 +9,18 @@ zurückgeschrieben.
 
 ## Für Spieler
 
-1. Den Einladungslink des Trainers einmal auf dem Gerät öffnen oder unter
-   **Start → Team Space → Team Space verbinden oder verwalten** einfügen.
+1. **Start → Team Space → Team Space verbinden** wählen. Den Einladungslink
+   aus Safari oder einer Nachricht kopieren. In der installierten PWA
+   **Link aus Zwischenablage einfügen** auswählen (alternativ manuell
+   einfügen) und mit **Mit Team Space verbinden** bestätigen.
    Die App prüft den Zugang, speichert die Verbindung und zeigt danach auf
-   der **Startseite** eine kurze Erfolgsmeldung. Es werden dabei noch keine
-   Spiele heruntergeladen oder vorhandene Daten überschrieben.
-2. Unter **Schneller Wiedereinstieg** wird der zuletzt ausgewählte Team Space
-   angezeigt – auch nach einem Neustart der App. Mit **Laden** direkt öffnen.
+   der **Startseite** eine Erfolgsmeldung. Es werden noch keine Spiele
+   heruntergeladen oder vorhandene Daten überschrieben.
+2. Unter **Start → Team Space → Team Space laden** werden bereits auf diesem
+   Gerät verbundene Team Spaces aufgelistet. Den gewünschten Team Space
+   mit **Laden** öffnen. Solange noch keine Verbindung besteht, wird
+   ein Einstieg zum Verbinden angeboten. Unter **Schneller Wiedereinstieg**
+   steht auch nach einem Neustart der zuletzt ausgewählte Team Space bereit.
 3. Unter **Saison laden** die gewünschte veröffentlichte Saison auswählen.
    Ein Klick auf **Saison laden** übernimmt die **gesamte Saison mit den
    enthaltenen Spielen** als neue lokale Saison; andere lokale Saisons
@@ -41,7 +46,7 @@ Zusätzlich zum bisherigen schlüsselbasierten Zugang gibt es einen
 **optionalen, zentral freigegebenen Trainerzugang**. Er ist erst nutzbar,
 nachdem Firebase Authentication in der Google Cloud eingerichtet ist.
 
-1. **Start → Team Space → Trainerkonto · Registrierung und Saisonverwaltung**
+1. **Start → Team Space → Team Space verbinden → Trainerkonto · Registrierung und Saisonverwaltung**
    öffnen.
 2. Mit E-Mail-Adresse und Passwort **Registrieren**, anschließend die
    Bestätigungs-E-Mail öffnen und auf **E-Mail-Bestätigung prüfen** klicken.
@@ -83,7 +88,7 @@ die Trainerfreigabe durch einen Administrator erteilt.
 
 ## Für Trainer – neuen Team Space erstellen
 
-1. **Start → Team Space → Team Space verbinden oder verwalten** öffnen.
+1. **Start → Team Space → Team Space verbinden → Team Space verbinden oder verwalten** öffnen.
 2. Den Cloud-Run-Dienst, Teamnamen und den **zentralen Registrierungsschlüssel**
    eingeben. Dieser Schlüssel wird nur zur Erstellung neuer Team Spaces benutzt
    (bei älteren Saison-Cloud-Bereichen bleibt er vorerst auch deren Legacy-Schlüssel).
