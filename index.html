@@ -6708,7 +6708,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       "\nAusdrücklich privat und ausgeschlossen: "+summary.excluded+
       "\n\nDie Videodatei selbst wird nicht übertragen.";
   }
-  async function teamSpacePublish(type,{remoteEventCount=null}={}){
+  async function teamSpacePublish(type,{remoteEventCount=null,selection=null,onlineSeasonId=null,expectedGameId=null}={}){
     if(teamSpaceBusy)return;teamSpaceBusy=true;
     $("teamSpacePublishStatus").textContent="Veröffentlichung wird vorbereitet. Noch keine Serverbestätigung.";
     try{
@@ -6783,7 +6783,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           teamSpaceShowPublication();
         }
       }else{
-        const selected=$("teamSpacePublishGame").value;
+        const selected=selection??$("teamSpacePublishGame").value;
         if(!selected)throw Error("Bitte ein Einzelspiel auswählen.");
         let game=null,gameId=null,fileName="Spiel.json",
           localSourceSeasonId=null,localSourceGameId=null;
@@ -6803,7 +6803,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           game=structuredClone(item.state);gameId=item.id;fileName=item.fileName;
           localSourceSeasonId=localSeason;localSourceGameId=item.id;
         }
-        const assigned=$("teamSpacePublishTargetSeason").value||null;
+        if(expectedGameId&&gameId!==expectedGameId)
+          throw Error("Das ausgewählte Spiel hat sich geändert. Veröffentlichung nicht gestartet.");
+        const assigned=(onlineSeasonId??$("teamSpacePublishTargetSeason").value)||null;
         const targetSeason=assigned?catalog.seasons.find(row=>row.id===assigned):null;
         const publishedGame=publicGameForTeamSpace(game);
         const sharing=publicationSharingSummary(game);
@@ -7460,9 +7462,35 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         ![...targetSelect.options].some(option=>option.value===onlineSeasonId))
         throw Error("Die korrekte Spiel- und Saisonzuordnung steht nicht zur Verfügung. Bitte im Team Space prüfen.");
       gameSelect.value=selected;targetSelect.value=onlineSeasonId;
-      const published=await teamSpacePublish("game",{remoteEventCount:remoteCount});
-      if(!published&&$("teamSpacePublishStatus").textContent.startsWith("Veröffentlichung nicht bestätigt"))
-        toast($("teamSpacePublishStatus").textContent);
+      const published=await teamSpacePublish("game",{
+        remoteEventCount:remoteCount,selection:selected,onlineSeasonId,
+        expectedGameId:localGameId
+      });
+      if(!published){
+        if($("teamSpacePublishStatus").textContent.startsWith("Veröffentlichung nicht bestätigt"))
+          toast($("teamSpacePublishStatus").textContent);
+        return;
+      }
+      // This publication also increments the remote season version. Reflect
+      // our own upload locally only when the linked season was at the exact
+      // pre-publication revision; otherwise another remote edit needs review.
+      try{
+        const refreshedSeason=teamSpaceCatalogData?.seasons.find(row=>row.id===onlineSeasonId);
+        const refreshedGame=teamSpaceCatalogData?.games.find(row=>row.id===published.gameId);
+        if(linked[0].revision===onlineSeason.revision&&
+          refreshedSeason?.revision===onlineSeason.revision+1&&
+          refreshedGame?.revision===published.itemRevision){
+          const link={...linked[0],revision:refreshedSeason.revision,
+            gameRevisions:{...linked[0].gameRevisions,
+              [published.gameId]:published.itemRevision},updatedAt:new Date().toISOString()};
+          await writeInternalRecord(INTERNAL_SEASON_STORE,link);
+          teamSpaceLinks.set(link.id,link);
+          await teamSpaceRefreshCatalog();
+        }
+      }catch(localError){
+        toast("Cloud-Upload bestätigt, lokale Version konnte nicht aktualisiert werden: "+
+          (localError?.message||String(localError)));
+      }
     }catch(error){
       const message="Spiel nicht veröffentlicht: "+(error?.message||String(error));
       toast(message);
