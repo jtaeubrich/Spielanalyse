@@ -15,7 +15,8 @@ async function openTrainerAccount(page){
   await page.goto("/");
   await page.locator("#homeChooseTeamSpace").click();
   await page.locator("#homeNew").click();
-  await page.locator("#trainerAccountPanel summary").click();
+  await page.locator("#teamSpaceTrainerEntry").click();
+  await expect(page.locator("#trainerAccountPanel")).toHaveAttribute("open","");
   await expect(page.locator("#trainerAccountLogin")).toBeVisible();
 }
 test("Safari and password managers receive correctly mapped login fields, Enter signs in",async({page})=>{
@@ -174,9 +175,12 @@ test("Account registration stays unavailable until Firebase is configured, legac
   await page.goto("/");
   await page.locator("#homeChooseTeamSpace").click();
   await page.locator("#homeNew").click();
-  await page.locator("#trainerAccountPanel summary").click();
+  await page.locator("#teamSpaceTrainerEntry").click();
+  await expect(page.locator("#trainerAccountPanel")).toHaveAttribute("open","");
   await expect(page.locator("#trainerAccountStatus")).toContainText("noch nicht aktiviert");
   await expect(page.locator("#trainerAccountLogin")).toBeHidden();
+  await expect(page.locator("#teamSpaceConnect")).toBeHidden();
+  await page.locator("#teamSpaceLegacyEntry").click();
   await expect(page.locator("#teamSpaceConnect")).toHaveAttribute("open","");
   await expect(page.locator("#teamSpaceRegistrationToken")).toBeVisible();
 });
@@ -348,6 +352,8 @@ test("Approved Firebase trainer can create a Team Space and publish local season
   await page.locator("#homeOpen").click();
   await page.locator("#homeLibraryList .home-list-row")
     .getByRole("button",{name:"Laden"}).click();
+  await expect(page.locator("#teamSpaceTrainerTools")).toBeVisible();
+  await page.locator("#teamSpaceTrainerTools > summary").click();
   await page.locator("#teamSpacePublish summary").click();
   await page.locator("#teamSpacePublishSeasonTarget").selectOption(SEASON);
   await page.locator("#teamSpacePublishSeasonBtn").click();
