@@ -24,15 +24,72 @@ const clean=value=>{
   }
   return result;
 };
+// A Team Space may share a YouTube reference and synchronization metadata,
+// never the device-local video object, file names, handles or file paths.
+const YOUTUBE_ID=/^[A-Za-z0-9_-]{11}$/;
+function youtubeIdFromVideo(video){
+  const candidate=String(video?.youtubeId||"").trim();
+  if(YOUTUBE_ID.test(candidate))return candidate;
+  try{
+    const url=new URL(String(video?.youtubeUrl||""));
+    const host=url.hostname.toLowerCase();
+    let id="";
+    if(host==="youtu.be"||host==="www.youtu.be"){
+      id=url.pathname.split("/")[1]||"";
+    }else if(["youtube.com","www.youtube.com","m.youtube.com",
+      "youtube-nocookie.com","www.youtube-nocookie.com"].includes(host)){
+      id=url.searchParams.get("v")||
+        /^\/(?:shorts|embed|live)\/([^/]+)/.exec(url.pathname)?.[1]||"";
+    }
+    return YOUTUBE_ID.test(id)?id:"";
+  }catch{return ""}
+}
+function sharedYoutubeVideo(video){
+  if(!video||typeof video!=="object"||Array.isArray(video))return null;
+  const id=youtubeIdFromVideo(video);
+  if(!id)return null;
+  const shared={
+    youtubeId:id,youtubeUrl:"https://www.youtube.com/watch?v="+id,
+    analysisTimeBasis:"youtube-absolute-ms"
+  };
+  if(["seconds","ms"].includes(video.syncUnit))shared.syncUnit=video.syncUnit;
+  for(const key of ["h1SyncRealTime","h2SyncRealTime","kickoff",
+    "h1LiveStartMs","h2LiveStartMs"]){
+    if(video[key]===null||video[key]===undefined||video[key]==="")continue;
+    const number=Number(video[key]);
+    if(Number.isFinite(number)&&number>=0)shared[key]=number;
+  }
+  if(Array.isArray(video.reviewClockAnchors)){
+    const anchors=video.reviewClockAnchors.filter(anchor=>
+      [1,2].includes(Number(anchor?.half))&&
+      anchor?.videoAt!==null&&anchor?.videoAt!==undefined&&
+      anchor?.gameAt!==null&&anchor?.gameAt!==undefined&&
+      Number.isFinite(Number(anchor.videoAt))&&
+      Number.isFinite(Number(anchor.gameAt))&&
+      Number(anchor.videoAt)>=0&&Number(anchor.gameAt)>=0
+    ).map(anchor=>({
+      half:Number(anchor.half),videoAt:Number(anchor.videoAt),
+      gameAt:Number(anchor.gameAt),running:anchor.running!==false
+    }));
+    if(anchors.length)shared.reviewClockAnchors=anchors;
+  }
+  return shared;
+}
 function privateSettings(event){
   const settings=event?.teamSpacePrivate;
   return settings&&typeof settings==="object"&&!Array.isArray(settings)?settings:{};
 }
-function publicEvent(event){
+function publicEvent(event,{shareVideoTime=false}={}){
   if(!event||typeof event!=="object")return null;
   const privacy=privateSettings(event);
   if(event.type==="keyMoment"&&privacy.moment===true)return null;
   const result=clean(event);
+  // In video-scouting games realTime is a confirmed YouTube video offset
+  // (milliseconds), not the wall-clock timestamp from live scouting.
+  if(shareVideoTime&&event.realTime!==null&&
+    event.realTime!==undefined&&event.realTime!==""&&
+    Number.isFinite(Number(event.realTime))&&Number(event.realTime)>=0)
+    result.realTime=Number(event.realTime);
   if(Array.isArray(event.tags)){
     const hiddenTags=Array.isArray(privacy.tags)?privacy.tags:[];
     const tags=event.tags.filter(tag=>typeof tag==="string"&&!hiddenTags.includes(tag));
@@ -63,14 +120,18 @@ export function publicGameForTeamSpace(game){
     !game.home||!game.away||!Array.isArray(game.events))
     throw Error("Spiel enthält keine gültigen Team- und Ereignisdaten.");
   const source={};
+  const youtubeVideo=sharedYoutubeVideo(game.video);
   for(const [key,value] of Object.entries(game)){
     if(LOCAL_FIELDS.has(key)||PRIVATE_FIELD.test(key))continue;
     if(key==="timer"){
       source.timer={duration:value?.duration||25};
     }else if(key==="events"){
-      source.events=value.map(publicEvent).filter(Boolean);
+      source.events=value.map(event=>publicEvent(event,{
+        shareVideoTime:Boolean(youtubeVideo&&game.isVideoscoutingFile)
+      })).filter(Boolean);
     }else source[key]=clean(value);
   }
+  if(youtubeVideo)source.video=youtubeVideo;
   return source;
 }
 export function publicSeasonForTeamSpace(archive){
