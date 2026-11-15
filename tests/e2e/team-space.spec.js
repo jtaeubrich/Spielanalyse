@@ -585,3 +585,41 @@ test("Single-game upload identifies the selected Team Space and online season, a
   await expect(page.locator("#teamSpacePublishStatus"))
     .toContainText("Cloud-Version 2");
 });
+
+
+test("Team Space game list shows oldest matches above newer matches",async({page})=>{
+  await mockSpace(page);
+  const games=[
+    {id:"sg-newest",name:"20.03.2027 | THW KIEL II - TSV KRONSHAGEN",date:"2027-03-20"},
+    {id:"sg-middle",name:"23.01.2027 | HTS/BW96 HANDBALL",date:"2027-01-23"},
+    {id:"sg-oldest",name:"12.09.2026 | TSV KRONSHAGEN - GAST",date:"2026-09-12"}
+  ].map(game=>({...game,revision:1,sha256:"a".repeat(64),
+    seasonIds:[SEASON],matchId:""}));
+  // Cloud catalog is intentionally newest-first, as in the screenshot.
+  await page.route(API+"/spaces/"+SPACE+"/catalog",route=>route.fulfill({
+    status:200,contentType:"application/json",headers:{"Access-Control-Allow-Origin":"*"},
+    body:JSON.stringify({
+      spaceId:SPACE,name:"TSV Kronshagen",revision:3,updatedAt:"2026-11-15",
+      trainerAccess:"individual",seasons:[{
+        id:SEASON,name:"Saison 2026/27",revision:1,
+        gameCount:3,gameIds:games.map(g=>g.id)
+      }],games
+    })
+  }));
+  await page.goto("/#teamspace="+encodeURIComponent(SPACE)+
+    "&key="+encodeURIComponent(READER)+"&api="+encodeURIComponent(API));
+  await expect(page.locator("#homeTeamSpaceJoined")).toContainText("erfolgreich hinzugefügt");
+  await page.locator("#homeRecentOptions .home-list-row").filter({hasText:"Team Space verbunden"})
+    .getByRole("button",{name:"Laden"}).click();
+  await expect(page.locator("#teamSpaceGamesDetails")).not.toHaveAttribute("open","");
+  await page.locator("#teamSpaceGamesDetails summary").click();
+  const rows=page.locator("#teamSpaceGames .home-list-row");
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(0)).toContainText("12.09.2026");
+  await expect(rows.nth(1)).toContainText("23.01.2027");
+  await expect(rows.nth(2)).toContainText("20.03.2027");
+  await expect(page.locator("#teamSpaceGamesSummary")).toContainText("(3)");
+  await page.locator("#teamSpaceRefresh").click();
+  await expect(rows.nth(0)).toContainText("12.09.2026");
+  await expect(rows.nth(2)).toContainText("20.03.2027");
+});

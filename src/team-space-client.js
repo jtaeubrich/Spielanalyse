@@ -4,6 +4,16 @@ import {seasonCloudCall,seasonCloudEndpoint,validSeasonCloudId,
   validSeasonCloudToken} from "./season-sync-client.js";
 const gameId=/^sg-[a-z0-9_-]{1,80}$/i;
 export const teamSpaceGameId=value=>gameId.test(String(value||""));
+// The Team Space list uses the same oldest-first chronology as local seasons.
+// Published catalog data is not mutated; games without a date come last.
+export function chronologicalTeamSpaceGames(games=[]){
+  return [...games].sort((left,right)=>{
+    const a=String(left?.date||""),b=String(right?.date||"");
+    if(!a)return b?1:0;
+    if(!b)return -1;
+    return a.localeCompare(b);
+  });
+}
 function requireConnection(connection){
   if(!validSeasonCloudId(connection?.spaceId)||!validSeasonCloudToken(connection?.readToken))
     throw Error("Team-Space-Zugang fehlt oder ist ungültig.");

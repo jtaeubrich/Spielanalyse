@@ -1,7 +1,7 @@
 import {describe,it,expect,vi} from "vitest";
 import {createHash} from "node:crypto";
 import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,
-  downloadTeamSpaceGame,publishTeamSpaceGame,claimTeamSpaceTrainerToken,
+  chronologicalTeamSpaceGames,downloadTeamSpaceGame,publishTeamSpaceGame,claimTeamSpaceTrainerToken,
   verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "../src/team-space-client.js";
 const API="https://handball-season-sync-235703972531.europe-west1.run.app";
 const SPACE="88735513-5e3e-4a95-aa70-6a1a2fe94bf9";
@@ -146,4 +146,30 @@ describe("Team Space API client",()=>{
     expect(calls).toEqual([[SPACE,"/catalog"],[SPACE,"/games/sg-1/download"]]);
   });
 
+});
+
+describe("Team Space game order",()=>{
+  it("shows oldest games first without changing the cloud catalog",()=>{
+    const newest={id:"sg-march",date:"2027-03-20",name:"März"};
+    const oldest={id:"sg-september",date:"2026-09-12",name:"September"};
+    const middle={id:"sg-january",date:"2027-01-23",name:"Januar"};
+    const undated={id:"sg-no-date",date:"",name:"Noch ohne Datum"};
+    const source=[newest,undated,middle,oldest];
+    expect(chronologicalTeamSpaceGames(source).map(game=>game.id)).toEqual([
+      "sg-september","sg-january","sg-march","sg-no-date"
+    ]);
+    expect(source.map(game=>game.id)).toEqual([
+      "sg-march","sg-no-date","sg-january","sg-september"
+    ]);
+  });
+  it("preserves the input order for games on the same date",()=>{
+    const items=[
+      {id:"sg-first",date:"2026-11-15"},
+      {id:"sg-second",date:"2026-11-15"},
+      {id:"sg-prior",date:"2026-11-14"}
+    ];
+    expect(chronologicalTeamSpaceGames(items).map(g=>g.id)).toEqual([
+      "sg-prior","sg-first","sg-second"
+    ]);
+  });
 });
