@@ -9,7 +9,7 @@ const PUBLIC_TACTICAL_TAG=/^(?:Deckung|Auslöser):/;
 const PRIVATE_FIELD=/(?:comment|note|annotation|drawing|highlight|bookmark|personal|private|video|realTime)/i;
 const LOCAL_FIELDS=new Set([
   "video","videoFileName","videoPath","videoSource","videoHandle",
-  "isVideoscoutingFile","isHistorical","theme","shotCapture",
+  "theme","shotCapture",
   "gameTime","activeTw","activeDefense","possession","attackPhase",
   "preflight","videoUrl","videoName","fileHandle"
 ]);
