@@ -94,7 +94,7 @@ async function environment(callback,{enabled=true,adminUids=["admin-uid"],bootst
         ...(identity?{Authorization:"Bearer "+identity}:{}),
         ...(data!==undefined?{"Content-Type":"application/json"}:{})},
       ...(data!==undefined?{body:JSON.stringify(data)}:{})});
-    return {status:response.status,data:await response.json()};
+    const raw=await response.text();return {status:response.status,data:JSON.parse(raw),raw,headers:response.headers};
   }
   try{await callback({call,store})}finally{await new Promise(resolve=>server.close(resolve))}
 }
