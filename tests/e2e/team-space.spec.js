@@ -253,7 +253,7 @@ test("Team Space laden lists connected spaces and back returns to the list",asyn
   await expect(page.locator("#teamSpaceStatus")).toBeHidden();
   await expect(page.locator("#teamSpaceSelectedIdInfo")).toBeHidden();
   await expect(page.locator("#teamSpacePlayerSummary")).toContainText("1 Saison · 1 Spiel");
-  await expect(page.locator("#teamSpacePlayerStatus")).toContainText("aktuell");
+  await expect(page.locator("#teamSpacePlayerStatus")).toContainText("Keine neueren Cloud-Versionen");
   await expect(page.locator("#teamSpaceSeasons")).not.toContainText("Version ");
   await page.locator("#homeBack").click();
   await expect(page.locator("#homeLibrary")).toBeVisible();
