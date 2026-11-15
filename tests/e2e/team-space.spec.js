@@ -466,6 +466,8 @@ test("Trainer sees unpublished scouting edits but not private note edits in Team
   await editLocal("note","Meine private Beobachtung");
   await page.reload();
   await loadConnectedTeamSpace(page);
+  await expect(page.locator("#teamSpaceAuditPanel")).toBeHidden();
+  await unlockExistingTrainerSpace(page);
   await expect(page.locator("#teamSpaceAuditStatus")).toContainText("0 lokal geändert");
   await expect(page.locator("#teamSpaceAuditStatus")).toContainText("1 identisch");
   await editLocal("scoreH",5);
