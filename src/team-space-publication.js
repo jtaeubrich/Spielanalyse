@@ -6,7 +6,7 @@
 // Other tags are personal unless the product introduces an explicit sharing
 // control for them.
 const PUBLIC_TACTICAL_TAG=/^(?:Deckung|Auslöser):/;
-const PRIVATE_FIELD=/(?:comment|note|annotation|drawing|highlight|bookmark|personal|private)/i;
+const PRIVATE_FIELD=/(?:comment|note|annotation|drawing|highlight|bookmark|personal|private|video|realTime)/i;
 const LOCAL_FIELDS=new Set([
   "video","videoFileName","videoPath","videoSource","videoHandle",
   "isVideoscoutingFile","isHistorical","theme","shotCapture",
@@ -49,10 +49,10 @@ export function publicGameForTeamSpace(game){
 }
 export function publicSeasonForTeamSpace(archive){
   if(!archive||!Array.isArray(archive.games))throw Error("Saison enthält keine Spiele.");
-  return {...archive,games:archive.games.map(item=>({
-    ...item,data:publicGameForTeamSpace(item.data??item.state),
-    ...(Object.hasOwn(item,"state")?{state:undefined}:{})
-  }))};
+  return {...archive,games:archive.games.map(item=>{
+    const {state,...rest}=item;
+    return {...rest,data:publicGameForTeamSpace(item.data??state)};
+  })};
 }
 // Canonicalize key order (not array order) so a cloud JSON roundtrip or a
 // different object insertion order cannot appear as an unsent local edit.
