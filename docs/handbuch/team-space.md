@@ -126,9 +126,58 @@ die Trainerfreigabe durch einen Administrator erteilt.
   für alle vorhandenen Team Spaces empfehlenswert.
 
 
-**Hinweis zur Freigabe:** Veröffentlicht wird der vom Trainer ausdrücklich
-ausgewählte Spielstand. Der Trainer sollte prüfen, ob darin Informationen
-enthalten sind, die nicht für die gesamte Mannschaft bestimmt sind.
+## Versionsvergleich: Lokal gegen Team Space
+
+Unter **Start → Team Space → Team Space laden → Updates prüfen** wird der
+Cloud-Katalog abgerufen. Für Trainer wird zusätzlich **Veröffentlichungsstand
+meiner Spiele** berechnet. Dafür vergleicht die App lokale Spielstände auf
+diesem Gerät mit ihren veröffentlichten Gegenstücken, ohne private
+Anmerkungen zu berücksichtigen. Sie zeigt:
+
+- **Identisch mit Cloud** – die freigegebenen Scoutingdaten stimmen überein
+- **Lokal geändert** – seit dem letzten bekannten Cloud-Stand wurden
+  Scoutingdaten geändert oder ergänzt
+- **Cloud-Version neuer** – es gibt einen neueren Cloud-Stand; vor dem
+  Hochladen erst die Unterschiede prüfen und eine lokale Sicherung erstellen
+- **Noch nicht veröffentlicht** – für das lokale Spiel wurde im gewählten
+  Team Space keine passende Cloud-Partie gefunden
+- **Abweichend – Zuordnung prüfen** – eine eindeutige Versionszuordnung
+  ist nicht möglich. Die App bietet keine ungesicherte Schnellfreigabe an.
+
+Auf der Startseite erscheint beim verbundenen Team Space die
+**Zusammenfassung der letzten Prüfung mit Datum/Uhrzeit**. Diese Anzeige
+ist ein **gespeicherter Prüfstand**, keine automatische Hintergrundprüfung:
+für einen aktuellen Vergleich den Team Space öffnen und **Updates prüfen**
+verwenden. Der detaillierte Vergleich lädt bei Bedarf die Cloud-Spiele mit
+SHA-256-Prüfsumme, falls der Versions-Fingerabdruck nicht übereinstimmt.
+Einzelne Spiele können unter **Zur Veröffentlichung** im
+Veröffentlichungsdialog vorausgewählt werden; das Hochladen erfordert
+weiterhin die Bestätigung des Trainers.
+
+## Öffentliche Scoutingdaten und private Anmerkungen
+
+Beim **neuen Hochladen** (gesamte Saison oder einzelnes Spiel) werden
+Scouting-Ereignisse, Spielstatistik, Teams und taktische Klassifizierungen
+veröffentlicht. Vor der Übertragung entfernt die App aus einer **Kopie** der
+Spiel-Datei private Freitextkommentare, Notizen, individuelle Hervorhebungen,
+Videozeichnungen und -zeitangaben, persönliche Schlüssel-Momente sowie
+frei vergebene Tags. Die taktischen Kategorien **Deckung:** und
+**Auslöser:** bleiben erhalten. Das lokale Original bleibt unverändert.
+
+Alle Trainer sollten ausdrücklich kontrollieren, welche weiteren
+Spiel- und Mannschaftsdaten an die Mannschaft gehen. Es handelt sich nicht
+um eine individuelle Berechtigungsverwaltung innerhalb der veröffentlichten
+Daten: Jeder mit einem gültigen Leseschlüssel kann den öffentlichen Stand
+sehen. Video-Dateien werden nicht in den Team Space hochgeladen.
+
+**Bereits vor dieser Korrektur veröffentlichte Daten** können persönliche
+Anmerkungen enthalten. Eine erneute Veröffentlichung mit der aktuellen App
+ersetzt die *aktuelle abrufbare Fassung* durch die bereinigte Kopie.
+Historische, nicht mehr referenzierte Cloud-Objekte können intern weiter
+gespeichert sein und erfordern gegebenenfalls eine getrennte Bereinigung
+durch einen Administrator. Ein neues Update entfernt diese alten
+Cloud-Objekte nicht automatisch.
+
 Spieler-Lesezugänge besitzen keinerlei Veröffentlichungsberechtigung.
 
 ## Technischer Stand und Grenzen
