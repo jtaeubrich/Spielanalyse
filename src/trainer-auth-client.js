@@ -165,8 +165,8 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
   async function fetchTeamSpaceResource(spaceId,suffix){
     if(!validSeasonCloudId(spaceId)||
       !(suffix==="/catalog"||
-        /^\\/seasons\\/[0-9a-f-]{36}\\/download$/i.test(suffix)||
-        /^\\/games\\/sg-[a-z0-9_-]{1,80}\\/download$/i.test(suffix)))
+        /^\/seasons\/[0-9a-f-]{36}\/download$/i.test(suffix)||
+        /^\/games\/sg-[a-z0-9_-]{1,80}\/download$/i.test(suffix)))
       throw Error("Team-Space-Ressource ungültig.");
     return call("/spaces/"+spaceId+suffix,{teamSpace:true,raw:true});
   }
