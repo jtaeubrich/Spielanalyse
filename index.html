@@ -6627,6 +6627,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
     finally{teamSpaceBusy=false}
   }
+  function teamSpaceSharingConfirmation(summary){
+    return "\n\nStandardmäßig wird alles freigegeben, was nicht ausdrücklich privat markiert ist."+
+      "\nKommentare: "+summary.comments+" · Zeichnungen: "+summary.drawings+
+      " · Schlüsselmomente: "+summary.keyMoments+" · Highlights: "+summary.highlights+
+      "\nAusdrücklich privat und ausgeschlossen: "+summary.excluded+
+      "\n\nDie Videodatei selbst wird nicht übertragen.";
+  }
   async function teamSpacePublish(type){
     if(teamSpaceBusy)return;teamSpaceBusy=true;
     $("teamSpacePublishStatus").textContent="Veröffentlichung wird vorbereitet. Noch keine Serverbestätigung.";
@@ -6645,10 +6652,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         if(!localId)throw Error("Bitte lokale Saison auswählen.");
         if(localId!==seasonLibraryId)await switchSeasonLibrary(localId);
         persistSession();
-        const archive=publicSeasonForTeamSpace(seasonExportObject({includePersonal:true}));
+        const sourceArchive=seasonExportObject({includePersonal:true});
+        const archive=publicSeasonForTeamSpace(sourceArchive);
+        const sharing=publicationSharingSummary(sourceArchive);
         if(!confirm("Saison „"+archive.name+"“ mit "+archive.games.length+
           " Spielen im Team Space „"+(connection.name||"Team Space")+
-          "“ (ID …"+connection.spaceId.slice(-8)+") veröffentlichen?")){
+          "“ (ID …"+connection.spaceId.slice(-8)+") veröffentlichen?"+
+          teamSpaceSharingConfirmation(sharing))){
           $("teamSpacePublishStatus").textContent="Veröffentlichung abgebrochen. Keine Daten übertragen.";
           return;
         }
@@ -6722,6 +6732,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const assigned=$("teamSpacePublishTargetSeason").value||null;
         const targetSeason=assigned?catalog.seasons.find(row=>row.id===assigned):null;
         const publishedGame=publicGameForTeamSpace(game);
+        const sharing=publicationSharingSummary(game);
         const remote=catalog.games.find(row=>row.id===gameId||
           (game.officialSource?.matchId&&row.matchId===String(game.officialSource.matchId)));
         if(remote){
@@ -6734,7 +6745,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         if(!confirm("Spiel „"+game.gameName+"“ im Team Space „"+
           (connection.name||"Team Space")+"“ (ID …"+connection.spaceId.slice(-8)+
           ") veröffentlichen?\n\nOnline-Saison: "+
-          (targetSeason?.name||"Ohne Saisonzuordnung"))){
+          (targetSeason?.name||"Ohne Saisonzuordnung")+teamSpaceSharingConfirmation(sharing))){
           $("teamSpacePublishStatus").textContent="Veröffentlichung abgebrochen. Keine Daten übertragen.";
           return;
         }
@@ -8559,7 +8570,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(["shot","goal","save","miss","block"].includes(e.type)){conditional.push(`<label>Spielsituation<select class="field" id="veePhase">${videoEditorOptionHtml(phaseItems,e.attackPhase)}</select></label>`,`<label>Abwurfposition<select class="field" id="veeZone">${videoEditorOptionHtml(zoneItems,e.z)}</select></label>`,`<label>Wurfziel<select class="field" id="veeTarget">${videoEditorOptionHtml(targetItems,e.gz)}</select></label>`,`<label>Deckungsformation<select class="field" id="veeDefenseFormation">${videoEditorOptionHtml([["","Nicht angegeben"],...defenseFormations.map(x=>[x,x])],defenseTag)}</select></label>`,`<label>Auslösehandlung<select class="field" id="veeTrigger">${videoEditorOptionHtml([["","Nicht angegeben"],...triggerActions.map(x=>[x,x])],triggerTag)}</select></label>`)}
     if(defendingTeam&&["shot","goal","save","miss","block"].includes(e.type))conditional.push(`<label>Abwehrzuordnung<select class="field" id="veeDefender">${videoEditorOptionHtml(defenderItems,defenseValue)}</select></label>`);
     if(e.type==="keyMoment")conditional.push(`<label class="wide">Notiz<input class="field" id="veeNote" value="${escapeHtml(e.note||"")}"></label>`);
-    host.innerHTML=`<h2>${escapeHtml(e.displayTime||fmt(e.time||0))} · ${escapeHtml(eventLabels[e.type]||e.type)}</h2>${activeTab==="match"&&matchReviewMode?`<div class="match-review-pin-state">${reviewPinnedEventIndex===activeVideoEventIndex?"📌 Event fixiert – automatische Auswahl pausiert":"Automatische Event-Auswahl aktiv"}${reviewPinnedEventIndex===activeVideoEventIndex?'<button class="btn tiny" id="veeUnpin" type="button">Fixierung lösen</button>':""}</div>`:""}<div class="video-event-data-grid"><label>Spielzeit<input class="field" id="veeTime" value="${escapeHtml(e.displayTime||fmt(e.time||0))}"></label>${e.officialSource?`<div class="official-time-warning" role="note">⚠ Spielzeit aus dem offiziellen Spielprotokoll${e.officialOriginalTime!==undefined?` · Original: ${escapeHtml(fmt(e.officialOriginalTime))}`:""}. Änderungen werden ausdrücklich bestätigt und das Original bleibt erhalten.</div>`:""}<label>Video-/Realzeit (mm:ss.d)<input class="field" id="veeRealTime" type="text" inputmode="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="18:42.5" value="${escapeHtml(formatVideoEditorTime(e.realTime))}"></label><label>Team<select class="field" id="veeTeam">${videoEditorOptionHtml(teamItems,e.team)}</select></label><label>Ereignis<select class="field" id="veeType">${videoEditorOptionHtml(typeItems,e.type)}</select></label>${conditional.join("")}</div><div class="video-event-meta-row"><label><input id="eventHighlight" type="checkbox" ${e.highlight?'checked':''}> Highlight</label><button class="btn primary" id="veeSetCurrentVideoTime" type="button">Aktuelle Videoposition übernehmen</button><button class="btn" id="veeJumpToEvent" type="button">Zum Event</button><button class="btn" id="veePlayScene" type="button">Szene abspielen</button><button class="btn danger" id="veeDeleteEvent" type="button">Event löschen</button></div><div class="event-editor-grid"><input class="field" id="eventTagInput" list="eventTagSuggestions" placeholder="Tag hinzufügen"><button class="btn" id="addEventTag" type="button">Tag hinzufügen</button></div><div class="tag-chips">${tags.map(tag=>`<button class="tag-chip" type="button" data-remove-tag="${escapeHtml(tag)}">${escapeHtml(tag)} ×</button>`).join("")}</div><label>Kommentar im Video<input class="field" id="eventVideoComment" value="${escapeHtml(annotation.comment)}" placeholder="Optionaler Kommentar"></label><div class="teamspace-privacy-options" aria-label="Freigabe für die Mannschaft"><strong>Team-Space-Freigabe (standardmäßig veröffentlichen)</strong>${e.type==="keyMoment"?`<label class="social-check"><input type="checkbox" id="veePrivateMoment" ${e.teamSpacePrivate?.moment?"checked":""}> Privat – Schlüsselmoment nicht veröffentlichen</label><label class="social-check"><input type="checkbox" id="veePrivateNote" ${e.teamSpacePrivate?.note?"checked":""}> Privat – Notiz nicht veröffentlichen</label>`:""}<label class="social-check"><input type="checkbox" id="veePrivateComment" ${e.teamSpacePrivate?.comment?"checked":""}> Privat – Kommentar nicht veröffentlichen</label><label class="social-check"><input type="checkbox" id="veePrivateHighlight" ${e.teamSpacePrivate?.highlight?"checked":""}> Privat – Highlight-Markierung nicht veröffentlichen</label>${annotation.shapes.length?`<div class="number-help">Zeichnungen einzeln freigeben:</div>${annotation.shapes.map((shape,index)=>`<label class="social-check"><input type="checkbox" data-private-shape-index="${index}" ${shape.teamSpacePrivate?"checked":""}> Zeichnung ${index+1} privat – nicht veröffentlichen</label>`).join("")}`:""}</div>`;
+    host.innerHTML=`<h2>${escapeHtml(e.displayTime||fmt(e.time||0))} · ${escapeHtml(eventLabels[e.type]||e.type)}</h2>${activeTab==="match"&&matchReviewMode?`<div class="match-review-pin-state">${reviewPinnedEventIndex===activeVideoEventIndex?"📌 Event fixiert – automatische Auswahl pausiert":"Automatische Event-Auswahl aktiv"}${reviewPinnedEventIndex===activeVideoEventIndex?'<button class="btn tiny" id="veeUnpin" type="button">Fixierung lösen</button>':""}</div>`:""}<div class="video-event-data-grid"><label>Spielzeit<input class="field" id="veeTime" value="${escapeHtml(e.displayTime||fmt(e.time||0))}"></label>${e.officialSource?`<div class="official-time-warning" role="note">⚠ Spielzeit aus dem offiziellen Spielprotokoll${e.officialOriginalTime!==undefined?` · Original: ${escapeHtml(fmt(e.officialOriginalTime))}`:""}. Änderungen werden ausdrücklich bestätigt und das Original bleibt erhalten.</div>`:""}<label>Video-/Realzeit (mm:ss.d)<input class="field" id="veeRealTime" type="text" inputmode="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="18:42.5" value="${escapeHtml(formatVideoEditorTime(e.realTime))}"></label><label>Team<select class="field" id="veeTeam">${videoEditorOptionHtml(teamItems,e.team)}</select></label><label>Ereignis<select class="field" id="veeType">${videoEditorOptionHtml(typeItems,e.type)}</select></label>${conditional.join("")}</div><div class="video-event-meta-row"><label><input id="eventHighlight" type="checkbox" ${e.highlight?'checked':''}> Highlight</label><button class="btn primary" id="veeSetCurrentVideoTime" type="button">Aktuelle Videoposition übernehmen</button><button class="btn" id="veeJumpToEvent" type="button">Zum Event</button><button class="btn" id="veePlayScene" type="button">Szene abspielen</button><button class="btn danger" id="veeDeleteEvent" type="button">Event löschen</button></div><div class="event-editor-grid"><input class="field" id="eventTagInput" list="eventTagSuggestions" placeholder="Tag hinzufügen"><button class="btn" id="addEventTag" type="button">Tag hinzufügen</button></div><div class="tag-chips">${tags.map(tag=>`<span><button class="tag-chip" type="button" data-remove-tag="${escapeHtml(tag)}">${escapeHtml(tag)} ×</button><label class="social-check"><input type="checkbox" data-private-tag="${escapeHtml(tag)}" ${e.teamSpacePrivate?.tags?.includes(tag)?"checked":""}> Privat</label></span>`).join("")}</div><label>Kommentar im Video<input class="field" id="eventVideoComment" value="${escapeHtml(annotation.comment)}" placeholder="Optionaler Kommentar"></label><div class="teamspace-privacy-options" aria-label="Freigabe für die Mannschaft"><strong>Team-Space-Freigabe (standardmäßig veröffentlichen)</strong>${e.type==="keyMoment"?`<label class="social-check"><input type="checkbox" id="veePrivateMoment" ${e.teamSpacePrivate?.moment?"checked":""}> Privat – Schlüsselmoment nicht veröffentlichen</label><label class="social-check"><input type="checkbox" id="veePrivateNote" ${e.teamSpacePrivate?.note?"checked":""}> Privat – Notiz nicht veröffentlichen</label>`:""}<label class="social-check"><input type="checkbox" id="veePrivateComment" ${e.teamSpacePrivate?.comment?"checked":""}> Privat – Kommentar nicht veröffentlichen</label><label class="social-check"><input type="checkbox" id="veePrivateHighlight" ${e.teamSpacePrivate?.highlight?"checked":""}> Privat – Highlight-Markierung nicht veröffentlichen</label>${annotation.shapes.length?`<div class="number-help">Zeichnungen einzeln freigeben:</div>${annotation.shapes.map((shape,index)=>`<label class="social-check"><input type="checkbox" data-private-shape-index="${index}" ${shape.teamSpacePrivate?"checked":""}> Zeichnung ${index+1} privat – nicht veröffentlichen</label>`).join("")}`:""}</div>`;
     for(const [id,field] of [["veePrivateMoment","moment"],["veePrivateNote","note"],["veePrivateComment","comment"],["veePrivateHighlight","highlight"]]){
       const checkbox=$(id);
       if(checkbox)checkbox.onchange=change=>updateEventPrivacy(e,field,change.target.checked);
@@ -8567,6 +8578,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     host.querySelectorAll("[data-private-shape-index]").forEach(checkbox=>checkbox.onchange=change=>{
       const shape=eventAnnotation(e)?.shapes?.[Number(change.target.dataset.privateShapeIndex)];
       if(shape)updateShapePrivacy(e,shape,change.target.checked);
+    });
+    host.querySelectorAll("[data-private-tag]").forEach(checkbox=>checkbox.onchange=change=>{
+      const tag=change.target.dataset.privateTag,privacy=eventPrivacy(e);
+      const tags=new Set(Array.isArray(privacy.tags)?privacy.tags:[]);
+      if(change.target.checked)tags.add(tag);else tags.delete(tag);
+      if(tags.size)privacy.tags=[...tags];else delete privacy.tags;
+      persistSession();
     });
     if(e.type==="keyMoment"){const picker=keyMomentPlayerPicker(e,()=>videoEditorCommit("Beteiligte Spieler geändert"),"veeKeyMomentPlayers");picker.open=keyMomentPlayersOpen;host.querySelector(".video-event-data-grid").append(picker)}
     $("veeTime").onchange=event=>{try{const t=Math.round(parseTime(event.target.value));if(t===e.time)return;const prior=e.time,priorDisplay=e.displayTime,priorHalf=e.half;if(e.officialSource){const original=e.officialOriginalTime!==undefined?e.officialOriginalTime:prior;if(!window.confirm(`Achtung: Die Spielzeit stammt aus dem offiziellen Spielprotokoll (${fmt(original)}). Soll sie für dieses Event wirklich auf ${fmt(t)} geändert werden? Der Originalwert bleibt gespeichert.`)){event.target.value=priorDisplay||fmt(prior||0);return}if(e.officialOriginalTime===undefined){e.officialOriginalTime=prior;e.officialOriginalDisplayTime=priorDisplay;e.officialOriginalHalf=priorHalf}}e.time=t;e.displayTime=fmt(t);e.half=t<state.timer.duration*60?1:2;videoEditorCommit("Spielzeit geändert");renderVideoEventEditor()}catch(err){toast(err.message);event.target.value=e.displayTime||fmt(e.time||0)}};
@@ -8848,6 +8866,17 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
       const noteInput=editorInput(e.note||"",value=>{e.note=value;afterDataEdit("Notiz geändert")},"key-moment-note");
       noteLabel.append(noteTitle,noteInput);
       fields.append(noteLabel);
+      const privateMoment=document.createElement("label");
+      privateMoment.className="data-detail-field social-check";
+      privateMoment.textContent="Privat – Schlüsselmoment nicht veröffentlichen";
+      const privateCheckbox=document.createElement("input");
+      privateCheckbox.type="checkbox";privateCheckbox.id="deePrivateMoment";
+      privateCheckbox.checked=Boolean(e.teamSpacePrivate?.moment);
+      privateCheckbox.onchange=input=>{
+        updateEventPrivacy(e,"moment",input.target.checked);
+        afterDataEdit("Team-Space-Freigabe geändert");
+      };
+      privateMoment.prepend(privateCheckbox);fields.append(privateMoment);
       const picker=keyMomentPlayerPicker(e,()=>afterDataEdit("Beteiligte Spieler geändert"),"deeKeyMomentPlayers");
       picker.open=keyMomentPlayersOpen;
       fields.append(picker);
