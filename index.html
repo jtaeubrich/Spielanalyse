@@ -1610,7 +1610,8 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
     #teamSpaceInviteLink{font-family:monospace;font-size:12px}
     #teamSpaceJoinPanel[hidden],#teamSpaceTrainerTools[hidden],
     #teamSpacePlayerSummary[hidden],#teamSpacePlayerStatus[hidden],
-    #teamSpaceJoinStatus[hidden],#teamSpaceRefresh[hidden]{display:none!important}
+    #teamSpaceJoinStatus[hidden],#teamSpaceRefresh[hidden],
+    #publishOpenedGameBtn[hidden]{display:none!important}
     #teamSpaceJoinPanel{margin:8px 0 12px}
     #teamSpaceJoinPanel label{display:block}
     #teamSpaceJoinPanel .field{display:block;width:100%;box-sizing:border-box;margin:8px 0 12px}
@@ -7444,9 +7445,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         throw Error("Das Cloud-Spiel wurde während der Prüfung geändert. Bitte erneut versuchen.");
       const localCount=localGame.state?.events?.length||0;
       const remoteCount=release.data?.events?.length||0;
-      if(localCount===0&&remoteCount>0)
-        throw Error("Das lokale Spiel enthält 0 Ereignisse, die Cloud dagegen "+
-          remoteCount+". Eine leere Version wird nicht über die vorhandenen Ereignisse veröffentlicht.");
+      if(localCount<remoteCount)
+        throw Error("Das lokale Spiel enthält "+localCount+" Ereignisse, die Cloud dagegen "+
+          remoteCount+". Ein Spiel mit weniger Ereignissen darf nicht ungeprüft darüber veröffentlicht werden. Bitte zuerst die Unterschiede prüfen.");
       if((await teamSpaceAuditHash(localGame.state))===remote.sha256){
         toast("Dieses Spiel ist bereits mit dem Team Space synchronisiert ("+
           localCount+" Ereignisse).");return;
