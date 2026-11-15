@@ -443,7 +443,7 @@ test("approved trainer on fresh iPad sees own spaces and writes without a copied
   await expect(page.locator("#homeLibraryList")).toContainText("TSV Kronshagen");
   await page.locator("#homeLibraryList").getByRole("button",{name:"Laden"}).click();
   await expect(page.locator("#teamSpaceSeasons")).toContainText("B-Jugend");
-  await expect(page.locator("#teamSpacePlayerStatus")).toContainText("Alle Inhalte aktuell");
+  await expect(page.locator("#teamSpacePlayerStatus")).toContainText("Keine neueren Cloud-Versionen");
   await expect(page.locator("#teamSpaceTrainerTools")).toBeVisible();
   await page.locator("#teamSpaceTrainerTools > summary").click();
   await expect(page.locator("#teamSpacePublish")).toBeVisible();

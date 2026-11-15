@@ -253,7 +253,7 @@ test("Team Space laden lists connected spaces and back returns to the list",asyn
   await expect(page.locator("#teamSpaceStatus")).toBeHidden();
   await expect(page.locator("#teamSpaceSelectedIdInfo")).toBeHidden();
   await expect(page.locator("#teamSpacePlayerSummary")).toContainText("1 Saison · 1 Spiel");
-  await expect(page.locator("#teamSpacePlayerStatus")).toContainText("aktuell");
+  await expect(page.locator("#teamSpacePlayerStatus")).toContainText("Keine neueren Cloud-Versionen");
   await expect(page.locator("#teamSpaceSeasons")).not.toContainText("Version ");
   await page.locator("#homeBack").click();
   await expect(page.locator("#homeLibrary")).toBeVisible();
@@ -622,4 +622,33 @@ test("Team Space game list shows oldest matches above newer matches",async({page
   await page.locator("#teamSpaceRefresh").click();
   await expect(rows.nth(0)).toContainText("12.09.2026");
   await expect(rows.nth(2)).toContainText("20.03.2027");
+});
+
+
+test("Team Space warns when a separately published game is not part of its cloud season",async({page})=>{
+  await mockSpace(page);
+  const extra={id:"sg-separate",name:"15.11.2026 | SG HAMBURG-NORD - TSV KRONSHAGEN",
+    date:"2026-11-15",revision:1,sha256:"a".repeat(64),matchId:"",
+    seasonIds:[]};
+  await page.route(API+"/spaces/"+SPACE+"/catalog",route=>route.fulfill({
+    status:200,contentType:"application/json",
+    headers:{"Access-Control-Allow-Origin":"*"},
+    body:JSON.stringify({
+      ...apiData(1).catalog,
+      games:[apiData(1).catalog.games[0],extra]
+    })
+  }));
+  await page.goto("/#teamspace="+encodeURIComponent(SPACE)+
+    "&key="+encodeURIComponent(READER)+"&api="+encodeURIComponent(API));
+  await expect(page.locator("#homeTeamSpaceJoined")).toContainText("erfolgreich hinzugefügt");
+  await page.locator("#homeRecentOptions .home-list-row").filter({hasText:"Team Space verbunden"})
+    .getByRole("button",{name:"Laden"}).click();
+  const status=page.locator("#teamSpacePlayerStatus");
+  await expect(status).toContainText("1 Einzelspiel ist keiner Online-Saison zugeordnet");
+  await expect(status).toContainText("2026-11-15");
+  await expect(status).not.toContainText("Alle Inhalte aktuell.");
+  await expect(page.locator("#teamSpaceSeasons")).toContainText("1 Spiel");
+  await expect(page.locator("#teamSpaceGamesSummary")).toContainText("(2)");
+  await page.locator("#teamSpaceRefresh").click();
+  await expect(status).toContainText("1 Einzelspiel ist keiner Online-Saison zugeordnet");
 });
