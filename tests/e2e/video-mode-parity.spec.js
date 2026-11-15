@@ -5,7 +5,7 @@ import {fileURLToPath} from "node:url";
 
 const fixture=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../fixtures/hkn_reference.json");
 
-async function openWorkflow(page,mode){
+async function openWorkflow(page,mode,customizeGame=null){
   await page.addInitScript(()=>{
     window.__fakeVideoTime=0;
     window.__videoSeekCalls=[];
@@ -32,6 +32,7 @@ async function openWorkflow(page,mode){
   game.isHistorical=false;
   game.isVideoscoutingFile=mode==="video";
   game.liveScoutingCompleted=false;
+  if(customizeGame)customizeGame(game);
   await page.goto("/");
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#continueGameInput").setInputFiles({
@@ -99,3 +100,37 @@ for(const mode of ["video","review"]){
     expect(saved.events.map(e=>e.type)).toEqual(game.events.map(e=>e.type));
   });
 }
+
+test("trainer can mark an event comment, tag and individual drawing private",async({page})=>{
+  const game=await openWorkflow(page,"video",input=>{
+    input.events[0].tags=["Deckung:3:2:1","Trainerhinweis"];
+    input.events[0].videoAnnotation={
+      comment:"Gemeinsamer Kommentar",
+      shapes:[{tool:"arrow",points:[{x:0.1,y:0.2},{x:0.4,y:0.5}]}]
+    };
+  });
+  const first=page.locator("#matchNearbyList .match-nearby-item").first();
+  await first.click();
+  await expect(page.locator("#videoEventEditor")).toBeVisible();
+  await expect(page.locator("#veePrivateComment")).not.toBeChecked();
+  await expect(page.locator('[data-private-shape-index="0"]')).not.toBeChecked();
+  await page.locator("#veePrivateComment").check();
+  await page.locator('[data-private-shape-index="0"]').check();
+  await page.locator('[data-private-tag="Trainerhinweis"]').check();
+  await expect.poll(()=>page.evaluate(()=>{
+    const game=JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state;
+    const event=game.events[0];
+    return {
+      comment:event.teamSpacePrivate?.comment,
+      shape:event.videoAnnotation.shapes[0].teamSpacePrivate,
+      tags:event.teamSpacePrivate?.tags
+    };
+  })).toEqual({comment:true,shape:true,tags:["Trainerhinweis"]});
+  await page.reload();
+  await page.locator('[data-tab="match"]').click();
+  await page.locator("#matchNearbyList .match-nearby-item").first().click();
+  await expect(page.locator("#veePrivateComment")).toBeChecked();
+  await expect(page.locator('[data-private-shape-index="0"]')).toBeChecked();
+  await expect(page.locator('[data-private-tag="Trainerhinweis"]')).toBeChecked();
+  expect(game.events.length).toBeGreaterThan(0);
+});
