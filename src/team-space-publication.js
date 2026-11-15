@@ -52,9 +52,12 @@ export function publicGameForTeamSpace(game){
 }
 export function publicSeasonForTeamSpace(archive){
   if(!archive||!Array.isArray(archive.games))throw Error("Saison enthält keine Spiele.");
-  return {...archive,games:archive.games.map(item=>{
-    const {state,...rest}=item;
-    return {...rest,data:publicGameForTeamSpace(item.data??state)};
+  // Besides game events, seasonal metadata and game-record metadata can also
+  // contain annotations. Apply the privacy boundary to every archive layer.
+  const {games,...metadata}=archive;
+  return {...clean(metadata),games:games.map(item=>{
+    const {state,data,...recordMetadata}=item;
+    return {...clean(recordMetadata),data:publicGameForTeamSpace(data??state)};
   })};
 }
 // Canonicalize key order (not array order) so a cloud JSON roundtrip or a
