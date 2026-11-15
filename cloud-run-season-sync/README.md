@@ -91,6 +91,28 @@ zugänglich. Spieler-Leseschlüssel und gesperrte Konten berechtigen
 nicht zum Schreiben. Der zentrale Registrierungsschlüssel wird
 Trainerkonten weiterhin **nicht** ausgehändigt.
 
+**Mehrere Trainergeräte:** Bei der Anmeldung gleicht die PWA die dem verifizierten
+Trainerkonto zugeordneten Team Spaces ab. Sie erscheinen automatisch im
+lokalen Bereich **Team Space laden**, ohne dass der Spieler-Einladungslink erneut
+eingefügt werden muss. Der Server erlaubt Konto-Inhabern Katalog- und
+Spiel-/Saison-Downloads über ihr Firebase-ID-Token, ohne den ursprünglichen
+Leseschlüssel herauszugeben; Spielpublikationen benötigen weiterhin eine
+freigegebene Traineridentität. Ein Gerät ohne Leseschlüssel kann deshalb
+bestehende Spieler-Einladungslinks **nicht** erneut kopieren. Vorhandene
+Einladungen bleiben unberührt; der Original-Link ist auf dem zuerst
+verwendeten Gerät oder im Passwortmanager verfügbar.
+
+**Ältere Team Spaces übernehmen:** Unter **Trainerkonto → Vorhandenen Team
+Space übernehmen** können freigegebene Trainer eine bestehende Space-ID und
+den individuell ausgegebenen Trainer-Schlüssel eingeben. Die Zuordnung wird
+serverseitig über den Hash des Trainer-Schlüssels geprüft und einmalig mit
+der Firebase-UID verknüpft. Danach wird der Space auf allen Geräten des
+zugeordneten Trainerkontos angeboten. Bestehende Spieler-Einladungen,
+Trainer-Schlüssel, Spielstände und Cloud-Versionen bleiben erhalten.
+Ein anderer Trainer kann denselben Space nicht übernehmen. Für Spaces ohne
+eigenen Trainer-Schlüssel ist vor der Konto-Verknüpfung die bisherige
+Migration auf die individuelle v2-Trainerberechtigung erforderlich.
+
 **Spätere Spielpflege:** Im Abschnitt **Saisons und Spiele veröffentlichen**
 wählt der angemeldete Trainer eine lokale Saison und bei Bedarf eine
 bereits angelegte **Online-Zielsaison** aus; Einzelspiele können
