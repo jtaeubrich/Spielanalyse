@@ -6390,6 +6390,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const link=teamSpaceLocalGame(g);
         return link&&link.revision<g.revision;
       }).length;
+      // Published standalone games are not automatically part of a Cloud season.
+      // A catalog can have no newer revisions while local season games still
+      // contain fewer events than a separate published copy.
+      const seasonIds=new Set(catalog.seasons.map(season=>season.id));
+      const unassignedGames=catalog.games.filter(game=>
+        !game.seasonIds?.some(seasonId=>seasonIds.has(seasonId)));
       const published=teamSpaceLastPublish?.spaceId===id?teamSpaceLastPublish:null;
       const last=published&&(published.type==="season"
         ?catalog.seasons.find(row=>row.id===published.id)
@@ -6406,9 +6412,25 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         $("teamSpacePlayerSummary").textContent=catalog.seasons.length+" "+
           (catalog.seasons.length===1?"Saison":"Saisons")+" · "+catalog.games.length+" "+
           (catalog.games.length===1?"Spiel":"Spiele");
-        $("teamSpacePlayerStatus").textContent=updates?
-          updates+" "+(updates===1?"Aktualisierung verfügbar":"Aktualisierungen verfügbar"):
-          "Alle Inhalte aktuell.";
+        const statusParts=[updates
+          ?updates+" "+(updates===1?"Aktualisierung verfügbar":"Aktualisierungen verfügbar")
+          :"Keine neueren Cloud-Versionen für importierte Inhalte erkannt."];
+        if(unassignedGames.length){
+          const item=unassignedGames.length===1?unassignedGames[0]:null;
+          statusParts.push(unassignedGames.length+" "+
+            (unassignedGames.length===1?"Einzelspiel ist":"Einzelspiele sind")+
+            " keiner Online-Saison zugeordnet"+
+            (item?.date?" ("+item.date+")":"")+
+            ". Unter „Einzelspiele anzeigen“ prüfen.");
+        }
+        const audit=teamSpaceAudit.spaceId===id?teamSpaceAudit.summary:null;
+        const pending=Number(audit?.dirty||0)+Number(audit?.unpublished||0);
+        if(pending){
+          statusParts.push(pending+" "+(pending===1
+            ?"lokaler Spielstand weicht vom Cloud-Stand ab oder ist unveröffentlicht."
+            :"lokale Spielstände weichen vom Cloud-Stand ab oder sind unveröffentlicht."));
+        }
+        $("teamSpacePlayerStatus").textContent=statusParts.join(" ");
         teamSpaceUpdateView();
       }
     }catch(error){
