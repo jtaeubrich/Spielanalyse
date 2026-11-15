@@ -1767,6 +1767,10 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             </div>
             <button type="submit" tabindex="-1" aria-hidden="true" hidden></button>
           </form>
+          <label class="number-help" style="display:flex;align-items:flex-start;gap:9px;margin:12px 0">
+            <input id="trainerAccountRememberDevice" type="checkbox" style="margin-top:3px;flex-shrink:0">
+            <span><strong>Auf diesem Gerät angemeldet bleiben</strong> (nur auf einem privaten Gerät). Die PWA speichert dafür lokal einen Firebase-Anmelde-Erneuerungsschlüssel, niemals dein Passwort. Abmelden löscht den lokalen Schlüssel.</span>
+          </label>
           <div id="trainerAccountSessionActions" hidden>
             <button type="button" class="btn" id="trainerAccountSignOut">Abmelden</button>
           </div>
@@ -2648,7 +2652,7 @@ import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handbal
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
 import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,chronologicalTeamSpaceGames,teamSpaceCatalog as coreTeamSpaceCatalog,downloadTeamSpaceSeason as coreDownloadTeamSpaceSeason,downloadTeamSpaceGame as coreDownloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=4";
-import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=4";
+import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=5";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
 import {publicGameForTeamSpace,publicSeasonForTeamSpace,publicationSharingSummary,
   publicGameSignature,comparePublicGames} from "./src/team-space-publication.js?v=2";
@@ -7010,13 +7014,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     try{await navigator.clipboard.writeText(link);toast("Team-Space-Leselink kopiert. Nur an die Mannschaft weitergeben.")}
     catch{$("teamSpaceInviteLink").select();toast("Link markiert; bitte kopieren.")}
   };
-  // Optional account-based Team Space registration. Credentials are handled by
-  // Firebase; only the refresh token is kept in per-tab session storage.
+  // Optional Firebase Trainer login. Refresh tokens are session-only unless
+  // the user explicitly enables persistent sign-in for a private device.
   let trainerAccountClient=null;
   function trainerAccountApi(){
     const api=seasonCloudEndpoint($("teamSpaceApi").value);
     if(!trainerAccountClient||trainerAccountClient.api!==api){
       trainerAccountClient=createTrainerAuthClient(api);
+      $("trainerAccountRememberDevice").checked=trainerAccountClient.rememberDevice();
       teamSpaceAccountAuthorized=false;
       teamSpaceOwnedIds.clear();
     }
@@ -7025,6 +7030,18 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   function trainerAccountStatus(message){
     $("trainerAccountStatus").textContent=message;
   }
+  $("trainerAccountRememberDevice").onchange=()=>{
+    const client=trainerAccountApi(),field=$("trainerAccountRememberDevice");
+    try{
+      client.setRememberDevice(field.checked);
+      if(client.hasSession())trainerAccountStatus(field.checked
+        ?"Anmeldung bleibt auf diesem privaten Gerät gespeichert."
+        :"Dauerhafte Anmeldung deaktiviert. Die laufende Sitzung bleibt bis zum Schließen der PWA gültig.");
+    }catch(error){
+      field.checked=client.rememberDevice();
+      trainerAccountStatus(error.message);
+    }
+  };
   function trainerAccountClearPublisher(){
     $("trainerAccountPublisherToken").value="";
     $("trainerAccountPublisherCredentials").hidden=true;
@@ -7254,6 +7271,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
     trainerAccountClearPublisher();
     const service=trainerAccountApi();
+    service.setRememberDevice($("trainerAccountRememberDevice").checked);
     await service.signup($("trainerAccountEmail").value.trim(),password);
     // A new account has an active Firebase session, even while its email
     // still awaits verification; sign-out must remain accessible.
@@ -7265,6 +7283,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("trainerAccountSignIn").onclick=()=>trainerAccountAction(async()=>{
     trainerAccountClearPublisher();
     const service=trainerAccountApi();
+    service.setRememberDevice($("trainerAccountRememberDevice").checked);
     await service.login($("trainerAccountEmail").value.trim(),
       $("trainerAccountPassword").value);
     $("trainerAccountPassword").value="";
@@ -7290,6 +7309,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   $("trainerAccountSignOut").onclick=()=>trainerAccountAction(async()=>{
     trainerAccountClearPublisher();
     trainerAccountApi().logout();
+    $("trainerAccountRememberDevice").checked=false;
     teamSpaceAccountAuthorized=false;
     teamSpaceOwnedIds.clear();
     teamSpaceUpdateView();
@@ -7783,7 +7803,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const linked=activeSeasonGameId?null:teamStandaloneActiveId;
     internalAutosaveTimer=setTimeout(()=>storeInternalGame(JSON.stringify(copy,null,2),filename,linked).catch(()=>{}),250);
   }
-  function restoreSessionObject(saved){if(!saved?.state||!saved.state.home||!saved.state.away)return false;activeSeasonGameId=typeof saved.seasonGameId==="string"?saved.seasonGameId:null;teamStandaloneActiveId=!activeSeasonGameId&&typeof saved.teamSpaceSingleId==="string"?saved.teamSpaceSingleId:null;state=migrateGameData(saved.state);ownTeam=["home","away"].includes(saved.ownTeam)?saved.ownTeam:ownTeam;myTeamLeft=saved.myTeamLeft!==false;analysisMode=state.liveScoutingCompleted&&!state.isHistorical?"live":saved.analysisMode==="video"?"video":"live";matchReviewMode=Boolean(state.liveScoutingCompleted&&!state.isHistorical);gameBase=Number(saved.gameBase??state.timer?.secondsElapsed??0)||0;videoBase=Number(state.video?.analysisClockMs||0);liveClockBase=videoBase;liveClockInitialized=analysisMode==="live";currentGameFileName=saved.currentGameFileName||null;currentGameFileHandle=null;gameRunning=videoRunning=liveClockRunning=false;normalize();document.body.classList.toggle("live-mode",analysisMode==="live");refreshSecondaryClockControls();updateMatchReviewControls();restoreSavedVideoReference();return true}
+  function restoreSessionObject(saved){if(!saved?.state||!saved.state.home||!saved.state.away)return false;activeSeasonGameId=typeof saved.seasonGameId==="string"?saved.seasonGameId:null;teamStandaloneActiveId=!activeSeasonGameId&&typeof saved.teamSpaceSingleId==="string"?saved.teamSpaceSingleId:null;state=migrateGameData(saved.state);ownTeam=["home","away"].includes(saved.ownTeam)?saved.ownTeam:ownTeam;myTeamLeft=saved.myTeamLeft!==false;analysisMode=saved.analysisMode==="video"?"video":"live";matchReviewMode=Boolean(state.liveScoutingCompleted&&!state.isHistorical&&analysisMode==="live");gameBase=Number(saved.gameBase??state.timer?.secondsElapsed??0)||0;videoBase=Number(state.video?.analysisClockMs||0);liveClockBase=videoBase;liveClockInitialized=analysisMode==="live";currentGameFileName=saved.currentGameFileName||null;currentGameFileHandle=null;gameRunning=videoRunning=liveClockRunning=false;normalize();document.body.classList.toggle("live-mode",analysisMode==="live");refreshSecondaryClockControls();updateMatchReviewControls();restoreSavedVideoReference();return true}
   async function restoreAutomaticSession(){try{const saved=JSON.parse(localStorage.getItem(SESSION_STORAGE_KEY)||"null");if(restoreSessionObject(saved))return true}catch{}const record=await readInternalGame();if(!record?.text)return false;try{const recovered=migrateGameData(JSON.parse(record.text));return restoreSessionObject({state:recovered,ownTeam:["home","away"].includes(recovered.ownTeam)?recovered.ownTeam:"away",myTeamLeft:true,gameBase:recovered.timer?.secondsElapsed||0,analysisMode:recovered.isVideoscoutingFile?"video":"live",currentGameFileName:record.fileName})}catch{return false}}
   function persistSession(){if(!persistenceReady||homeSessionDeleted)return;try{state.activeDefense={...activeDefense};let copy=structuredClone(state);copy.ownTeam=ownTeam;const halfElapsed=currentGameSeconds();copy.timer.secondsElapsed=halfElapsed;copy.timer.active=false;copy.gameTime=Math.round((copy.timer.half-1)*copy.timer.duration*60+halfElapsed);copy.video.analysisClockMs=currentVideoMs();copy=stampCurrentGameFormat(copy);syncActiveSeasonGame(copy);localStorage.setItem(SESSION_STORAGE_KEY,JSON.stringify(buildSessionRecord({state:copy,ownTeam,myTeamLeft,gameBase:halfElapsed,analysisMode,currentGameFileName,seasonGameId:activeSeasonGameId,teamSpaceSingleId:!activeSeasonGameId?teamStandaloneActiveId:null})));queueInternalAutosave(copy)}catch{}}
   function setInputUnlessActive(id,value){const el=$(id);if(document.activeElement!==el)el.value=value??""}
@@ -9193,7 +9213,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   function savedYoutubeReference(){return resolveYoutubeReference(state.video)}
   function restoreSavedVideoReference(){const youtube=savedYoutubeReference();$("youtubeUrl").value=youtube;if(youtube)$("videoMessage").textContent='YouTube-Link aus der Spieldatei übernommen. Zum Öffnen „YouTube laden“ wählen.';else if(state.video?.localFileName)$("videoMessage").textContent=`Gespeichertes lokales Video „${state.video.localFileName}“ bitte erneut auswählen.`}
   const gameFileTypes=GAME_FILE_TYPES;
-  function applyLoadedGameText(text,historical,fileName,handle=null,linkedSeasonGameId=null,openPreparation=false){try{homeSessionDeleted=false;if(linkedSeasonGameId)enterSeasonWorkspace();if(!linkedSeasonGameId){enterStandaloneWorkspace({restore:false});showSetupMode("single",{focused:true});$("analysisPerspectiveSelect").value="neutral";$("analysisTeamFilter").value="all";$("analysisPlayerFilter").value="all"}persistSession();void teamSpaceSaveStandaloneNow();teamStandaloneActiveId=null;analysisSelectedGameId="";matchReviewMode=false;const loaded=parseGameText(text);resetLoadedVideo();activeSeasonGameId=linkedSeasonGameId;state=loaded;ownTeam=["home","away"].includes(loaded.ownTeam)?loaded.ownTeam:"away";state.ownTeam=ownTeam;state.isHistorical=historical;currentGameFileHandle=handle;currentGameFileName=fileName||null;gameBase=Number(state.timer?.secondsElapsed||0);liveClockBase=Number(state.video?.analysisClockMs||0);liveClockInitialized=false;gameRunning=videoRunning=liveClockRunning=false;normalize();restoreSavedVideoReference();videoBase=Number(state.video?.analysisClockMs||0);analysisMode=historical?"video":(state.liveScoutingCompleted?"live":state.isVideoscoutingFile?"video":"live");matchReviewMode=false;setAnalysisMode(analysisMode);update();if(openPreparation)showSetupMode("single",{focused:linkedSeasonGameId?setupFocused:true});showTab(openPreparation?"setup":historical?"analysis":"match");if(!historical&&state.liveScoutingCompleted)setMatchReviewMode(true,{announce:false,navigate:!openPreparation});if(savedYoutubeReference())$("youtubeForm").requestSubmit();homeHasSession=true;toast(linkedSeasonGameId?(historical?"Saisonspiel zur Analyse geöffnet":"Saisonspiel zum Fortsetzen geladen"):(historical?"Spiel für Analyse geladen":"Spiel zum Fortsetzen geladen"))}catch(error){toast(error?.message||"JSON konnte nicht geladen werden")}}
+  function applyLoadedGameText(text,historical,fileName,handle=null,linkedSeasonGameId=null,openPreparation=false){try{homeSessionDeleted=false;if(linkedSeasonGameId)enterSeasonWorkspace();if(!linkedSeasonGameId){enterStandaloneWorkspace({restore:false});showSetupMode("single",{focused:true});$("analysisPerspectiveSelect").value="neutral";$("analysisTeamFilter").value="all";$("analysisPlayerFilter").value="all"}persistSession();void teamSpaceSaveStandaloneNow();teamStandaloneActiveId=null;analysisSelectedGameId="";matchReviewMode=false;const loaded=parseGameText(text);resetLoadedVideo();activeSeasonGameId=linkedSeasonGameId;state=loaded;ownTeam=["home","away"].includes(loaded.ownTeam)?loaded.ownTeam:"away";state.ownTeam=ownTeam;state.isHistorical=historical;currentGameFileHandle=handle;currentGameFileName=fileName||null;gameBase=Number(state.timer?.secondsElapsed||0);liveClockBase=Number(state.video?.analysisClockMs||0);liveClockInitialized=false;gameRunning=videoRunning=liveClockRunning=false;normalize();restoreSavedVideoReference();videoBase=Number(state.video?.analysisClockMs||0);analysisMode=historical?"video":state.isVideoscoutingFile?"video":"live";matchReviewMode=false;setAnalysisMode(analysisMode);update();if(openPreparation)showSetupMode("single",{focused:linkedSeasonGameId?setupFocused:true});showTab(openPreparation?"setup":historical?"analysis":"match");if(!historical&&state.liveScoutingCompleted&&analysisMode==="live")setMatchReviewMode(true,{announce:false,navigate:!openPreparation});if(savedYoutubeReference())$("youtubeForm").requestSubmit();homeHasSession=true;toast(linkedSeasonGameId?(historical?"Saisonspiel zur Analyse geöffnet":"Saisonspiel zum Fortsetzen geladen"):(historical?"Spiel für Analyse geladen":"Spiel zum Fortsetzen geladen"))}catch(error){toast(error?.message||"JSON konnte nicht geladen werden")}}
   async function pickGameFile(historical){if(typeof window.showOpenFilePicker!=="function")return $(historical?"fileInput":"continueGameInput").click();try{const [handle]=await window.showOpenFilePicker(gameOpenPickerOptions());const file=await handle.getFile();applyLoadedGameText(await file.text(),historical,file.name,handle)}catch(error){if(error?.name!=="AbortError")toast(error?.message||"Spiel konnte nicht geöffnet werden")}}
   function loadGameFromInput(e,historical){const f=e.target.files[0];e.target.value="";if(!f)return;const r=new FileReader();r.onload=()=>applyLoadedGameText(r.result,historical,f.name,null);r.onerror=()=>toast("JSON konnte nicht geladen werden");r.readAsText(f)}
   $("continueGameInput").onchange=e=>loadGameFromInput(e,false);$("fileInput").onchange=e=>loadGameFromInput(e,true);
@@ -9396,24 +9416,33 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     $("finishLiveScouting").hidden=completed||!available;
     $("matchReviewNote").textContent=completed?"Live-Erfassung gesperrt. Bestehende Ereignisse bleiben im Video editierbar.":"Live-Zeitstempel bleiben unverändert.";
     $("modeSelect").value=matchReviewMode?"review":analysisMode;
-    $("modeSelect").disabled=completed;
+    // Mode selection is independent of event count and live-completion status.
+    $("modeSelect").disabled=false;
   }
   function refreshSecondaryClockControls(){$("secondaryClockLabel").textContent=matchReviewMode?"Videozeit":analysisMode==="live"?"Realzeit":"Videozeit";$("videoToggle").classList.remove("hidden","active");$("videoToggle").textContent=matchReviewMode?"▶ Video":analysisMode==="live"?"▶ Realzeit starten":"▶ Start";$("syncVideo").textContent=matchReviewMode||analysisMode==="video"?"Zeit setzen":"Nullen"}
-  function setMatchReviewMode(enabled,{announce=true,navigate=true}={}){enabled=Boolean((enabled||state.liveScoutingCompleted)&&analysisMode==="live"&&!state.isHistorical&&(state.events.length||state.liveScoutingCompleted));if(enabled===matchReviewMode){updateMatchReviewControls();refreshSecondaryClockControls();updateMatchReviewLayout();return}stopGame();if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}mediaPause();scenePlayback.cancel();matchReviewMode=enabled;mobileMatchEditorShown=false;mobileMatchEditorCollapsed=false;updateMatchReviewControls();refreshSecondaryClockControls();if(enabled){if(navigate)showTab("match");resizeAnnotationCanvas()}updateMatchReviewLayout();if(announce)toast(enabled?"Video-Nachanalyse aktiv – Events können am Video ergänzt und korrigiert werden":"Video-Nachanalyse beendet")}
-  function setAnalysisMode(mode){if(state.liveScoutingCompleted&&!state.isHistorical)mode="live";const changed=mode!==analysisMode;if(mode!=="live"&&matchReviewMode)setMatchReviewMode(false,{announce:false});stopGame();if(mode==="live"){mediaPause();if(!liveClockInitialized){liveClockBase=0;liveClockInitialized=true}analysisMode="live";state.video.analysisTimeBasis="live-elapsed-ms"}else{if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}analysisMode="video";state.video.analysisTimeBasis="video-absolute-ms"}if(changed){mobileMatchEditorShown=false;mobileMatchEditorCollapsed=false}if(!state.isHistorical)state.isVideoscoutingFile=analysisMode==="video";document.body.classList.toggle("live-mode",analysisMode==="live");$("modeSelect").value=analysisMode;updateMatchReviewLayout();refreshSecondaryClockControls();mediaLast=analysisMode==="video"&&mediaReady()?mediaSeconds():null;updateMatchReviewControls();if(persistenceReady)persistSession();if(changed)toast(analysisMode==="live"?"Live Scouting aktiv – Realzeit separat starten":"Video Scouting aktiv")}
+  function setMatchReviewMode(enabled,{announce=true,navigate=true}={}){enabled=Boolean(enabled&&analysisMode==="live"&&!state.isHistorical&&(state.events.length||state.liveScoutingCompleted));if(enabled===matchReviewMode){updateMatchReviewControls();refreshSecondaryClockControls();updateMatchReviewLayout();return}stopGame();if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}mediaPause();scenePlayback.cancel();matchReviewMode=enabled;mobileMatchEditorShown=false;mobileMatchEditorCollapsed=false;updateMatchReviewControls();refreshSecondaryClockControls();if(enabled){if(navigate)showTab("match");resizeAnnotationCanvas()}updateMatchReviewLayout();if(announce)toast(enabled?"Video-Nachanalyse aktiv – Events können am Video ergänzt und korrigiert werden":"Video-Nachanalyse beendet")}
+  function setAnalysisMode(mode){const changed=mode!==analysisMode;if(mode!=="live"&&matchReviewMode)setMatchReviewMode(false,{announce:false});stopGame();if(mode==="live"){mediaPause();if(!liveClockInitialized){liveClockBase=0;liveClockInitialized=true}analysisMode="live";state.video.analysisTimeBasis="live-elapsed-ms"}else{if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}analysisMode="video";state.video.analysisTimeBasis="video-absolute-ms"}if(changed){mobileMatchEditorShown=false;mobileMatchEditorCollapsed=false}if(!state.isHistorical)state.isVideoscoutingFile=analysisMode==="video";document.body.classList.toggle("live-mode",analysisMode==="live");$("modeSelect").value=analysisMode;updateMatchReviewLayout();refreshSecondaryClockControls();mediaLast=analysisMode==="video"&&mediaReady()?mediaSeconds():null;updateMatchReviewControls();if(persistenceReady)persistSession();if(changed)toast(analysisMode==="live"?"Live Scouting aktiv – Realzeit separat starten":"Video Scouting aktiv")}
   $("modeSelect").onchange=e=>{
-    if(state.liveScoutingCompleted){
-      e.target.value="review";return toast("Live-Scouting wurde abgeschlossen. Die Video-Nachanalyse bleibt aktiv.");
+    const next=e.target.value,previous=matchReviewMode?"review":analysisMode;
+    const restore=()=>{e.target.value=previous;};
+    if(next!=="live"&&next!=="video"){restore();return;}
+    if(draft&&!confirm("Eine noch nicht abgeschlossene Ereigniserfassung verwerfen und den Modus wechseln? Bereits gespeicherte Ereignisse bleiben erhalten.")){
+      restore();return;
     }
-    if(matchReviewMode||state.events.length&&e.target.value!==analysisMode){
-      e.target.value=matchReviewMode?"review":analysisMode;
-      return toast("Scouting-Modus nach dem ersten Ereignis nicht wechseln.");
+    if(next==="live"&&state.liveScoutingCompleted){
+      if(!confirm("Das Live-Scouting wurde bereits abgeschlossen. Live-Erfassung ausdrücklich wieder öffnen? Alle gespeicherten Ereignisse bleiben erhalten; die Spielzeit wird nicht automatisch gestartet.")){
+        restore();return;
+      }
+      state.liveScoutingCompleted=false;
     }
-    setAnalysisMode(e.target.value);
+    if(draft){draft=null;showStep("idle");}
+    if(matchReviewMode)setMatchReviewMode(false,{announce:false,navigate:false});
+    setAnalysisMode(next);
+    persistSession();
   };
   $("finishLiveScouting").onclick=()=>{
     if(analysisMode!=="live"||state.isHistorical||state.liveScoutingCompleted)return;
-    if(!confirm("Live-Scouting abschließen?\n\nDanach können Ereignisse nur noch über die Video-Nachanalyse ergänzt oder bearbeitet werden. Die Live-Erfassung lässt sich nicht wieder einschalten."))return;
+    if(!confirm("Live-Scouting abschließen?\n\nDanach öffnet sich die Video-Nachanalyse. Ein späterer Wechsel des Scouting-Modus bleibt möglich und ändert keine gespeicherten Ereignisse."))return;
     stopGame();
     if(liveClockRunning){liveClockBase=currentLiveMs();liveClockRunning=false}
     draft=null;showStep("idle");
@@ -9916,7 +9945,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   $('numberTeam').onchange=renderNumbers;
   $('closeNumbers').onclick=()=>$('numbersDialog').close();
   $('numbersForm').onsubmit=e=>{e.preventDefault();for(const [key,value] of Object.entries(numberEdits)){if(value!==''&&(!/^\\d{1,2}$/.test(value))){$('numberError').textContent='Bitte Nummern zwischen 0 und 99 eintragen.';return;}}for(const team of ['home','away'])for(const p of state[team].players){const value=numberEdits[team+':'+p.id];if(value!==undefined)p.nr=value===''?'':Number(value);}document.querySelectorAll('.player-label').forEach(label=>{const p=getPlayer(label.dataset.playerId);if(p)playerLabel(label.parentElement,p);});showStep(currentStep);$('numbersDialog').close();toast('Rückennummern übernommen');};
-  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical)setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;if(restoredSession)persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;await teamSpaceRestore().catch(error=>console.warn("Team Space konnte nicht geladen werden",error));homeShow("choose",null);showTab("home");if(trainerAccountApi().hasSession())void trainerAccountRefresh().catch(error=>console.warn("Trainerkonto konnte beim Start nicht aktualisiert werden",error));if(pendingCloudInvite)await joinSeasonCloud(pendingCloudInvite).catch(error=>{
+  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical&&analysisMode==="live")setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;if(restoredSession)persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;await teamSpaceRestore().catch(error=>console.warn("Team Space konnte nicht geladen werden",error));homeShow("choose",null);showTab("home");if(trainerAccountApi().hasSession())void trainerAccountRefresh().catch(error=>console.warn("Trainerkonto konnte beim Start nicht aktualisiert werden",error));if(pendingCloudInvite)await joinSeasonCloud(pendingCloudInvite).catch(error=>{
   toast("Saison-Einladung konnte nicht geöffnet werden: "+error.message);
 });if(pendingTeamSpaceInvite)await teamSpaceJoin(pendingTeamSpaceInvite).catch(error=>{
   toast("Team-Space-Einladung konnte nicht geöffnet werden: "+error.message);
@@ -9926,7 +9955,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=171",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=172",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
