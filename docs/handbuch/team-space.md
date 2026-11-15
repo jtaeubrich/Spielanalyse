@@ -2,10 +2,11 @@
 
 Der **Team Space** ist der dritte Einstieg auf der Startseite, neben
 **Saison** und **Einzelspiel**. Die lokalen Arbeitsbereiche bleiben bestehen.
-Im Team Space sehen die Spieler die vom Trainer veröffentlichten Saisons
-und einzelnen Spiele. Es werden **keine persönlichen Kommentare, Tags,
-Zeichnungen, Schlüsselmomente oder eigenen Änderungen** in die Cloud
-zurückgeschrieben.
+Im Team Space sehen die Spieler die vom Trainer ausdrücklich veröffentlichten
+Saisons und Spiele. **Trainerinhalte sind bei der Veröffentlichung standardmäßig
+freigegeben:** Dazu gehören Kommentare, Zeichnungen, Tags und Schlüsselmomente.
+Nur als **„Privat – nicht veröffentlichen“** markierte Bestandteile bleiben
+lokal. Spieler können die Cloud nicht selbst aktualisieren.
 
 ## Für Spieler
 
@@ -130,7 +131,7 @@ die Trainerfreigabe durch einen Administrator erteilt.
 Unter **Start → Team Space → Team Space laden → Aktualisieren** wird der
 Cloud-Katalog abgerufen. Für Trainer wird zusätzlich **Veröffentlichungsstand
 meiner Spiele** berechnet. Dafür vergleicht die App lokale Spielstände auf
-diesem Gerät mit ihren veröffentlichten Gegenstücken, ohne private
+diesem Gerät mit ihren veröffentlichten Gegenstücken, ohne ausdrücklich privat markierte
 Anmerkungen zu berücksichtigen. Sie zeigt:
 
 - **Identisch mit Cloud** – die freigegebenen Scoutingdaten stimmen überein
@@ -155,27 +156,40 @@ weiterhin die Bestätigung des Trainers.
 
 ## Öffentliche Scoutingdaten und private Anmerkungen
 
-Beim **neuen Hochladen** (gesamte Saison oder einzelnes Spiel) werden
-Scouting-Ereignisse, Spielstatistik, Teams und taktische Klassifizierungen
-veröffentlicht. Vor der Übertragung entfernt die App aus einer **Kopie** der
-Spiel-Datei private Freitextkommentare, Notizen, individuelle Hervorhebungen,
-Videozeichnungen und -zeitangaben, persönliche Schlüssel-Momente sowie
-frei vergebene Tags. Die taktischen Kategorien **Deckung:** und
-**Auslöser:** bleiben erhalten. Das lokale Original bleibt unverändert.
+Beim **bewussten Hochladen durch einen Trainer** (gesamte Saison oder
+einzelnes Spiel) sind neue Scouting-Ereignisse, Spielstatistiken, Teams,
+Kommentare, Zeichnungen, freie Tags, Highlights und Schlüsselmomente
+**standardmäßig für alle Leser des Team Space freigegeben**.
+Wer etwas nicht veröffentlichen möchte, markiert es am betreffenden
+Element ausdrücklich **„Privat – nicht veröffentlichen“**:
 
-Alle Trainer sollten ausdrücklich kontrollieren, welche weiteren
-Spiel- und Mannschaftsdaten an die Mannschaft gehen. Es handelt sich nicht
-um eine individuelle Berechtigungsverwaltung innerhalb der veröffentlichten
-Daten: Jeder mit einem gültigen Leseschlüssel kann den öffentlichen Stand
-sehen. Video-Dateien werden nicht in den Team Space hochgeladen.
+- Beim Anlegen eines Schlüsselmoments: Kontrollkästchen am Marker;
+  alternativ später im Event- oder Dateneditor
+- Im Video-Tab: Kontrollkästchen beim Kommentar zum aktuellen Event
+- Im Event-Editor: separate Schalter für Kommentare, Notizen,
+  Highlight-Markierungen und freie Tags sowie für einzelne Zeichnungen
+- Im Vollbild-Zeichenmodus: Zeichnung im Modus **Auswahl** markieren und
+  dort **„Privat – nicht veröffentlichen“** aktivieren
 
-**Bereits vor dieser Korrektur veröffentlichte Daten** können persönliche
-Anmerkungen enthalten. Eine erneute Veröffentlichung mit der aktuellen App
-ersetzt die *aktuelle abrufbare Fassung* durch die bereinigte Kopie.
-Historische, nicht mehr referenzierte Cloud-Objekte können intern weiter
-gespeichert sein und erfordern gegebenenfalls eine getrennte Bereinigung
-durch einen Administrator. Ein neues Update entfernt diese alten
-Cloud-Objekte nicht automatisch.
+Die App erstellt vor der Übertragung eine **Kopie mit den ausgewählten
+Ausschlüssen**. Ein vollständig privat markierter Schlüsselmoment wird
+nicht übertragen. Bei einer privaten Zeichnung bleibt der übrige
+Eventinhalt unverändert. Die lokale Originaldatei bleibt erhalten.
+Video-Dateien, lokale Quellpfade und Synchronisationsdaten werden nicht
+in den Team Space hochgeladen. Für freigegebene Zeichnungen werden
+die benötigten Zeichenkoordinaten und Zeitbereiche gespeichert.
+
+Vor jedem Upload zeigt ein Bestätigungsdialog die Zahl der freigegebenen
+Kommentare, Zeichnungen, Schlüsselmomente und Highlights sowie die
+ausgeschlossenen Bestandteile. Das Hochladen erfordert weiterhin einen
+berechtigten Trainer und eine ausdrückliche Bestätigung.
+
+**Wichtig:** Jeder mit einem gültigen Spieler-Leseschlüssel kann alle
+veröffentlichten Inhalte lesen. Die Freigabe ist keine individuelle
+Berechtigung je Spieler. Eine nachträglich aktivierte Privat-Markierung
+wirkt erst nach der **nächsten Veröffentlichung** und ersetzt nur die
+aktuelle abrufbare Cloud-Fassung; ältere Cloud-Objektversionen können
+intern bestehen bleiben und eine administrative Bereinigung erfordern.
 
 Spieler-Lesezugänge besitzen keinerlei Veröffentlichungsberechtigung.
 
