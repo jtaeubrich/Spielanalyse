@@ -41,15 +41,17 @@ test("video-only archived scouting can resume editing in Video Scouting without 
   const total=game.events.length;
   await expect(page.locator("#eventCount")).toContainText(String(total));
   await page.locator("#modeSelect").selectOption("live");
-  await expect(page.locator("#modeSelect")).toHaveValue("video");
+  await expect(page.locator("#modeSelect")).toHaveValue("live");
   await expect(page.locator("#eventCount")).toContainText(String(total));
+  await page.locator("#modeSelect").selectOption("video");
+  await expect(page.locator("#modeSelect")).toHaveValue("video");
   await page.reload();
   await page.locator("#homeRecentOptions").getByRole("button",{name:"Spiel fortsetzen"}).click();
   await expect(page.locator("#modeSelect")).toHaveValue("video");
   await expect(page.locator("body")).toHaveClass(/video-scouting-layout/);
 });
 
-test("finishing a live match permanently opens Video-Nachanalyse without deleting any events",async({page})=>{
+test("finishing a live match initially opens Video-Nachanalyse without locking the mode selector",async({page})=>{
   const game=structuredClone(fixture);
   game.gameName="Live abgeschlossen";
   game.isHistorical=false;
@@ -73,7 +75,7 @@ test("finishing a live match permanently opens Video-Nachanalyse without deletin
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
   await expect(page.locator("#matchVideoHost")).toBeVisible();
   await expect(page.locator("#modeSelect")).toHaveValue("review");
-  await expect(page.locator("#modeSelect")).toBeDisabled();
+  await expect(page.locator("#modeSelect")).toBeEnabled();
   await expect(page.locator("#runBtn")).toBeHidden();
   await expect(page.locator("#matchReviewToggle")).toBeDisabled();
   await expect(page.locator("#finishLiveScouting")).toBeHidden();
@@ -85,7 +87,7 @@ test("finishing a live match permanently opens Video-Nachanalyse without deletin
   await page.locator("#homeRecentOptions").getByRole("button",{name:"Spiel fortsetzen"}).click();
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
   await expect(page.locator("#modeSelect")).toHaveValue("review");
-  await expect(page.locator("#modeSelect")).toBeDisabled();
+  await expect(page.locator("#modeSelect")).toBeEnabled();
   await expect(page.locator("#runBtn")).toBeHidden();
   await expect(page.locator("#eventCount")).toContainText(String(count));
   await page.locator('[data-tab="home"]').click();
@@ -97,7 +99,7 @@ test("finishing a live match permanently opens Video-Nachanalyse without deletin
   await page.locator("#preflightStart").click();
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
   await expect(page.locator("#modeSelect")).toHaveValue("review");
-  await expect(page.locator("#modeSelect")).toBeDisabled();
+  await expect(page.locator("#modeSelect")).toBeEnabled();
   await expect(page.locator("#runBtn")).toBeHidden();
 });
 
@@ -115,7 +117,7 @@ test("completed standalone live game restores video review label and video works
   await page.locator("#continueGameInput").setInputFiles(upload("completed-live.json",game));
   await expect(page.locator("#matchTab")).toBeVisible();
   await expect(page.locator("#modeSelect")).toHaveValue("review");
-  await expect(page.locator("#modeSelect")).toBeDisabled();
+  await expect(page.locator("#modeSelect")).toBeEnabled();
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
   await expect(page.locator("body")).not.toHaveClass(/live-scouting-layout/);
   await expect(page.locator("#matchVideoHost")).toBeVisible();
@@ -163,7 +165,7 @@ test("returning from a season preserves the standalone completed-match review",a
   await page.locator("#homeLibraryList").getByRole("button",{name:"Fortsetzen"}).first().click();
   await expect(page.locator("#matchTab")).toBeVisible();
   await expect(page.locator("#modeSelect")).toHaveValue("review");
-  await expect(page.locator("#modeSelect")).toBeDisabled();
+  await expect(page.locator("#modeSelect")).toBeEnabled();
   await expect(page.locator("body")).toHaveClass(/match-review-mode/);
   await expect(page.locator("#runBtn")).toBeHidden();
   await expect(page.locator("#eventCount")).toContainText(String(game.events.length));
@@ -221,4 +223,69 @@ test("live events without finalization retain the reversible video review switch
   await page.locator("#matchReviewToggle").click();
   await expect(page.locator("body")).toHaveClass(/live-scouting-layout/);
   await expect(page.locator("#finishLiveScouting")).toBeVisible();
+});
+
+
+test("imported public protocol events do not lock switching Live and Video Scouting",async({page})=>{
+  const game=structuredClone(fixture);
+  game.gameName="Öffentliches Spielprotokoll – nur importiert";
+  game.isHistorical=false;
+  game.isVideoscoutingFile=false;
+  game.liveScoutingCompleted=false;
+  await page.goto("/");
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeImport").click();
+  await page.locator("#continueGameInput").setInputFiles(upload("imported-official.json",game));
+  const mode=page.locator("#modeSelect"),count=game.events.length;
+  await expect(mode).toHaveValue("live");
+  await expect(mode).toBeEnabled();
+  await expect(page.locator("#eventCount")).toContainText(String(count));
+  const originals=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state.events);
+  await mode.selectOption("video");
+  await expect(mode).toHaveValue("video");
+  await expect(page.locator("body")).toHaveClass(/video-scouting-layout/);
+  await expect(page.locator("#eventCount")).toContainText(String(count));
+  await mode.selectOption("live");
+  await expect(mode).toHaveValue("live");
+  await expect(page.locator("body")).toHaveClass(/live-scouting-layout/);
+  await mode.selectOption("video");
+  await page.reload();
+  await page.locator("#homeRecentOptions").getByRole("button",{name:"Spiel fortsetzen"}).click();
+  await expect(mode).toHaveValue("video");
+  const restored=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state.events);
+  expect(restored).toEqual(originals);
+});
+
+test("completed Live Scouting can switch to Video mode and explicitly resume Live without losing imported events",async({page})=>{
+  const game=structuredClone(fixture);
+  game.gameName="Abgeschlossenes Live mit Video-Nachanalyse";
+  game.isHistorical=false;
+  game.isVideoscoutingFile=false;
+  game.liveScoutingCompleted=true;
+  await page.goto("/");
+  await page.locator("#homeChooseGame").click();
+  await page.locator("#homeImport").click();
+  await page.locator("#continueGameInput").setInputFiles(upload("completed-to-video.json",game));
+  const mode=page.locator("#modeSelect"),count=game.events.length;
+  await expect(mode).toHaveValue("review");
+  await expect(mode).toBeEnabled();
+  await mode.selectOption("video");
+  await expect(mode).toHaveValue("video");
+  await expect(page.locator("body")).toHaveClass(/video-scouting-layout/);
+  await expect(page.locator("#eventCount")).toContainText(String(count));
+  await page.reload();
+  await page.locator("#homeRecentOptions").getByRole("button",{name:"Spiel fortsetzen"}).click();
+  await expect(mode).toHaveValue("video");
+  await expect(page.locator("#modeSelect")).toBeEnabled();
+  page.once("dialog",dialog=>{
+    expect(dialog.message()).toContain("Live-Erfassung ausdrücklich wieder öffnen");
+    return dialog.accept();
+  });
+  await mode.selectOption("live");
+  await expect(mode).toHaveValue("live");
+  await expect(page.locator("body")).toHaveClass(/live-scouting-layout/);
+  const restored=await page.evaluate(()=>JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state);
+  expect(restored.liveScoutingCompleted).toBe(false);
+  expect(restored.events).toHaveLength(count);
+  expect(restored.events.map(event=>event.type)).toEqual(game.events.map(event=>event.type));
 });

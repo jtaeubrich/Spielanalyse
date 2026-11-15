@@ -21,9 +21,37 @@ export function trainerAuthError(code){
   const key=String(code||"").split(" : ")[0].trim();
   return ERRORS[key]||"Anmeldung fehlgeschlagen: "+key;
 }
-export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorage}={}){
+export function createTrainerAuthClient(api,{
+  fetcher=fetch,session=sessionStorage,
+  persistent=typeof localStorage==="undefined"?null:localStorage
+}={}){
   const endpoint=seasonCloudEndpoint(api),sessionKey=SESSION_KEY+":"+endpoint;
-  let config=null,idToken="",refreshToken=session.getItem(sessionKey)||"",expiry=0;
+  const persistentKey=sessionKey+":remember-device";
+  // Persistent sign-in is explicit and local to this PWA installation.
+  // Never persist a password or ID token. Firebase still validates/revokes
+  // the refresh token and every sensitive request checks server-side rights.
+  let savedRefreshToken="";
+  try{savedRefreshToken=persistent?.getItem(persistentKey)||""}
+  catch{/* Storage can be blocked; session-only sign-in still works. */}
+  let rememberDevice=Boolean(savedRefreshToken);
+  let config=null,idToken="",
+    refreshToken=session.getItem(sessionKey)||savedRefreshToken,expiry=0;
+  function setRememberDevice(enabled){
+    const next=Boolean(enabled);
+    if(next){
+      if(!persistent)throw Error("Dauerhafte Anmeldung ist in diesem Browser nicht verfügbar.");
+      try{
+        if(refreshToken)persistent.setItem(persistentKey,refreshToken);
+      }catch{
+        throw Error("Die Anmeldung kann auf diesem Gerät nicht dauerhaft gespeichert werden.");
+      }
+    }else{
+      try{persistent?.removeItem(persistentKey)}
+      catch{throw Error("Der lokal gespeicherte Anmeldeschlüssel konnte nicht gelöscht werden. Bitte lokale Websitedaten prüfen.")}
+    }
+    rememberDevice=next;
+    return rememberDevice;
+  }
   async function jsonFetch(url,body,{bearer}={}){
     const result=await fetcher(url,{method:"POST",cache:"no-store",redirect:"error",
       headers:{"Content-Type":"application/json",Accept:"application/json",
@@ -66,6 +94,7 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
     idToken=data.idToken;refreshToken=data.refreshToken;
     expiry=Date.now()+Math.max(30,Number(data.expiresIn||3600))*1000;
     session.setItem(sessionKey,refreshToken);
+    if(rememberDevice)setRememberDevice(true);
   }
   async function refresh(force=false){
     const c=await requireConfig();
@@ -78,6 +107,8 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
     const data=await result.json().catch(()=>({}));
     if(!result.ok){
       idToken="";refreshToken="";expiry=0;session.removeItem(sessionKey);
+      try{persistent?.removeItem(persistentKey)}catch{}
+      rememberDevice=false;
       throw Error(trainerAuthError(data?.error?.message||"INVALID_REFRESH_TOKEN"));
     }
     storeSession({idToken:data.id_token,refreshToken:data.refresh_token,
@@ -95,7 +126,11 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
     storeSession(data);
     return data;
   }
-  function logout(){idToken="";refreshToken="";expiry=0;session.removeItem(sessionKey)}
+  function logout(){
+    idToken="";refreshToken="";expiry=0;session.removeItem(sessionKey);
+    try{persistent?.removeItem(persistentKey)}catch{}
+    rememberDevice=false;
+  }
   async function requestVerification(){
     return firebaseAction("sendOobCode",{requestType:"VERIFY_EMAIL",idToken:await refresh()});
   }
@@ -194,5 +229,6 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
     refresh,me,register,claimFirstAdmin,listSpaces,createSpace,createSeason,catalog,
     listUsers,setApproval,issuePublisherKey,publishSeason,publishGame,
     fetchTeamSpaceResource,linkSpace,
-    hasSession:()=>Boolean(refreshToken),api:endpoint};
+    hasSession:()=>Boolean(refreshToken),
+    rememberDevice:()=>rememberDevice,setRememberDevice,api:endpoint};
 }
