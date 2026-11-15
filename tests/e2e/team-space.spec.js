@@ -103,12 +103,35 @@ async function readStore(page,storeName,id){
     }finally{db.close()}
   },{storeName,id});
 }
-test("Home offers Team Space as an independent third entry",async({page})=>{
+async function loadConnectedTeamSpace(page){
+  await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeLibraryList .home-list-row")
+    .getByRole("button",{name:"Laden"}).click();
+}
+async function startTeamSpaceConnection(page){
+  await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#homeNew").click();
+}
+test("Home offers Team Space with separate connect and load actions",async({page})=>{
   await page.goto("/");
   await expect(page.locator("#homeChoose .home-big-choice")).toHaveCount(3);
   await page.locator("#homeChooseTeamSpace").click();
-  await expect(page.locator("#homeTeamSpace")).toBeVisible();
+  await expect(page.locator("#homeActions")).toBeVisible();
   await expect(page.locator("#homeChoose")).toBeHidden();
+  await expect(page.locator("#homeOpen")).toContainText("Team Space laden");
+  await expect(page.locator("#homeNew")).toContainText("Team Space verbinden");
+  await expect(page.locator("#homeImport")).toBeHidden();
+  await page.locator("#homeOpen").click();
+  await expect(page.locator("#homeLibrary")).toBeVisible();
+  await expect(page.locator("#homeLibraryList")).toContainText("Noch kein Team Space verbunden");
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeActions")).toBeVisible();
+  await page.locator("#homeNew").click();
+  await expect(page.locator("#teamSpaceJoinInput")).toBeVisible();
+  await expect(page.locator("#teamSpaceConnect")).toHaveAttribute("open","");
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeActions")).toBeVisible();
   await page.locator("#homeBack").click();
   await page.locator("#homeChooseSeason").click();
   await expect(page.locator("#homeActions")).toBeVisible();
@@ -142,7 +165,7 @@ test("invite opens catalog, season imports once and updates existing season",asy
   expect(link.localSeasonId).toBe(localId);
   cloud.revision=2;
   await page.locator('[data-tab="home"]').click();
-  await page.locator("#homeChooseTeamSpace").click();
+  await loadConnectedTeamSpace(page);
   await expect(page.locator("#teamSpaceSeasons")).toContainText("Update verfügbar");
   await page.locator("#teamSpaceSeasons").getByRole("button",{name:"Aktualisieren"}).click();
   await expect(page.locator("#seasonRefreshDialog")).toBeVisible();
@@ -154,7 +177,7 @@ test("invite opens catalog, season imports once and updates existing season",asy
   const mapped=await readStore(page,"seasons","teamspace-season-link-"+SPACE+"-"+SEASON);
   expect(mapped.revision).toBe(2);
   await page.locator('[data-tab="home"]').click();
-  await page.locator("#homeChooseTeamSpace").click();
+  await loadConnectedTeamSpace(page);
   await expect(page.locator("#teamSpaceSeasons")).toContainText("Aktuell");
   expect(cloud.calls.filter(call=>call.method==="POST")).toHaveLength(0);
 });
@@ -219,7 +242,7 @@ test("single game imports independently, preserves private note after update and
     }finally{db.close()}
   },{key});
   await page.reload();
-  await page.locator("#homeChooseTeamSpace").click();
+  await loadConnectedTeamSpace(page);
   await expect(page.locator("#teamSpaceGames")).toContainText("Aktuell");
   cloud.revision=2;
   await page.locator("#teamSpaceRefresh").click();
@@ -245,8 +268,7 @@ test("trainer can publish a season without exposing the admin token in the invit
   await page.goto("/");
   await page.locator("#seasonImportInput").setInputFiles(upload("season.json",archive()));
   await page.locator('[data-tab="home"]').click();
-  await page.locator("#homeChooseTeamSpace").click();
-  await page.locator("#teamSpaceConnect summary").click();
+  await startTeamSpaceConnection(page);
   await page.locator("#teamSpaceApi").fill(API);
   await page.locator("#teamSpaceName").fill("TSV Kronshagen");
   await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
@@ -274,7 +296,7 @@ test("trainer can publish a season without exposing the admin token in the invit
   await expect(page.locator("#teamSpaceSelectedIdInfo")).toContainText(SPACE);
   // Reload must not erase a successful server receipt or its catalog proof.
   await page.reload();
-  await page.locator("#homeChooseTeamSpace").click();
+  await loadConnectedTeamSpace(page);
   await expect(page.locator("#teamSpacePublishStatus"))
     .toContainText("Im Cloud-Katalog bestätigt: Saison");
 });
@@ -287,8 +309,7 @@ test("Server publication failure remains visible with the selected Team Space",a
   await page.goto("/");
   await page.locator("#seasonImportInput").setInputFiles(upload("season.json",archive()));
   await page.locator('[data-tab="home"]').click();
-  await page.locator("#homeChooseTeamSpace").click();
-  await page.locator("#teamSpaceConnect summary").click();
+  await startTeamSpaceConnection(page);
   await page.locator("#teamSpaceApi").fill(API);
   await page.locator("#teamSpaceName").fill("TSV Kronshagen");
   await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
@@ -311,8 +332,7 @@ test("A server accepted upload absent from the selected catalog is flagged, not 
   await page.goto("/");
   await page.locator("#seasonImportInput").setInputFiles(upload("season.json",archive()));
   await page.locator('[data-tab="home"]').click();
-  await page.locator("#homeChooseTeamSpace").click();
-  await page.locator("#teamSpaceConnect summary").click();
+  await startTeamSpaceConnection(page);
   await page.locator("#teamSpaceApi").fill(API);
   await page.locator("#teamSpaceName").fill("TSV Kronshagen");
   await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
@@ -325,7 +345,7 @@ test("A server accepted upload absent from the selected catalog is flagged, not 
   await expect(page.locator("#teamSpaceStatus"))
     .toContainText("0 Saisons · 0 Spiele");
   await page.reload();
-  await page.locator("#homeChooseTeamSpace").click();
+  await loadConnectedTeamSpace(page);
   await expect(page.locator("#teamSpacePublishStatus"))
     .toContainText("nicht nachweisbar");
 });
@@ -342,8 +362,7 @@ test("Single-game upload identifies the selected Team Space and online season, a
   await page.locator("#continueGameInput").setInputFiles(upload("spiel.json",game()));
   await expect(page.locator("#matchTab")).toBeVisible();
   await page.locator('[data-tab="home"]').click();
-  await page.locator("#homeChooseTeamSpace").click();
-  await page.locator("#teamSpaceConnect summary").click();
+  await startTeamSpaceConnection(page);
   await page.locator("#teamSpaceApi").fill(API);
   await page.locator("#teamSpaceName").fill("TSV Kronshagen");
   await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
