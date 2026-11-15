@@ -6078,7 +6078,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("teamSpaceAuditStatus").textContent="Letzte Prüfung: "+stamp+
       " · "+summary.same+" identisch · "+summary.dirty+" lokal geändert · "+
       summary.unpublished+" noch nicht veröffentlicht · "+summary.cloudNewer+
-      " Cloud-Version neuer · "+summary.unlinked+" Zuordnung prüfen"+
+      " Cloud-Version neuer · "+summary.onlyCloud+" nur online · "+
+      summary.unlinked+" Zuordnung prüfen"+
       (summary.error?" · "+summary.error+" Vergleich fehlgeschlagen":"")+
       ". Keine automatische Veröffentlichung.";
     $("teamSpaceAuditSummary").textContent="Einzelne Spiele ansehen ("+
