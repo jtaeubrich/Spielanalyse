@@ -58,6 +58,9 @@ async function mockSpace(page){
       return route.fulfill({status:401,headers,
         body:JSON.stringify({error:{message:"Unauthorized"}})});
     const data=apiData(cloud.revision);
+    if(url.pathname.endsWith("/verify-trainer")&&isWrite)
+      return route.fulfill({status:200,headers,
+        body:JSON.stringify({spaceId:SPACE,trainerAccess:"individual"})});
     if(url.pathname.endsWith("/catalog")){
       if(cloud.hidePublished&&cloud.lastPublish){
         data.catalog.seasons=[];data.catalog.games=[];
@@ -118,6 +121,22 @@ async function openLegacyTeamSpaceTools(page){
   await page.locator("#teamSpaceTrainerEntry").click();
   await page.locator("#teamSpaceLegacyEntry").click();
   await expect(page.locator("#teamSpaceConnect")).toHaveAttribute("open","");
+}
+async function unlockExistingTrainerSpace(page){
+  // A previous local trainer role is not a login after a fresh PWA launch.
+  await page.locator("#homeBack").click();
+  await page.locator("#homeBack").click();
+  await page.locator("#homeNew").click();
+  await page.locator("#teamSpaceTrainerEntry").click();
+  await page.locator("#teamSpaceLegacyEntry").click();
+  await page.locator("#teamSpaceAdminToken").fill(PERSONAL);
+  await page.locator("#teamSpaceLegacyVerify").click();
+  await expect(page.locator("#teamSpaceTrainerDetails")).toBeVisible();
+  await page.locator("#homeBack").click();
+  await page.locator("#homeBack").click();
+  await loadConnectedTeamSpace(page);
+  await page.locator("#teamSpaceTrainerTools > summary").click();
+  await expect(page.locator("#teamSpaceAuditPanel")).toBeVisible();
 }
 test("Home offers Team Space with separate connect and load actions",async({page})=>{
   await page.goto("/");
@@ -452,6 +471,8 @@ test("Trainer sees unpublished scouting edits but not private note edits in Team
   await editLocal("scoreH",5);
   await page.reload();
   await loadConnectedTeamSpace(page);
+  await expect(page.locator("#teamSpaceAuditPanel")).toBeHidden();
+  await unlockExistingTrainerSpace(page);
   await expect(page.locator("#teamSpaceAuditStatus")).toContainText("1 lokal geändert");
   await page.locator("#teamSpaceAuditDetails summary").click();
   await expect(page.locator("#teamSpaceAuditRows")).toContainText("Lokal geändert");
