@@ -6530,7 +6530,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         if(!localId)throw Error("Bitte lokale Saison auswählen.");
         if(localId!==seasonLibraryId)await switchSeasonLibrary(localId);
         persistSession();
-        const archive=seasonExportObject({includePersonal:true});
+        const archive=publicSeasonForTeamSpace(seasonExportObject({includePersonal:true}));
         if(!confirm("Saison „"+archive.name+"“ mit "+archive.games.length+
           " Spielen im Team Space „"+(connection.name||"Team Space")+
           "“ (ID …"+connection.spaceId.slice(-8)+") veröffentlichen?")){
@@ -6547,6 +6547,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const targetId=selectedId||linkedId;
         const target=targetId?catalog.seasons.find(season=>season.id===targetId):null;
         if(targetId&&!target)throw Error("Die ausgewählte Online-Saison wurde nicht gefunden. Bitte aktualisieren.");
+        if(target&&old?.revision&&old.revision<target.revision)
+          throw Error("Cloud-Version neuer als die zuletzt veröffentlichte Saison (lokal V"+
+            old.revision+", Cloud V"+target.revision+"). Bitte vor dem erneuten Hochladen die Änderungen prüfen und eine lokale Sicherung erstellen.");
         if(target?.gameCount>0&&!confirm("Die Online-Saison „"+target.name+
           "“ enthält bereits "+target.gameCount+
           " Spiele. Ihre Spielzuordnung durch den lokalen Saisonstand ersetzen?"))return;
@@ -6603,6 +6606,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         }
         const assigned=$("teamSpacePublishTargetSeason").value||null;
         const targetSeason=assigned?catalog.seasons.find(row=>row.id===assigned):null;
+        const publishedGame=publicGameForTeamSpace(game);
+        const remote=catalog.games.find(row=>row.id===gameId||
+          (game.officialSource?.matchId&&row.matchId===String(game.officialSource.matchId)));
+        if(remote){
+          const localLink=teamSpaceLocalGame(remote);
+          if(localLink?.revision&&localLink.revision<remote.revision)
+            throw Error("Cloud-Version dieses Spiels ist neuer (lokal V"+
+              localLink.revision+", Cloud V"+remote.revision+
+              "). Bitte zuerst die Änderungen prüfen und lokal sichern.");
+        }
         if(!confirm("Spiel „"+game.gameName+"“ im Team Space „"+
           (connection.name||"Team Space")+"“ (ID …"+connection.spaceId.slice(-8)+
           ") veröffentlichen?\n\nOnline-Saison: "+
@@ -6612,15 +6625,15 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         }
         $("teamSpacePublishStatus").textContent="Spiel wird an den Server übertragen …";
         result=account
-          ?await trainerAccountApi().publishGame(connection.spaceId,game,catalog.revision,{
+          ?await trainerAccountApi().publishGame(connection.spaceId,publishedGame,catalog.revision,{
             gameId,seasonId:assigned,fileName})
-          :await publishTeamSpaceGame(connection,game,secret,catalog.revision,{
+          :await publishTeamSpaceGame(connection,publishedGame,secret,catalog.revision,{
             gameId,seasonId:assigned,fileName});
         teamSpaceRememberPublication(connection,"game",result,game.gameName||fileName);
         if(localSourceSeasonId){
           try{
             const now=new Date().toISOString();
-            const source=coreNormalizeSeasonGame(game,fileName);
+            const source=coreNormalizeSeasonGame(publishedGame,fileName);
             source.id=localSourceGameId;
             const link={id:teamGameLinkId(connection.spaceId,result.gameId),
               localSeasonId:localSourceSeasonId,localGameId:localSourceGameId,
