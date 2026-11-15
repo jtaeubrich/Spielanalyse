@@ -339,6 +339,51 @@ test("trainer can publish a season without exposing the admin token in the invit
 });
 
 
+test("Trainer season upload shares scouting data but keeps private notes and drawings only in local archive",async({page})=>{
+  const cloud=await mockSpace(page);
+  const season=archive();
+  const event=season.games[0].data.events[0];
+  event.note="Private taktische Anmerkung";
+  event.comment="Nicht an Spieler weitergeben";
+  event.highlight=true;
+  event.videoAnnotation={comment:"Private Videoanalyse",
+    shapes:[{type:"line",x1:1,y1:2}]};
+  event.tags=["Deckung:3:2:1","Nur meine persönliche Bewertung"];
+  season.games[0].data.events.push({id:"private-key",type:"keyMoment",
+    team:"home",time:80,note:"Private Schlüsselszene"});
+  season.games[0].data.videoFileName="private-video.mp4";
+  page.on("dialog",dialog=>dialog.accept());
+  await page.goto("/");
+  await page.locator("#seasonImportInput").setInputFiles(upload("private.json",season));
+  const localId=await page.locator("#seasonLibrarySelect").inputValue();
+  await page.locator('[data-tab="home"]').click();
+  await startTeamSpaceConnection(page);
+  await page.locator("#teamSpaceApi").fill(API);
+  await page.locator("#teamSpaceName").fill("TSV Kronshagen");
+  await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
+  await page.locator("#teamSpaceCreate").click();
+  await page.locator("#teamSpacePublish summary").click();
+  await page.locator("#teamSpacePublishSeasonBtn").click();
+  await expect.poll(()=>cloud.lastPublish).not.toBeNull();
+  const publicGame=cloud.lastPublish.archive.games[0].data;
+  expect(publicGame.events).toHaveLength(1);
+  expect(publicGame.events[0]).toMatchObject({
+    id:123,type:"goal",scoreH:1,tags:["Deckung:3:2:1"]
+  });
+  expect(publicGame.events[0]).not.toHaveProperty("comment");
+  expect(publicGame.events[0]).not.toHaveProperty("note");
+  expect(publicGame.events[0]).not.toHaveProperty("highlight");
+  expect(publicGame.events[0]).not.toHaveProperty("videoAnnotation");
+  expect(publicGame).not.toHaveProperty("video");
+  expect(publicGame).not.toHaveProperty("videoFileName");
+  expect(JSON.stringify(publicGame)).not.toContain("Private");
+  const stored=await readStore(page,"seasons",localId);
+  const localGame=stored.games[0].data;
+  expect(localGame.events.find(e=>e.id===123)?.note).toBe("Private taktische Anmerkung");
+  expect(localGame.events.find(e=>e.id==="private-key")?.note).toBe("Private Schlüsselszene");
+  await expect(page.locator("#teamSpaceAuditPanel")).toBeVisible();
+});
+
 test("Server publication failure remains visible with the selected Team Space",async({page})=>{
   const cloud=await mockSpace(page);
   cloud.failUpload=true;
