@@ -85,6 +85,13 @@ describe("Team Space public publication boundary",()=>{
     });
   });
 
+  it("does not treat the migrator's empty player IDs as a public edit",()=>{
+    const remote=original(),local=structuredClone(remote);
+    local.home.players[0].handballNetId="";
+    local.away.players=[];
+    expect(comparePublicGames(local,remote).equal).toBe(true);
+  });
+
   it("does not classify object-key order as local edits",()=>{
     const a=original(),b=structuredClone(a);
     b.events[0]={time:b.events[0].time,...b.events[0]};
