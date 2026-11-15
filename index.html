@@ -1610,7 +1610,8 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
     #teamSpaceInviteLink{font-family:monospace;font-size:12px}
     #teamSpaceJoinPanel[hidden],#teamSpaceTrainerTools[hidden],
     #teamSpacePlayerSummary[hidden],#teamSpacePlayerStatus[hidden],
-    #teamSpaceJoinStatus[hidden],#teamSpaceRefresh[hidden]{display:none!important}
+    #teamSpaceJoinStatus[hidden],#teamSpaceRefresh[hidden],
+    #publishOpenedGameBtn[hidden]{display:none!important}
     #teamSpaceJoinPanel{margin:8px 0 12px}
     #teamSpaceJoinPanel label{display:block}
     #teamSpaceJoinPanel .field{display:block;width:100%;box-sizing:border-box;margin:8px 0 12px}
@@ -1627,7 +1628,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
   <header class="top">
     <div class="brand">Handball<span>Spielanalyse</span></div>
     <div class="score"><img class="score-logo" src="./icons/logo-ball-flow.svg" alt=""><strong class="team" id="homeName">Mein Team</strong><span class="numbers" id="score">0 : 0</span><strong class="team" id="awayName">Gegner</strong></div>
-    <div class="filebar"><button class="btn primary" id="saveBtn">Spiel speichern</button><button class="btn" id="supportBtn" type="button" title="Mit Ko-fi unterstützen" aria-label="Projekt mit Ko-fi unterstützen">♥ Unterstützen</button><button class="btn" id="helpBtn" type="button" title="Dokumentation öffnen" aria-label="Dokumentation öffnen">? Hilfe</button></div>
+    <div class="filebar"><button class="btn primary" id="saveBtn">Spiel speichern</button><button class="btn" id="publishOpenedGameBtn" type="button" hidden>Im Team Space veröffentlichen</button><button class="btn" id="supportBtn" type="button" title="Mit Ko-fi unterstützen" aria-label="Projekt mit Ko-fi unterstützen">♥ Unterstützen</button><button class="btn" id="helpBtn" type="button" title="Dokumentation öffnen" aria-label="Dokumentation öffnen">? Hilfe</button></div>
   </header>
   <nav class="tabbar" aria-label="Arbeitsbereiche"><button class="tab active" data-tab="home">Start</button><button class="tab" data-tab="setup">Setup</button><button class="tab" id="matchTabButton" data-tab="match">Match</button><button class="tab" data-tab="analysis">Analyse</button><button class="tab" data-tab="video">Video</button><button class="tab" data-tab="data">Daten editieren</button></nav>
   <nav id="analysisSubtabs" class="analysis-subtabs" aria-label="Analyseansichten" hidden>
@@ -5293,6 +5294,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(tab)tab.classList.toggle("hidden",previewOnly);
     }
     $("saveBtn").classList.toggle("hidden",previewOnly);
+    updateOpenedGamePublishButton();
     $("analysisSeasonSubtab").hidden=!analysisSeasonActive();
     for(const [id,selected] of [["analysisSingleSubtab",name==="analysis"],["analysisSeasonSubtab",name==="season"]]){
       $(id).classList.toggle("active",selected);
@@ -5991,7 +5993,18 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       teamSpaceAccountAuthorized&&teamSpaceOwnedIds.has(connection.spaceId)||
       connection.role==="trainer"&&teamSpaceVerifiedLegacyIds.has(connection.spaceId));
   }
+  function updateOpenedGamePublishButton(){
+    const button=$("publishOpenedGameBtn");
+    const linked=!!activeSeasonGameId&&!!seasonLibraryId&&
+      [...teamSpaceLinks.values()].some(entry=>
+        entry.id?.startsWith(teamSeasonLinkId(teamSpaceSelectedId,""))&&
+        entry.localSeasonId===seasonLibraryId);
+    button.hidden=!linked||!teamSpaceCanPublish();
+    button.disabled=teamSpaceBusy||teamSpaceDirectPublishBusy;
+  }
+  let teamSpaceDirectPublishBusy=false;
   function teamSpaceUpdateView(){
+    updateOpenedGamePublishButton();
     const inSpace=homeView==="teamspace";
     const joining=inSpace&&homeTeamSpaceReturnView==="actions";
     const connection=teamActiveConnection();
@@ -6695,7 +6708,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       "\nAusdrücklich privat und ausgeschlossen: "+summary.excluded+
       "\n\nDie Videodatei selbst wird nicht übertragen.";
   }
-  async function teamSpacePublish(type){
+  async function teamSpacePublish(type,{remoteEventCount=null,selection=null,onlineSeasonId=null,expectedGameId=null}={}){
     if(teamSpaceBusy)return;teamSpaceBusy=true;
     $("teamSpacePublishStatus").textContent="Veröffentlichung wird vorbereitet. Noch keine Serverbestätigung.";
     try{
@@ -6770,7 +6783,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           teamSpaceShowPublication();
         }
       }else{
-        const selected=$("teamSpacePublishGame").value;
+        const selected=selection??$("teamSpacePublishGame").value;
         if(!selected)throw Error("Bitte ein Einzelspiel auswählen.");
         let game=null,gameId=null,fileName="Spiel.json",
           localSourceSeasonId=null,localSourceGameId=null;
@@ -6790,7 +6803,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           game=structuredClone(item.state);gameId=item.id;fileName=item.fileName;
           localSourceSeasonId=localSeason;localSourceGameId=item.id;
         }
-        const assigned=$("teamSpacePublishTargetSeason").value||null;
+        if(expectedGameId&&gameId!==expectedGameId)
+          throw Error("Das ausgewählte Spiel hat sich geändert. Veröffentlichung nicht gestartet.");
+        const assigned=(onlineSeasonId??$("teamSpacePublishTargetSeason").value)||null;
         const targetSeason=assigned?catalog.seasons.find(row=>row.id===assigned):null;
         const publishedGame=publicGameForTeamSpace(game);
         const sharing=publicationSharingSummary(game);
@@ -6806,7 +6821,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         if(!confirm("Spiel „"+game.gameName+"“ im Team Space „"+
           (connection.name||"Team Space")+"“ (ID …"+connection.spaceId.slice(-8)+
           ") veröffentlichen?\n\nOnline-Saison: "+
-          (targetSeason?.name||"Ohne Saisonzuordnung")+teamSpaceSharingConfirmation(sharing))){
+          (targetSeason?.name||"Ohne Saisonzuordnung")+
+          "\nEreignisse: "+(game.events?.length||0)+" lokal"+
+          (Number.isFinite(remoteEventCount)?", "+remoteEventCount+" online":"")+
+          teamSpaceSharingConfirmation(sharing))){
           $("teamSpacePublishStatus").textContent="Veröffentlichung abgebrochen. Keine Daten übertragen.";
           return;
         }
@@ -6838,6 +6856,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       }
       toast("Cloud-Server hat Version "+result.revision+" bestätigt.");
       await teamSpaceRefreshCatalog();
+      return result;
     }catch(error){
       const message="Veröffentlichung nicht bestätigt: "+(error?.message||String(error))+
         ". Bitte den ausgewählten Team Space und den Cloud-Katalog prüfen.";
@@ -7381,6 +7400,107 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const linkedId=old?.id?.slice(prefix.length)||"";
     target.value=[...target.options].some(opt=>opt.value===linkedId)?linkedId:"";
   };
+  async function teamSpacePublishOpenedGame(){
+    if(teamSpaceDirectPublishBusy||teamSpaceBusy)return;
+    teamSpaceDirectPublishBusy=true;
+    updateOpenedGamePublishButton();
+    try{
+      const space=teamActiveConnection(),localSeasonId=seasonLibraryId,
+        localGameId=activeSeasonGameId;
+      if(!space||!localSeasonId||!localGameId||
+        !teamSpaceCanPublish())throw Error("Bitte als Trainer im richtigen Team Space anmelden.");
+      const prefix=teamSeasonLinkId(space.spaceId,"");
+      const linked=[...teamSpaceLinks.values()].filter(entry=>
+        entry.id?.startsWith(prefix)&&entry.localSeasonId===localSeasonId);
+      if(linked.length!==1)
+        throw Error("Diese lokale Saison ist nicht eindeutig mit diesem Team Space verknüpft. Bitte zuerst die Saisonzuordnung prüfen.");
+      const onlineSeasonId=linked[0].id.slice(prefix.length);
+      // Always save the active editing state before reading the season archive.
+      // A failed local save stops the upload; we never publish a stale snapshot.
+      persistSession();
+      clearTimeout(seasonPersistTimer);
+      await storeInternalSeason();
+      if(space.spaceId!==teamSpaceSelectedId||localSeasonId!==seasonLibraryId||
+        localGameId!==activeSeasonGameId)
+        throw Error("Spiel oder Team Space wurde während der Prüfung gewechselt.");
+      const localGame=seasonGames.find(item=>item.id===localGameId);
+      if(!localGame)throw Error("Das geöffnete Saisonspiel wurde lokal nicht gefunden.");
+      const catalog=await teamSpaceCatalog(space);
+      const onlineSeason=catalog.seasons.find(season=>season.id===onlineSeasonId);
+      if(!onlineSeason)throw Error("Die zugehörige Online-Saison wurde nicht gefunden. Bitte im Team Space aktualisieren.");
+      const matchId=String(localGame.state?.officialSource?.matchId||"");
+      const candidates=catalog.games.filter(game=>
+        onlineSeason.gameIds.includes(game.id)&&
+        (game.id===localGameId||(matchId&&game.matchId===matchId)));
+      if(candidates.length!==1)
+        throw Error("Das Spiel kann in der Online-Saison nicht eindeutig zugeordnet werden. Bitte im Team Space den Veröffentlichungsstand prüfen, damit keine Duplikate entstehen.");
+      const remote=candidates[0];
+      const localVersion=teamSpaceAuditLocalVersion({
+        kind:"season",seasonId:localSeasonId,gameId:localGameId
+      },remote);
+      if(!localVersion)throw Error("Die lokale Basisversion ist unbekannt. Bitte zuerst den Team-Space-Vergleich prüfen.");
+      if(localVersion<remote.revision)
+        throw Error("In der Cloud liegt eine neuere Version dieses Spiels (lokal V"+
+          localVersion+", Cloud V"+remote.revision+"). Bitte vor dem Hochladen aktualisieren und Unterschiede prüfen.");
+      const release=await downloadTeamSpaceGame(space,remote.id);
+      if(release.revision!==remote.revision||release.sha256!==remote.sha256)
+        throw Error("Das Cloud-Spiel wurde während der Prüfung geändert. Bitte erneut versuchen.");
+      const localCount=localGame.state?.events?.length||0;
+      const remoteCount=release.data?.events?.length||0;
+      if(localCount<remoteCount)
+        throw Error("Das lokale Spiel enthält "+localCount+" Ereignisse, die Cloud dagegen "+
+          remoteCount+". Ein Spiel mit weniger Ereignissen darf nicht ungeprüft darüber veröffentlicht werden. Bitte zuerst die Unterschiede prüfen.");
+      if((await teamSpaceAuditHash(localGame.state))===remote.sha256){
+        toast("Dieses Spiel ist bereits mit dem Team Space synchronisiert ("+
+          localCount+" Ereignisse).");return;
+      }
+      teamSpaceCatalogData=catalog;
+      teamSpaceRenderControls();
+      const gameSelect=$("teamSpacePublishGame"),targetSelect=$("teamSpacePublishTargetSeason");
+      const selected=localSeasonId+"|"+localGameId;
+      if(![...gameSelect.options].some(option=>option.value===selected)||
+        ![...targetSelect.options].some(option=>option.value===onlineSeasonId))
+        throw Error("Die korrekte Spiel- und Saisonzuordnung steht nicht zur Verfügung. Bitte im Team Space prüfen.");
+      gameSelect.value=selected;targetSelect.value=onlineSeasonId;
+      const published=await teamSpacePublish("game",{
+        remoteEventCount:remoteCount,selection:selected,onlineSeasonId,
+        expectedGameId:localGameId
+      });
+      if(!published){
+        if($("teamSpacePublishStatus").textContent.startsWith("Veröffentlichung nicht bestätigt"))
+          toast($("teamSpacePublishStatus").textContent);
+        return;
+      }
+      // This publication also increments the remote season version. Reflect
+      // our own upload locally only when the linked season was at the exact
+      // pre-publication revision; otherwise another remote edit needs review.
+      try{
+        const refreshedSeason=teamSpaceCatalogData?.seasons.find(row=>row.id===onlineSeasonId);
+        const refreshedGame=teamSpaceCatalogData?.games.find(row=>row.id===published.gameId);
+        if(linked[0].revision===onlineSeason.revision&&
+          refreshedSeason?.revision===onlineSeason.revision+1&&
+          refreshedGame?.revision===published.itemRevision){
+          const link={...linked[0],revision:refreshedSeason.revision,
+            gameRevisions:{...linked[0].gameRevisions,
+              [published.gameId]:published.itemRevision},updatedAt:new Date().toISOString()};
+          await writeInternalRecord(INTERNAL_SEASON_STORE,link);
+          teamSpaceLinks.set(link.id,link);
+          await teamSpaceRefreshCatalog();
+        }
+      }catch(localError){
+        toast("Cloud-Upload bestätigt, lokale Version konnte nicht aktualisiert werden: "+
+          (localError?.message||String(localError)));
+      }
+    }catch(error){
+      const message="Spiel nicht veröffentlicht: "+(error?.message||String(error));
+      toast(message);
+      teamStatus(message);
+    }finally{
+      teamSpaceDirectPublishBusy=false;
+      updateOpenedGamePublishButton();
+    }
+  }
+  $("publishOpenedGameBtn").onclick=()=>void teamSpacePublishOpenedGame();
   $("teamSpacePublishSeasonBtn").onclick=()=>void teamSpacePublish("season");
   $("teamSpacePublishGameBtn").onclick=()=>void teamSpacePublish("game");
 
@@ -9806,7 +9926,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=170",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=171",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
