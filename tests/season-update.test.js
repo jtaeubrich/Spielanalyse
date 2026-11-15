@@ -1,5 +1,5 @@
 import {describe,it,expect} from "vitest";
-import {prepareSeasonRefresh,exportPublishedSeason} from "../src/season-update.js";
+import {prepareSeasonRefresh,preparePublishedGameRefresh,exportPublishedSeason} from "../src/season-update.js";
 
 const event=(id,time,extra={})=>({id,type:"goal",team:"home",time,
   half:1,scoreH:1,scoreA:0,realTime:time*1000,...extra});
@@ -132,5 +132,29 @@ describe("safe three-way season refresh",()=>{
     expect(()=>prepareSeasonRefresh(old,other,old)).toThrow(/Spiel-ID/);
     other.games[0].id="sg-unrelated";other.games[1].id="sg-unrelated-too";
     expect(()=>prepareSeasonRefresh(old,other,old)).toThrow(/Keine gemeinsamen Spielkennungen/);
+  });
+});
+
+describe("YouTube video synchronization on existing iPad season games",()=>{
+  it("applies the published YouTube source and H1/H2 sync to a local game without losing annotations",()=>{
+    const old=game("sg-shared",[event("goal-1",45)]);
+    delete old.state.video;
+    old.state.events[0].note="Mein lokaler Trainerhinweis";
+    const incoming=game("sg-shared",[event("goal-1",45)]);
+    incoming.state.isVideoscoutingFile=true;
+    incoming.state.video={
+      youtubeId:"sLAq3M30ZBY",
+      youtubeUrl:"https://www.youtube.com/watch?v=sLAq3M30ZBY",
+      syncUnit:"seconds",h1SyncRealTime:31.4,h2SyncRealTime:1515,
+      reviewClockAnchors:[{half:1,videoAt:120,gameAt:101,running:false}]
+    };
+    incoming.state.events[0].realTime=54400;
+    const merged=preparePublishedGameRefresh(old,incoming);
+    expect(merged.game.id).toBe("sg-shared");
+    expect(merged.game.state.video).toEqual(incoming.state.video);
+    expect(merged.game.state.isVideoscoutingFile).toBe(true);
+    expect(merged.game.state.events[0].realTime).toBe(54400);
+    expect(merged.game.state.events[0].note).toBe("Mein lokaler Trainerhinweis");
+    expect(merged.game.state.events).toHaveLength(1);
   });
 });
