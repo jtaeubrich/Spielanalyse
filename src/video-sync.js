@@ -119,7 +119,9 @@ export function eventVideoPosition(event, options = {}) {
     }
   }
   const seconds = baseVideo + elapsed;
-  return { seconds: seconds >= 0 ? seconds : NaN, status: "estimated" };
+  return Number.isFinite(seconds) && seconds >= 0
+    ? { seconds, status: "estimated" }
+    : { seconds: NaN, status: "unassigned" };
 }
 
 export function eventVideoSeconds(
