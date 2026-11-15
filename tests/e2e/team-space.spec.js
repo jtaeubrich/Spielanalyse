@@ -207,6 +207,41 @@ test("Connected Team Space reappears in quick entry after a new app launch",asyn
   await expect(page.locator("#teamSpaceGamesDetails")).not.toHaveAttribute("open","");
   expect(cloud.calls.filter(call=>call.path.endsWith("/download"))).toHaveLength(0);
 });
+test("Team Space laden lists connected spaces and back returns to the list",async({page})=>{
+  await mockSpace(page);
+  await page.goto("/#teamspace="+encodeURIComponent(SPACE)+
+    "&key="+encodeURIComponent(READER)+"&api="+encodeURIComponent(API));
+  await expect(page.locator("#homeTeamSpaceJoined")).toContainText("erfolgreich hinzugefügt");
+  await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#homeOpen").click();
+  await expect(page.locator("#homeLibraryList .home-list-row")).toHaveCount(1);
+  await expect(page.locator("#homeLibraryList")).toContainText("TSV Kronshagen");
+  await page.locator("#homeLibraryList .home-list-row")
+    .getByRole("button",{name:"Laden"}).click();
+  await expect(page.locator("#homeTeamSpace")).toBeVisible();
+  await expect(page.locator("#teamSpaceSeasons")).toContainText("Saison 2026/27");
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeLibrary")).toBeVisible();
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeActions")).toBeVisible();
+});
+test("Invite can be pasted from clipboard and connected without leaving the app",async({page})=>{
+  await mockSpace(page);
+  const invite="http://127.0.0.1:4173/#teamspace="+encodeURIComponent(SPACE)+
+    "&key="+encodeURIComponent(READER)+"&api="+encodeURIComponent(API);
+  await page.addInitScript(value=>{
+    Object.defineProperty(navigator,"clipboard",{
+      configurable:true,value:{readText:()=>Promise.resolve(value)}
+    });
+  },invite);
+  await page.goto("/");
+  await startTeamSpaceConnection(page);
+  await page.locator("#teamSpacePasteInvite").click();
+  await expect(page.locator("#teamSpaceJoinInput")).toHaveValue(invite);
+  await page.locator("#teamSpaceJoin").click();
+  await expect(page.locator("#homeTeamSpaceJoined")).toContainText("erfolgreich hinzugefügt");
+  await expect(page.locator("#homeChoose")).toBeVisible();
+});
 test("single game imports independently, preserves private note after update and survives reload",async({page})=>{
   const cloud=await mockSpace(page);
   page.on("dialog",dialog=>dialog.accept());
@@ -256,6 +291,8 @@ test("single game imports independently, preserves private note after update and
   const merged=await readStore(page,"games",key);
   expect(JSON.parse(merged.text).events[0].videoAnnotation.comment).toBe("Mein privater Kommentar");
   expect(merged.source.events[0].videoAnnotation.comment).toBe("");
+  await page.locator("#homeBack").click();
+  await page.locator("#homeBack").click();
   await page.locator("#homeBack").click();
   await page.locator("#homeChooseGame").click();
   await page.locator("#homeOpen").click();
