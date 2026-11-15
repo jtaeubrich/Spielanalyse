@@ -652,3 +652,33 @@ test("Team Space warns when a separately published game is not part of its cloud
   await page.locator("#teamSpaceRefresh").click();
   await expect(status).toContainText("1 Einzelspiel ist keiner Online-Saison zugeordnet");
 });
+
+test("separate published game does not masquerade as a fully synced season",async({page})=>{
+  await mockSpace(page);
+  const base=apiData(1).catalog;
+  base.games.push({id:"sg-unassigned",name:"15.11.2026 | TSV KRONSHAGEN – SG HAMBURG",
+    date:"2026-11-15",revision:1,sha256:"b".repeat(64),
+    matchId:"",seasonIds:[]});
+  await page.route(API+"/spaces/"+SPACE+"/catalog",route=>route.fulfill({
+    status:200,contentType:"application/json",body:JSON.stringify(base),
+    headers:{"Access-Control-Allow-Origin":"*"}
+  }));
+  await page.goto("/#teamspace="+encodeURIComponent(SPACE)+
+    "&key="+encodeURIComponent(READER)+"&api="+encodeURIComponent(API));
+  await expect(page.locator("#homeTeamSpaceJoined")).toContainText("erfolgreich hinzugefügt");
+  await page.locator("#homeRecentOptions .home-list-row").filter({
+    hasText:"Team Space verbunden"
+  }).getByRole("button",{name:"Laden"}).click();
+  await expect(page.locator("#teamSpacePlayerSummary")).toContainText("2 Spiele");
+  await expect(page.locator("#teamSpacePlayerStatus"))
+    .toContainText("1 Einzelspiel ist keiner Online-Saison zugeordnet (2026-11-15)");
+  await expect(page.locator("#teamSpacePlayerStatus"))
+    .toContainText("Lokale Ereignisse werden nicht automatisch zwischen Geräten abgeglichen");
+  await expect(page.locator("#teamSpacePlayerStatus")).not.toContainText("Alle Inhalte aktuell");
+  await page.locator("#teamSpaceRefresh").click();
+  await expect(page.locator("#teamSpacePlayerStatus"))
+    .toContainText("1 Einzelspiel ist keiner Online-Saison zugeordnet");
+  await page.locator("#teamSpaceGamesDetails summary").click();
+  await expect(page.locator("#teamSpaceGames")).toContainText("15.11.2026");
+  await expect(page.locator("#teamSpaceSeasons")).toContainText("1 Spiel");
+});
