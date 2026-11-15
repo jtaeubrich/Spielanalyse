@@ -14,6 +14,7 @@ function catalog(seasons=[]){return {spaceId:SPACE,name:"TSV Kronshagen",revisio
 async function openTrainerAccount(page){
   await page.goto("/");
   await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#homeNew").click();
   await page.locator("#trainerAccountPanel summary").click();
   await expect(page.locator("#trainerAccountLogin")).toBeVisible();
 }
@@ -172,10 +173,11 @@ test("Account registration stays unavailable until Firebase is configured, legac
   await page.route(API+"/trainer-auth/config",route=>route.fulfill(success({enabled:false})));
   await page.goto("/");
   await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#homeNew").click();
   await page.locator("#trainerAccountPanel summary").click();
   await expect(page.locator("#trainerAccountStatus")).toContainText("noch nicht aktiviert");
   await expect(page.locator("#trainerAccountLogin")).toBeHidden();
-  await page.locator("#teamSpaceConnect summary").click();
+  await expect(page.locator("#teamSpaceConnect")).toHaveAttribute("open","");
   await expect(page.locator("#teamSpaceRegistrationToken")).toBeVisible();
 });
 test("Registration requires matching passwords before contacting Firebase and clears credentials",async({page})=>{
@@ -343,6 +345,9 @@ test("Approved Firebase trainer can create a Team Space and publish local season
   });
   await page.locator('[data-tab="home"]').click();
   await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeLibraryList .home-list-row")
+    .getByRole("button",{name:"Laden"}).click();
   await page.locator("#teamSpacePublish summary").click();
   await page.locator("#teamSpacePublishSeasonTarget").selectOption(SEASON);
   await page.locator("#teamSpacePublishSeasonBtn").click();
