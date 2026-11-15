@@ -94,7 +94,7 @@ async function environment(callback,{enabled=true,adminUids=["admin-uid"],bootst
         ...(identity?{Authorization:"Bearer "+identity}:{}),
         ...(data!==undefined?{"Content-Type":"application/json"}:{})},
       ...(data!==undefined?{body:JSON.stringify(data)}:{})});
-    return {status:response.status,data:await response.json()};
+    const raw=await response.text();return {status:response.status,data:JSON.parse(raw),raw,headers:response.headers};
   }
   try{await callback({call,store})}finally{await new Promise(resolve=>server.close(resolve))}
 }
@@ -325,3 +325,76 @@ test("Persisted first-admin email cannot be changed to inherit administrator rol
   assert.equal(changed.data.status,"not_registered");
   assert.equal((await call("GET","/trainer-auth/admin/users",T.changed)).status,403);
 },{adminUids:[]}));
+
+test("Approved trainer reads own account Team Space without reader key across devices",()=>environment(async({call})=>{
+  await register(call,T.trainer);await approve(call,"trainer-uid");
+  await register(call,T.other);await approve(call,"other-uid");
+  const created=(await call("POST","/trainer-auth/spaces",T.trainer,{name:"TSV"})).data;
+  const root="/spaces/"+SPACE;
+  const game={gameName:"Test",home:{name:"Home"},away:{name:"Away"},events:[]};
+  const pub=await call("POST",root+"/publish-game",T.trainer,{expectedRevision:0,game});
+  assert.equal(pub.status,200);
+  const id=pub.data.gameId;
+  const ownCatalog=await call("GET",root+"/catalog",T.trainer);
+  assert.equal(ownCatalog.status,200);
+  assert.equal(ownCatalog.data.games[0].id,id);
+  assert.equal(JSON.stringify(ownCatalog.data).includes(created.readToken),false);
+  const downloaded=await call("GET",root+"/games/"+id+"/download",T.trainer);
+  assert.equal(downloaded.status,200);
+  assert.deepEqual(downloaded.data,game);
+  assert.equal(downloaded.headers.get("x-content-sha256"),
+    createHash("sha256").update(downloaded.raw).digest("hex"));
+  assert.equal((await call("GET",root+"/catalog",T.other)).status,403);
+  assert.equal((await call("GET",root+"/catalog",T.unverified)).status,403);
+  assert.equal((await call("GET",root+"/catalog")).status,401);
+  assert.equal((await call("GET",root+"/catalog",created.readToken)).status,200);
+  await call("POST","/trainer-auth/admin/users/trainer-uid",T.admin,{status:"suspended"});
+  assert.equal((await call("GET",root+"/catalog",T.trainer)).status,403);
+}));
+
+test("Existing v2 Team Space can be securely linked once, preserving invitations and publications",()=>environment(async({call,store})=>{
+  const key="trainer_"+("P".repeat(44)),reader="reader_"+("R".repeat(44));
+  const digest=value=>createHash("sha256").update(value).digest("hex");
+  await store.createSpace(SPACE,{id:SPACE,name:"Alter Space",
+    authVersion:2,revision:0,createdAt:"2026-01-01T00:00:00Z",
+    updatedAt:"2026-01-01T00:00:00Z",readerHash:digest(reader),trainerHash:digest(key),
+    seasons:{},games:{}});
+  await register(call,T.trainer);await approve(call,"trainer-uid");
+  await register(call,T.other);await approve(call,"other-uid");
+  const path="/trainer-auth/spaces/"+SPACE+"/link";
+  assert.equal((await call("POST",path,T.unverified,{trainerToken:key})).status,403);
+  assert.equal((await call("POST",path,T.other,{trainerToken:"trainer_"+("X".repeat(44))})).status,403);
+  assert.equal((await call("GET","/trainer-auth/spaces",T.trainer)).data.spaces.length,0);
+  const linked=await call("POST",path,T.trainer,{trainerToken:key});
+  assert.equal(linked.status,200);
+  const meta=(await store.readSpace(SPACE)).metadata;
+  assert.equal(meta.ownerUid,"trainer-uid");
+  assert.equal(meta.authMode,"firebase");
+  assert.equal(meta.trainerHash,digest(key));
+  assert.equal(meta.readerHash,digest(reader));
+  assert.equal(JSON.stringify(meta).includes(key),false);
+  assert.equal(JSON.stringify(meta).includes(reader),false);
+  assert.deepEqual((await call("GET","/trainer-auth/spaces",T.trainer))
+    .data.spaces.map(item=>item.spaceId),[SPACE]);
+  assert.equal((await call("GET","/spaces/"+SPACE+"/catalog",T.trainer)).status,200);
+  assert.equal((await call("GET","/spaces/"+SPACE+"/catalog",reader)).status,200);
+  assert.equal((await call("GET","/spaces/"+SPACE+"/catalog",T.other)).status,403);
+  assert.equal((await call("POST",path,T.other,{trainerToken:key})).status,409);
+  assert.equal((await call("POST",path,T.trainer,{trainerToken:key})).status,200);
+  const game={gameName:"Historisches Spiel",home:{},away:{},events:[]};
+  assert.equal((await call("POST","/spaces/"+SPACE+"/publish-game",T.trainer,
+    {expectedRevision:0,game})).status,200);
+  assert.equal((await call("POST","/spaces/"+SPACE+"/publish-game",key,
+    {expectedRevision:1,game})).status,200);
+}));
+
+test("Unmigrated v1 spaces cannot be linked using central registration credentials",()=>environment(async({call,store})=>{
+  await store.createSpace(SPACE,{id:SPACE,name:"Vor Migration",readerHash:"a".repeat(64),
+    revision:0,seasons:{},games:{}});
+  await register(call,T.trainer);await approve(call,"trainer-uid");
+  const result=await call("POST","/trainer-auth/spaces/"+SPACE+"/link",
+    T.trainer,{trainerToken:MASTER});
+  assert.equal(result.status,409);
+  assert.equal(result.data.error.code,"TRAINER_KEY_REQUIRED");
+  assert.equal((await store.readSpace(SPACE)).metadata.ownerUid,undefined);
+}));

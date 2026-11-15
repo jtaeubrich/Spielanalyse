@@ -25,7 +25,10 @@ export function makeTeamSpaceInvite(appUrl,connection){
     key:config.readToken,api:config.api}).toString();
   return link.href;
 }
-async function request(connection,suffix,{fetcher=fetch,method="GET",data,adminToken}={}){
+async function request(connection,suffix,{fetcher=fetch,method="GET",data,adminToken,accountClient}={}){
+  if(accountClient&&connection?.role==="account"&&!adminToken&&method==="GET"){
+    return accountClient.fetchTeamSpaceResource(connection.spaceId,suffix);
+  }
   const config=adminToken?{api:seasonCloudEndpoint(connection.api)}:requireConnection(connection);
   return seasonCloudCall(config,"/spaces/"+connection.spaceId+suffix,{
     method,data,authToken:adminToken,fetcher
@@ -53,8 +56,8 @@ export async function createTeamSpace(api,teamName,registrationToken,{fetcher=fe
   return {api:root,spaceId:data.spaceId,readToken:data.readToken,
     trainerToken:data.trainerToken,name:data.name,role:"trainer",revision:data.revision||0};
 }
-export async function teamSpaceCatalog(connection,{fetcher=fetch}={}){
-  const response=await request(connection,"/catalog",{fetcher});
+export async function teamSpaceCatalog(connection,{fetcher=fetch,accountClient}={}){
+  const response=await request(connection,"/catalog",{fetcher,accountClient});
   const catalog=await response.json();
   if(catalog.spaceId!==connection.spaceId||
      !Number.isInteger(catalog.revision)||catalog.revision<0||
@@ -71,8 +74,8 @@ export async function teamSpaceCatalog(connection,{fetcher=fetch}={}){
   }
   return catalog;
 }
-async function verifiedDownload(connection,suffix,{fetcher=fetch}={}){
-  const response=await request(connection,suffix,{fetcher});
+async function verifiedDownload(connection,suffix,{fetcher=fetch,accountClient}={}){
+  const response=await request(connection,suffix,{fetcher,accountClient});
   const text=await response.text(),expected=response.headers.get("x-content-sha256");
   if(!/^[a-f0-9]{64}$/i.test(expected||""))throw Error("Prüfsumme des Team-Space-Downloads fehlt.");
   const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(text));

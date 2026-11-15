@@ -1784,6 +1784,19 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             </div>
             <div id="trainerAccountCreator" hidden>
               <hr>
+              <h3>Vorhandenen Team Space übernehmen</h3>
+              <p class="number-help">Einmalig mit deinem Trainerkonto verknüpfen. Der bisherige Trainer-Schlüssel wird nur zur Prüfung übertragen, nicht gespeichert. Spieler-Einladungen bleiben gültig.</p>
+              <div class="teamspace-fields">
+                <label>Team-Space-ID
+                  <input class="field" id="trainerAccountLinkSpaceId" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="UUID des vorhandenen Team Space">
+                </label>
+                <label>Individueller Trainer-Schlüssel
+                  <input class="field" id="trainerAccountLinkToken" type="password" autocomplete="off" spellcheck="false" placeholder="trainer_…">
+                </label>
+              </div>
+              <button type="button" class="btn" id="trainerAccountLinkSpace">Mit Trainerkonto verknüpfen</button>
+              <p class="number-help" id="trainerAccountLinkStatus" role="status" aria-live="polite">Einmalige Übernahme für ältere Team Spaces.</p>
+              <hr>
               <h3>Team Space erstellen</h3>
               <label>Teamname
                 <input class="field" id="trainerAccountSpaceName" type="text" placeholder="TSV Kronshagen B-Jugend">
@@ -2633,8 +2646,8 @@ import { findKnownTeamRecord, mergeAliases, renameKnownTeamRecord, teamRosterSta
 import { handballNetMatchId, hbNameKey, hbPrepare, hbVenue } from "./src/handball360.js?v=147";
 import { parseHandball360TeamId, validateHandball360SeasonSchedule, seasonScheduleStatus, buildHandball360SeasonGame, appendNewHandball360SeasonGames, seasonMatchIdentity, seasonMatchUrl, syncSeasonFixtureSchedule, assignHandball360Match, seedKnownSeasonRosters, enrichSeasonGameFromOfficial, officialSeasonLogoEntries, mergeOfficialSeasonLogoRecord } from "./src/season-handball360.js?v=3";
 import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
-import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=2";
-import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=3";
+import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog as coreTeamSpaceCatalog,downloadTeamSpaceSeason as coreDownloadTeamSpaceSeason,downloadTeamSpaceGame as coreDownloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=3";
+import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=4";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
 import {publicGameForTeamSpace,publicSeasonForTeamSpace,publicationSharingSummary,
   publicGameSignature,comparePublicGames} from "./src/team-space-publication.js?v=2";
@@ -5959,6 +5972,19 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   const teamGameLinkId=(spaceId,gameId)=>"teamspace-game-link-"+spaceId+"-"+gameId;
   const teamSingleId=(spaceId,gameId)=>"teamspace-localgame-"+spaceId+"-"+gameId;
   const teamActiveConnection=()=>teamSpaces.get(teamSpaceSelectedId);
+  const teamSpaceReadOptions=connection=>
+    connection?.role==="account"&&!connection.readToken
+      ?{accountClient:trainerAccountApi()}:{};
+  
+  function teamSpaceCatalog(connection){
+    return coreTeamSpaceCatalog(connection,teamSpaceReadOptions(connection));
+  }
+  function downloadTeamSpaceSeason(connection,seasonId){
+    return coreDownloadTeamSpaceSeason(connection,seasonId,teamSpaceReadOptions(connection));
+  }
+  function downloadTeamSpaceGame(connection,gameId){
+    return coreDownloadTeamSpaceGame(connection,gameId,teamSpaceReadOptions(connection));
+  }
   function teamSpaceCanPublish(){
     const connection=teamActiveConnection();
     return !!connection&&(connection.role==="account"&&
@@ -6069,8 +6095,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       teamSpaceCatalogData?.trainerAccess!=="legacy";
     $("teamSpaceActivateTrainer").hidden=!connection||["trainer","account"].includes(connection.role);
     $("teamSpaceCopyInvite").disabled=!["trainer","account"].includes(connection?.role);
-    $("teamSpaceInviteLink").value=["trainer","account"].includes(connection?.role)
+    // Account-only devices have no transferable player credential. Do not
+    // manufacture a read link or rotate the existing invite behind users' backs.
+    const inviteAvailable=["trainer","account"].includes(connection?.role)&&
+      !!connection?.readToken;
+    $("teamSpaceInviteLink").value=inviteAvailable
       ?makeTeamSpaceInvite(location.origin+location.pathname,connection):"";
+    $("teamSpaceCopyInvite").disabled=!inviteAvailable;
     if(connection?.api&&!$("teamSpaceApi").value)
       $("teamSpaceApi").value=connection.api;
     if(connection?.name&&!$("teamSpaceName").value)
@@ -6431,9 +6462,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       $("teamSpaceNewTrainerToken").value="";
     }
     const current=teamSpaces.get(connection.spaceId);
-    const joined=["trainer","account"].includes(current?.role)?current:{
-      ...connection,name:current?.name||"Team Space",role:"reader"
-    };
+    const joined=["trainer","account"].includes(current?.role)
+      ?{...current,readToken:current.readToken||connection.readToken}
+      :{...connection,name:current?.name||"Team Space",role:"reader"};
     const catalog=await teamSpaceCatalog(joined);
     joined.name=catalog.name;
     await saveTeamSpaceConnection(joined);
@@ -6970,6 +7001,29 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(!data.spaces.length)select.add(new Option("Zuerst Team Space erstellen",""));
     return data.spaces;
   }
+  async function trainerAccountSyncSpaces(rows){
+    const service=trainerAccountApi(),updated=[];
+    for(const item of rows){
+      const old=teamSpaces.get(item.spaceId);
+      const connection={...old,api:service.api,spaceId:item.spaceId,
+        name:item.name,role:"account",revision:item.revision};
+      if(!old||old.role!=="account"||old.name!==item.name||old.api!==service.api){
+        updated.push({id:teamLinkId(item.spaceId),connection,
+          updatedAt:new Date().toISOString()});
+      }
+      teamSpaces.set(item.spaceId,connection);
+    }
+    if(updated.length)await writeInternalRecords(INTERNAL_SEASON_STORE,updated);
+    if(!teamSpaces.has(teamSpaceSelectedId)&&rows.length){
+      teamSpaceSelectedId=rows[0].spaceId;
+      localStorage.setItem("handballSpielanalyse.teamSpace",teamSpaceSelectedId);
+    }
+    if(updated.length){
+      if(homeView==="library"&&homeKind==="teamspace")homeRenderLibrary();
+      if(homeView==="choose")homeRenderRecent();
+    }
+    return updated.length;
+  }
   async function trainerAccountLoadAdmin(){
     const service=trainerAccountApi(),container=$("trainerAccountUserList");
     const data=await service.listUsers();
@@ -7038,6 +7092,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       const owned=await trainerAccountLoadSpaces();
       teamSpaceOwnedIds.clear();
       for(const space of owned)teamSpaceOwnedIds.add(space.spaceId);
+      await trainerAccountSyncSpaces(owned);
       teamSpaceAccountAuthorized=true;
     }
     if(me.isAdmin)await trainerAccountLoadAdmin();
@@ -7175,6 +7230,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("trainerAccountPassword").value="";
     trainerAccountRegistrationMode(false);
     await trainerAccountRefresh();
+    if(homeView==="teamspace"&&homeTeamSpaceReturnView==="actions"&&
+      teamSpaceOwnedIds.size)homeShow("library","teamspace");
   });
   $("trainerAccountVerifyMail").onclick=()=>trainerAccountAction(async()=>{
     await trainerAccountApi().requestVerification();
@@ -7221,6 +7278,25 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       ?"Freigabe beantragt. Ein Administrator muss sie bestätigen.":"Freigegeben."));
   });
   $("trainerAccountRefresh").onclick=()=>trainerAccountAction(trainerAccountRefresh);
+  $("trainerAccountLinkSpace").onclick=()=>trainerAccountAction(async()=>{
+    const id=$("trainerAccountLinkSpaceId").value.trim();
+    const tokenField=$("trainerAccountLinkToken"),trainerToken=tokenField.value.trim();
+    const status=$("trainerAccountLinkStatus");
+    status.textContent="Trainerberechtigung wird geprüft …";
+    try{
+      const linked=await trainerAccountApi().linkSpace(id,trainerToken);
+      if(linked.spaceId!==id)throw Error("Der Cloud-Dienst hat einen anderen Team Space bestätigt.");
+      await trainerAccountRefresh();
+      status.textContent="Team Space „"+linked.name+"“ ist deinem Trainerkonto zugeordnet. Er erscheint ab jetzt auch auf anderen Geräten.";
+      $("trainerAccountLinkSpaceId").value="";
+      await teamSpaceRefreshCatalog();
+    }catch(error){
+      status.textContent="Verknüpfung fehlgeschlagen: "+error.message;
+    }finally{
+      // Never retain a trainer credential in the DOM or local storage.
+      tokenField.value="";
+    }
+  });
   $("trainerAccountCreateSpace").onclick=()=>trainerAccountAction(async()=>{
     const service=trainerAccountApi();
     const name=$("trainerAccountSpaceName").value.trim();
@@ -9699,7 +9775,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   $('numberTeam').onchange=renderNumbers;
   $('closeNumbers').onclick=()=>$('numbersDialog').close();
   $('numbersForm').onsubmit=e=>{e.preventDefault();for(const [key,value] of Object.entries(numberEdits)){if(value!==''&&(!/^\\d{1,2}$/.test(value))){$('numberError').textContent='Bitte Nummern zwischen 0 und 99 eintragen.';return;}}for(const team of ['home','away'])for(const p of state[team].players){const value=numberEdits[team+':'+p.id];if(value!==undefined)p.nr=value===''?'':Number(value);}document.querySelectorAll('.player-label').forEach(label=>{const p=getPlayer(label.dataset.playerId);if(p)playerLabel(label.parentElement,p);});showStep(currentStep);$('numbersDialog').close();toast('Rückennummern übernommen');};
-  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical)setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;if(restoredSession)persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;await teamSpaceRestore().catch(error=>console.warn("Team Space konnte nicht geladen werden",error));homeShow("choose",null);showTab("home");if(pendingCloudInvite)await joinSeasonCloud(pendingCloudInvite).catch(error=>{
+  const restoredSession=await restoreAutomaticSession();if(!restoredSession)myTeamLeft=true;const restoredSeason=await restoreStoredSeason();await refreshKnownRosterOptions();setAnalysisMode(analysisMode);if(state.liveScoutingCompleted&&!state.isHistorical)setMatchReviewMode(true,{announce:false});update();renderClipPresetList();persistenceReady=true;if(restoredSession)persistSession();restoreSavedVideoReference();homeHasSession=restoredSession;await teamSpaceRestore().catch(error=>console.warn("Team Space konnte nicht geladen werden",error));homeShow("choose",null);showTab("home");if(trainerAccountApi().hasSession())void trainerAccountRefresh().catch(error=>console.warn("Trainerkonto konnte beim Start nicht aktualisiert werden",error));if(pendingCloudInvite)await joinSeasonCloud(pendingCloudInvite).catch(error=>{
   toast("Saison-Einladung konnte nicht geöffnet werden: "+error.message);
 });if(pendingTeamSpaceInvite)await teamSpaceJoin(pendingTeamSpaceInvite).catch(error=>{
   toast("Team-Space-Einladung konnte nicht geöffnet werden: "+error.message);
@@ -9709,7 +9785,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=167",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=168",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);

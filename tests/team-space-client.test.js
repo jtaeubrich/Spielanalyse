@@ -121,4 +121,29 @@ describe("Team Space API client",()=>{
     expect(opts.headers.Authorization).toBe("Bearer "+PERSONAL);
   });
 
+
+  it("reads an account Team Space without a player invite on a second device",async()=>{
+    const connection={api:API,spaceId:SPACE,name:"TSV Kronshagen",role:"account"};
+    const data={gameName:"Fernzugriff",home:{},away:{},events:[]};
+    const raw=JSON.stringify(data);
+    const digest=createHash("sha256").update(raw).digest("hex");
+    const calls=[];
+    const accountClient={fetchTeamSpaceResource:vi.fn(async(id,suffix)=>{
+      calls.push([id,suffix]);
+      if(suffix==="/catalog")return new Response(JSON.stringify({
+        spaceId:SPACE,name:"TSV Kronshagen",revision:3,
+        seasons:[],games:[{id:"sg-1",revision:1,sha256:digest}]
+      }));
+      if(suffix==="/games/sg-1/download")
+        return new Response(raw,{headers:{"x-item-revision":"1","x-content-sha256":digest}});
+      throw Error("Unexpected "+suffix);
+    })};
+    const cat=await teamSpaceCatalog(connection,{accountClient});
+    expect(cat.games).toHaveLength(1);
+    const downloaded=await downloadTeamSpaceGame(connection,"sg-1",{accountClient});
+    expect(downloaded.data).toEqual(data);
+    expect(downloaded.sha256).toBe(digest);
+    expect(calls).toEqual([[SPACE,"/catalog"],[SPACE,"/games/sg-1/download"]]);
+  });
+
 });

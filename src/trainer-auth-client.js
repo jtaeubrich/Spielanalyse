@@ -102,7 +102,7 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
   async function resetPassword(email){
     return firebaseAction("sendOobCode",{requestType:"PASSWORD_RESET",email});
   }
-  async function call(path,{method="GET",data,retry=true,teamSpace=false}={}){
+  async function call(path,{method="GET",data,retry=true,teamSpace=false,raw=false}={}){
     const jwt=await refresh();
     const response=await fetcher(endpoint+(teamSpace?"":"/trainer-auth")+path,{
       method,cache:"no-store",redirect:"error",
@@ -111,8 +111,9 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
       ...(data!==undefined?{body:JSON.stringify(data)}:{})});
     if(response.status===401&&retry){
       await refresh(true);
-      return call(path,{method,data,retry:false,teamSpace});
+      return call(path,{method,data,retry:false,teamSpace,raw});
     }
+    if(raw&&response.ok)return response;
     const json=await response.json().catch(()=>({}));
     if(!response.ok){
       const error=new Error(json.error?.message||"Trainer-API HTTP "+response.status);
@@ -159,6 +160,24 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
         ...(fileName?{fileName}:{})}
     });
   }
+  // This is an authenticated resource request (not a player invite). Raw
+  // responses keep the download checksum and revision headers intact.
+  async function fetchTeamSpaceResource(spaceId,suffix){
+    if(!validSeasonCloudId(spaceId)||
+      !(suffix==="/catalog"||
+        /^\/seasons\/[0-9a-f-]{36}\/download$/i.test(suffix)||
+        /^\/games\/sg-[a-z0-9_-]{1,80}\/download$/i.test(suffix)))
+      throw Error("Team-Space-Ressource ungültig.");
+    return call("/spaces/"+spaceId+suffix,{teamSpace:true,raw:true});
+  }
+  async function linkSpace(spaceId,trainerToken){
+    if(!validSeasonCloudId(spaceId))throw Error("Team-Space-ID ungültig.");
+    if(!/^trainer_[A-Za-z0-9_-]{32,256}$/.test(String(trainerToken||"")))
+      throw Error("Bitte den individuellen Trainer-Schlüssel angeben.");
+    return call("/spaces/"+spaceId+"/link",{
+      method:"POST",data:{trainerToken}
+    });
+  }
   async function issuePublisherKey(spaceId){
     if(!validSeasonCloudId(spaceId))throw Error("Team-Space-ID ungültig.");
     return call("/admin/spaces/"+spaceId+"/publisher-key",{method:"POST",data:{}});
@@ -174,5 +193,6 @@ export function createTrainerAuthClient(api,{fetcher=fetch,session=sessionStorag
   return {getConfig,signup,login,logout,requestVerification,resetPassword,
     refresh,me,register,claimFirstAdmin,listSpaces,createSpace,createSeason,catalog,
     listUsers,setApproval,issuePublisherKey,publishSeason,publishGame,
+    fetchTeamSpaceResource,linkSpace,
     hasSession:()=>Boolean(refreshToken),api:endpoint};
 }
