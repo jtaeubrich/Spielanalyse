@@ -1,17 +1,12 @@
-// Shared Team Space release boundary. This is deliberately separate from the
-// private/local export. Never mutate an existing game or season in-place.
-//
-// A label beginning with "Deckung:" or "Auslöser:" is a tactical scouting
-// classification used in analysis, not an arbitrary free-form player note.
-// Other tags are personal unless the product introduces an explicit sharing
-// control for them.
-const PUBLIC_TACTICAL_TAG=/^(?:Deckung|Auslöser):/;
-const PRIVATE_FIELD=/(?:comment|note|annotation|drawing|highlight|bookmark|personal|private|video|realTime)/i;
+// Team Space publication is an explicit trainer action. Within an action
+// scouting data, comments, key moments and drawings are shared by default.
+// Every annotation may be explicitly excluded via local opt-out fields.
+// Player-side edits never upload because player credentials are read-only.
+const PRIVATE_FIELD=/(?:comment|note|annotation|drawing|bookmark|personal|private|video|realTime|highlight)/i;
 const LOCAL_FIELDS=new Set([
   "video","videoFileName","videoPath","videoSource","videoHandle",
-  "theme","shotCapture",
-  "gameTime","activeTw","activeDefense","possession","attackPhase",
-  "preflight","videoUrl","videoName","fileHandle"
+  "theme","shotCapture","gameTime","activeTw","activeDefense",
+  "possession","attackPhase","preflight","videoUrl","videoName","fileHandle"
 ]);
 const clean=value=>{
   if(Array.isArray(value))return value.map(clean);
@@ -19,20 +14,50 @@ const clean=value=>{
   const result={};
   for(const [key,item] of Object.entries(value)){
     if(PRIVATE_FIELD.test(key))continue;
-    // The legacy game migrator adds an empty handballNetId on every player.
-    // Do not misinterpret this harmless schema normalization as an edit.
+    // Empty optional IDs inserted by the migrator are not user edits.
     if(key==="handballNetId"&&(item==null||item===""))continue;
     if(key==="tags"){
-      if(Array.isArray(item)){
-        const tags=item.filter(tag=>typeof tag==="string"&&PUBLIC_TACTICAL_TAG.test(tag));
-        if(tags.length)result.tags=tags;
-      }
+      if(Array.isArray(item))result.tags=item.filter(tag=>typeof tag==="string");
       continue;
     }
     result[key]=clean(item);
   }
   return result;
 };
+function privateSettings(event){
+  const settings=event?.teamSpacePrivate;
+  return settings&&typeof settings==="object"&&!Array.isArray(settings)?settings:{};
+}
+function publicEvent(event){
+  if(!event||typeof event!=="object")return null;
+  const privacy=privateSettings(event);
+  if(event.type==="keyMoment"&&privacy.moment===true)return null;
+  const result=clean(event);
+  if(Array.isArray(event.tags)){
+    const hiddenTags=Array.isArray(privacy.tags)?privacy.tags:[];
+    const tags=event.tags.filter(tag=>typeof tag==="string"&&!hiddenTags.includes(tag));
+    if(tags.length)result.tags=tags;
+    else delete result.tags;
+  }
+  if(event.note!=null&&privacy.note!==true)result.note=event.note;
+  if(event.comment!=null&&privacy.comment!==true)result.comment=event.comment;
+  if(event.highlight!=null&&privacy.highlight!==true)result.highlight=event.highlight;
+  const annotation=event.videoAnnotation;
+  if(annotation&&typeof annotation==="object"){
+    const shapes=Array.isArray(annotation.shapes)
+      ?annotation.shapes.filter(shape=>shape&&shape.teamSpacePrivate!==true).map(clean):[];
+    const comment=privacy.comment===true?"":String(annotation.comment||"");
+    if(comment||shapes.length){
+      result.videoAnnotation={
+        ...(comment?{comment}:{}),
+        ...(shapes.length?{shapes}:{}),
+        ...(shapes.length&&annotation.startSeconds!=null?{startSeconds:annotation.startSeconds}:{}),
+        ...(shapes.length&&annotation.endSeconds!=null?{endSeconds:annotation.endSeconds}:{})
+      };
+    }
+  }
+  return result;
+}
 export function publicGameForTeamSpace(game){
   if(!game||typeof game!=="object"||Array.isArray(game)||
     !game.home||!game.away||!Array.isArray(game.events))
@@ -41,27 +66,54 @@ export function publicGameForTeamSpace(game){
   for(const [key,value] of Object.entries(game)){
     if(LOCAL_FIELDS.has(key)||PRIVATE_FIELD.test(key))continue;
     if(key==="timer"){
-      // Duration is a game rule, elapsed time and running state are private
-      // editing/session state and should never trigger a publication.
       source.timer={duration:value?.duration||25};
     }else if(key==="events"){
-      source.events=value.filter(event=>event&&event.type!=="keyMoment").map(clean);
+      source.events=value.map(publicEvent).filter(Boolean);
     }else source[key]=clean(value);
   }
   return source;
 }
 export function publicSeasonForTeamSpace(archive){
   if(!archive||!Array.isArray(archive.games))throw Error("Saison enthält keine Spiele.");
-  // Private annotations may also occur on season and game-record metadata.
-  // Filter every layer before publishing while preserving the local archive.
   const {games,...metadata}=archive;
   return {...clean(metadata),games:games.map(item=>{
     const {state,data,...recordMetadata}=item;
     return {...clean(recordMetadata),data:publicGameForTeamSpace(data??state)};
   })};
 }
-// Canonicalize key order (not array order) so a cloud JSON roundtrip or a
-// different object insertion order cannot appear as an unsent local edit.
+// Includes only counts, not any personal content or upload credentials.
+export function publicationSharingSummary(data){
+  const games=Array.isArray(data?.games)
+    ?data.games.map(item=>item.data??item.state):[data];
+  const summary={games:games.length,comments:0,drawings:0,keyMoments:0,
+    highlights:0,excluded:0};
+  for(const game of games){
+    for(const event of game?.events||[]){
+      const privacy=privateSettings(event);
+      if(event.type==="keyMoment"){
+        if(privacy.moment===true){summary.excluded++;continue}
+        summary.keyMoments++;
+      }
+      if(event.highlight){
+        if(privacy.highlight===true)summary.excluded++;
+        else summary.highlights++;
+      }
+      if(event.note&&privacy.note===true)summary.excluded++;
+      if(Array.isArray(privacy.tags))summary.excluded+=privacy.tags
+        .filter(tag=>Array.isArray(event.tags)&&event.tags.includes(tag)).length;
+      const annotation=event.videoAnnotation;
+      if((annotation?.comment||event.comment)){
+        if(privacy.comment===true)summary.excluded++;
+        else summary.comments++;
+      }
+      for(const shape of annotation?.shapes||[]){
+        if(shape?.teamSpacePrivate===true)summary.excluded++;
+        else summary.drawings++;
+      }
+    }
+  }
+  return summary;
+}
 function canonical(value){
   if(Array.isArray(value))return value.map(canonical);
   if(!value||typeof value!=="object")return value;
@@ -77,10 +129,8 @@ export function comparePublicGames(local,cloud){
   const equal=JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
   const cloudById=new Map(b.events.filter(e=>e.id!=null).map(e=>[String(e.id),e]));
   const localById=new Map(a.events.filter(e=>e.id!=null).map(e=>[String(e.id),e]));
-  const added=a.events.filter(e=>e.id==null||
-    !cloudById.has(String(e.id))).length;
-  const removed=b.events.filter(e=>e.id==null||
-    !localById.has(String(e.id))).length;
+  const added=a.events.filter(e=>e.id==null||!cloudById.has(String(e.id))).length;
+  const removed=b.events.filter(e=>e.id==null||!localById.has(String(e.id))).length;
   const edited=a.events.filter(e=>e.id!=null&&cloudById.has(String(e.id))&&
     JSON.stringify(canonical(e))!==
     JSON.stringify(canonical(cloudById.get(String(e.id))))).length;
