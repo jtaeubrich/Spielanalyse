@@ -5975,6 +5975,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
     $("teamSpacePublish").hidden=!["trainer","account"].includes(connection?.role);
     $("teamSpaceAuditPanel").hidden=!["trainer","account"].includes(connection?.role);
+    if(connection&&teamSpaceAudit.spaceId!==connection.spaceId)
+      $("teamSpaceAuditStatus").textContent="Noch nicht geprüft. Auf „Updates prüfen“ tippen.";
     $("teamSpaceRotateReader").hidden=connection?.role!=="trainer";
     $("teamSpaceRotateTrainer").hidden=connection?.role!=="trainer"||
       teamSpaceCatalogData?.trainerAccess==="legacy";
@@ -6207,8 +6209,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const season of catalog.seasons){
       const local=teamSpaceLocalSeason(season.id);
       const outdated=local&&Number(local.revision)<season.revision;
+      const auditRows=local&&teamSpaceAudit.spaceId===teamSpaceSelectedId
+        ?teamSpaceAudit.rows.filter(row=>row.seasonId===local.localSeasonId):[];
+      const localDirty=auditRows.some(row=>row.status==="dirty");
+      const auditCloudNew=auditRows.some(row=>row.status==="cloudNewer");
       const status=season.gameCount===0?"Noch keine Spiele":
-        local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
+        local?(outdated||auditCloudNew?"Cloud-Version neuer":
+          localDirty?"Lokal geändert":"Aktuell"):"Noch nicht importiert";
       const actions=season.gameCount===0?[]:[{title:outdated?"Aktualisieren":local?"Saison öffnen":"Saison laden",
         primary:true,action:async()=>{
           if(local&&!outdated){
@@ -6223,7 +6230,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       seasonHost.textContent="Noch keine Saison veröffentlicht.";
     for(const game of catalog.games){
       const local=teamSpaceLocalGame(game),outdated=local&&local.revision<game.revision;
-      const status=local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
+      const audited=teamSpaceAudit.spaceId===teamSpaceSelectedId
+        ?teamSpaceAudit.rows.find(row=>row.gameId===game.id):null;
+      const status=audited?.status==="dirty"?"Lokal geändert":
+        audited?.status==="cloudNewer"?"Cloud-Version neuer":
+        audited?.status==="same"?"Identisch mit Cloud":
+        local?(outdated?"Update verfügbar":"Aktuell"):"Nur online";
       const actions=[{title:outdated?"Aktualisieren":local?"Öffnen":"Importieren",
         primary:true,action:()=>teamSpaceImportGame(game)}];
       if(!local&&homeSeasonRecords().length)
@@ -6263,7 +6275,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         :" · Achtung: letzter Upload im Katalog nicht nachweisbar";
       teamStatus(catalog.name+" · ID …"+id.slice(-8)+" · "+catalog.seasons.length+
         " Saisons · "+catalog.games.length+" Spiele"+
-        (updates?" · "+updates+" Updates verfügbar":" · Stand aktuell")+confirmation);
+        (updates?" · "+updates+" Import-Updates verfügbar":" · Cloud-Katalog geladen")+confirmation);
+      await teamSpaceAuditCompare(connection,catalog);
+      if(teamSpaceSelectedId===id)teamSpaceRenderCatalog();
     }catch(error){
       teamSpaceCatalogData=null;teamSpaceRenderControls();
       teamSpaceShowPublication();
