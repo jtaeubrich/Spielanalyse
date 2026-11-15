@@ -47,6 +47,9 @@ async function openSeasonAdmin(page){
   await expect(page.locator("#seasonName")).toBeVisible();
 }
 test.beforeEach(async({page})=>{
+  // Keep Sept 2026 matches in the past and the Nov 2026 fixture in the future.
+  // These mocked fixtures must not change meaning when CI runs on a later date.
+  await page.clock.setFixedTime(new Date("2026-10-01T12:00:00Z"));
   await page.addInitScript(() => localStorage.setItem("handballSpielanalyse.proxyToken", "playwright-fake-proxy-token"));
   await page.route("**/handball360-proxy-235703972531.europe-west1.run.app/**",async route=>{
     const request = route.request();
