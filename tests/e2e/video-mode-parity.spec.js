@@ -134,3 +134,59 @@ test("trainer can mark an event comment, tag and individual drawing private",asy
   await expect(page.locator('[data-private-tag="Trainerhinweis"]')).toBeChecked();
   expect(game.events.length).toBeGreaterThan(0);
 });
+
+test("official first goal recalibrates a late-start video without changing confirmed event times",async({page})=>{
+  await openWorkflow(page,"video",game=>{
+    game.video={...game.video,syncUnit:"seconds",
+      h1SyncRealTime:0,h2SyncRealTime:1800};
+    game.events=[
+      {id:"early",type:"yellow",team:"away",time:6,half:1,
+        officialSource:"handball.net",realTime:null},
+      {id:"first-goal",type:"goal",team:"home",time:40,half:1,
+        scoreH:1,scoreA:0,officialSource:"handball.net",realTime:null},
+      {id:"confirmed",type:"goal",team:"away",time:60,half:1,
+        scoreH:1,scoreA:1,officialSource:"handball.net",realTime:55000},
+      {id:"later",type:"goal",team:"home",time:80,half:1,
+        scoreH:2,scoreA:1,officialSource:"handball.net",realTime:null},
+      {id:"second-half",type:"goal",team:"away",time:1515,half:2,
+        scoreH:2,scoreA:2,officialSource:"handball.net",realTime:null}
+    ];
+  });
+  const rows=page.locator("#matchNearbyList .match-nearby-item");
+  await expect(rows).toHaveCount(5);
+  await rows.nth(1).click();
+  await expect(page.locator("#veeSyncHalfFromGoal")).toBeVisible();
+  const dialogs=[];
+  page.on("dialog",dialog=>{
+    dialogs.push(dialog.message());
+    return dialog.accept();
+  });
+  await page.evaluate(()=>{window.__fakeVideoTime=35});
+  await page.locator("#veeSyncHalfFromGoal").click();
+  await expect.poll(()=>page.evaluate(()=>
+    JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state.video.h1SyncRealTime
+  )).toBe(-5);
+  expect(dialogs.some(message=>message.includes("Neuer Halbzeit-Anpfiff")&&
+    message.includes("-5.0 s"))).toBe(true);
+  const after=await page.evaluate(async()=>{
+    const mod=await import("/src/video-sync.js?v=152");
+    const saved=JSON.parse(localStorage.getItem("handballSpielanalyse.session")).state;
+    const positions=Object.fromEntries(saved.events.map(event=>[
+      event.id,mod.eventVideoPosition(event,{
+        events:saved.events,video:saved.video,
+        durationMinutes:saved.timer.duration,isVideoscoutingFile:true
+      })
+    ]));
+    return {video:saved.video,events:saved.events,positions};
+  });
+  expect(after.video.h1SyncRealTime).toBe(-5);
+  expect(after.video.h2SyncRealTime).toBe(1800);
+  expect(after.events.map(event=>event.time)).toEqual([6,40,60,80,1515]);
+  expect(after.events.find(event=>event.id==="first-goal").realTime).toBe(35000);
+  expect(after.events.find(event=>event.id==="confirmed").realTime).toBe(55000);
+  expect(after.positions.early).toEqual({seconds:1,status:"estimated"});
+  expect(after.positions["first-goal"]).toEqual({seconds:35,status:"confirmed"});
+  expect(after.positions.confirmed).toEqual({seconds:55,status:"confirmed"});
+  expect(after.positions.later).toEqual({seconds:75,status:"estimated"});
+  expect(after.positions["second-half"]).toEqual({seconds:1815,status:"estimated"});
+});
