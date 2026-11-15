@@ -41,6 +41,9 @@ const currentEvent=page=>page.evaluate(()=>{
 test("multi-player key moments are visible and editable in Daten editieren and in video review",async({page})=>{
   const {first,second,third}=await loadKeyMoment(page);
   await page.locator('[data-tab="data"]').click();
+  await expect(page.locator("#deePrivateMoment")).not.toBeChecked();
+  await page.locator("#deePrivateMoment").check();
+  await expect.poll(async()=>(await currentEvent(page)).teamSpacePrivate?.moment).toBe(true);
   const dataPicker=page.locator("#deeKeyMomentPlayers");
   await expect(dataPicker.locator("summary")).toContainText("Beteiligte Spieler (2)");
   await expect(dataPicker.locator("summary")).toContainText(first.nachname);
@@ -82,6 +85,9 @@ test("multi-player key moments are visible and editable in Daten editieren and i
 
   await page.reload();
   await page.locator('[data-tab="data"]').click();
+  await expect(page.locator("#deePrivateMoment")).toBeChecked();
+  await page.locator("#deePrivateMoment").uncheck();
+  await expect.poll(async()=>(await currentEvent(page)).teamSpacePrivate?.moment).toBeUndefined();
   await expect(page.locator("#deeKeyMomentPlayers summary")).toContainText(third.nachname);
   await expect(page.locator("#deeKeyMomentPlayers summary")).not.toContainText(first.nachname);
   await expect(page.locator("#deeKeyMomentPlayers summary")).not.toContainText(second.nachname);
