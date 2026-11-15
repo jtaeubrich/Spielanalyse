@@ -64,20 +64,19 @@ export async function handleTeamSpace(req,res,url,{store,adminToken,now,idFactor
       authVersion:2,updatedAt:now().toISOString()},generation);
     send(res,200,{spaceId,trainerToken});return true;
   }
-  if(write){
-    // Approved Firebase trainers can publish only to their own account Team Spaces.
-    // Administrators can also publish to account Team Spaces. All other actions
-    // keep the existing individual/legacy key authorization.
-    const isAccountUpload=stored.authMode==="firebase"&&trainerAccounts&&
-      ["publish-season","publish-game"].includes(action)&&
-      /^Bearer [A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(
-        req.headers.authorization||"");
-    if(isAccountUpload){
-      const account=await trainerAccounts.identity(req,{approved:true});
-      if(!account.isAdmin&&stored.ownerUid!==account.uid)
-        throw err(403,"SPACE_NOT_OWNED","Dieser Team Space gehört nicht zu deinem Trainerkonto.");
-    }else trainerSpace(req,stored,adminToken);
-  }else reader(req,stored);
+  // Verified Firebase account ownership grants read/download access on every
+  // device. Existing player invitations stay reader-key only. JWT credentials
+  // are never returned in a catalog or URL.
+  const isAccountRequest=stored.authMode==="firebase"&&trainerAccounts&&
+    /^Bearer [A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(
+      req.headers.authorization||"");
+  const accountAction=!write||["publish-season","publish-game"].includes(action);
+  if(isAccountRequest&&accountAction){
+    const account=await trainerAccounts.identity(req,{approved:true});
+    if(stored.ownerUid!==account.uid&&!(write&&account.isAdmin))
+      throw err(403,"SPACE_NOT_OWNED","Dieser Team Space gehört nicht zu deinem Trainerkonto.");
+  }else if(write)trainerSpace(req,stored,adminToken);
+  else reader(req,stored);
   if(action==="verify-trainer"){
     send(res,200,{spaceId,trainerAccess:stored.trainerHash?"individual":"legacy"});
     return true;
