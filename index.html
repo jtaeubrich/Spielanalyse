@@ -6393,9 +6393,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       // Published standalone games are not automatically part of a Cloud season.
       // A catalog can have no newer revisions while local season games still
       // contain fewer events than a separate published copy.
-      const seasonIds=new Set(catalog.seasons.map(season=>season.id));
-      const unassignedGames=catalog.games.filter(game=>
-        !game.seasonIds?.some(seasonId=>seasonIds.has(seasonId)));
+      const assignedGameIds=new Set(catalog.seasons.flatMap(season=>season.gameIds||[]));
+      const unassignedGames=catalog.games.filter(game=>!assignedGameIds.has(game.id));
       const published=teamSpaceLastPublish?.spaceId===id?teamSpaceLastPublish:null;
       const last=published&&(published.type==="season"
         ?catalog.seasons.find(row=>row.id===published.id)
