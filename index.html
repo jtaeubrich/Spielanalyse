@@ -127,6 +127,9 @@
     .home-list-icon svg{width:31px;height:31px;display:block}
     .home-action-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
     .home-action-choice{min-height:188px;padding:17px 12px}
+    .home-action-choice[hidden]{display:none!important}
+    #homeActions.home-actions-teamspace .home-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    @media(max-width:620px){#homeActions.home-actions-teamspace .home-action-grid{grid-template-columns:1fr}}
     .home-action-choice strong{font-size:clamp(17px,2.4vw,23px)}
     .home-action-icon{font-size:42px;line-height:1;color:var(--cyan)}
     .home-recent{margin-top:20px;padding:16px}
@@ -1647,7 +1650,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         <div class="home-action-grid">
           <button class="home-action-choice" type="button" id="homeOpen"><span class="home-action-icon" aria-hidden="true">▣</span><strong id="homeOpenLabel">Laden</strong><small id="homeOpenHint">Bereits auf diesem Gerät gespeichert</small></button>
           <button class="home-action-choice" type="button" id="homeImport"><span class="home-action-icon" aria-hidden="true">⇧</span><strong>Importieren</strong><small id="homeImportHint">JSON-Datei von einem anderen Gerät</small></button>
-          <button class="home-action-choice" type="button" id="homeNew"><span class="home-action-icon" aria-hidden="true">＋</span><strong>Neu anlegen</strong><small id="homeNewHint">Neue Saison oder neues Spiel vorbereiten</small></button>
+          <button class="home-action-choice" type="button" id="homeNew"><span class="home-action-icon" aria-hidden="true">＋</span><strong id="homeNewLabel">Neu anlegen</strong><small id="homeNewHint">Neue Saison oder neues Spiel vorbereiten</small></button>
         </div>
       </div>
       <div id="homeLibrary" class="home-view panel home-library" hidden>
@@ -1787,6 +1790,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
           </label>
           <div class="season-tools">
             <button type="button" class="btn primary" id="teamSpaceJoin">Mit Team Space verbinden</button>
+            <button type="button" class="btn" id="teamSpacePasteInvite">Link aus Zwischenablage einfügen</button>
           </div>
           <hr>
           <p class="number-help">Trainerbereich: Mit dem zentralen Registrierungsschlüssel wird ein neuer Team Space eingerichtet. Jeder Space erhält danach einen eigenen Trainer-Schlüssel und einen Leseschlüssel für Spieler. Schlüssel werden nicht dauerhaft im Browser gespeichert.</p>
@@ -5261,6 +5265,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   // the active game; saved games are always opened via existing handlers.
   let homeKind=null,homeView="choose",homeHasSession=false,homeSessionDeleted=false;
   let homeTeamSpaceNotice="";
+  let homeTeamSpaceReturnView="choose";
   const homePanels={choose:"homeChoose",actions:"homeActions",library:"homeLibrary",dashboard:"homeSeasonDashboard",teamspace:"homeTeamSpace"};
   const homeKinds={season:"Saison",game:"Einzelspiel",teamspace:"Team Space"};
   const homeButton=(label,callback,primary=false)=>{
@@ -5468,12 +5473,21 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const [key,id] of Object.entries(homePanels))$(id).hidden=key!==view;
     $("homeBack").hidden=view==="choose";
     const area=homeKinds[kind]||"";
-    $("homeOpenLabel").textContent=kind==="season"?"Saison laden":"Spiel laden";
-    $("homeOpenHint").textContent=kind==="season"?"Gespeicherte Saisons auf diesem Gerät":"Letztes Spiel oder Spiel aus einer Saison";
+    $("homeActions").classList.toggle("home-actions-teamspace",kind==="teamspace");
+    $("homeImport").hidden=kind==="teamspace";
+    $("homeOpenLabel").textContent=kind==="teamspace"?"Team Space laden":
+      kind==="season"?"Saison laden":"Spiel laden";
+    $("homeOpenHint").textContent=kind==="teamspace"?"Bereits verbundene Team Spaces auf diesem Gerät":
+      kind==="season"?"Gespeicherte Saisons auf diesem Gerät":"Letztes Spiel oder Spiel aus einer Saison";
     $("homeImportHint").textContent=kind==="season"?"Saison-JSON von einem anderen Gerät":"Spiel-JSON von einem anderen Gerät";
-    $("homeNewHint").textContent=kind==="season"?"Unabhängige Saison mit eigenem Spielplan":"Spiel manuell oder über Handball360 anlegen";
+    $("homeNewLabel").textContent=kind==="teamspace"?"Team Space verbinden":"Neu anlegen";
+    $("homeNewHint").textContent=kind==="teamspace"?"Einladungslink einfügen oder Trainerkonto verwenden":
+      kind==="season"?"Unabhängige Saison mit eigenem Spielplan":"Spiel manuell oder über Handball360 anlegen";
     $("homeBreadcrumb").textContent=view==="choose"?"":area+
-      (view==="library"?" › Gespeichert":view==="dashboard"?" › Saisonübersicht":" › Aktion wählen");
+      (view==="library"?(kind==="teamspace"?" › Verbundene Team Spaces":" › Gespeichert"):
+        view==="dashboard"?" › Saisonübersicht":
+        view==="teamspace"?" › "+(homeTeamSpaceReturnView==="actions"?"Verbinden":"Laden"):
+        " › Aktion wählen");
     const dashboard=view==="dashboard";
     $("homeTitle").hidden=dashboard;
     $("homeSubtitle").hidden=dashboard;
@@ -5499,7 +5513,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(lastSpace){
       host.append(homeRow(lastSpace.name||"Team Space",
         "Team Space verbunden · Online-Saisons und Spiele verfügbar",[
-          {title:"Laden",primary:true,action:()=>homeShow("teamspace","teamspace")}
+          {title:"Laden",primary:true,action:()=>{
+            homeTeamSpaceReturnView="choose";
+            $("teamSpaceConnect").open=false;
+            homeShow("teamspace","teamspace");
+          }}
         ],"teamspace"));
     }
     if(homeHasSession){
@@ -5531,11 +5549,33 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   let homeLibrarySwitchBusy=false;
   function homeRenderLibrary(){
     const host=$("homeLibraryList");host.replaceChildren();
-    $("homeLibraryTitle").textContent=homeKind==="season"?"Gespeicherte Saisons":"Gespeicherte Spiele";
-    $("homeLibraryHint").textContent=homeKind==="season"?
-      "Jede Saison bleibt unabhängig im lokalen PWA-Speicher.":"Zuletzt geöffnetes Einzelspiel sowie Spiele der lokal gespeicherten Saisons.";
+    $("homeLibraryTitle").textContent=homeKind==="teamspace"?"Verbundene Team Spaces":
+      homeKind==="season"?"Gespeicherte Saisons":"Gespeicherte Spiele";
+    $("homeLibraryHint").textContent=homeKind==="teamspace"?
+      "Wähle einen bereits verbundenen Team Space. Die Verbindung bleibt auf diesem Gerät gespeichert.":
+      homeKind==="season"?"Jede Saison bleibt unabhängig im lokalen PWA-Speicher.":
+      "Zuletzt geöffnetes Einzelspiel sowie Spiele der lokal gespeicherten Saisons.";
+    $("homeAdvanced").hidden=homeKind==="teamspace";
     $("homeLibraryGameSearchWrap").hidden=homeKind!=="game";
-    if(homeKind==="season"){
+    if(homeKind==="teamspace"){
+      for(const connection of teamSpaces.values()){
+        host.append(homeRow(connection.name||"Team Space",
+          "Verbunden · ID …"+connection.spaceId.slice(-8),
+          [{title:"Laden",primary:true,action:()=>{
+            if(teamSpaceSelectedId!==connection.spaceId){
+              $("teamSpaceAdminToken").value="";
+              $("teamSpaceNewTrainerCredentials").hidden=true;
+              $("teamSpaceNewTrainerToken").value="";
+            }
+            teamSpaceSelectedId=connection.spaceId;
+            localStorage.setItem("handballSpielanalyse.teamSpace",connection.spaceId);
+            teamSpaceCatalogData=null;
+            homeTeamSpaceReturnView="library";
+            $("teamSpaceConnect").open=false;
+            homeShow("teamspace","teamspace");
+          }}],"teamspace"));
+      }
+    }else if(homeKind==="season"){
       for(const entry of homeSeasonRecords()){
         const actions=[{title:"Öffnen",
           primary:true,action:async()=>{
@@ -5568,10 +5608,14 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
     if(!host.childElementCount){
       const empty=document.createElement("div");empty.className="empty";
-      empty.textContent=homeKind==="game"&&$("homeLibraryGameSearch").value.trim()?
+      empty.textContent=homeKind==="teamspace"?
+        "Noch kein Team Space verbunden. Füge zuerst den Einladungslink deines Trainers hinzu.":
+        homeKind==="game"&&$("homeLibraryGameSearch").value.trim()?
         "Keine passenden lokal gespeicherten Spiele gefunden.":
         "Noch nichts gespeichert. Du kannst einen Eintrag importieren oder neu anlegen.";
       host.append(empty);
+      if(homeKind==="teamspace")host.append(homeButton("Team Space verbinden",
+        ()=>homeOpenTeamSpaceConnect(),true));
     }
   }
   // Operate on the exact archive ID, even when titles and match counts coincide.
@@ -5735,9 +5779,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   $("homeChooseSeason").onclick=()=>homeShow("actions","season");
   $("homeChooseGame").onclick=()=>homeShow("actions","game");
-  $("homeChooseTeamSpace").onclick=()=>homeShow("teamspace","teamspace");
+  $("homeChooseTeamSpace").onclick=()=>homeShow("actions","teamspace");
+  function homeOpenTeamSpaceConnect(){
+    homeTeamSpaceReturnView="actions";
+    $("teamSpaceConnect").open=true;
+    homeShow("teamspace","teamspace");
+    $("teamSpaceJoinInput").focus();
+  }
   $("homeBack").onclick=()=>{
-    if(homeView==="teamspace")homeShow("choose",null);
+    if(homeView==="teamspace")homeShow(homeTeamSpaceReturnView,
+      homeTeamSpaceReturnView==="choose"?null:"teamspace");
     else if(homeView==="dashboard")homeShow("library","season");
     else if(homeView==="library")homeShow("actions",homeKind);
     else homeShow("choose",null);
@@ -5751,6 +5802,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     }
   };
   $("homeNew").onclick=async()=>{
+    if(homeKind==="teamspace"){
+      homeOpenTeamSpaceConnect();
+      return;
+    }
     if(homeKind==="game"){
       homeAdvancedSetup("game");
       showNewGameChoice();
@@ -6058,6 +6113,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     homeTeamSpaceNotice="Team Space „"+joined.name+"“ erfolgreich hinzugefügt. "+
       "Du findest ihn jetzt unter „Schneller Wiedereinstieg“ mit „Laden“. "+
       "Saisons kannst du bei Bedarf vollständig herunterladen.";
+    homeTeamSpaceReturnView="choose";
     homeShow("choose",null);
   }
   async function teamSpaceImportSeason(season){
@@ -6396,6 +6452,19 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   };
   $("teamSpaceRefresh").onclick=()=>void teamSpaceOpen();
   $("teamSpaceVerifyPublish").onclick=()=>void teamSpaceOpen();
+  $("teamSpacePasteInvite").onclick=async()=>{
+    try{
+      if(!navigator.clipboard?.readText)throw Error("Zwischenablage nicht unterstützt.");
+      const invite=(await navigator.clipboard.readText()).trim();
+      if(!invite)throw Error("Zwischenablage ist leer.");
+      $("teamSpaceJoinInput").value=invite;
+      $("teamSpaceJoinInput").focus();
+      toast("Einladungslink eingefügt. Bitte Verbindung bestätigen.");
+    }catch(error){
+      teamStatus("Zwischenablage nicht verfügbar: "+error.message+
+        " Bitte den Link manuell in das Eingabefeld einfügen.");
+    }
+  };
   $("teamSpaceJoin").onclick=async()=>{
     try{
       const raw=$("teamSpaceJoinInput").value.trim();
