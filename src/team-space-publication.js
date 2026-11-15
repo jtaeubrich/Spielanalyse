@@ -19,6 +19,9 @@ const clean=value=>{
   const result={};
   for(const [key,item] of Object.entries(value)){
     if(PRIVATE_FIELD.test(key))continue;
+    // The legacy game migrator adds an empty handballNetId on every player.
+    // Do not misinterpret this harmless schema normalization as an edit.
+    if(key==="handballNetId"&&(item==null||item===""))continue;
     if(key==="tags"){
       if(Array.isArray(item)){
         const tags=item.filter(tag=>typeof tag==="string"&&PUBLIC_TACTICAL_TAG.test(tag));
