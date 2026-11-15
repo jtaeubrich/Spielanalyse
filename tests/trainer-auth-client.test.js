@@ -182,4 +182,60 @@ describe("Firebase trainer browser client",()=>{
     expect(JSON.stringify(session.entries())).not.toContain(secret);
   });
 
+
+  it("fetches account-owned Team Space catalogs and checks authenticated download headers",async()=>{
+    const session=memoryStorage(),calls=[];
+    const fetcher=vi.fn(async(url,opts={})=>{
+      calls.push({url,opts});
+      if(url.endsWith("/trainer-auth/config"))return new Response(JSON.stringify(firebase));
+      if(url.includes("signInWithPassword"))return new Response(JSON.stringify({
+        idToken:jwt,refreshToken:"private-refresh",expiresIn:"3600"
+      }));
+      if(url.endsWith("/spaces/"+SPACE+"/catalog"))return new Response(JSON.stringify({
+        spaceId:SPACE,name:"Test",revision:1,seasons:[],games:[]
+      }));
+      if(url.endsWith("/spaces/"+SPACE+"/games/sg-123/download"))
+        return new Response('{"events":[]}',{headers:{
+          "x-content-sha256":"a".repeat(64),"x-item-revision":"2"
+        }});
+      throw Error("Unexpected "+url);
+    });
+    const client=createTrainerAuthClient(API,{fetcher,session});
+    await client.login("trainer@example.org","correct horse");
+    const response=await client.fetchTeamSpaceResource(SPACE,"/catalog");
+    expect((await response.json()).spaceId).toBe(SPACE);
+    const raw=await client.fetchTeamSpaceResource(SPACE,"/games/sg-123/download");
+    expect(raw.headers.get("x-item-revision")).toBe("2");
+    expect(await raw.text()).toBe('{"events":[]}');
+    for(const call of calls.filter(c=>c.url.includes("/spaces/"+SPACE+"/"))){
+      expect(call.opts.headers.Authorization).toBe("Bearer "+jwt);
+      expect(call.url).not.toContain(jwt);
+    }
+    await expect(client.fetchTeamSpaceResource(SPACE,"/rotate-reader"))
+      .rejects.toThrow("ungültig");
+    expect(JSON.stringify(session.entries())).not.toContain(jwt);
+  });
+  it("associates an existing key-based space without persisting the trainer key",async()=>{
+    const secret="trainer_"+("p".repeat(44)),session=memoryStorage(),calls=[];
+    const fetcher=vi.fn(async(url,opts={})=>{
+      calls.push({url,opts});
+      if(url.endsWith("/trainer-auth/config"))return new Response(JSON.stringify(firebase));
+      if(url.includes("signInWithPassword"))return new Response(JSON.stringify({
+        idToken:jwt,refreshToken:"private-refresh",expiresIn:"3600"
+      }));
+      if(url.endsWith("/trainer-auth/spaces/"+SPACE+"/link"))
+        return new Response(JSON.stringify({spaceId:SPACE,name:"Alter Team Space",linked:true}));
+      throw Error("Unexpected "+url);
+    });
+    const client=createTrainerAuthClient(API,{fetcher,session});
+    await client.login("trainer@example.org","pass");
+    await expect(client.linkSpace(SPACE,"short")).rejects.toThrow("Trainer-Schlüssel");
+    const data=await client.linkSpace(SPACE,secret);
+    expect(data.linked).toBe(true);
+    const request=calls.find(c=>c.url.endsWith("/link"));
+    expect(request.opts.headers.Authorization).toBe("Bearer "+jwt);
+    expect(JSON.parse(request.opts.body)).toEqual({trainerToken:secret});
+    expect(request.url).not.toContain(secret);
+    expect(JSON.stringify(session.entries())).not.toContain(secret);
+  });
 });
