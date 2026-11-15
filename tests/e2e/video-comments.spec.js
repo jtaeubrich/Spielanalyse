@@ -18,6 +18,15 @@ test("video event comment belongs to selected event and survives reload", async 
   const comment = page.locator("#videoTabEventComment");
   await expect(comment).toBeEnabled();
   await comment.fill("Gute Entscheidung im Rückraum");
+  // Trainer notes are shared by default unless the trainer explicitly opts out.
+  const privateToggle=page.locator("#videoTabCommentPrivate");
+  await expect(privateToggle).toBeEnabled();
+  await expect(privateToggle).not.toBeChecked();
+  await privateToggle.check();
+  await expect.poll(()=>page.evaluate(()=>{
+    const raw=localStorage.getItem("handballSpielanalyse.session");
+    return JSON.parse(raw).state.events.find(e=>e.videoAnnotation?.comment==="Gute Entscheidung im Rückraum")?.teamSpacePrivate?.comment;
+  })).toBe(true);
   await expect(page.locator("#videoCommentOverlay")).toBeEmpty();
   await page.locator('#videoPlaylist [data-event-index="' + secondIndex + '"]').click();
   await expect(comment).toHaveValue("");
@@ -31,4 +40,7 @@ test("video event comment belongs to selected event and survives reload", async 
   await page.locator('[data-tab="video"]').click();
   await page.locator('#videoPlaylist [data-event-index="' + firstIndex + '"]').click();
   await expect(page.locator("#videoTabEventComment")).toHaveValue("Gute Entscheidung im Rückraum");
+  await expect(page.locator("#videoTabCommentPrivate")).toBeChecked();
+  await page.locator("#videoTabCommentPrivate").uncheck();
+  await expect(page.locator("#videoTabCommentPrivate")).not.toBeChecked();
 });
