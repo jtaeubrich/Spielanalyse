@@ -181,6 +181,39 @@ export function createTrainerAccountRegistry({
       await store.createTrainerSpaceLink(user.uid,spaceId);
       send(res,201,{spaceId,name,readToken,revision:0});return true;
     }
+    // One-time, proof-of-possession association for pre-Firebase Team Spaces.
+    // Preserve the existing reader/trainer hashes, game IDs and all publications.
+    // A legacy space without a separate trainer key must be upgraded to v2 first.
+    const link=/^\\/trainer-auth\\/spaces\\/([^/]+)\\/link$/.exec(path);
+    if(link&&method==="POST"){
+      const user=await identity(req,{approved:true}),spaceId=link[1];
+      if(!validSpace(spaceId))throwError(404,"NOT_FOUND","Team Space nicht gefunden.");
+      const {metadata:space,generation}=await store.readSpace(spaceId);
+      if(!space)throwError(404,"NOT_FOUND","Team Space nicht gefunden.");
+      if(space.ownerUid&&space.ownerUid!==user.uid)
+        throwError(409,"ALREADY_LINKED","Dieser Team Space ist bereits einem anderen Trainerkonto zugeordnet.");
+      const ids=await store.listTrainerSpaceLinks(user.uid);
+      if(!ids.includes(spaceId)&&ids.length>=5)
+        throwError(409,"SPACE_LIMIT","Pro Trainer sind höchstens fünf Team Spaces möglich.");
+      if(space.ownerUid===user.uid&&space.authMode==="firebase"){
+        if(!ids.includes(spaceId))await store.createTrainerSpaceLink(user.uid,spaceId);
+        send(res,200,{spaceId,name:space.name,linked:true});return true;
+      }
+      if(!space.trainerHash)
+        throwError(409,"TRAINER_KEY_REQUIRED",
+          "Diesen älteren Team Space zuerst auf einen individuellen Trainer-Schlüssel umstellen.");
+      const body=await bodyJson(req),submitted=clean(body?.trainerToken);
+      if(!/^trainer_[A-Za-z0-9_-]{32,256}$/.test(submitted)||
+        !timingSafeEqual(Buffer.from(hash(submitted),"hex"),
+          Buffer.from(space.trainerHash,"hex")))
+        throwError(403,"INVALID_TRAINER_KEY","Der Trainer-Schlüssel ist ungültig.");
+      const stamp=now().toISOString();
+      await store.updateSpace(spaceId,{...space,authMode:"firebase",
+        ownerUid:user.uid,authVersion:3,accountLinkedAt:stamp,updatedAt:stamp},
+        generation);
+      await store.createTrainerSpaceLink(user.uid,spaceId);
+      send(res,200,{spaceId,name:space.name,linked:true});return true;
+    }
     const createSeason=/^\/trainer-auth\/spaces\/([^/]+)\/seasons$/.exec(path);
     if(createSeason&&method==="POST"){
       const spaceId=createSeason[1];
