@@ -60,7 +60,11 @@ function sharedYoutubeVideo(video){
     "h1LiveStartMs","h2LiveStartMs"]){
     if(video[key]===null||video[key]===undefined||video[key]==="")continue;
     const number=Number(video[key]);
-    if(Number.isFinite(number)&&number>=0)shared[key]=number;
+    // A recording that starts late has a negative virtual kickoff offset.
+    // Preserve it for synchronization while keeping live clock origins >= 0.
+    if(Number.isFinite(number)&&
+      (number>=0||["h1SyncRealTime","h2SyncRealTime","kickoff"].includes(key)))
+      shared[key]=number;
   }
   if(Array.isArray(video.reviewClockAnchors)){
     const anchors=video.reviewClockAnchors.filter(anchor=>
