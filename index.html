@@ -6413,7 +6413,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
           (catalog.games.length===1?"Spiel":"Spiele");
         const statusParts=[updates
           ?updates+" "+(updates===1?"Aktualisierung verfügbar":"Aktualisierungen verfügbar")
-          :"Keine neueren Cloud-Versionen für importierte Inhalte erkannt."];
+          :"Keine neueren Import-Versionen erkannt. Lokale Ereignisse werden nicht automatisch zwischen Geräten abgeglichen."];
         if(unassignedGames.length){
           const item=unassignedGames.length===1?unassignedGames[0]:null;
           statusParts.push(unassignedGames.length+" "+
@@ -6429,6 +6429,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
             ?"lokaler Spielstand weicht vom Cloud-Stand ab oder ist unveröffentlicht."
             :"lokale Spielstände weichen vom Cloud-Stand ab oder sind unveröffentlicht."));
         }
+        const requiresReview=Number(audit?.unlinked||0)+Number(audit?.error||0);
+        if(requiresReview)statusParts.push(requiresReview+" "+
+          (requiresReview===1?"Spiel benötigt":"Spiele benötigen")+
+          " eine Prüfung der Zuordnung bzw. Ereignisse.");
         $("teamSpacePlayerStatus").textContent=statusParts.join(" ");
         teamSpaceUpdateView();
       }
@@ -9806,7 +9810,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=170",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=171",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
