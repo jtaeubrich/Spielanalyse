@@ -19,6 +19,41 @@ export function eventHalf(event, durationMinutes = 25, { boundaryToSecondHalf = 
   return boundaryToSecondHalf ? (time < duration ? 1 : 2) : (time <= duration ? 1 : 2);
 }
 
+const OFFICIAL_VIDEO_SOURCES=new Set(["handball.net","handball360","nuliga"]);
+export function officialVideoEvent(event){
+  return OFFICIAL_VIDEO_SOURCES.has(String(event?.officialSource||""));
+}
+
+// A delayed video start can place the real half-time kickoff before 00:00
+// on the recording. Keep that negative sync point: events outside the filmed
+// segment remain unassigned, and all filmed official events retain game time.
+export function halfSyncFromOfficialGoal(event, videoSeconds, {
+  video={},durationMinutes=25
+}={}){
+  if(event?.type!=="goal"||!officialVideoEvent(event))
+    throw new Error("Bitte ein Tor aus dem offiziellen Spielprotokoll auswählen.");
+  if(!Number.isFinite(videoSeconds)||videoSeconds<0)
+    throw new Error("Die aktuelle Videoposition ist ungültig.");
+  const halfLength=Number(durationMinutes)*60;
+  if(!Number.isFinite(halfLength)||halfLength<=0)
+    throw new Error("Ungültige Halbzeitdauer.");
+  const half=eventHalf(event,durationMinutes);
+  const hasOfficialOriginal=finiteValue(event.officialOriginalTime);
+  const officialTime=Number(hasOfficialOriginal?event.officialOriginalTime:event.time);
+  const elapsed=officialTime-(half-1)*halfLength;
+  if(!Number.isFinite(officialTime)||!finiteValue(
+    hasOfficialOriginal?event.officialOriginalTime:event.time
+  )||elapsed<0||elapsed>halfLength)
+    throw new Error("Die offizielle Torzeit liegt außerhalb der Halbzeit.");
+  const offsetSeconds=videoSeconds-elapsed;
+  const unit=video?.syncUnit==="ms"?"ms":"seconds";
+  const key=half===1?"h1SyncRealTime":"h2SyncRealTime";
+  const nextVideo={...video,syncUnit:unit,
+    [key]:offsetSeconds*(unit==="ms"?1000:1)};
+  if(half===1)nextVideo.kickoff=nextVideo[key];
+  return {half,officialTime,offsetSeconds,video:nextVideo};
+}
+
 export function syncForHalf(video = {}, half = 1) {
   const raw =
     half === 1
@@ -38,7 +73,7 @@ export function eventVideoPosition(event, options = {}) {
   if (!options.isVideoscoutingFile) {
     return { seconds: eventVideoSeconds(event, options), status: "derived" };
   }
-  if (event.officialSource !== "handball.net" || !finiteValue(event.time)) {
+  if (!officialVideoEvent(event) || !finiteValue(event.time)) {
     return { seconds: NaN, status: "unassigned" };
   }
   const duration = Number(options.durationMinutes || 25) * 60;
