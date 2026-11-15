@@ -502,3 +502,69 @@ test("trainer can link a previous Team Space once and then find it in the librar
   await page.locator("#homeOpen").click();
   await expect(page.locator("#homeLibraryList")).toContainText("Alter Team Space");
 });
+
+
+test("private iPhone PWA can remember trainer login and restore it after a closed browser session",async({page})=>{
+  const calls=[];
+  await page.route(API+"/trainer-auth/**",route=>{
+    const request=route.request(),url=request.url();
+    calls.push({url,auth:request.headers().authorization});
+    if(url.endsWith("/trainer-auth/config"))return route.fulfill(success(firebase));
+    if(request.headers().authorization!=="Bearer "+ID_TOKEN)
+      return route.fulfill(success({error:{message:"No token"}},401));
+    if(url.endsWith("/trainer-auth/me"))return route.fulfill(success({
+      uid:"trainer-1",email:"trainer@example.org",status:"approved",isAdmin:false
+    }));
+    if(url.endsWith("/trainer-auth/spaces"))return route.fulfill(success({spaces:[]}));
+    return route.fulfill(success({error:{message:"Unhandled mocked endpoint"}},404));
+  });
+  await page.route("https://identitytoolkit.googleapis.com/**",route=>{
+    if(route.request().url().includes("signInWithPassword"))
+      return route.fulfill(success({
+        idToken:ID_TOKEN,refreshToken:"phone-remember-refresh",expiresIn:"3600"
+      }));
+    return route.fulfill(success({error:{message:"Unexpected"}},400));
+  });
+  let rotations=0;
+  await page.route("https://securetoken.googleapis.com/**",route=>{
+    rotations++;
+    expect(route.request().postData()).toContain("refresh_token=phone-remember-refresh");
+    return route.fulfill(success({
+      id_token:ID_TOKEN,refresh_token:"phone-remember-refresh",expires_in:"3600"
+    }));
+  });
+  await openTrainerAccount(page);
+  const checkbox=page.locator("#trainerAccountRememberDevice");
+  await expect(checkbox).not.toBeChecked();
+  await checkbox.check();
+  await page.locator("#trainerAccountEmail").fill("trainer@example.org");
+  await page.locator("#trainerAccountPassword").fill("private-phone-password");
+  await page.locator("#trainerAccountSignIn").click();
+  await expect(page.locator("#trainerAccountStatus")).toContainText("Trainer freigegeben");
+  await expect(checkbox).toBeChecked();
+  const recorded=await page.evaluate(()=>Object.entries(localStorage)
+    .filter(([key])=>key.includes("trainerAuthRefresh")));
+  expect(recorded).toHaveLength(1);
+  expect(recorded[0][1]).toBe("phone-remember-refresh");
+  expect(JSON.stringify(recorded)).not.toContain("private-phone-password");
+  expect(JSON.stringify(recorded)).not.toContain(ID_TOKEN);
+
+  // Clear the transient tab session, simulating the PWA being fully closed.
+  await page.evaluate(()=>sessionStorage.clear());
+  await page.reload();
+  await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#homeNew").click();
+  await page.locator("#teamSpaceTrainerEntry").click();
+  await expect(page.locator("#trainerAccountStatus")).toContainText("Trainer freigegeben");
+  await expect(checkbox).toBeChecked();
+  await expect(page.locator("#trainerAccountLogin")).toBeHidden();
+  await expect(page.locator("#trainerAccountSessionActions")).toBeVisible();
+  expect(rotations).toBeGreaterThan(0);
+  await page.locator("#trainerAccountSignOut").click();
+  await expect(page.locator("#trainerAccountLogin")).toBeVisible();
+  await expect(checkbox).not.toBeChecked();
+  const afterSignout=await page.evaluate(()=>Object.keys(localStorage)
+    .filter(key=>key.includes("trainerAuthRefresh")));
+  expect(afterSignout).toEqual([]);
+  expect(calls.some(call=>call.url.endsWith("/trainer-auth/me"))).toBe(true);
+});
