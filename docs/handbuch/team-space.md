@@ -27,9 +27,15 @@ lokal. Spieler können die Cloud nicht selbst aktualisieren.
    enthaltenen Spielen** als neue lokale Saison; andere lokale Saisons
    bleiben bestehen. Die importierte Saison kann danach über **Saison**
    geöffnet werden.
-4. Die Zustände **Aktuell** und **Update verfügbar** zeigen, ob neue Daten
-   bereitliegen. Bei Aktualisierungen erscheint eine Abgleichvorschau,
-   damit persönliche Kommentare und Markierungen erhalten bleiben.
+4. Die Zustände **Aktuell** und **Update verfügbar** vergleichen Cloud-Versionen
+   mit den jeweils auf diesem Gerät gespeicherten Importversionen. Sie sagen
+   **nicht**, dass alle lokalen Ereignisse automatisch hochgeladen oder alle
+   Daten in der lokal geöffneten Saison identisch sind. Bei Aktualisierungen
+   erscheint eine Abgleichvorschau, damit persönliche Kommentare und
+   Markierungen erhalten bleiben. Ein Hinweis auf separat veröffentlichte
+   Einzelspiele bedeutet, dass diese keiner Online-Saison zugeordnet sind;
+   die Spieleliste kann solche Einträge zeigen, obwohl die Saison weniger
+   Spiele enthält.
 5. **Einzelspiele anzeigen** ist anfangs eingeklappt. Nur bei Bedarf öffnen,
    um einzelne Spiele separat zu importieren oder einer lokalen Saison
    zuzuordnen. Die zusätzliche Importziel-Auswahl erscheint erst dort.
@@ -153,6 +159,18 @@ SHA-256-Prüfsumme, falls der Versions-Fingerabdruck nicht übereinstimmt.
 Einzelne Spiele können unter **Zur Veröffentlichung** im
 Veröffentlichungsdialog vorausgewählt werden; das Hochladen erfordert
 weiterhin die Bestätigung des Trainers.
+
+**Abweichende Ereigniszahlen auf zwei Geräten:** Zuerst auf dem
+erfassenden Gerät die lokale Spielversion sichern. Im Team Space
+**Einzelspiele anzeigen** öffnen und prüfen, ob das betreffende Spiel
+separat veröffentlicht wurde. Der Cloud-Katalog enthält keine
+Ereigniszählung, daher beweisen die Statusmeldung und die Anzahl der
+Spiele nicht, dass alle Events übertragen wurden. Das lokale Spiel auf
+dem anderen Gerät nicht ungeprüft veröffentlichen: Ein leerer Stand
+könnte sonst eine neuere Veröffentlichung überschreiben. Erst das
+richtige Online-Spiel und die gewünschte Online-Zielsaison zuordnen,
+das Spiel durch den berechtigten Trainer ausdrücklich veröffentlichen
+und auf dem zweiten Gerät aktualisieren.
 
 ## Öffentliche Scoutingdaten und private Anmerkungen
 
