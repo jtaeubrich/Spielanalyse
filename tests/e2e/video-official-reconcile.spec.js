@@ -62,6 +62,12 @@ async function openGame(page,mode){
   });
   await page.locator('[data-tab="match"]').click();
   if(mode==="review")await page.locator("#matchReviewToggle").click();
+  // The official import belongs to Setup, not the Match capture workflow.
+  await expect(page.locator("#matchTab #videoOfficialOpen")).toHaveCount(0);
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#setupSinglePanel details").filter({
+    has:page.locator("summary",{hasText:"Spieldaten übernehmen"})
+  }).locator("summary").click();
   await expect(page.locator("#videoOfficialOpen")).toBeVisible();
   await page.locator("#videoOfficialOpen").click();
   await expect(page.locator("#videoOfficialDialog")).toBeVisible();
@@ -88,7 +94,11 @@ for(const mode of ["video","review"]){
     await expect(page.locator("#videoOfficialEventRows .video-official-add:not(:disabled)")).toHaveCount(1);
     await page.locator("#videoOfficialNone").click();
     await expect(page.locator("#videoOfficialEventRows .video-official-add:checked")).toHaveCount(0);
-    await page.locator("#videoOfficialEventRows .video-official-add:not(:disabled)").check();
+    await expect(page.locator("#videoOfficialSelectMissing")).toBeEnabled();
+    await page.locator("#videoOfficialSelectMissing").click();
+    await expect(page.locator("#videoOfficialEventRows .video-official-add:checked")).toHaveCount(1);
+    await expect(page.locator("#videoOfficialSelectionStatus")).toContainText("1 von 1");
+    await expect(page.locator("#videoOfficialEventRows .video-official-add:disabled:checked")).toHaveCount(0);
     await page.locator("#videoOfficialSafe").click();
     await page.locator("#videoOfficialRosters").check();
     page.once("dialog",dlg=>dlg.accept());
@@ -111,6 +121,7 @@ for(const mode of ["video","review"]){
     page.once("dialog",dlg=>dlg.accept());
     await page.locator("#videoOfficialLoad").click();
     await expect(page.locator("#videoOfficialSummary")).toContainText("0 eindeutig fehlend");
+    await expect(page.locator("#videoOfficialSelectMissing")).toBeDisabled();
   });
   test(mode+": Handball360 compares existing goal and imports only the confirmed sanction",async({page})=>{
     await openGame(page,mode);
@@ -130,7 +141,8 @@ for(const mode of ["video","review"]){
     await expect(page.locator("#videoOfficialSummary")).toContainText("1 vorhanden");
     await expect(page.locator("#videoOfficialSummary")).toContainText("1 eindeutig fehlend");
     expect((await storedGame(page)).events).toEqual(initial.events);
-    await page.locator("#videoOfficialEventRows .video-official-add:not(:disabled)").check();
+    await page.locator("#videoOfficialSelectMissing").click();
+    await expect(page.locator("#videoOfficialEventRows .video-official-add:checked")).toHaveCount(1);
     page.once("dialog",dlg=>dlg.accept());
     await page.locator("#videoOfficialApply").click();
     await expect(page.locator("#videoOfficialStatus")).toContainText("Übernommen: 1 Ereignisse");
