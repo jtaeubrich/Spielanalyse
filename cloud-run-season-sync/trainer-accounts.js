@@ -184,7 +184,7 @@ export function createTrainerAccountRegistry({
     // One-time, proof-of-possession association for pre-Firebase Team Spaces.
     // Preserve the existing reader/trainer hashes, game IDs and all publications.
     // A legacy space without a separate trainer key must be upgraded to v2 first.
-    const link=/^\\/trainer-auth\\/spaces\\/([^/]+)\\/link$/.exec(path);
+    const link=/^\/trainer-auth\/spaces\/([^/]+)\/link$/.exec(path);
     if(link&&method==="POST"){
       const user=await identity(req,{approved:true}),spaceId=link[1];
       if(!validSpace(spaceId))throwError(404,"NOT_FOUND","Team Space nicht gefunden.");
