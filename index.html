@@ -1784,6 +1784,19 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
             </div>
             <div id="trainerAccountCreator" hidden>
               <hr>
+              <h3>Vorhandenen Team Space übernehmen</h3>
+              <p class="number-help">Einmalig mit deinem Trainerkonto verknüpfen. Der bisherige Trainer-Schlüssel wird nur zur Prüfung übertragen, nicht gespeichert. Spieler-Einladungen bleiben gültig.</p>
+              <div class="teamspace-fields">
+                <label>Team-Space-ID
+                  <input class="field" id="trainerAccountLinkSpaceId" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="UUID des vorhandenen Team Space">
+                </label>
+                <label>Individueller Trainer-Schlüssel
+                  <input class="field" id="trainerAccountLinkToken" type="password" autocomplete="off" spellcheck="false" placeholder="trainer_…">
+                </label>
+              </div>
+              <button type="button" class="btn" id="trainerAccountLinkSpace">Mit Trainerkonto verknüpfen</button>
+              <p class="number-help" id="trainerAccountLinkStatus" role="status" aria-live="polite">Einmalige Übernahme für ältere Team Spaces.</p>
+              <hr>
               <h3>Team Space erstellen</h3>
               <label>Teamname
                 <input class="field" id="trainerAccountSpaceName" type="text" placeholder="TSV Kronshagen B-Jugend">
@@ -5960,7 +5973,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   const teamSingleId=(spaceId,gameId)=>"teamspace-localgame-"+spaceId+"-"+gameId;
   const teamActiveConnection=()=>teamSpaces.get(teamSpaceSelectedId);
   const teamSpaceReadOptions=connection=>
-    connection?.role==="account"?{accountClient:trainerAccountApi()}:{};
+    connection?.role==="account"&&!connection.readToken
+      ?{accountClient:trainerAccountApi()}:{};
+  
   function teamSpaceCatalog(connection){
     return coreTeamSpaceCatalog(connection,teamSpaceReadOptions(connection));
   }
@@ -7263,6 +7278,25 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       ?"Freigabe beantragt. Ein Administrator muss sie bestätigen.":"Freigegeben."));
   });
   $("trainerAccountRefresh").onclick=()=>trainerAccountAction(trainerAccountRefresh);
+  $("trainerAccountLinkSpace").onclick=()=>trainerAccountAction(async()=>{
+    const id=$("trainerAccountLinkSpaceId").value.trim();
+    const tokenField=$("trainerAccountLinkToken"),trainerToken=tokenField.value.trim();
+    const status=$("trainerAccountLinkStatus");
+    status.textContent="Trainerberechtigung wird geprüft …";
+    try{
+      const linked=await trainerAccountApi().linkSpace(id,trainerToken);
+      if(linked.spaceId!==id)throw Error("Der Cloud-Dienst hat einen anderen Team Space bestätigt.");
+      await trainerAccountRefresh();
+      status.textContent="Team Space „"+linked.name+"“ ist deinem Trainerkonto zugeordnet. Er erscheint ab jetzt auch auf anderen Geräten.";
+      $("trainerAccountLinkSpaceId").value="";
+      await teamSpaceRefreshCatalog();
+    }catch(error){
+      status.textContent="Verknüpfung fehlgeschlagen: "+error.message;
+    }finally{
+      // Never retain a trainer credential in the DOM or local storage.
+      tokenField.value="";
+    }
+  });
   $("trainerAccountCreateSpace").onclick=()=>trainerAccountAction(async()=>{
     const service=trainerAccountApi();
     const name=$("trainerAccountSpaceName").value.trim();
