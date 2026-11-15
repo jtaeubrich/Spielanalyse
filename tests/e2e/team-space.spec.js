@@ -166,7 +166,7 @@ test("invite opens catalog, season imports once and updates existing season",asy
   cloud.revision=2;
   await page.locator('[data-tab="home"]').click();
   await loadConnectedTeamSpace(page);
-  await expect(page.locator("#teamSpaceSeasons")).toContainText("Update verfügbar");
+  await expect(page.locator("#teamSpaceSeasons")).toContainText("Cloud-Version neuer");
   await page.locator("#teamSpaceSeasons").getByRole("button",{name:"Aktualisieren"}).click();
   await expect(page.locator("#seasonRefreshDialog")).toBeVisible();
   await page.locator("#seasonRefreshConfirm").click();
