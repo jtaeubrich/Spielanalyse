@@ -1681,6 +1681,12 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         </div>
         <p id="teamSpaceSelectedIdInfo" class="number-help">Noch kein Team Space ausgewählt.</p>
         <p id="teamSpaceStatus" class="number-help" role="status">Noch kein Team Space verbunden.</p>
+        <div id="teamSpaceAuditPanel" hidden>
+          <h3>Veröffentlichungsstand meiner Spiele</h3>
+          <p class="number-help">Vergleicht die Spiel- und Scoutingdaten auf diesem Gerät mit der Cloud. Private Notizen, Zeichnungen, Videozeiten und persönliche Schlüsselmomente werden weder veröffentlicht noch als Änderungen gezählt.</p>
+          <p id="teamSpaceAuditStatus" class="number-help" role="status" aria-live="polite">Noch nicht geprüft. Auf „Updates prüfen“ tippen.</p>
+          <details class="season-games-details" id="teamSpaceAuditDetails"><summary id="teamSpaceAuditSummary">Einzelne Spiele ansehen</summary><div id="teamSpaceAuditRows" class="home-list"></div></details>
+        </div>
         <div id="teamSpaceCatalog" hidden>
           <h3>Saison laden</h3>
           <p class="number-help">Eine Saison vollständig auf diesem Gerät speichern – einschließlich aller darin veröffentlichten Spiele. Danach kannst du sie direkt über „Saison“ öffnen.</p>
@@ -1832,7 +1838,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         </details>
         <details class="season-games-details teamspace-publish" id="teamSpacePublish" hidden>
           <summary>Saisons und Spiele veröffentlichen · Trainer</summary>
-          <p class="number-help">Freigegebene Trainer veröffentlichen eigene Saisons und Spiele direkt über ihr E-Mail-Konto. Bei älteren Team Spaces ist weiterhin der individuelle Trainer-Schlüssel erforderlich. Prüfe vor der Freigabe, welche Spieldaten für die Mannschaft sichtbar werden.</p>
+          <p class="number-help">Veröffentlicht werden ausschließlich Spiel- und Scoutingdaten. Private Kommentare, freie Markierungen, Zeichnungen, Videozeiten und persönliche Schlüsselmomente bleiben auf diesem Gerät. Für eine Veröffentlichung als Trainer ist eine bestätigte Berechtigung erforderlich.</p>
           <div class="teamspace-fields">
             <label>Lokale Saison veröffentlichen
               <select class="field" id="teamSpacePublishSeason"></select>
@@ -2598,6 +2604,8 @@ import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
 import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=2";
 import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=3";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
+import {publicGameForTeamSpace,publicSeasonForTeamSpace,publicGameSignature,
+  comparePublicGames} from "./src/team-space-publication.js?v=1";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
@@ -5512,7 +5520,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const lastSpace=teamSpaces.get(teamSpaceSelectedId);
     if(lastSpace){
       host.append(homeRow(lastSpace.name||"Team Space",
-        "Team Space verbunden · Online-Saisons und Spiele verfügbar",[
+        "Team Space verbunden · "+teamSpaceAuditQuickSummary(lastSpace.spaceId),[
           {title:"Laden",primary:true,action:()=>{
             homeTeamSpaceReturnView="choose";
             $("teamSpaceConnect").open=false;
@@ -5835,6 +5843,20 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   let teamSpaceSelectedId="",teamSpaceCatalogData=null,teamStandaloneGames=[],
     teamSpaceBusy=false,teamStandaloneActiveId=null,teamSpaceLastPublish=null;
   const TEAM_SPACE_LAST_PUBLISH_KEY="handballSpielanalyse.lastTeamSpacePublication";
+  const TEAM_SPACE_AUDIT_KEY="handballSpielanalyse.lastTeamSpaceAudit";
+  let teamSpaceAudit={spaceId:"",checkedAt:"",rows:[],summary:null},teamSpaceAuditRequest=0;
+  try{
+    const last=JSON.parse(localStorage.getItem(TEAM_SPACE_AUDIT_KEY)||"null");
+    if(last?.spaceId&&last?.summary)teamSpaceAudit={...last,rows:[]};
+  }catch{/* Audit history is only a hint; network checks are authoritative. */}
+  function teamSpaceAuditQuickSummary(spaceId){
+    if(teamSpaceAudit.spaceId!==spaceId||!teamSpaceAudit.summary)
+      return "Noch kein Veröffentlichungsvergleich auf diesem Gerät";
+    const sum=teamSpaceAudit.summary;
+    const checked=new Date(teamSpaceAudit.checkedAt).toLocaleString("de-DE");
+    return "Letzte Prüfung "+checked+" · "+sum.dirty+" lokal geändert · "+
+      sum.unpublished+" nicht veröffentlicht · "+sum.cloudNewer+" Cloud neuer";
+  }
   try{
     const saved=JSON.parse(localStorage.getItem(TEAM_SPACE_LAST_PUBLISH_KEY)||"null");
     if(saved?.spaceId&&["season","game"].includes(saved.type)&&saved.id)
@@ -5952,6 +5974,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       :"Noch kein Team Space ausgewählt.";
     $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
     $("teamSpacePublish").hidden=!["trainer","account"].includes(connection?.role);
+    $("teamSpaceAuditPanel").hidden=!["trainer","account"].includes(connection?.role);
+    if(connection&&teamSpaceAudit.spaceId!==connection.spaceId)
+      $("teamSpaceAuditStatus").textContent="Noch nicht geprüft. Auf „Updates prüfen“ tippen.";
     $("teamSpaceRotateReader").hidden=connection?.role!=="trainer";
     $("teamSpaceRotateTrainer").hidden=connection?.role!=="trainer"||
       teamSpaceCatalogData?.trainerAccess==="legacy";
@@ -6003,6 +6028,179 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       remote.add(new Option(season.name,season.id));
     if([...remote.options].some(opt=>opt.value===lastRemote))remote.value=lastRemote;
   }
+  function teamSpaceAuditCandidates(){
+    const candidates=[];
+    for(const season of homeSeasonRecords())for(const game of season.games||[]){
+      candidates.push({key:season.id+"|"+game.id,kind:"season",
+        gameId:game.id,seasonId:season.id,state:game.state,
+        title:homeGameTitle(game),localSeason:season.name});
+    }
+    for(const record of teamStandaloneGames){
+      if(!record.id.startsWith("teamspace-localgame-"+teamSpaceSelectedId+"-"))continue;
+      try{
+        const data=JSON.parse(record.text);
+        candidates.push({key:record.id,kind:"single",gameId:record.remoteGameId||"",
+          state:data,title:record.gameName||data.gameName||record.fileName,
+          localVersion:record.revision||0});
+      }catch{/* Broken local files must not trigger uploads. */}
+    }
+    if(homeHasSession&&!activeSeasonGameId&&!teamStandaloneActiveId&&
+      Array.isArray(state.events)&&state.events.length){
+      candidates.push({key:"current",kind:"single",
+        gameId:coreSeasonGameId(currentGameFileName||"Spiel.json",state),
+        state,title:state.gameName||"Aktuelles Einzelspiel"});
+    }
+    return candidates;
+  }
+  function teamSpaceAuditLocalVersion(entry,remote){
+    if(entry.kind!=="season")return entry.localVersion||0;
+    const gameLink=teamSpaceLinks.get(teamGameLinkId(teamSpaceSelectedId,remote.id));
+    if(gameLink?.localSeasonId===entry.seasonId&&
+      gameLink.localGameId===entry.gameId)return gameLink.revision||0;
+    for(const seasonId of remote.seasonIds||[]){
+      const seasonLink=teamSpaceLinks.get(teamSeasonLinkId(teamSpaceSelectedId,seasonId));
+      if(seasonLink?.localSeasonId===entry.seasonId)
+        return seasonLink.gameRevisions?.[remote.id]||0;
+    }
+    return 0;
+  }
+  async function teamSpaceAuditHash(data){
+    const bytes=new TextEncoder().encode(JSON.stringify(publicGameForTeamSpace(data)));
+    const digest=await crypto.subtle.digest("SHA-256",bytes);
+    return [...new Uint8Array(digest)].map(byte=>byte.toString(16).padStart(2,"0")).join("");
+  }
+  function teamSpaceAuditRender(){
+    const host=$("teamSpaceAuditRows");
+    host.replaceChildren();
+    const summary=teamSpaceAudit.summary;
+    if(!summary||teamSpaceAudit.spaceId!==teamSpaceSelectedId)return;
+    const stamp=new Date(teamSpaceAudit.checkedAt).toLocaleString("de-DE");
+    $("teamSpaceAuditStatus").textContent="Letzte Prüfung: "+stamp+
+      " · "+summary.same+" identisch · "+summary.dirty+" lokal geändert · "+
+      summary.unpublished+" noch nicht veröffentlicht · "+summary.cloudNewer+
+      " Cloud-Version neuer · "+summary.onlyCloud+" nur online · "+
+      summary.unlinked+" Zuordnung prüfen"+
+      (summary.error?" · "+summary.error+" Vergleich fehlgeschlagen":"")+
+      ". Keine automatische Veröffentlichung.";
+    $("teamSpaceAuditSummary").textContent="Einzelne Spiele ansehen ("+
+      teamSpaceAudit.rows.length+")";
+    for(const entry of teamSpaceAudit.rows){
+      const actions=[];
+      const safe=["dirty","unpublished"].includes(entry.status);
+      if(safe){
+        actions.push({title:"Zur Veröffentlichung",action:()=>{
+          const publishing=$("teamSpacePublish");
+          publishing.open=true;
+          const field=$("teamSpacePublishGame");
+          if([...field.options].some(option=>option.value===entry.key))
+            field.value=entry.key;
+          const season=$("teamSpacePublishTargetSeason");
+          if(entry.remoteSeasonId&&
+            [...season.options].some(option=>option.value===entry.remoteSeasonId))
+            season.value=entry.remoteSeasonId;
+          publishing.scrollIntoView({behavior:"smooth",block:"start"});
+        }});
+      }
+      const version="Cloud "+(entry.cloudVersion?"V"+entry.cloudVersion:"—")+
+        " · lokale Basis "+(entry.localVersion?"V"+entry.localVersion:"unbekannt");
+      host.append(homeRow(entry.title,entry.label+" · "+version+
+        (entry.details?" · "+entry.details:""),actions,"game"));
+    }
+    if(!teamSpaceAudit.rows.length)
+      host.textContent="Keine lokalen Spiele auf diesem Gerät vorhanden.";
+  }
+  async function teamSpaceAuditCompare(connection,catalog){
+    const generation=++teamSpaceAuditRequest;
+    const trainer=["trainer","account"].includes(connection.role);
+    if(!trainer)return;
+    const spaceId=connection.spaceId;
+    const candidates=teamSpaceAuditCandidates();
+    $("teamSpaceAuditStatus").textContent="Lokale Spielstände werden mit dem Team Space verglichen … ("+
+      candidates.length+" Spiele).";
+    const results=new Array(candidates.length),remoteCache=new Map();
+    const matchedIds=new Set(),usedBy=new Map();
+    const remoteById=new Map(catalog.games.map(game=>[game.id,game]));
+    const byMatchId=new Map();
+    for(const remote of catalog.games)if(remote.matchId){
+      if(!byMatchId.has(String(remote.matchId)))byMatchId.set(String(remote.matchId),[]);
+      byMatchId.get(String(remote.matchId)).push(remote);
+    }
+    let next=0;
+    async function inspect(index){
+      const item=candidates[index],officialId=String(item.state?.officialSource?.matchId||"");
+      const direct=item.gameId?remoteById.get(item.gameId):null;
+      const matches=direct?[direct]:officialId?(byMatchId.get(officialId)||[]):[];
+      const base={...item,cloudVersion:0,localVersion:0,remoteSeasonId:""};
+      delete base.state;
+      if(matches.length>1){
+        results[index]={...base,status:"unlinked",label:"Mehrdeutige Spielzuordnung"};
+        return;
+      }
+      const remote=matches[0];
+      if(!remote){
+        results[index]={...base,status:"unpublished",label:"Noch nicht veröffentlicht"};
+        return;
+      }
+      matchedIds.add(remote.id);
+      const count=usedBy.get(remote.id)||0;usedBy.set(remote.id,count+1);
+      const version=teamSpaceAuditLocalVersion(item,remote);
+      const metadata={...base,cloudVersion:remote.revision,localVersion:version,
+        remoteSeasonId:remote.seasonIds?.length===1?remote.seasonIds[0]:""};
+      try{
+        const hash=await teamSpaceAuditHash(item.state);
+        let difference=null;
+        if(hash.toLowerCase()!==remote.sha256?.toLowerCase()){
+          if(!remoteCache.has(remote.id))
+            remoteCache.set(remote.id,downloadTeamSpaceGame(connection,remote.id));
+          const download=await remoteCache.get(remote.id);
+          if(download.revision!==remote.revision||download.sha256!==remote.sha256)
+            throw Error("Cloud-Version während Prüfung geändert");
+          difference=comparePublicGames(item.state,download.data);
+        }
+        const equal=!difference||difference.equal;
+        const details=equal?"Scoutingdaten identisch":
+          "+"+difference.added+" Events · "+difference.edited+" korrigiert · "+
+          difference.removed+" entfernt";
+        if(version&&version<remote.revision)
+          results[index]={...metadata,status:"cloudNewer",label:"Cloud-Version neuer",
+            details:equal?"Inhalt aktuell, Importversion älter":details};
+        else if(equal)
+          results[index]={...metadata,status:"same",label:"Identisch mit Cloud",details};
+        else if(version===remote.revision&&version>0)
+          results[index]={...metadata,status:"dirty",label:"Lokal geändert",details};
+        else
+          results[index]={...metadata,status:"unlinked",
+            label:"Abweichend – Zuordnung prüfen",details};
+      }catch(error){
+        results[index]={...metadata,status:"error",label:"Vergleich fehlgeschlagen",
+          details:String(error?.message||error)};
+      }
+    }
+    const workers=Array.from({length:Math.min(4,candidates.length)},async()=>{
+      while(next<candidates.length){
+        const index=next++;
+        await inspect(index);
+      }
+    });
+    await Promise.all(workers);
+    if(generation!==teamSpaceAuditRequest||teamSpaceSelectedId!==spaceId)return;
+    // Multiple local copies of the same remote match are ambiguous:
+    // never suggest automatic overwrite/republish for these.
+    for(const entry of results){
+      const remote=catalog.games.find(g=>g.id===entry.gameId);
+      if(remote&&(usedBy.get(remote.id)||0)>1&&entry.status==="dirty"){
+        entry.status="unlinked";entry.label="Mehrere lokale Kopien – Zuordnung prüfen";
+      }
+    }
+    const summary={same:0,dirty:0,unpublished:0,cloudNewer:0,unlinked:0,error:0,
+      onlyCloud:catalog.games.filter(game=>!matchedIds.has(game.id)).length};
+    for(const entry of results)if(Object.hasOwn(summary,entry.status))summary[entry.status]++;
+    teamSpaceAudit={spaceId,checkedAt:new Date().toISOString(),rows:results,summary};
+    try{localStorage.setItem(TEAM_SPACE_AUDIT_KEY,
+      JSON.stringify({spaceId,checkedAt:teamSpaceAudit.checkedAt,summary}))}
+    catch{/* Reporting must not block a working offline application. */}
+    teamSpaceAuditRender();
+  }
   function teamSpaceRenderCatalog(){
     teamSpaceRenderControls();
     const catalog=teamSpaceCatalogData,seasonHost=$("teamSpaceSeasons"),
@@ -6012,8 +6210,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const season of catalog.seasons){
       const local=teamSpaceLocalSeason(season.id);
       const outdated=local&&Number(local.revision)<season.revision;
+      const auditRows=local&&teamSpaceAudit.spaceId===teamSpaceSelectedId
+        ?teamSpaceAudit.rows.filter(row=>row.seasonId===local.localSeasonId):[];
+      const localDirty=auditRows.some(row=>row.status==="dirty");
+      const auditCloudNew=auditRows.some(row=>row.status==="cloudNewer");
       const status=season.gameCount===0?"Noch keine Spiele":
-        local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
+        local?(outdated||auditCloudNew?"Cloud-Version neuer":
+          localDirty?"Lokal geändert":"Aktuell"):"Noch nicht importiert";
       const actions=season.gameCount===0?[]:[{title:outdated?"Aktualisieren":local?"Saison öffnen":"Saison laden",
         primary:true,action:async()=>{
           if(local&&!outdated){
@@ -6028,7 +6231,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       seasonHost.textContent="Noch keine Saison veröffentlicht.";
     for(const game of catalog.games){
       const local=teamSpaceLocalGame(game),outdated=local&&local.revision<game.revision;
-      const status=local?(outdated?"Update verfügbar":"Aktuell"):"Noch nicht importiert";
+      const audited=teamSpaceAudit.spaceId===teamSpaceSelectedId
+        ?teamSpaceAudit.rows.find(row=>row.gameId===game.id):null;
+      const status=audited?.status==="dirty"?"Lokal geändert":
+        audited?.status==="cloudNewer"?"Cloud-Version neuer":
+        audited?.status==="same"?"Identisch mit Cloud":
+        local?(outdated?"Update verfügbar":"Aktuell"):"Nur online";
       const actions=[{title:outdated?"Aktualisieren":local?"Öffnen":"Importieren",
         primary:true,action:()=>teamSpaceImportGame(game)}];
       if(!local&&homeSeasonRecords().length)
@@ -6068,7 +6276,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         :" · Achtung: letzter Upload im Katalog nicht nachweisbar";
       teamStatus(catalog.name+" · ID …"+id.slice(-8)+" · "+catalog.seasons.length+
         " Saisons · "+catalog.games.length+" Spiele"+
-        (updates?" · "+updates+" Updates verfügbar":" · Stand aktuell")+confirmation);
+        (updates?" · "+updates+" Import-Updates verfügbar":" · Cloud-Katalog geladen")+confirmation);
+      await teamSpaceAuditCompare(connection,catalog);
+      if(teamSpaceSelectedId===id)teamSpaceRenderCatalog();
     }catch(error){
       teamSpaceCatalogData=null;teamSpaceRenderControls();
       teamSpaceShowPublication();
@@ -6321,7 +6531,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         if(!localId)throw Error("Bitte lokale Saison auswählen.");
         if(localId!==seasonLibraryId)await switchSeasonLibrary(localId);
         persistSession();
-        const archive=seasonExportObject({includePersonal:true});
+        const archive=publicSeasonForTeamSpace(seasonExportObject({includePersonal:true}));
         if(!confirm("Saison „"+archive.name+"“ mit "+archive.games.length+
           " Spielen im Team Space „"+(connection.name||"Team Space")+
           "“ (ID …"+connection.spaceId.slice(-8)+") veröffentlichen?")){
@@ -6338,6 +6548,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         const targetId=selectedId||linkedId;
         const target=targetId?catalog.seasons.find(season=>season.id===targetId):null;
         if(targetId&&!target)throw Error("Die ausgewählte Online-Saison wurde nicht gefunden. Bitte aktualisieren.");
+        if(target&&old?.revision&&old.revision<target.revision)
+          throw Error("Cloud-Version neuer als die zuletzt veröffentlichte Saison (lokal V"+
+            old.revision+", Cloud V"+target.revision+"). Bitte vor dem erneuten Hochladen die Änderungen prüfen und eine lokale Sicherung erstellen.");
         if(target?.gameCount>0&&!confirm("Die Online-Saison „"+target.name+
           "“ enthält bereits "+target.gameCount+
           " Spiele. Ihre Spielzuordnung durch den lokalen Saisonstand ersetzen?"))return;
@@ -6394,6 +6607,16 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         }
         const assigned=$("teamSpacePublishTargetSeason").value||null;
         const targetSeason=assigned?catalog.seasons.find(row=>row.id===assigned):null;
+        const publishedGame=publicGameForTeamSpace(game);
+        const remote=catalog.games.find(row=>row.id===gameId||
+          (game.officialSource?.matchId&&row.matchId===String(game.officialSource.matchId)));
+        if(remote){
+          const localLink=teamSpaceLocalGame(remote);
+          if(localLink?.revision&&localLink.revision<remote.revision)
+            throw Error("Cloud-Version dieses Spiels ist neuer (lokal V"+
+              localLink.revision+", Cloud V"+remote.revision+
+              "). Bitte zuerst die Änderungen prüfen und lokal sichern.");
+        }
         if(!confirm("Spiel „"+game.gameName+"“ im Team Space „"+
           (connection.name||"Team Space")+"“ (ID …"+connection.spaceId.slice(-8)+
           ") veröffentlichen?\n\nOnline-Saison: "+
@@ -6403,15 +6626,15 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         }
         $("teamSpacePublishStatus").textContent="Spiel wird an den Server übertragen …";
         result=account
-          ?await trainerAccountApi().publishGame(connection.spaceId,game,catalog.revision,{
+          ?await trainerAccountApi().publishGame(connection.spaceId,publishedGame,catalog.revision,{
             gameId,seasonId:assigned,fileName})
-          :await publishTeamSpaceGame(connection,game,secret,catalog.revision,{
+          :await publishTeamSpaceGame(connection,publishedGame,secret,catalog.revision,{
             gameId,seasonId:assigned,fileName});
         teamSpaceRememberPublication(connection,"game",result,game.gameName||fileName);
         if(localSourceSeasonId){
           try{
             const now=new Date().toISOString();
-            const source=coreNormalizeSeasonGame(game,fileName);
+            const source=coreNormalizeSeasonGame(publishedGame,fileName);
             source.id=localSourceGameId;
             const link={id:teamGameLinkId(connection.spaceId,result.gameId),
               localSeasonId:localSourceSeasonId,localGameId:localSourceGameId,
