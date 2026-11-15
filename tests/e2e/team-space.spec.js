@@ -384,6 +384,65 @@ test("Trainer season upload shares scouting data but keeps private notes and dra
   await expect(page.locator("#teamSpaceAuditPanel")).toBeVisible();
 });
 
+test("Trainer sees unpublished scouting edits but not private note edits in Team Space and quick access",async({page})=>{
+  const cloud=await mockSpace(page);
+  page.on("dialog",dialog=>dialog.accept());
+  await page.goto("/");
+  await page.locator("#seasonImportInput").setInputFiles(upload("season.json",archive()));
+  const localId=await page.locator("#seasonLibrarySelect").inputValue();
+  await page.locator('[data-tab="home"]').click();
+  await startTeamSpaceConnection(page);
+  await page.locator("#teamSpaceApi").fill(API);
+  await page.locator("#teamSpaceName").fill("TSV Kronshagen");
+  await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
+  await page.locator("#teamSpaceCreate").click();
+  await page.locator("#teamSpacePublish summary").click();
+  await page.locator("#teamSpacePublishSeasonBtn").click();
+  await expect.poll(()=>cloud.lastPublish).not.toBeNull();
+
+  async function editLocal(field,value){
+    await page.evaluate(async({localId,field,value})=>{
+      const db=await new Promise((resolve,reject)=>{
+        const request=indexedDB.open("handball-spielanalyse",3);
+        request.onsuccess=()=>resolve(request.result);
+        request.onerror=()=>reject(request.error);
+      });
+      try{
+        await new Promise((resolve,reject)=>{
+          const transaction=db.transaction("seasons","readwrite");
+          const store=transaction.objectStore("seasons");
+          for(const id of [localId,"current"]){
+            const req=store.get(id);
+            req.onsuccess=()=>{
+              const record=req.result;
+              if(!record?.games?.length)return;
+              const event=record.games[0].data?.events?.[0]||
+                record.games[0].state?.events?.[0];
+              if(event){event[field]=value;store.put(record);}
+            };
+          }
+          transaction.oncomplete=resolve;
+          transaction.onerror=()=>reject(transaction.error);
+        });
+      }finally{db.close()}
+    },{localId,field,value});
+  }
+
+  await editLocal("note","Meine private Beobachtung");
+  await page.reload();
+  await loadConnectedTeamSpace(page);
+  await expect(page.locator("#teamSpaceAuditStatus")).toContainText("0 lokal geändert");
+  await expect(page.locator("#teamSpaceAuditStatus")).toContainText("1 identisch");
+  await editLocal("scoreH",5);
+  await page.reload();
+  await loadConnectedTeamSpace(page);
+  await expect(page.locator("#teamSpaceAuditStatus")).toContainText("1 lokal geändert");
+  await page.locator("#teamSpaceAuditDetails summary").click();
+  await expect(page.locator("#teamSpaceAuditRows")).toContainText("Lokal geändert");
+  await expect(page.locator("#teamSpaceAuditRows")).toContainText("1 korrigiert");
+  await page.locator("#homeBack").click();
+  await expect(page.locator("#homeRecentOptions")).toContainText("1 lokal geändert");
+});
 test("Server publication failure remains visible with the selected Team Space",async({page})=>{
   const cloud=await mockSpace(page);
   cloud.failUpload=true;
