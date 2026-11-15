@@ -2655,7 +2655,7 @@ import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,chronologicalTe
 import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=5";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
 import {publicGameForTeamSpace,publicSeasonForTeamSpace,publicationSharingSummary,
-  publicGameSignature,comparePublicGames} from "./src/team-space-publication.js?v=2";
+  publicGameSignature,comparePublicGames} from "./src/team-space-publication.js?v=3";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
@@ -6710,7 +6710,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       "\nKommentare: "+summary.comments+" · Zeichnungen: "+summary.drawings+
       " · Schlüsselmomente: "+summary.keyMoments+" · Highlights: "+summary.highlights+
       "\nAusdrücklich privat und ausgeschlossen: "+summary.excluded+
-      "\n\nDie Videodatei selbst wird nicht übertragen.";
+      "\n\nDie Videodatei selbst wird nicht übertragen. Ein verknüpftes YouTube-Video und dessen Video-Synchronisierung werden mitveröffentlicht.";
   }
   async function teamSpacePublish(type,{remoteEventCount=null,selection=null,onlineSeasonId=null,expectedGameId=null}={}){
     if(teamSpaceBusy)return;teamSpaceBusy=true;
@@ -9955,7 +9955,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=172",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=173",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
