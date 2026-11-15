@@ -374,20 +374,30 @@ test("trainer can publish a season without exposing the admin token in the invit
 });
 
 
-test("Trainer season upload shares scouting data but keeps private notes and drawings only in local archive",async({page})=>{
+test("Trainer publishes shared commentary and drawings by default but excludes explicitly private items",async({page})=>{
   const cloud=await mockSpace(page);
   const season=archive();
   const event=season.games[0].data.events[0];
-  event.note="Private taktische Anmerkung";
+  event.note="Geheime taktische Anmerkung";
   event.comment="Nicht an Spieler weitergeben";
   event.highlight=true;
-  event.videoAnnotation={comment:"Private Videoanalyse",
-    shapes:[{type:"line",x1:1,y1:2}]};
-  event.tags=["Deckung:3:2:1","Nur meine persönliche Bewertung"];
+  event.videoAnnotation={comment:"Geheime Videoanalyse",
+    shapes:[{tool:"arrow",points:[{x:0.1,y:0.1},{x:0.4,y:0.4}]},
+      {tool:"circle",points:[{x:0.2,y:0.2},{x:0.3,y:0.3}],teamSpacePrivate:true}]};
+  event.tags=["Deckung:3:2:1","Meine persönliche Bewertung"];
+  event.teamSpacePrivate={note:true,comment:true,highlight:true,
+    tags:["Meine persönliche Bewertung"]};
   season.games[0].data.events.push({id:"private-key",type:"keyMoment",
-    team:"home",time:80,note:"Private Schlüsselszene"});
+    team:"home",time:80,note:"Geheime Schlüsselszene",
+    teamSpacePrivate:{moment:true}});
+  season.games[0].data.events.push({id:"team-key",type:"keyMoment",
+    team:"home",time:120,note:"Wichtige Freigabe für die Mannschaft"});
   season.games[0].data.videoFileName="private-video.mp4";
-  page.on("dialog",dialog=>dialog.accept());
+  const confirmations=[];
+  page.on("dialog",dialog=>{
+    confirmations.push(dialog.message());
+    return dialog.accept();
+  });
   await page.goto("/");
   await page.locator("#seasonImportInput").setInputFiles(upload("private.json",season));
   const localId=await page.locator("#seasonLibrarySelect").inputValue();
@@ -400,22 +410,28 @@ test("Trainer season upload shares scouting data but keeps private notes and dra
   await page.locator("#teamSpacePublish summary").click();
   await page.locator("#teamSpacePublishSeasonBtn").click();
   await expect.poll(()=>cloud.lastPublish).not.toBeNull();
+  expect(confirmations.some(message=>message.includes("Standardmäßig wird alles freigegeben"))).toBe(true);
+  expect(confirmations.some(message=>message.includes("Zeichnungen: 1"))).toBe(true);
   const publicGame=cloud.lastPublish.archive.games[0].data;
-  expect(publicGame.events).toHaveLength(1);
+  expect(publicGame.events).toHaveLength(2);
   expect(publicGame.events[0]).toMatchObject({
-    id:123,type:"goal",scoreH:1,tags:["Deckung:3:2:1"]
+    id:123,type:"goal",scoreH:1,tags:["Deckung:3:2:1"],
+    videoAnnotation:{shapes:[{tool:"arrow"}]}
+  });
+  expect(publicGame.events[1]).toMatchObject({
+    id:"team-key",type:"keyMoment",note:"Wichtige Freigabe für die Mannschaft"
   });
   expect(publicGame.events[0]).not.toHaveProperty("comment");
   expect(publicGame.events[0]).not.toHaveProperty("note");
   expect(publicGame.events[0]).not.toHaveProperty("highlight");
-  expect(publicGame.events[0]).not.toHaveProperty("videoAnnotation");
+  expect(publicGame.events[0].videoAnnotation).not.toHaveProperty("comment");
   expect(publicGame).not.toHaveProperty("video");
   expect(publicGame).not.toHaveProperty("videoFileName");
-  expect(JSON.stringify(publicGame)).not.toContain("Private");
+  expect(JSON.stringify(publicGame)).not.toContain("Geheime");
   const stored=await readStore(page,"seasons",localId);
   const localGame=stored.games[0].data;
-  expect(localGame.events.find(e=>e.id===123)?.note).toBe("Private taktische Anmerkung");
-  expect(localGame.events.find(e=>e.id==="private-key")?.note).toBe("Private Schlüsselszene");
+  expect(localGame.events.find(e=>e.id===123)?.note).toBe("Geheime taktische Anmerkung");
+  expect(localGame.events.find(e=>e.id==="private-key")?.note).toBe("Geheime Schlüsselszene");
   await expect(page.locator("#teamSpaceAuditPanel")).toBeVisible();
 });
 
@@ -453,7 +469,11 @@ test("Trainer sees unpublished scouting edits but not private note edits in Team
               if(!record?.games?.length)return;
               const event=record.games[0].data?.events?.[0]||
                 record.games[0].state?.events?.[0];
-              if(event){event[field]=value;store.put(record);}
+              if(event){
+                event[field]=value;
+                if(field==="note")event.teamSpacePrivate={...(event.teamSpacePrivate||{}),note:true};
+                store.put(record);
+              }
             };
           }
           transaction.oncomplete=resolve;
