@@ -126,6 +126,9 @@ export function publicGameForTeamSpace(game){
   const source={};
   const youtubeVideo=sharedYoutubeVideo(game.video);
   for(const [key,value] of Object.entries(game)){
+    // Whether the source was video-scouted changes the interpretation of
+    // event.realTime and must survive cross-device transfer.
+    if(key==="isVideoscoutingFile"){source.isVideoscoutingFile=Boolean(value);continue;}
     if(LOCAL_FIELDS.has(key)||PRIVATE_FIELD.test(key))continue;
     if(key==="timer"){
       source.timer={duration:value?.duration||25};
