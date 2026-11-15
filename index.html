@@ -1681,6 +1681,12 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         </div>
         <p id="teamSpaceSelectedIdInfo" class="number-help">Noch kein Team Space ausgewählt.</p>
         <p id="teamSpaceStatus" class="number-help" role="status">Noch kein Team Space verbunden.</p>
+        <div id="teamSpaceAuditPanel" hidden>
+          <h3>Veröffentlichungsstand meiner Spiele</h3>
+          <p class="number-help">Vergleicht die Spiel- und Scoutingdaten auf diesem Gerät mit der Cloud. Private Notizen, Zeichnungen, Videozeiten und persönliche Schlüsselmomente werden weder veröffentlicht noch als Änderungen gezählt.</p>
+          <p id="teamSpaceAuditStatus" class="number-help" role="status" aria-live="polite">Noch nicht geprüft. Auf „Updates prüfen“ tippen.</p>
+          <div id="teamSpaceAuditRows" class="home-list"></div>
+        </div>
         <div id="teamSpaceCatalog" hidden>
           <h3>Saison laden</h3>
           <p class="number-help">Eine Saison vollständig auf diesem Gerät speichern – einschließlich aller darin veröffentlichten Spiele. Danach kannst du sie direkt über „Saison“ öffnen.</p>
@@ -1832,7 +1838,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         </details>
         <details class="season-games-details teamspace-publish" id="teamSpacePublish" hidden>
           <summary>Saisons und Spiele veröffentlichen · Trainer</summary>
-          <p class="number-help">Freigegebene Trainer veröffentlichen eigene Saisons und Spiele direkt über ihr E-Mail-Konto. Bei älteren Team Spaces ist weiterhin der individuelle Trainer-Schlüssel erforderlich. Prüfe vor der Freigabe, welche Spieldaten für die Mannschaft sichtbar werden.</p>
+          <p class="number-help">Veröffentlicht werden ausschließlich Spiel- und Scoutingdaten. Private Kommentare, freie Markierungen, Zeichnungen, Videozeiten und persönliche Schlüsselmomente bleiben auf diesem Gerät. Für eine Veröffentlichung als Trainer ist eine bestätigte Berechtigung erforderlich.</p>
           <div class="teamspace-fields">
             <label>Lokale Saison veröffentlichen
               <select class="field" id="teamSpacePublishSeason"></select>
@@ -2598,6 +2604,8 @@ import { handball360Kickoff } from "./src/handball360-kickoff.js?v=1";
 import {parseTeamSpaceInvite,makeTeamSpaceInvite,createTeamSpace,teamSpaceCatalog,downloadTeamSpaceSeason,downloadTeamSpaceGame,publishTeamSpaceSeason,publishTeamSpaceGame,rotateTeamSpaceReadToken,claimTeamSpaceTrainerToken,verifyTeamSpaceTrainerToken,rotateTeamSpaceTrainerToken} from "./src/team-space-client.js?v=2";
 import {createTrainerAuthClient} from "./src/trainer-auth-client.js?v=3";
 import {preparePublishedGameRefresh} from "./src/season-update.js?v=1";
+import {publicGameForTeamSpace,publicSeasonForTeamSpace,publicGameSignature,
+  comparePublicGames} from "./src/team-space-publication.js?v=1";
 import { createTeamArchive } from "./src/season-archive.js?v=1";
 import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuLigaReportHtml, applyNuLigaReport, attachNuLigaReportForComparison } from "./src/nuliga-html.js?v=3";
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
