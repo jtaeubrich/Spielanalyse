@@ -5520,7 +5520,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const lastSpace=teamSpaces.get(teamSpaceSelectedId);
     if(lastSpace){
       host.append(homeRow(lastSpace.name||"Team Space",
-        "Team Space verbunden · Online-Saisons und Spiele verfügbar",[
+        "Team Space verbunden · "+teamSpaceAuditQuickSummary(lastSpace.spaceId),[
           {title:"Laden",primary:true,action:()=>{
             homeTeamSpaceReturnView="choose";
             $("teamSpaceConnect").open=false;
@@ -5843,6 +5843,20 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   let teamSpaceSelectedId="",teamSpaceCatalogData=null,teamStandaloneGames=[],
     teamSpaceBusy=false,teamStandaloneActiveId=null,teamSpaceLastPublish=null;
   const TEAM_SPACE_LAST_PUBLISH_KEY="handballSpielanalyse.lastTeamSpacePublication";
+  const TEAM_SPACE_AUDIT_KEY="handballSpielanalyse.lastTeamSpaceAudit";
+  let teamSpaceAudit={spaceId:"",checkedAt:"",rows:[],summary:null},teamSpaceAuditRequest=0;
+  try{
+    const last=JSON.parse(localStorage.getItem(TEAM_SPACE_AUDIT_KEY)||"null");
+    if(last?.spaceId&&last?.summary)teamSpaceAudit={...last,rows:[]};
+  }catch{/* Audit history is only a hint; network checks are authoritative. */}
+  function teamSpaceAuditQuickSummary(spaceId){
+    if(teamSpaceAudit.spaceId!==spaceId||!teamSpaceAudit.summary)
+      return "Noch kein Veröffentlichungsvergleich auf diesem Gerät";
+    const sum=teamSpaceAudit.summary;
+    const checked=new Date(teamSpaceAudit.checkedAt).toLocaleString("de-DE");
+    return "Letzte Prüfung "+checked+" · "+sum.dirty+" lokal geändert · "+
+      sum.unpublished+" nicht veröffentlicht · "+sum.cloudNewer+" Cloud neuer";
+  }
   try{
     const saved=JSON.parse(localStorage.getItem(TEAM_SPACE_LAST_PUBLISH_KEY)||"null");
     if(saved?.spaceId&&["season","game"].includes(saved.type)&&saved.id)
@@ -5960,6 +5974,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       :"Noch kein Team Space ausgewählt.";
     $("teamSpaceCatalog").hidden=!connection||!teamSpaceCatalogData;
     $("teamSpacePublish").hidden=!["trainer","account"].includes(connection?.role);
+    $("teamSpaceAuditPanel").hidden=!["trainer","account"].includes(connection?.role);
     $("teamSpaceRotateReader").hidden=connection?.role!=="trainer";
     $("teamSpaceRotateTrainer").hidden=connection?.role!=="trainer"||
       teamSpaceCatalogData?.trainerAccess==="legacy";
