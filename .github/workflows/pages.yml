@@ -110,7 +110,8 @@ jobs:
           echo "No successful source CI found; screenshot deployment is blocked." >&2
           exit 1
 
-  deploy:
+  package_pages:
+    name: Pages-Artefakt vorbereiten
     needs: [test, screenshot_gate]
     if: >-
       ${{ always() &&
@@ -120,9 +121,6 @@ jobs:
             inputs.deploy_only == true &&
             needs.screenshot_gate.result == 'success' &&
             needs.screenshot_gate.outputs.eligible == 'true')) }}
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Repository laden
@@ -131,10 +129,48 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Website vorbereiten
+      - name: Website-Artefakt einmalig hochladen
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
-      - name: Website veröffentlichen
+          retention-days: 7
+
+  deploy:
+    name: GitHub Pages veroeffentlichen
+    needs: [package_pages]
+    if: ${{ needs.package_pages.result == 'success' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hochgeladenes Pages-Artefakt pruefen
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # GitHub's artifact API can briefly return no results after upload.
+          # Keep this step in the deployment job: retrying it must NOT reupload.
+          for attempt in $(seq 1 20); do
+            response="$(gh api "repos/$REPOSITORY/actions/runs/$RUN_ID/artifacts?per_page=100")"
+            count="$(jq '[.artifacts[] | select(.name == "github-pages" and .expired == false)] | length' <<< "$response")"
+            echo "Artefaktpruefung $attempt/20: $count github-pages-Artefakt(e) sichtbar."
+            if [ "$count" -eq 1 ]; then
+              # Give GitHub Pages a moment to observe the uploaded metadata.
+              sleep 3
+              exit 0
+            fi
+            if [ "$count" -gt 1 ]; then
+              echo "::error::Mehrere github-pages-Artefakte vorhanden. Nicht den Upload-Job wiederholen; einen frischen Workflow-Lauf starten."
+              exit 1
+            fi
+            sleep 4
+          done
+          echo "::error::Das github-pages-Artefakt ist nach mehreren Versuchen nicht sichtbar."
+          exit 1
+      - name: Website veroeffentlichen
         id: deployment
         uses: actions/deploy-pages@v4
