@@ -92,6 +92,62 @@ test.describe("video-review tablet sidebar",()=>{
     }
   });
 
+  for(const mode of ["review","video scouting"]){
+    test("closing iPad "+mode+" event details while scrolled restores full-height event list",async({page,isMobile})=>{
+      test.skip(isMobile,"Tablet sidebar height is covered by the desktop viewport");
+      await openReview(page);
+      if(mode==="video scouting"){
+        await page.locator("#modeSelect").selectOption("video");
+        await expect(page.locator("#modeSelect")).toHaveValue("video");
+      }
+      const cards=page.locator("#matchNearbyList .match-nearby-item");
+      await expect(cards).toHaveCount(136);
+      await cards.first().click();
+      await expect(page.locator("#matchNearbyEditorHost")).toBeVisible();
+      const before=await page.evaluate(()=>{
+        const events=document.querySelector("#matchNearbyEvents");
+        return events.getBoundingClientRect().height;
+      });
+      expect(before).toBeGreaterThan(350);
+      // On iPad, scrolling to the details can place the video above the
+      // viewport. The hidden editor then has an empty rect at (0,0).
+      await page.evaluate(()=>{
+        const top=document.querySelector("#matchVideoHost").getBoundingClientRect().top;
+        window.scrollTo(0,window.scrollY+top+200);
+      });
+      await expect.poll(()=>page.evaluate(()=>
+        document.querySelector("#matchVideoHost").getBoundingClientRect().top
+      )).toBeLessThan(-110);
+      await page.evaluate(()=>document.getElementById("matchEditorClose").click());
+      await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
+      // Wait for the queued remeasurement, not an unrelated tab switch.
+      await page.evaluate(()=>new Promise(resolve=>
+        requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+      const after=await page.evaluate(()=>{
+        const events=document.querySelector("#matchNearbyEvents");
+        const list=document.querySelector("#matchNearbyList");
+        return {
+          height:events.getBoundingClientRect().height,
+          listHeight:list.getBoundingClientRect().height,
+          cardCount:list.querySelectorAll(".match-nearby-item").length,
+          listOverflow:getComputedStyle(list).overflowY,
+          hiddenEditorRects:document.querySelector("#matchNearbyEditorHost").getClientRects().length
+        };
+      });
+      expect(after.cardCount).toBe(136);
+      expect(after.hiddenEditorRects).toBe(0);
+      expect(after.listOverflow).toBe("auto");
+      expect(after.height).toBeGreaterThanOrEqual(before-16);
+      expect(after.listHeight).toBeGreaterThan(280);
+      await cards.nth(1).click();
+      await expect(page.locator("#matchNearbyEditorHost")).toBeVisible();
+      await page.evaluate(()=>document.getElementById("matchEditorClose").click());
+      await expect(page.locator("#matchNearbyEditorHost")).toBeHidden();
+      await expect.poll(()=>page.locator("#matchNearbyEvents")
+        .evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThan(before-16);
+    });
+  }
+
   test("video-time auto-follow respects manual scrolling and has a return button",async({page,isMobile})=>{
     test.skip(isMobile,"Tablet-specific vertical follow is not the phone's horizontal strip");
     await openReview(page,{video:true});
