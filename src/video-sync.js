@@ -5,6 +5,41 @@ function finiteValue(value) {
     Number.isFinite(Number(value));
 }
 
+// Match shows the official/game clock first, not the (sometimes estimated)
+// video position. Keep event identity and persisted array order unchanged.
+function visibleGameTimeSeconds(event) {
+  const time=event?.time;
+  if(time!==null&&time!==undefined&&time!==""&&Number.isFinite(Number(time)))
+    return Number(time);
+  const match=/^(\d{1,3}):([0-5]\d)$/.exec(String(event?.displayTime||"").trim());
+  return match?Number(match[1])*60+Number(match[2]):Infinity;
+}
+export function sortMatchEventsByGameTime(entries=[]) {
+  return [...entries].sort((a,b)=>{
+    const first=visibleGameTimeSeconds(a.event);
+    const second=visibleGameTimeSeconds(b.event);
+    if(first!==second)return first<second?-1:1;
+    // Preserve input order for events sharing the same game time.
+    return a.index-b.index;
+  });
+}
+
+// Find the event closest to playback on the independent *video* timeline.
+// The on-screen list can now be sorted by game time without changing follow.
+export function matchEventForVideoTime(entries=[],now,graceSeconds=5) {
+  if(!Number.isFinite(now))return null;
+  const threshold=now-graceSeconds;
+  let next=null,previous=null;
+  for(const entry of entries){
+    const seconds=entry.at;
+    if(!Number.isFinite(seconds))continue;
+    if(seconds>=threshold){
+      if(!next||seconds<next.at)next=entry;
+    }else if(!previous||seconds>previous.at)previous=entry;
+  }
+  return next||previous;
+}
+
 export function syncPointSeconds(value, syncUnit = "seconds") {
   if (value === null || value === undefined || value === "") return NaN;
   const number = Number(value);
