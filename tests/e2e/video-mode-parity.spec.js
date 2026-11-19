@@ -101,6 +101,57 @@ for(const mode of ["video","review"]){
   });
 }
 
+test("Match sorts mixed imported and own events by game clock and still follows the video timeline",async({page,isMobile})=>{
+  const game=await openWorkflow(page,"video",input=>{
+    input.video={...input.video,syncUnit:"seconds",h1SyncRealTime:-5};
+    const entry=(id,type,time,video,official=false)=>({
+      id,type,team:"home",time,half:1,
+      displayTime:String(Math.floor(time/60)).padStart(2,"0")+":"+
+        String(time%60).padStart(2,"0"),
+      realTime:Math.round(video*1000),
+      ...(official?{officialSource:"handball.net"}:{})
+    });
+    input.events=[
+      ...Array.from({length:18},(_,i)=>entry("lead-"+i,"goal",20+i*22,35+i*24,i%2===0)),
+      entry("official-miss","miss",420,653.8,true),
+      entry("official-goal","goal",659,681,true),
+      entry("own-yellow","yellow",571,804.8,false),
+      entry("own-goal","goal",742,880,false),
+      entry("own-miss","miss",692,926.8,false),
+      ...Array.from({length:16},(_,i)=>entry("tail-"+i,"goal",800+i*30,120+i*16,i%2===0))
+    ];
+  });
+  const list=page.locator("#matchNearbyList");
+  const rows=list.locator(".match-nearby-item");
+  await expect(rows).toHaveCount(game.events.length);
+  const order=await rows.evaluateAll(nodes=>nodes.map(node=>Number(node.dataset.eventIndex)));
+  expect(order.filter(index=>index>=18&&index<=22)).toEqual([18,20,19,22,21]);
+  const labels=await rows.locator(".compact-event-head").allTextContents();
+  const times=labels.map(label=>{
+    const match=label.match(/^(\\d{1,3}):(\\d\\d)/);
+    return match?Number(match[1])*60+Number(match[2]):NaN;
+  });
+  expect(times.every((time,i)=>i===0||time>=times[i-1])).toBe(true);
+  await list.evaluate(host=>{
+    host.scrollLeft=0;host.scrollTop=0;
+    host.dispatchEvent(new WheelEvent("wheel",{bubbles:true}));
+  });
+  await page.evaluate(()=>{window.__fakeVideoTime=700});
+  await page.locator("#matchJumpToCurrentEvent").click();
+  // Video 13:24.8 (game time 09:31) is the first event after 11:35
+  // on the video timeline; a game-time-ordered scan would choose 12:22.
+  const target=list.locator('[data-event-index="20"]');
+  await expect.poll(()=>target.evaluate(row=>{
+    const host=row.parentElement.getBoundingClientRect(),box=row.getBoundingClientRect();
+    return Math.abs(window.innerWidth<=600?box.left-host.left:box.top-host.top);
+  })).toBeLessThan(isMobile?220:75);
+  const saved=await page.evaluate(()=>JSON.parse(
+    localStorage.getItem("handballSpielanalyse.session")).state.events);
+  expect(saved.map(event=>event.id)).toEqual(game.events.map(event=>event.id));
+  expect(saved.map(event=>event.time)).toEqual(game.events.map(event=>event.time));
+  expect(saved.map(event=>event.realTime)).toEqual(game.events.map(event=>event.realTime));
+});
+
 test("trainer can mark an event comment, tag and individual drawing private",async({page})=>{
   const game=await openWorkflow(page,"video",input=>{
     input.events[0].tags=["Deckung:3:2:1","Trainerhinweis"];
