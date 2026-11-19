@@ -128,8 +128,8 @@ test("Match sorts mixed imported and own events by game clock and still follows 
   expect(order.filter(index=>index>=18&&index<=22)).toEqual([18,20,19,22,21]);
   const labels=await rows.locator(".compact-event-head").allTextContents();
   const times=labels.map(label=>{
-    const match=label.match(/^(\\d{1,3}):(\\d\\d)/);
-    return match?Number(match[1])*60+Number(match[2]):NaN;
+    const [minutes,seconds]=label.split(" · ")[0].split(":").map(Number);
+    return minutes*60+seconds;
   });
   expect(times.every((time,i)=>i===0||time>=times[i-1])).toBe(true);
   await list.evaluate(host=>{
