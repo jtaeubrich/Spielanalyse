@@ -568,3 +568,101 @@ test("private iPhone PWA can remember trainer login and restore it after a close
   expect(afterSignout).toEqual([]);
   expect(calls.some(call=>call.url.endsWith("/trainer-auth/me"))).toBe(true);
 });
+
+
+test("opening a previously linked account Team Space prompts for login in-place and resumes catalog",async({page})=>{
+  let catalogCalls=0,logins=0;
+  await page.route("https://identitytoolkit.googleapis.com/**",route=>{
+    logins++;
+    return route.fulfill(success({idToken:ID_TOKEN,
+      refreshToken:"inline-login-refresh",expiresIn:"3600"}));
+  });
+  await page.route(API+"/trainer-auth/**",route=>{
+    const path=new URL(route.request().url()).pathname;
+    if(path==="/trainer-auth/config")return route.fulfill(success(firebase));
+    if(route.request().headers().authorization!=="Bearer "+ID_TOKEN)
+      return route.fulfill(success({error:{message:"Not authenticated"}},401));
+    if(path==="/trainer-auth/me")return route.fulfill(success({
+      uid:"trainer-1",email:"trainer@example.org",status:"approved",isAdmin:false
+    }));
+    if(path==="/trainer-auth/spaces")return route.fulfill(success({
+      spaces:[{spaceId:SPACE,name:"TSV Kronshagen",revision:1,seasonCount:1}]
+    }));
+    return route.fulfill(success({error:{message:"Unknown endpoint"}},404));
+  });
+  await page.route(API+"/spaces/"+SPACE+"/catalog",route=>{
+    catalogCalls++;
+    if(route.request().headers().authorization!=="Bearer "+ID_TOKEN)
+      return route.fulfill(success({error:{message:"Not authorized"}},401));
+    return route.fulfill(success(catalog([{
+      id:SEASON,name:"B-Jugend 2026/27",revision:1,gameCount:0,gameIds:[]
+    }])));
+  });
+  await openTrainerAccount(page);
+  await page.locator("#trainerAccountEmail").fill("trainer@example.org");
+  await page.locator("#trainerAccountPassword").fill("first-password");
+  await page.locator("#trainerAccountSignIn").click();
+  await expect(page.locator("#homeLibraryList")).toContainText("TSV Kronshagen");
+  // Closing the browser removes the session; the linked Team Space survives.
+  await page.evaluate(()=>sessionStorage.clear());
+  await page.reload();
+  await page.locator("#homeChooseTeamSpace").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeLibraryList .home-list-row")
+    .getByRole("button",{name:"Laden"}).click();
+  const prompt=page.locator("#teamSpaceAuthPrompt");
+  await expect(prompt).toBeVisible();
+  await expect(page.locator("#teamSpaceAuthDescription"))
+    .toContainText("Danach geht es automatisch weiter");
+  await expect(page.locator("#teamSpaceCatalog")).toBeHidden();
+  expect(catalogCalls).toBe(0);
+  await page.locator("#teamSpaceInlineEmail").fill("trainer@example.org");
+  await page.locator("#teamSpaceInlinePassword").fill("second-password");
+  await page.locator("#teamSpaceInlineRemember").check();
+  await page.locator("#teamSpaceInlineSignIn").click();
+  await expect(prompt).toBeHidden();
+  await expect(page.locator("#teamSpaceSeasons")).toContainText("B-Jugend 2026/27");
+  await expect(page.locator("#teamSpacePlayerStatus"))
+    .toContainText("Keine neueren Cloud-Versionen");
+  expect(catalogCalls).toBeGreaterThan(0);
+  expect(logins).toBe(2);
+  const persisted=await page.evaluate(()=>JSON.stringify([
+    Object.values(localStorage),Object.values(sessionStorage)
+  ]));
+  expect(persisted).toContain("inline-login-refresh");
+  expect(persisted).not.toContain("second-password");
+  expect(persisted).not.toContain(ID_TOKEN);
+});
+test("a signed-in account without Team Space permission gets an access warning, not server outage",async({page})=>{
+  let hasPermission=true;
+  await page.route("https://identitytoolkit.googleapis.com/**",route=>
+    route.fulfill(success({idToken:ID_TOKEN,refreshToken:"inline-restricted",expiresIn:"3600"})));
+  await page.route(API+"/trainer-auth/**",route=>{
+    const path=new URL(route.request().url()).pathname;
+    if(path==="/trainer-auth/config")return route.fulfill(success(firebase));
+    if(path==="/trainer-auth/me")return route.fulfill(success({
+      uid:"trainer-1",email:"trainer@example.org",status:"approved",isAdmin:false
+    }));
+    if(path==="/trainer-auth/spaces")return route.fulfill(success({
+      spaces:[{spaceId:SPACE,name:"TSV Kronshagen",revision:1,seasonCount:1}]
+    }));
+    return route.fulfill(success({error:{message:"Unknown endpoint"}},404));
+  });
+  await page.route(API+"/spaces/"+SPACE+"/catalog",route=>
+    route.fulfill(hasPermission
+      ?success(catalog())
+      :success({error:{code:"NOT_AUTHORIZED",message:"Forbidden"}},403)));
+  await openTrainerAccount(page);
+  await page.locator("#trainerAccountEmail").fill("trainer@example.org");
+  await page.locator("#trainerAccountPassword").fill("first-password");
+  await page.locator("#trainerAccountSignIn").click();
+  await expect(page.locator("#homeLibraryList")).toContainText("TSV Kronshagen");
+  hasPermission=false;
+  await page.locator("#homeLibraryList .home-list-row")
+    .getByRole("button",{name:"Laden"}).click();
+  await expect(page.locator("#teamSpaceAuthPrompt")).toBeVisible();
+  await expect(page.locator("#teamSpaceAuthTitle")).toHaveText("Keine Zugriffsberechtigung");
+  await expect(page.locator("#teamSpaceAuthDescription"))
+    .toContainText("keinen Zugriff");
+  await expect(page.locator("#teamSpacePlayerStatus")).not.toContainText("nicht erreichbar");
+});
