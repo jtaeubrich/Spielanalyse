@@ -1696,6 +1696,30 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         </div>
         <p id="teamSpacePlayerSummary" class="number-help" hidden></p>
         <p id="teamSpacePlayerStatus" class="number-help" role="status" aria-live="polite" hidden></p>
+        <section id="teamSpaceAuthPrompt" class="panel" hidden>
+          <h3 id="teamSpaceAuthTitle">Traineranmeldung erforderlich</h3>
+          <p id="teamSpaceAuthDescription" class="number-help"></p>
+          <form id="teamSpaceInlineLogin" autocomplete="on">
+            <div class="teamspace-fields">
+              <label>E-Mail-Adresse
+                <input class="field" id="teamSpaceInlineEmail" name="username" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" required>
+              </label>
+              <label>Passwort
+                <input class="field" id="teamSpaceInlinePassword" name="password" type="password" autocomplete="current-password" required>
+              </label>
+            </div>
+            <label class="number-help" style="display:flex;align-items:flex-start;gap:9px;margin:12px 0">
+              <input id="teamSpaceInlineRemember" type="checkbox" style="margin-top:3px;flex-shrink:0">
+              <span>Auf diesem privaten Gerät angemeldet bleiben</span>
+            </label>
+            <div class="season-tools">
+              <button class="btn primary" id="teamSpaceInlineSignIn" type="submit">Anmelden und Team Space laden</button>
+              <button class="btn" id="teamSpaceInlineResetPassword" type="button">Passwort zurücksetzen</button>
+              <button class="btn" id="teamSpaceInlineOtherOptions" type="button">Weitere Kontooptionen</button>
+            </div>
+          </form>
+          <p id="teamSpaceInlineStatus" class="number-help" role="status" aria-live="polite"></p>
+        </section>
         <section id="teamSpaceJoinPanel" hidden>
           <p class="number-help">Kopiere den Einladungslink aus einer Nachricht oder Safari und füge ihn hier ein.</p>
           <label for="teamSpaceJoinInput">Einladungslink</label>
@@ -5950,6 +5974,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   // Only verified credentials unlock the trainer panel, not a stored role label.
   let teamSpaceAccountAuthorized=false,teamSpaceTrainerLoginVisible=false,
     teamSpaceLegacyEntryVisible=false;
+  let teamSpaceAuthRequired=false,teamSpaceAuthSpaceId="";
+  const teamSpaceAccountReadIds=new Set();
   const teamSpaceOwnedIds=new Set(),teamSpaceVerifiedLegacyIds=new Set();
   const TEAM_SPACE_LAST_PUBLISH_KEY="handballSpielanalyse.lastTeamSpacePublication";
   const TEAM_SPACE_AUDIT_KEY="handballSpielanalyse.lastTeamSpaceAudit";
@@ -6020,8 +6046,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   const teamGameLinkId=(spaceId,gameId)=>"teamspace-game-link-"+spaceId+"-"+gameId;
   const teamSingleId=(spaceId,gameId)=>"teamspace-localgame-"+spaceId+"-"+gameId;
   const teamActiveConnection=()=>teamSpaces.get(teamSpaceSelectedId);
+  const teamSpaceNeedsSignIn=connection=>
+    connection?.role==="account"&&!connection.readToken;
   const teamSpaceReadOptions=connection=>
-    connection?.role==="account"&&!connection.readToken
+    connection?.role==="account"&&
+    (!connection.readToken||teamSpaceAccountReadIds.has(connection.spaceId))
       ?{accountClient:trainerAccountApi()}:{};
   
   function teamSpaceCatalog(connection){
@@ -6064,6 +6093,8 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("teamSpaceCatalog").hidden=!inSpace||joining||!connection||!teamSpaceCatalogData;
     $("teamSpacePlayerSummary").hidden=!inSpace||joining||!teamSpaceCatalogData;
     $("teamSpacePlayerStatus").hidden=!inSpace||joining;
+    $("teamSpaceAuthPrompt").hidden=!inSpace||joining||!connection||
+      !teamSpaceAuthRequired||teamSpaceAuthSpaceId!==connection.spaceId;
     $("teamSpaceTrainerTools").hidden=!inSpace||!hasTrainerTools;
     if(!hasTrainerTools)$("teamSpaceTrainerTools").open=false;
     $("teamSpaceTrainerDetails").hidden=!confirmedTrainer;
@@ -6425,6 +6456,23 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("teamSpaceGamesSummary").textContent="Einzelspiele anzeigen ("+catalog.games.length+")";
     teamSpaceUpdateView();
   }
+  function teamSpaceRequireLogin(connection,message,{denied=false}={}){
+    if(!connection||connection.role!=="account")return;
+    const changed=teamSpaceAuthSpaceId!==connection.spaceId||!teamSpaceAuthRequired;
+    teamSpaceAuthRequired=true;
+    teamSpaceAuthSpaceId=connection.spaceId;
+    $("teamSpaceAuthTitle").textContent=denied?"Keine Zugriffsberechtigung":
+      "Traineranmeldung erforderlich";
+    $("teamSpaceAuthDescription").textContent=message;
+    $("teamSpacePlayerStatus").textContent=message;
+    teamStatus(message);
+    if(changed){
+      $("teamSpaceInlineStatus").textContent="";
+      $("teamSpaceInlinePassword").value="";
+      $("teamSpaceInlineRemember").checked=trainerAccountApi().rememberDevice();
+    }
+    teamSpaceUpdateView();
+  }
   async function teamSpaceRefreshCatalog(){
     const connection=teamActiveConnection();
     if(!connection){
@@ -6434,10 +6482,21 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       return;
     }
     const id=connection.spaceId;
+    if(teamSpaceNeedsSignIn(connection)&&!trainerAccountApi().hasSession()){
+      teamSpaceCatalogData=null;
+      teamSpaceRequireLogin(connection,
+        "Bitte mit deinem Trainerkonto anmelden, um „"+
+        (connection.name||"Team Space")+"“ zu laden. Danach geht es automatisch weiter.");
+      return;
+    }
     $("teamSpacePlayerStatus").textContent="Inhalte werden geladen …";
     teamStatus("Team-Space-Katalog wird abgerufen …");
     try{
       const catalog=await teamSpaceCatalog(connection);
+      if(teamSpaceSelectedId===id&&teamSpaceAuthSpaceId===id){
+        teamSpaceAuthRequired=false;
+        teamSpaceAuthSpaceId="";
+      }
       if(teamSpaceSelectedId!==id)return;
       teamSpaceCatalogData=catalog;
       teamSpaceRenderCatalog();
@@ -6495,10 +6554,30 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       if(teamSpaceSelectedId!==id)return;
       teamSpaceCatalogData=null;teamSpaceRenderControls();
       teamSpaceShowPublication();
-      teamStatus("Team Space nicht erreichbar: "+error.message);
-      $("teamSpacePlayerStatus").textContent="Der Team Space ist zurzeit nicht erreichbar. "+
-        "Bereits heruntergeladene Inhalte bleiben lokal verfügbar.";
-      teamSpaceUpdateView();
+      if(connection.role==="account"&&
+        (error.status===401||!trainerAccountApi().hasSession())){
+        teamSpaceRequireLogin(connection,
+          "Deine Traineranmeldung fehlt oder ist abgelaufen. Bitte erneut anmelden; "+
+          "der Team Space wird anschließend automatisch geladen.");
+      }else if(error.status===403){
+        if(connection.role==="account")
+          teamSpaceRequireLogin(connection,
+            "Dieses Trainerkonto hat keinen Zugriff auf „"+
+            (connection.name||"Team Space")+"“. Bitte ein berechtigtes Konto verwenden.",
+            {denied:true});
+        else{
+          teamStatus("Kein Zugriff auf diesen Team Space: "+error.message);
+          $("teamSpacePlayerStatus").textContent=
+            "Kein Zugriff auf diesen Team Space. Bitte den Leseschlüssel überprüfen.";
+          teamSpaceUpdateView();
+        }
+      }else{
+        teamStatus("Team Space nicht erreichbar: "+error.message);
+        $("teamSpacePlayerStatus").textContent=
+          "Team-Space-Verbindung fehlgeschlagen: "+error.message+
+          ". Bereits heruntergeladene Inhalte bleiben lokal verfügbar.";
+        teamSpaceUpdateView();
+      }
     }
   }
   async function teamSpaceOpen(){
@@ -7322,6 +7401,53 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     trainerAccountRegistrationMode(false);
     trainerAccountStatus("Registriert. Bitte den Bestätigungslink in der E-Mail öffnen und danach „E-Mail-Bestätigung prüfen“ wählen.");
   });
+  $("teamSpaceInlineLogin").addEventListener("submit",event=>{
+    event.preventDefault();
+    if($("teamSpaceInlineSignIn").disabled)return;
+    const connection=teamActiveConnection(),spaceId=connection?.spaceId;
+    if(!connection||connection.role!=="account")return;
+    const button=$("teamSpaceInlineSignIn"),password=$("teamSpaceInlinePassword");
+    button.disabled=true;
+    $("teamSpaceInlineStatus").textContent="Trainerkonto wird angemeldet …";
+    void (async()=>{
+      try{
+        const service=trainerAccountApi();
+        service.setRememberDevice($("teamSpaceInlineRemember").checked);
+        await service.login($("teamSpaceInlineEmail").value.trim(),password.value);
+        password.value="";
+        await trainerAccountRefresh();
+        if(teamSpaceSelectedId!==spaceId||homeView!=="teamspace")return;
+        teamSpaceAccountReadIds.add(spaceId);
+        await teamSpaceRefreshCatalog();
+      }catch(error){
+        $("teamSpaceInlineStatus").textContent="Anmeldung fehlgeschlagen: "+error.message;
+      }finally{
+        password.value="";
+        button.disabled=false;
+      }
+    })();
+  });
+  $("teamSpaceInlineResetPassword").onclick=async()=>{
+    const email=$("teamSpaceInlineEmail").value.trim();
+    if(!email){
+      $("teamSpaceInlineStatus").textContent="Bitte zuerst die E-Mail-Adresse eingeben.";
+      return;
+    }
+    try{
+      await trainerAccountApi().resetPassword(email);
+      $("teamSpaceInlineStatus").textContent=
+        "Falls die Adresse registriert ist, erhält sie eine E-Mail zum Zurücksetzen des Passworts.";
+    }catch(error){
+      $("teamSpaceInlineStatus").textContent=
+        "Passwort-Zurücksetzen nicht möglich: "+error.message;
+    }
+  };
+  $("teamSpaceInlineOtherOptions").onclick=()=>{
+    teamSpaceTrainerLoginVisible=true;
+    teamSpaceUpdateView();
+    $("teamSpaceTrainerTools").open=true;
+    $("trainerAccountPanel").open=true;
+  };
   $("trainerAccountSignIn").onclick=()=>trainerAccountAction(async()=>{
     trainerAccountClearPublisher();
     const service=trainerAccountApi();
@@ -7331,6 +7457,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("trainerAccountPassword").value="";
     trainerAccountRegistrationMode(false);
     await trainerAccountRefresh();
+    if(homeView==="teamspace"&&teamSpaceAuthRequired){
+      const connection=teamActiveConnection();
+      if(connection?.role==="account")teamSpaceAccountReadIds.add(connection.spaceId);
+      await teamSpaceRefreshCatalog();
+    }
     if(homeView==="teamspace"&&homeTeamSpaceReturnView==="actions"&&
       teamSpaceOwnedIds.size)homeShow("library","teamspace");
   });
@@ -7354,6 +7485,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("trainerAccountRememberDevice").checked=false;
     teamSpaceAccountAuthorized=false;
     teamSpaceOwnedIds.clear();
+    teamSpaceAccountReadIds.clear();
     teamSpaceUpdateView();
     $("trainerAccountPassword").value="";
     trainerAccountRegistrationMode(false);
@@ -9997,7 +10129,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=174",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=175",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
