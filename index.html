@@ -2691,7 +2691,7 @@ import { analysisViewSide, analysisVideoRole, analysisPerspectiveText } from "./
 import { selectSeasonPreviewGame } from "./src/season-selection.js?v=1";
 import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver, createAliasedSeasonPlayerKeyResolver as coreCreateAliasedSeasonPlayerKeyResolver, setSeasonPlayerAlias as coreSetSeasonPlayerAlias, resolveSeasonPlayerAliasKey as coreResolveSeasonPlayerAliasKey } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
-import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, halfSyncFromOfficialGoal as coreHalfSyncFromOfficialGoal, officialVideoEvent as coreOfficialVideoEvent, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition, videoScoutingEventStamp as coreVideoScoutingEventStamp, reconstructedGameClock as coreReconstructedGameClock, scoreAtVideoPosition as coreScoreAtVideoPosition } from "./src/video-sync.js?v=152";
+import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, halfSyncFromOfficialGoal as coreHalfSyncFromOfficialGoal, officialVideoEvent as coreOfficialVideoEvent, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition, videoScoutingEventStamp as coreVideoScoutingEventStamp, reconstructedGameClock as coreReconstructedGameClock, scoreAtVideoPosition as coreScoreAtVideoPosition, sortMatchEventsByGameTime as coreSortMatchEventsByGameTime, matchEventForVideoTime as coreMatchEventForVideoTime } from "./src/video-sync.js?v=153";
 import { createScenePlayback, localVideoAdapter, youtubeAdapter } from "./src/video-playback.js";
 import { resolveYoutubeReference, storeYoutubeReference } from "./src/video-reference.js";
 import { selectRecorderMimeType, exportClipFilename } from "./src/clip-export.js";
@@ -8846,9 +8846,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const now=mediaSeconds();
     if(!Number.isFinite(now))return;
     const buttons=[...host.querySelectorAll(".match-nearby-item[data-video-seconds]")];
-    if(!buttons.length)return;
-    // Keep the current event available for five seconds after its timestamp.
-    const target=buttons.find(button=>Number(button.dataset.videoSeconds)>=now-5)||buttons[buttons.length-1];
+    // The visible rows are ordered by official game time, but the playback
+    // follow action must search independently on the video timeline.
+    const candidates=buttons.map(button=>({
+      at:Number(button.dataset.videoSeconds),index:Number(button.dataset.eventIndex),
+      button
+    }));
+    const target=coreMatchEventForVideoTime(candidates,now)?.button;
     if(!target||(!force&&nearbyAutoEventIndex===target.dataset.eventIndex))return;
     nearbyAutoEventIndex=target.dataset.eventIndex;
     const horizontal=host.scrollWidth>host.clientWidth+2&&host.scrollHeight<=host.clientHeight+4;
@@ -8918,11 +8922,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const shown=activeTab==="match"&&(analysisMode==="video"||matchReviewMode);
     panel.classList.toggle("hidden",!shown);
     if(!shown)return;
-    const entries=state.events.map((event,index)=>({event,index,position:eventVideoPosition(event)}))
-      .map(item=>({...item,at:item.position.seconds}))
-      .sort((a,b)=>Number.isFinite(a.at)
-        ?Number.isFinite(b.at)?a.at-b.at:-1
-        :Number.isFinite(b.at)?1:(a.event.time??Infinity)-(b.event.time??Infinity));
+    const entries=coreSortMatchEventsByGameTime(state.events
+      .map((event,index)=>({event,index,position:eventVideoPosition(event)}))
+      .map(item=>({...item,at:item.position.seconds})));
     const key=entries.map(item=>[item.index,item.event.type,item.event.time,item.event.realTime,
       item.event.pId,item.event.pName,item.event.note,item.at].join(":")).join("|")+";"+activeVideoEventIndex;
     if(!force&&key===nearbySignature){scrollMatchEventsToVideo();return}
@@ -10139,7 +10141,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=176",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=177",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
