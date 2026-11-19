@@ -8878,6 +8878,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     renderVideoEventEditor();
     renderEvents();
     renderMatchNearbyEvents(true);
+    // On iPad the editor lives below the video. Closing it can change the
+    // measured video column while the page is scrolled; restore the sidebar
+    // height after Safari has applied display:none.
+    requestAnimationFrame(syncMatchVideoColumnHeight);
   };
   let holdEventIndex=null;
   function hideMatchHoldMenu(){$("matchEventHoldMenu").classList.add("hidden");holdEventIndex=null}
@@ -9549,13 +9553,19 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
     const videoRect=video.getBoundingClientRect();
     // The match video host also contains the event editor and capture area.
     // Exclude both from the measured height of the adjacent events panel.
-    const capture=$("matchReviewCaptureHost")?.getBoundingClientRect();
-    const editor=$("matchNearbyEditorHost")?.getBoundingClientRect();
-    const points=[capture,editor].filter(rect=>rect&&rect.top>videoRect.top+120)
+    // Hidden elements return a zero-size rect at viewport (0,0). When the
+    // user scrolls down to close the iPad event editor, the video top may be
+    // negative; treating that (0,0) as a real position collapses the adjacent
+    // event column to only a couple of rows.
+    const boundaries=[$("matchReviewCaptureHost"),$("matchNearbyEditorHost")]
+      .filter(el=>el&&el.getClientRects().length>0)
+      .map(el=>el.getBoundingClientRect())
+      .filter(rect=>rect.width>0&&rect.height>0&&
+        rect.top>videoRect.top+120)
       .map(rect=>rect.top-videoRect.top);
     const videoFrame=video.querySelector(".video-pane .workspace");
     const fallback=videoFrame?.getBoundingClientRect().height||videoRect.height;
-    const height=Math.round(points.length?Math.min(...points)-8:fallback);
+    const height=Math.round(boundaries.length?Math.min(...boundaries)-8:fallback);
     if(height>120)events.style.setProperty("--match-video-height",height+"px");
   }
   if(typeof ResizeObserver!=="undefined"){
@@ -10129,7 +10139,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=175",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=176",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
