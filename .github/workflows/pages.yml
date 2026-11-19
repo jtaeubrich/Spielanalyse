@@ -138,7 +138,8 @@ jobs:
   deploy:
     name: GitHub Pages veroeffentlichen
     needs: [package_pages]
-    if: ${{ needs.package_pages.result == 'success' }}
+    # A skipped screenshot_gate must not implicitly skip deployment after package_pages succeeded.
+    if: ${{ !cancelled() && needs.package_pages.result == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
