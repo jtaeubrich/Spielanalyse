@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
   syncPointSeconds,
+  sortMatchEventsByGameTime,
+  matchEventForVideoTime,
   eventHalf,
   syncForHalf,
   halfSyncFromOfficialGoal,
@@ -367,4 +369,42 @@ describe("penalty moved earlier than official game clock",()=>{
   expect(scoreAtVideoPosition(2900,options)).toEqual([1,0]);
   expect(eventVideoPosition(penalty,options).seconds).toBeCloseTo(2859.597);
  });
+});
+
+describe("Match event list: game-time order independent of video-time follow",()=>{
+  const entries=[
+    {index:0,event:{type:"miss",officialSource:"handball.net",time:420,displayTime:"07:00"},at:653.8},
+    {index:1,event:{type:"goal",officialSource:"handball.net",time:659,displayTime:"10:59"},at:681},
+    {index:2,event:{type:"yellow",time:571,displayTime:"09:31",realTime:804800},at:804.8},
+    {index:3,event:{type:"goal",time:742,displayTime:"12:22",realTime:880000},at:880},
+    {index:4,event:{type:"miss",time:692,displayTime:"11:32",realTime:926800},at:926.8}
+  ];
+  test("mixed official and manual events appear in ascending game time even when video time crosses",()=>{
+    const before=structuredClone(entries);
+    const sorted=sortMatchEventsByGameTime(entries);
+    expect(sorted.map(x=>x.event.displayTime)).toEqual([
+      "07:00","09:31","10:59","11:32","12:22"
+    ]);
+    expect(sorted.map(x=>x.at)).toEqual([653.8,804.8,681,926.8,880]);
+    expect(entries).toEqual(before);
+  });
+  test("keeps equal game times stable and puts unscheduled events last",()=>{
+    const input=[
+      {index:3,event:{type:"keyMoment",time:null},at:300},
+      {index:2,event:{type:"yellow",time:40},at:62},
+      {index:1,event:{type:"goal",time:40},at:50},
+      {index:0,event:{type:"miss",time:30},at:75}
+    ];
+    expect(sortMatchEventsByGameTime(input).map(x=>x.index)).toEqual([0,1,2,3]);
+    expect(input.map(x=>x.index)).toEqual([3,2,1,0]);
+  });
+  test("Zur Videozeit selects the next video position, not the next row by game time",()=>{
+    const chronological=sortMatchEventsByGameTime(entries);
+    expect(matchEventForVideoTime(chronological,700)?.index).toBe(2);
+    expect(matchEventForVideoTime(chronological,676)?.index).toBe(1);
+    expect(matchEventForVideoTime(chronological,920)?.index).toBe(4);
+    expect(matchEventForVideoTime(chronological,1200)?.index).toBe(4);
+    expect(matchEventForVideoTime(chronological,NaN)).toBeNull();
+    expect(matchEventForVideoTime([{index:0,event:{time:50},at:NaN}],100)).toBeNull();
+  });
 });
