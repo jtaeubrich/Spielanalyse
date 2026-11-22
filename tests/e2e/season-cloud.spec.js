@@ -96,34 +96,31 @@ async function readSeason(page,id){
     }finally{db.close()}
   },id);
 }
-test("trainer publishes only with admin key and obtains a read-only invitation",async({page})=>{
+test("Season management offers only Team Space publishing, not a second Season Cloud",async({page})=>{
   const cloud=await mockCloud(page);
   await page.goto("/");
   await page.locator("#seasonImportInput").setInputFiles(upload("trainer.json",archive(1)));
   await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
   await page.locator("#homeSeasonManage").click();
-  await page.locator("#seasonCloudPanel summary").click();
-  await page.locator("#seasonCloudEndpoint").fill(API);
-  await page.locator("#seasonCloudAdminToken").fill(ADMIN);
-  page.once("dialog",dialog=>dialog.accept());
-  await page.locator("#seasonCloudPublish").click();
-  await expect(page.locator("#seasonCloudInvite")).toHaveValue(/#saison=/);
-  const link=await page.locator("#seasonCloudInvite").inputValue();
-  expect(link).toContain("key=");
-  expect(link).not.toContain(ADMIN);
-  const published=cloud.lastArchive;
-  expect(published.format).toBe("handball-spielanalyse-season");
-  expect(published.version).toBe(1);
-  expect(published.games).toHaveLength(1);
-  expect(cloud.calls.some(call=>call.method==="POST"&&call.path.endsWith("/publish")
-    &&call.auth==="Bearer "+ADMIN)).toBe(true);
+  await expect(page.locator("#seasonCloudPanel")).toBeHidden();
+  await expect(page.locator("#seasonCloudPanel")).toHaveAttribute("inert","");
+  await expect(page.locator("#seasonCloudInvite")).toBeHidden();
+  await expect(page.locator("#seasonCloudPublish")).toBeHidden();
+  await expect(page.locator("#homeSeasonRefresh")).toHaveText("Saison aktualisieren");
+  // Updating a local season must never silently use the legacy cloud.
+  await page.evaluate(()=>{
+    window.__localSeasonFilePicker=0;
+    document.querySelector("#seasonRefreshInput").click=
+      ()=>{window.__localSeasonFilePicker++};
+  });
+  await page.locator("#homeSeasonRefresh").click();
+  expect(await page.evaluate(()=>window.__localSeasonFilePicker)).toBe(1);
+  expect(cloud.calls).toHaveLength(0);
   const libraryId=await page.locator("#seasonLibrarySelect").inputValue();
-  const meta=await readSeason(page,"sync-"+libraryId);
-  expect(meta.connection.role).toBe("trainer");
-  expect(JSON.stringify(meta)).not.toContain(ADMIN);
+  expect(await readSeason(page,"sync-"+libraryId)).toBeNull();
 });
 
-test("player subscribes with one invite, keeps local comments after cloud refresh and never uploads",async({page})=>{
+test("old season invitation still imports locally without exposing legacy publishing",async({page})=>{
   const cloud=await mockCloud(page);
   page.on("dialog",dialog=>dialog.accept());
   const link="/#saison="+encodeURIComponent(ID)+"&key="+encodeURIComponent(READER)+
@@ -134,7 +131,9 @@ test("player subscribes with one invite, keeps local comments after cloud refres
   expect(await page.evaluate(()=>location.hash)).toBe("");
   const id=await page.locator("#seasonLibrarySelect").inputValue();
   expect((await readSeason(page,"sync-"+id)).connection.role).toBe("reader");
-  await expect(page.locator("#seasonCloudPublish")).toBeDisabled();
+  await page.locator("#homeSeasonManage").click();
+  await expect(page.locator("#seasonCloudPanel")).toBeHidden();
+  await page.locator('[data-tab="home"]').click();
   await page.locator("#homeSeasonGames .home-list-row").first()
     .getByRole("button",{name:"Fortsetzen",exact:true}).click();
   await page.locator('[data-tab="video"]').click();
@@ -143,25 +142,23 @@ test("player subscribes with one invite, keeps local comments after cloud refres
   const saved=await page.evaluate(()=>JSON.parse(
     localStorage.getItem("handballSpielanalyse.session")).state.events[0]);
   expect(saved.videoAnnotation.comment).toBe("Meine private Videoanalyse");
+  const callsBefore=cloud.calls.length;
   cloud.revision=2;
-  await page.locator("#homeSeasonRefresh").evaluate(button=>button.click());
-  await expect(page.locator("#seasonRefreshDialog")).toBeVisible();
-  await expect(page.locator("#seasonRefreshPreview")).toContainText("Neue Spiele");
-  await page.locator("#seasonRefreshConfirm").click();
+  await page.locator('[data-tab="home"]').click();
+  await page.evaluate(()=>{
+    window.__localSeasonFilePicker=0;
+    document.querySelector("#seasonRefreshInput").click=
+      ()=>{window.__localSeasonFilePicker++};
+  });
+  await page.locator("#homeSeasonRefresh").click();
+  expect(await page.evaluate(()=>window.__localSeasonFilePicker)).toBe(1);
+  expect(cloud.calls).toHaveLength(callsBefore);
   await expect(page.locator("#seasonRefreshDialog")).toBeHidden();
-  const library=await readSeason(page,id);
-  expect(library.games).toHaveLength(2);
-  expect(library.games[0].data.events[0].scoreH).toBe(2);
-  expect(library.games[0].data.events[0].videoAnnotation.comment)
-    .toBe("Meine private Videoanalyse");
-  expect((await readSeason(page,"source-"+id)).source.games[0].state.events[0]
-    .videoAnnotation.comment).toBe("");
-  expect((await readSeason(page,"sync-"+id)).connection.revision).toBe(2);
+  expect((await readSeason(page,"sync-"+id)).connection.revision).toBe(1);
   expect(cloud.calls.filter(call=>call.method==="POST")).toHaveLength(0);
-  // Opening the same invitation again must reconnect to the existing season.
-  await page.goto(link);
-  await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
-  await expect(page.locator("#seasonLibrarySelect option")).toHaveCount(1);
-  expect((await readSeason(page,id)).games[0].data.events[0].videoAnnotation.comment)
-    .toBe("Meine private Videoanalyse");
+  // Legacy season access is retained on the device for migration,
+  // while the visible invitation and publishing UI uses Team Space only.
+  await page.reload();
+  await expect(page.locator("#seasonCloudPanel")).toBeHidden();
+  expect((await readSeason(page,"sync-"+id)).connection.role).toBe("reader");
 });
