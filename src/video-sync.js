@@ -343,6 +343,36 @@ export function eventRealTimeFromVideoPosition(
   };
 }
 
+/** Plan a constant correction for recorded timestamps starting at a reference event. */
+export function planEventVideoAlignment(event, videoSeconds, options = {}) {
+  const target = eventRealTimeFromVideoPosition(event, videoSeconds, options);
+  if (!target.ok) return target;
+
+  const events = options.events || [];
+  const index = events.indexOf(event);
+  const gameTime = visibleGameTimeSeconds(event);
+  if (index === -1 || !finiteValue(event.realTime) || !Number.isFinite(gameTime)) {
+    return { ok: false, reason: "missing-reference" };
+  }
+
+  const offsetMs = target.realTime - Number(event.realTime);
+  const updates = [{ event, realTime: target.realTime }];
+  events.forEach((later, laterIndex) => {
+    const laterTime = visibleGameTimeSeconds(later);
+    if (!Number.isFinite(laterTime) || laterTime < gameTime ||
+        (laterTime === gameTime && laterIndex <= index) ||
+        eventHalf(later, options.durationMinutes) !== target.half ||
+        !finiteValue(later.realTime)) return;
+    updates.push({ event: later, realTime: Number(later.realTime) + offsetMs });
+  });
+
+  if (updates.some(({ event, realTime }) => eventVideoSeconds({ ...event, realTime }, options) < -0.0005)) {
+    return { ok: false, reason: "before-video" };
+  }
+
+  return { ok: true, half: target.half, offsetMs, updates };
+}
+
 /** New video-scouting events retain their exact video position and, when a
  * valid sync anchor exists, the estimated game clock at capture time. */
 export function videoScoutingEventStamp(videoSeconds, options = {}) {
