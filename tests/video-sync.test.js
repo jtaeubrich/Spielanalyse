@@ -11,6 +11,7 @@ import {
   estimateReviewGameTime,
   reviewPosition,
   eventRealTimeFromVideoPosition,
+  planEventVideoAlignment,
   videoScoutingEventStamp,
   reconstructedGameClock,
   scoreAtVideoPosition
@@ -406,5 +407,46 @@ describe("Match event list: game-time order independent of video-time follow",()
     expect(matchEventForVideoTime(chronological,1200)?.index).toBe(4);
     expect(matchEventForVideoTime(chronological,NaN)).toBeNull();
     expect(matchEventForVideoTime([{index:0,event:{time:50},at:NaN}],100)).toBeNull();
+  });
+});
+
+describe("alignment of recorded video jump marks", () => {
+  test("uses game order and applies the same offset to recorded events in the reference half", () => {
+    const later = { time: 90, realTime: 305000, half: 1 };
+    const earlier = { time: 59, realTime: 267000, half: 1 };
+    const tieBefore = { time: 60, realTime: 270000, half: 1 };
+    const anchor = { time: 60, realTime: 271000, half: 1 };
+    const tieAfter = { time: 60, realTime: 272000, half: 1 };
+    const estimated = { time: 70, realTime: null, half: 1, officialSource: "handball360" };
+    const secondHalf = { time: 1500, realTime: 1820000, half: 2 };
+    const events = [later, earlier, tieBefore, anchor, tieAfter, estimated, secondHalf];
+    const options = { events, video: { h1SyncRealTime: 15, h1LiveStartMs: 200000 } };
+
+    expect(planEventVideoAlignment(anchor, 93.5, options)).toEqual({
+      ok: true, half: 1, offsetMs: 7500,
+      updates: [
+        { event: anchor, realTime: 278500 },
+        { event: later, realTime: 312500 },
+        { event: tieAfter, realTime: 279500 }
+      ]
+    });
+    expect(events.map(event => event.realTime)).toEqual([
+      305000, 267000, 270000, 271000, 272000, null, 1820000
+    ]);
+  });
+
+  test("accepts negative offsets and rejects a reference without a recorded time", () => {
+    const anchor = { time: 60, realTime: 65000, half: 1 };
+    const later = { time: 90, realTime: 95000, half: 1 };
+    const estimated = { time: 70, realTime: null, half: 1 };
+    const options = { events: [anchor, later, estimated], isVideoscoutingFile: true };
+    expect(planEventVideoAlignment(anchor, 59, options)).toMatchObject({
+      ok: true, offsetMs: -6000, updates: [
+        { event: anchor, realTime: 59000 }, { event: later, realTime: 89000 }
+      ]
+    });
+    expect(planEventVideoAlignment(estimated, 70, options)).toEqual({
+      ok: false, reason: "missing-reference"
+    });
   });
 });

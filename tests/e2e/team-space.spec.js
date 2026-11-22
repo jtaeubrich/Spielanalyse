@@ -755,7 +755,10 @@ test("Team Space is the only visible invitation flow and exposes its link outsid
   await expect(page.locator("#teamSpaceConnect #teamSpaceInviteLink")).toHaveCount(0);
   // Invite remains accessible even with the trainer settings collapsed.
   await expect(page.locator("#teamSpaceTrainerTools")).not.toHaveAttribute("open","");
-  await page.locator('[data-tab="season"]').click();
+  await page.locator("#teamSpaceSeasons").getByRole("button",{name:"Saison laden"}).click();
+  await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
+  await page.locator("#homeSeasonManage").click();
+  await expect(page.locator("#setupSeasonPanel")).toBeVisible();
   await expect(page.locator("#seasonCloudPanel")).toBeHidden();
   await expect(page.locator("#seasonCloudInvite")).toBeHidden();
   await expect(page.locator("#seasonCloudPublish")).toBeHidden();

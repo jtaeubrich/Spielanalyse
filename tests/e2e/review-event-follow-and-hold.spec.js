@@ -52,6 +52,36 @@ async function openReview(page,{video=false}={}){
   return game;
 }
 
+test("aligns the selected live event and following jump marks in its half after confirmation",async({page})=>{
+  const game=await openReview(page,{video:true});
+  const card=index=>page.locator(`#matchNearbyList [data-event-index="${index}"]`);
+  const readMark=async index=>Number(await card(index).getAttribute("data-video-seconds"));
+  const secondHalf=game.events.findIndex(event=>event.half===2);
+  const earlier=await readMark(0),reference=await readMark(1);
+  const later=await readMark(2),otherHalf=await readMark(secondHalf);
+
+  await card(1).click();
+  await page.evaluate(position=>window.__fakeVideoPosition=position,reference+8);
+  const align=page.getByRole("button",{name:"Nachfolgende Events ausrichten"});
+  page.once("dialog",dialog=>dialog.dismiss());
+  await align.click();
+  expect(await readMark(1)).toBe(reference);
+  expect(await readMark(2)).toBe(later);
+
+  const confirmation=page.waitForEvent("dialog");
+  const click=align.click();
+  const dialog=await confirmation;
+  const message=dialog.message();
+  await dialog.accept();
+  await click;
+  expect(message).toMatch(/nachfolgende Events in H1 um \+8 s/);
+  expect(await readMark(0)).toBe(earlier);
+  expect(await readMark(1)).toBeCloseTo(reference+8,3);
+  expect(await readMark(2)).toBeCloseTo(later+8,3);
+  expect(await readMark(secondHalf)).toBe(otherHalf);
+  await expect(card(1)).toHaveClass(/selected/);
+});
+
 test.describe("video-review tablet sidebar",()=>{
   test.use({viewport:{width:1180,height:850},screen:{width:1180,height:850}});
 

@@ -96,16 +96,25 @@ async function readSeason(page,id){
     }finally{db.close()}
   },id);
 }
+async function reopenSeasonDashboard(page){
+  await page.locator('[data-tab="home"]').click();
+  await page.locator("#homeChooseSeason").click();
+  await page.locator("#homeOpen").click();
+  await page.locator("#homeLibraryList").getByRole("button",{name:"Öffnen",exact:true}).click();
+  await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
+}
 test("Season management offers only Team Space publishing, not a second Season Cloud",async({page})=>{
   const cloud=await mockCloud(page);
   await page.goto("/");
   await page.locator("#seasonImportInput").setInputFiles(upload("trainer.json",archive(1)));
   await expect(page.locator("#homeSeasonDashboard")).toBeVisible();
   await page.locator("#homeSeasonManage").click();
+  await expect(page.locator("#setupSeasonPanel")).toBeVisible();
   await expect(page.locator("#seasonCloudPanel")).toBeHidden();
   await expect(page.locator("#seasonCloudPanel")).toHaveAttribute("inert","");
   await expect(page.locator("#seasonCloudInvite")).toBeHidden();
   await expect(page.locator("#seasonCloudPublish")).toBeHidden();
+  await reopenSeasonDashboard(page);
   await expect(page.locator("#homeSeasonRefresh")).toHaveText("Saison aktualisieren");
   // Updating a local season must never silently use the legacy cloud.
   await page.evaluate(()=>{
@@ -117,7 +126,7 @@ test("Season management offers only Team Space publishing, not a second Season C
   expect(await page.evaluate(()=>window.__localSeasonFilePicker)).toBe(1);
   expect(cloud.calls).toHaveLength(0);
   const libraryId=await page.locator("#seasonLibrarySelect").inputValue();
-  expect(await readSeason(page,"sync-"+libraryId)).toBeNull();
+  expect(await readSeason(page,"sync-"+libraryId)).toBeUndefined();
 });
 
 test("old season invitation still imports locally without exposing legacy publishing",async({page})=>{
@@ -132,8 +141,9 @@ test("old season invitation still imports locally without exposing legacy publis
   const id=await page.locator("#seasonLibrarySelect").inputValue();
   expect((await readSeason(page,"sync-"+id)).connection.role).toBe("reader");
   await page.locator("#homeSeasonManage").click();
+  await expect(page.locator("#setupSeasonPanel")).toBeVisible();
   await expect(page.locator("#seasonCloudPanel")).toBeHidden();
-  await page.locator('[data-tab="home"]').click();
+  await reopenSeasonDashboard(page);
   await page.locator("#homeSeasonGames .home-list-row").first()
     .getByRole("button",{name:"Fortsetzen",exact:true}).click();
   await page.locator('[data-tab="video"]').click();
@@ -144,7 +154,7 @@ test("old season invitation still imports locally without exposing legacy publis
   expect(saved.videoAnnotation.comment).toBe("Meine private Videoanalyse");
   const callsBefore=cloud.calls.length;
   cloud.revision=2;
-  await page.locator('[data-tab="home"]').click();
+  await reopenSeasonDashboard(page);
   await page.evaluate(()=>{
     window.__localSeasonFilePicker=0;
     document.querySelector("#seasonRefreshInput").click=
