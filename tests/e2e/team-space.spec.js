@@ -732,3 +732,31 @@ test("opened Team Space game cannot overwrite a cloud match containing more even
   expect(cloud.lastPublish).toBeNull();
   await expect(page.locator("#publishOpenedGameBtn")).toBeEnabled();
 });
+
+test("Team Space is the only visible invitation flow and exposes its link outside advanced settings",async({page})=>{
+  await mockSpace(page);
+  await page.goto("/");
+  await openLegacyTeamSpaceTools(page);
+  await page.locator("#teamSpaceApi").fill(API);
+  await page.locator("#teamSpaceName").fill("TSV Kronshagen");
+  await page.locator("#teamSpaceRegistrationToken").fill(ADMIN);
+  await page.locator("#teamSpaceCreate").click();
+  await expect(page.locator("#teamSpaceInviteLink")).toHaveValue(/#teamspace=/);
+  await page.locator("#homeBack").click();
+  await page.locator("#homeBack").click();
+  await loadConnectedTeamSpace(page);
+  const invite=page.locator("#teamSpaceInvitePanel");
+  await expect(invite).toBeVisible();
+  await expect(page.locator("#teamSpaceInviteLink")).toBeVisible();
+  await expect(page.locator("#teamSpaceCopyInvite")).toBeVisible();
+  await expect(page.locator("#teamSpaceCopyInvite")).toBeEnabled();
+  await expect(page.locator("#teamSpaceInviteRecovery")).toBeHidden();
+  await expect(page.locator("#teamSpaceInviteLink")).toHaveCount(1);
+  await expect(page.locator("#teamSpaceConnect #teamSpaceInviteLink")).toHaveCount(0);
+  // Invite remains accessible even with the trainer settings collapsed.
+  await expect(page.locator("#teamSpaceTrainerTools")).not.toHaveAttribute("open","");
+  await page.locator('[data-tab="season"]').click();
+  await expect(page.locator("#seasonCloudPanel")).toBeHidden();
+  await expect(page.locator("#seasonCloudInvite")).toBeHidden();
+  await expect(page.locator("#seasonCloudPublish")).toBeHidden();
+});
