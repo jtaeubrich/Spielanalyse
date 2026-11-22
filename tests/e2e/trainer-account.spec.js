@@ -430,8 +430,9 @@ test("approved trainer on fresh iPad sees own spaces and writes without a copied
     return route.fulfill(success({error:{message:"Unknown endpoint"}},404));
   });
   await page.route(API+"/spaces/"+SPACE+"/catalog",route=>{
-    viewed.push(route.request().headers().authorization);
-    return route.fulfill(route.request().headers().authorization==="Bearer "+ID_TOKEN
+    const authorization=route.request().headers().authorization;
+    viewed.push(authorization);
+    return route.fulfill([ID_TOKEN,KEY].some(token=>authorization==="Bearer "+token)
       ?success(catalog([{id:SEASON,name:"B-Jugend",revision:1,
           gameCount:0,gameIds:[],preferredTeam:"TSV Kronshagen"}]))
       :success({error:{message:"No access"}},401));
@@ -444,6 +445,9 @@ test("approved trainer on fresh iPad sees own spaces and writes without a copied
   await page.locator("#homeLibraryList").getByRole("button",{name:"Laden"}).click();
   await expect(page.locator("#teamSpaceSeasons")).toContainText("B-Jugend");
   await expect(page.locator("#teamSpacePlayerStatus")).toContainText("Keine neueren Cloud-Versionen");
+  await expect(page.locator("#teamSpaceInvitePanel")).toBeVisible();
+  await expect(page.locator("#teamSpaceInviteRecovery")).toBeVisible();
+  await expect(page.locator("#teamSpaceInviteStatus")).toContainText("kein Mannschafts-Leseschlüssel");
   await expect(page.locator("#teamSpaceTrainerTools")).toBeVisible();
   await page.locator("#teamSpaceTrainerTools > summary").click();
   await expect(page.locator("#teamSpacePublish")).toBeVisible();
@@ -456,6 +460,20 @@ test("approved trainer on fresh iPad sees own spaces and writes without a copied
   expect(stored).not.toContain(ID_TOKEN);
   expect(stored).not.toContain("tablet-password");
   expect(stored).not.toContain(KEY);
+  const oldInvite="https://jtaeubrich.github.io/Spielanalyse/#teamspace="+SPACE+
+    "&key="+encodeURIComponent(KEY)+"&api="+encodeURIComponent(API);
+  await page.locator("#teamSpaceInviteRecovery summary").click();
+  await page.locator("#teamSpaceInviteRecoveryInput").fill(oldInvite);
+  await page.locator("#teamSpaceRecoverInvite").click();
+  await expect(page.locator("#teamSpaceInviteLink")).toHaveValue(/#teamspace=/);
+  await expect(page.locator("#teamSpaceInviteLink")).toHaveValue(/key=/);
+  await expect(page.locator("#teamSpaceCopyInvite")).toBeEnabled();
+  await expect(page.locator("#teamSpaceInviteRecovery")).toBeHidden();
+  await expect(page.locator("#teamSpaceInvitePanel")).toBeVisible();
+  await expect(page.locator("#teamSpaceSeasons")).toContainText("B-Jugend");
+  // The saved invitation recovers exactly the original read capability,
+  // without issuing or rotating a credential.
+  expect(viewed.some(authorization=>authorization==="Bearer "+KEY)).toBe(true);
 });
 
 test("trainer can link a previous Team Space once and then find it in the library",async({page})=>{
