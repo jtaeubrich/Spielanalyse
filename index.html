@@ -1607,7 +1607,16 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
     #homeTeamSpace h3{margin:20px 0 10px}
     .teamspace-connect,.teamspace-publish{padding:14px;border:1px solid var(--line);border-radius:14px;margin-top:18px}
     .teamspace-connect hr{margin:15px 0;border:0;border-top:1px solid var(--line)}
+    /* Team Space is the only visible publishing/invitation workflow.
+       Preserve hidden legacy season-cloud DOM for safe import of old links. */
+    #seasonCloudPanel{display:none!important}
     #teamSpaceInviteLink{font-family:monospace;font-size:12px}
+    #teamSpaceInvitePanel[hidden],#teamSpaceInviteRecovery[hidden]{display:none!important}
+    .teamspace-invite{padding:14px;border:1px solid var(--cyan);border-radius:14px;margin:14px 0;background:var(--panel)}
+    .teamspace-invite .field{display:block;box-sizing:border-box;width:100%;margin:8px 0}
+    .teamspace-invite>h3{margin:0 0 8px!important}
+    .teamspace-invite details{margin-top:12px}
+    .teamspace-invite details summary{cursor:pointer}
     #teamSpaceJoinPanel[hidden],#teamSpaceTrainerTools[hidden],
     #teamSpacePlayerSummary[hidden],#teamSpacePlayerStatus[hidden],
     #teamSpaceJoinStatus[hidden],#teamSpaceRefresh[hidden],
@@ -1696,6 +1705,24 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         </div>
         <p id="teamSpacePlayerSummary" class="number-help" hidden></p>
         <p id="teamSpacePlayerStatus" class="number-help" role="status" aria-live="polite" hidden></p>
+        <section id="teamSpaceInvitePanel" class="teamspace-invite" hidden aria-label="Mannschaft einladen">
+          <h3>Mannschaft einladen</h3>
+          <p class="number-help">Dieser Link öffnet den Team Space mit den freigegebenen Saisons und Spielen. Zum erneuten Teilen ist keine neue Veröffentlichung nötig.</p>
+          <label for="teamSpaceInviteLink">Einladungslink für die Mannschaft · Team Space</label>
+          <input class="field" id="teamSpaceInviteLink" type="text" readonly spellcheck="false" autocomplete="off">
+          <div class="season-tools">
+            <button type="button" class="btn primary" id="teamSpaceCopyInvite">Einladungslink kopieren</button>
+          </div>
+          <p class="number-help" id="teamSpaceInviteStatus" role="status" aria-live="polite"></p>
+          <details id="teamSpaceInviteRecovery" hidden>
+            <summary>Bereits geteilten Einladungslink auf diesem Gerät übernehmen</summary>
+            <p class="number-help">Der Leseschlüssel wird nicht automatisch mit dem Trainerkonto auf andere Geräte übertragen. Füge hier den bereits an die Mannschaft verschickten Link ein. Es wird kein neuer Team Space erstellt und kein Schlüssel erneuert.</p>
+            <label for="teamSpaceInviteRecoveryInput">Vorhandener Team-Space-Link</label>
+            <input class="field" id="teamSpaceInviteRecoveryInput" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="https://…/#teamspace=…">
+            <button type="button" class="btn" id="teamSpaceRecoverInvite">Einladungslink prüfen und übernehmen</button>
+            <p class="number-help" id="teamSpaceInviteRecoveryStatus" role="status" aria-live="polite"></p>
+          </details>
+        </section>
         <section id="teamSpaceAuthPrompt" class="panel" hidden>
           <h3 id="teamSpaceAuthTitle">Traineranmeldung erforderlich</h3>
           <p id="teamSpaceAuthDescription" class="number-help"></p>
@@ -1904,10 +1931,6 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
               <button type="button" class="btn" id="teamSpaceRevealTrainerToken">Schlüssel anzeigen</button>
             </div>
           </div>
-          <label>Einladungslink für die Mannschaft
-            <input class="field" id="teamSpaceInviteLink" type="text" readonly>
-          </label>
-          <button type="button" class="btn" id="teamSpaceCopyInvite">Link kopieren</button>
         </details>
         <details class="season-games-details teamspace-publish" id="teamSpacePublish" hidden>
           <summary>Saisons und Spiele veröffentlichen · Trainer</summary>
@@ -2217,7 +2240,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
         <div class="season-library"><label for="seasonLibrarySelect"><strong>Gespeicherte Saisons</strong></label><select class="field" id="seasonLibrarySelect" aria-label="Gespeicherte Saison auswählen"><option value="">Aktive Saison</option></select><button class="btn primary" id="seasonNew" type="button">+ Neue Saison</button><p class="number-help" id="seasonLibraryStatus">Alle Saisons werden auf diesem Gerät getrennt gespeichert. Saisonwechsel verändert das aktive Match nicht.</p></div>
         <div class="season-meta"><label>Saisonname<input class="field" id="seasonName" value="Saison 2026/27" placeholder="z. B. Saison 2026/27"></label><label>Archiv-Mannschaft (jahrgangsunabhängig)<input class="field" id="seasonArchiveTeam" placeholder="z. B. TSV Kronshagen mB"></label><label>Mein Team für die Saison<select class="field" id="seasonPreferredTeam"><option value="">Keine Mannschaft ausgewählt</option></select></label></div><div class="season-tools"><button class="btn primary" id="seasonHandball360Open" type="button">Saison über Handball360 importieren</button><button class="btn" id="seasonNuLigaOpen" type="button">nuLiga HTML-Demo</button><label class="btn" for="seasonGameInput">Spiel-JSONs laden</label><input id="seasonGameInput" type="file" accept=".json,application/json" multiple hidden><input id="seasonUpdateInput" type="file" accept=".json,application/json" hidden><label class="btn" for="seasonImportInput">Saison importieren</label><input id="seasonImportInput" type="file" accept=".json,application/json" hidden><button class="btn primary" id="seasonRefreshOpen" type="button">Bestehende Saison aktualisieren</button><input id="seasonRefreshInput" type="file" accept=".json,application/json" hidden><button class="btn" id="seasonSelectAll" type="button">Alle auswählen</button><button class="btn" id="seasonSelectNone" type="button">Auswahl aufheben</button><button class="btn danger" id="seasonClearGames" type="button">Saison leeren</button></div>
 
-        <details class="season-games-details season-cloud-card" id="seasonCloudPanel">
+        <details class="season-games-details season-cloud-card" id="seasonCloudPanel" hidden inert aria-hidden="true">
           <summary>☁ Saison-Cloud · für die Mannschaft</summary>
           <p class="editor-help">Neue Spiele online veröffentlichen oder die bestehende Saison mit einem Klick aktualisieren. Eigene Markierungen und Kommentare bleiben auf diesem Gerät.</p>
           <div class="season-cloud-fields">
@@ -4931,7 +4954,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       $("seasonCloudEndpoint").value=connection.api;
     $("seasonCloudInvite").value=connection?.role==="trainer"
       ?makeSeasonInvite(location.origin+location.pathname,connection):"";
-    $("homeSeasonRefresh").textContent=connection?"Saison online aktualisieren":"Saison aktualisieren";
+    // Legacy season-cloud connections remain stored for older invitations,
+    // but cannot be managed through a competing publishing workflow.
+    $("homeSeasonRefresh").textContent="Saison aktualisieren";
     cloudStatus(connection
       ?(connection.role==="trainer"?"Trainer-Verbindung":"Spieler-Lesezugang")+
         " · veröffentlichte Version "+(connection.revision||0)+
@@ -5124,13 +5149,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     console.warn("Ungültiger Saison- oder Team-Space-Link:",error.message);
   }
   $("seasonRefreshOpen").onclick=openSeasonRefreshPicker;
-  $("homeSeasonRefresh").onclick=async()=>{
-    if(!seasonCloudConfig)return openSeasonRefreshPicker();
-    const button=$("homeSeasonRefresh");button.disabled=true;
-    try{await refreshCurrentSeasonFromCloud()}
-    catch(error){toast("Cloud-Aktualisierung fehlgeschlagen: "+error.message)}
-    finally{button.disabled=false}
-  };
+  // The season overview updates local files only. Online updates are
+  // exclusively handled in the Team Space view.
+  $("homeSeasonRefresh").onclick=openSeasonRefreshPicker;
   $("seasonRefreshCancel").onclick=()=>$("seasonRefreshDialog").close();
   $("seasonRefreshClose").onclick=()=>$("seasonRefreshDialog").close();
   $("seasonRefreshDialog").addEventListener("close",()=>{
@@ -6095,6 +6116,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("teamSpacePlayerStatus").hidden=!inSpace||joining;
     $("teamSpaceAuthPrompt").hidden=!inSpace||joining||!connection||
       !teamSpaceAuthRequired||teamSpaceAuthSpaceId!==connection.spaceId;
+    $("teamSpaceInvitePanel").hidden=!inSpace||joining||!connection||!teamSpaceCanPublish();
     $("teamSpaceTrainerTools").hidden=!inSpace||!hasTrainerTools;
     if(!hasTrainerTools)$("teamSpaceTrainerTools").open=false;
     $("teamSpaceTrainerDetails").hidden=!confirmedTrainer;
@@ -6184,14 +6206,18 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("teamSpaceClaimTrainer").hidden=!connection||
       teamSpaceCatalogData?.trainerAccess!=="legacy";
     $("teamSpaceActivateTrainer").hidden=!connection||["trainer","account"].includes(connection.role);
-    $("teamSpaceCopyInvite").disabled=!["trainer","account"].includes(connection?.role);
-    // Account-only devices have no transferable player credential. Do not
-    // manufacture a read link or rotate the existing invite behind users' backs.
+    // Only a trainer with a locally stored reader capability may share it.
+    // An account-only device can recover an existing link, never mint a key.
     const inviteAvailable=["trainer","account"].includes(connection?.role)&&
       !!connection?.readToken;
     $("teamSpaceInviteLink").value=inviteAvailable
       ?makeTeamSpaceInvite(location.origin+location.pathname,connection):"";
     $("teamSpaceCopyInvite").disabled=!inviteAvailable;
+    $("teamSpaceInviteStatus").textContent=!connection?"":inviteAvailable
+      ?"Teile diesen Link mit Spielern und Eltern. Der Trainer-Schlüssel wird nicht mitgegeben."
+      :"Auf diesem Gerät ist kein Mannschafts-Leseschlüssel gespeichert. Ein bereits geteilter Link kann unten sicher übernommen werden.";
+    $("teamSpaceInviteRecovery").hidden=!connection||inviteAvailable||
+      !["trainer","account"].includes(connection.role);
     if(connection?.api&&!$("teamSpaceApi").value)
       $("teamSpaceApi").value=connection.api;
     if(connection?.name&&!$("teamSpaceName").value)
@@ -7134,6 +7160,39 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     if(!link)return;
     try{await navigator.clipboard.writeText(link);toast("Team-Space-Leselink kopiert. Nur an die Mannschaft weitergeben.")}
     catch{$("teamSpaceInviteLink").select();toast("Link markiert; bitte kopieren.")}
+  };
+  $("teamSpaceRecoverInvite").onclick=async()=>{
+    const connection=teamActiveConnection();
+    const status=$("teamSpaceInviteRecoveryStatus");
+    if(!connection||!teamSpaceCanPublish()){
+      status.textContent="Für das Übernehmen ist ein berechtigter Trainerzugang erforderlich.";
+      return;
+    }
+    const input=$("teamSpaceInviteRecoveryInput"),button=$("teamSpaceRecoverInvite");
+    button.disabled=true;
+    try{
+      const raw=input.value.trim();
+      const fragment=raw.startsWith("#")?raw:new URL(raw).hash;
+      const invite=parseTeamSpaceInvite(fragment);
+      if(!invite||invite.spaceId!==connection.spaceId)
+        throw Error("Der Einladungslink gehört nicht zum ausgewählten Team Space.");
+      if(seasonCloudEndpoint(invite.api)!==seasonCloudEndpoint(connection.api))
+        throw Error("Der Einladungslink gehört zu einem anderen Cloud-Dienst.");
+      // Verify the old player key against the server before persisting it.
+      const catalog=await coreTeamSpaceCatalog({
+        ...connection,role:"reader",readToken:invite.readToken
+      });
+      if(catalog.spaceId!==connection.spaceId)
+        throw Error("Der Cloud-Dienst hat einen anderen Team Space geliefert.");
+      await saveTeamSpaceConnection({...connection,readToken:invite.readToken});
+      input.value="";
+      status.textContent="Bestehender Spieler-Leseschlüssel geprüft und auf diesem Gerät übernommen.";
+      await teamSpaceRefreshCatalog();
+    }catch(error){
+      status.textContent="Einladungslink konnte nicht übernommen werden: "+error.message;
+    }finally{
+      button.disabled=false;
+    }
   };
   // Optional Firebase Trainer login. Refresh tokens are session-only unless
   // the user explicitly enables persistent sign-in for a private device.
@@ -10141,7 +10200,7 @@ function editorSelect(items,value,onchange,extra=""){const s=document.createElem
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js?v=177",{updateViaCache:"none"}).then(registration => {
+        navigator.serviceWorker.register("./sw.js?v=178",{updateViaCache:"none"}).then(registration => {
           registration.update().catch(() => {});
         }).catch(error => {
           console.warn("Service Worker konnte nicht registriert werden.", error);
