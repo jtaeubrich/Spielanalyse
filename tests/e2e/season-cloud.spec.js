@@ -126,7 +126,7 @@ test("Season management offers only Team Space publishing, not a second Season C
   expect(await page.evaluate(()=>window.__localSeasonFilePicker)).toBe(1);
   expect(cloud.calls).toHaveLength(0);
   const libraryId=await page.locator("#seasonLibrarySelect").inputValue();
-  expect(await readSeason(page,"sync-"+libraryId)).toBeNull();
+  expect(await readSeason(page,"sync-"+libraryId)).toBeUndefined();
 });
 
 test("old season invitation still imports locally without exposing legacy publishing",async({page})=>{
