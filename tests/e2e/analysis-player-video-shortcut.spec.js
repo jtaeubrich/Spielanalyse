@@ -96,3 +96,36 @@ test("Season preview player video icon opens only the selected fixture and retai
   expect(independentSaved.gameName).toBe("Unabhängiges Einzelspiel");
   await expect(page.locator("#seasonGameCount")).toContainText("2 Spiele");
 });
+
+test("Analysis combines a legacy and H360 roster entry and opens both video events", async ({ page }) => {
+  const source = game("Einzelspiel mit Altbestand", []);
+  const official = {
+    ...source.home.players[0], vorname: "Mia", nachname: "Beispiel", nr: 12,
+    isTW: false, handballNetId: "mia-h360"
+  };
+  const legacy = { id: "legacy-mia", vorname: "", nachname: "Mia Beispiel", nr: "" };
+  source.home.players = [legacy, official];
+  source.events = [legacy, official].map((p, index) => ({
+    id: "goal-" + index, type: "goal", team: "home", pId: p.id,
+    half: 1, time: 10 + index, realTime: 10000 + index * 1000
+  }));
+
+  await page.goto("/");
+  await page.locator('[data-tab="setup"]').click();
+  await page.locator("#continueGameInput").setInputFiles(upload("altbestand.json", source));
+  await page.locator('[data-tab="analysis"]').click();
+  const row = page.locator("#ownPlayerRows tr").filter({ hasText: "Mia Beispiel" });
+  await expect(row).toHaveCount(1);
+  await expect(row.locator("td").first()).toContainText("#12 Mia Beispiel");
+  await expect(row.locator("td").nth(2)).toHaveText("2");
+  await expect(page.locator("#analysisPlayerFilter option").filter({ hasText: "Mia Beispiel" })).toHaveCount(1);
+  await page.locator("#analysisPlayerFilter").selectOption(String(official.id));
+  await expect(row.locator("td").nth(2)).toHaveText("2");
+
+  await row.locator("button").click();
+  await expect(page.locator("#videoPlayerFilter")).toHaveValue(String(official.id));
+  await expect(page.locator("#videoPlaylist .clip")).toHaveCount(2);
+  const after = await stored(page);
+  expect(after.home.players.map(p => p.id)).toEqual([legacy.id, official.id]);
+  expect(after.events.map(event => event.pId)).toEqual([legacy.id, official.id]);
+});

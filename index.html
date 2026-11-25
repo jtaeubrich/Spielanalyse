@@ -2646,7 +2646,7 @@ body.phone-match-layout.video-workflow-layout #matchTab #matchNearbyEvents{
       <p>Unter dem einzigen Haupttab <strong>Analyse</strong> liegen die Ansichten <strong>Einzelspiel</strong> und, sofern eine Saison geöffnet ist, <strong>Saison</strong>. Die Saisonperspektive ist fest auf <strong>Mein Team für die Saison</strong> ausgerichtet – bei Heim- und Auswärtsspielen. Das zuletzt bearbeitete Saisonspiel wird automatisch nur zur Analyse vorausgewählt; für den tatsächlichen Scouting-Start bitte auf der Saisonübersicht <strong>Fortsetzen</strong> wählen. Bei unabhängigen Einzelspielen ist nur die Einzelspielansicht sichtbar und die Perspektive kann zwischen Neutral, Heim und Gast umgeschaltet werden. Filter stehen für Team, Spieler, Ereignistyp, Abwurfposition, Wurfziel und Spielsituation bereit.</p>
       <ul><li>Übersicht über Tore, Würfe, Paraden und technische Fehler.</li><li>Spielverlauf und Teamvergleich.</li><li>Wurf- und Torwartauswertungen nach Position und Ziel.</li><li>Spielerstatistiken und Torwartquote.</li><li>Gefilterte Szenen können direkt an den Video-Tab übergeben werden.</li><li>Die Analyse kann als PDF ausgegeben werden.</li></ul>
     </section>
-    <section class="help-section" id="helpSeason"><h3>Saison</h3><figure class="help-shot help-shot-wide"><a href="./docs/handbuch/images/generated/season-overview-desktop.jpg" target="_blank" rel="noopener"><picture><source media="(max-width: 600px)" srcset="./docs/handbuch/images/generated/season-overview-mobile.jpg"><img src="./docs/handbuch/images/generated/season-overview-desktop.jpg" loading="lazy" decoding="async" alt="Saisonübersicht mit gespielten und zukünftigen Begegnungen"></picture></a><figcaption>18 Begegnungen als Demo-Saison: fünf gespielte und dreizehn zukünftige Spiele.</figcaption></figure><figure class="help-shot help-shot-wide"><a href="./docs/handbuch/images/generated/season-analytics-desktop.jpg" target="_blank" rel="noopener"><img src="./docs/handbuch/images/generated/season-analytics-desktop.jpg" loading="lazy" decoding="async" alt="Saisonstatistik und Filter in der Spielanalyse"></a><figcaption>Saisonstatistik aus anonymisierten Ereignisdaten.</figcaption></figure><p><strong>Komplette Mannschaftssaison importieren:</strong> Über „Saison über Handball360 importieren“ die Team-ID oder den handball.net-Mannschaftslink und den Zeitraum eintragen, zunächst den Spielplan laden und anschließend einzelne Spiele auswählen. Bereits vorhandene Spiele sind gesperrt; manuell erfasste Events, Videos und Kommentare werden nicht überschrieben. Künftige Spieltermine werden zunächst nicht ausgewählt und zählen ohne offizielle Ereignisse bei Übernahme nicht in die Saisonauswertung. Da Handball360 keine vollständige eigene Wurf- und Torhüteranalyse liefert, können Wurfquote und TW-Quote aus offiziellen Daten unvollständig sein. Die verwendeten Web-Endpunkte sind nicht offiziell zugesichert.</p><p><strong>Spieler zusammenführen:</strong> Identische vollständige Namen werden auch ohne Rückennummer automatisch aggregiert, sofern sie eindeutig sind. Abweichende Schreibweisen lassen sich über den Button über der Spielertabelle manuell einem Zielspieler zuordnen und über „Aufheben“ rückgängig machen. Die Zuordnung wird mit der Saison exportiert, aber nicht in die einzelnen Spiel-JSONs geschrieben.</p><p>Über <strong>Setup → Saison</strong> lassen sich mehrere Spiel-JSONs laden und für die Auswertung auswählen. Die gemeinsame Statistik liegt unter <strong>Analyse → Saison</strong>, nicht in einem zweiten Haupttab. Filter, grafische Übersichten, Wurfkarten und Statistiken werden über die ausgewählten Spiele aggregiert. Der Team-Vergleich kann zwischen absoluten Saisonwerten und Durchschnittswerten pro ausgewähltem Spiel umgeschaltet werden. Die Spielertabelle enthält ausschließlich das eigene Team; Feldspieler werden mit Toren/Wurfquote, Torhüter mit Paraden/TW-Quote dargestellt. Strafen werden pro Spieler als 2-Minuten-Einheiten gezählt (2 Min. = 1, 2+2 = 2, Rot = 1). Bereits geladene Spiel-JSONs können durch erneutes Laden automatisch aktualisiert werden; alternativ steht pro Spiel „Aktualisieren“ zur Verfügung. Einzelne Spiele können direkt aus der Saison gelöscht werden. Die Saison wird zusätzlich automatisch lokal in IndexedDB gespeichert und beim nächsten Start wiederhergestellt. Über Saison exportieren/importieren kann sie als einzelne Backup-Datei zwischen Geräten übertragen werden. Die Originaldateien werden dabei nicht verändert; Video bleibt bewusst spielbezogen.</p></section>
+    <section class="help-section" id="helpSeason"><h3>Saison</h3><figure class="help-shot help-shot-wide"><a href="./docs/handbuch/images/generated/season-overview-desktop.jpg" target="_blank" rel="noopener"><picture><source media="(max-width: 600px)" srcset="./docs/handbuch/images/generated/season-overview-mobile.jpg"><img src="./docs/handbuch/images/generated/season-overview-desktop.jpg" loading="lazy" decoding="async" alt="Saisonübersicht mit gespielten und zukünftigen Begegnungen"></picture></a><figcaption>18 Begegnungen als Demo-Saison: fünf gespielte und dreizehn zukünftige Spiele.</figcaption></figure><figure class="help-shot help-shot-wide"><a href="./docs/handbuch/images/generated/season-analytics-desktop.jpg" target="_blank" rel="noopener"><img src="./docs/handbuch/images/generated/season-analytics-desktop.jpg" loading="lazy" decoding="async" alt="Saisonstatistik und Filter in der Spielanalyse"></a><figcaption>Saisonstatistik aus anonymisierten Ereignisdaten.</figcaption></figure><p><strong>Komplette Mannschaftssaison importieren:</strong> Über „Saison über Handball360 importieren“ die Team-ID oder den handball.net-Mannschaftslink und den Zeitraum eintragen, zunächst den Spielplan laden und anschließend einzelne Spiele auswählen. Bereits vorhandene Spiele sind gesperrt; manuell erfasste Events, Videos und Kommentare werden nicht überschrieben. Künftige Spieltermine werden zunächst nicht ausgewählt und zählen ohne offizielle Ereignisse bei Übernahme nicht in die Saisonauswertung. Da Handball360 keine vollständige eigene Wurf- und Torhüteranalyse liefert, können Wurfquote und TW-Quote aus offiziellen Daten unvollständig sein. Die verwendeten Web-Endpunkte sind nicht offiziell zugesichert.</p><p><strong>Spieler zusammenführen:</strong> Eindeutige Handball360-IDs und übereinstimmende vollständige Namen werden automatisch erkannt, auch wenn der volle Name in einer älteren Datei in einem einzigen Namensfeld steht. Abweichende Schreibweisen lassen sich über den Button über der Spielertabelle manuell einem Zielspieler zuordnen und über „Aufheben“ rückgängig machen. Die Zuordnung wird mit der Saison exportiert, aber nicht in die einzelnen Spiel-JSONs geschrieben.</p><p>Über <strong>Setup → Saison</strong> lassen sich mehrere Spiel-JSONs laden und für die Auswertung auswählen. Die gemeinsame Statistik liegt unter <strong>Analyse → Saison</strong>, nicht in einem zweiten Haupttab. Filter, grafische Übersichten, Wurfkarten und Statistiken werden über die ausgewählten Spiele aggregiert. Der Team-Vergleich kann zwischen absoluten Saisonwerten und Durchschnittswerten pro ausgewähltem Spiel umgeschaltet werden. Die Spielertabelle enthält ausschließlich das eigene Team; Feldspieler werden mit Toren/Wurfquote, Torhüter mit Paraden/TW-Quote dargestellt. Strafen werden pro Spieler als 2-Minuten-Einheiten gezählt (2 Min. = 1, 2+2 = 2, Rot = 1). Bereits geladene Spiel-JSONs können durch erneutes Laden automatisch aktualisiert werden; alternativ steht pro Spiel „Aktualisieren“ zur Verfügung. Einzelne Spiele können direkt aus der Saison gelöscht werden. Die Saison wird zusätzlich automatisch lokal in IndexedDB gespeichert und beim nächsten Start wiederhergestellt. Über Saison exportieren/importieren kann sie als einzelne Backup-Datei zwischen Geräten übertragen werden. Die Originaldateien werden dabei nicht verändert; Video bleibt bewusst spielbezogen.</p></section>
     <section class="help-section" id="helpVideo">
       <h3>Video</h3>
       <figure class="help-shot help-shot-wide"><a href="./docs/handbuch/images/generated/video-desktop.jpg" target="_blank" rel="noopener"><img src="./docs/handbuch/images/generated/video-desktop.jpg" loading="lazy" decoding="async" alt="Video-Tab mit Filtern und Videoplayer"></a><figcaption>Video-Tab mit Ereignissen; das reale Spielvideo ergänzen wir später.</figcaption></figure>
@@ -2712,7 +2712,7 @@ import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, d
 import { seasonTrendSeries as coreSeasonTrendSeries, seasonPlayerComparison as coreSeasonPlayerComparison, seasonTrendYAxisTicks as coreSeasonTrendYAxisTicks } from "./src/season-trends.js?v=3";
 import { analysisViewSide, analysisVideoRole, analysisPerspectiveText } from "./src/analysis-perspective.js?v=1";
 import { selectSeasonPreviewGame } from "./src/season-selection.js?v=1";
-import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver, createAliasedSeasonPlayerKeyResolver as coreCreateAliasedSeasonPlayerKeyResolver, setSeasonPlayerAlias as coreSetSeasonPlayerAlias, resolveSeasonPlayerAliasKey as coreResolveSeasonPlayerAliasKey } from "./src/season-core.js";
+import { seasonGameSummary as coreSeasonGameSummary, seasonTeamAggregate as coreSeasonTeamAggregate, seasonPlayerAggregate as coreSeasonPlayerAggregate, seasonEventPlayerKey as coreSeasonEventPlayerKey, seasonEventMatchesTeam as coreSeasonEventMatchesTeam, seasonEventMatchesPlayer as coreSeasonEventMatchesPlayer, seasonMatchesType as coreSeasonMatchesType, seasonDimension as coreSeasonDimension, filterSeasonEntries as coreFilterSeasonEntries, filterSeasonShots as coreFilterSeasonShots, createSeasonPlayerKeyResolver as coreCreateSeasonPlayerKeyResolver, createAliasedSeasonPlayerKeyResolver as coreCreateAliasedSeasonPlayerKeyResolver, setSeasonPlayerAlias as coreSetSeasonPlayerAlias, groupMatchPlayers as coreGroupMatchPlayers } from "./src/season-core.js";
 import { specialTeamsForState as coreSpecialTeamsForState } from "./src/special-teams.js";
 import { syncPointSeconds as coreSyncPointSeconds, eventHalf as coreVideoEventHalf, syncForHalf as coreSyncForHalf, halfSyncFromOfficialGoal as coreHalfSyncFromOfficialGoal, officialVideoEvent as coreOfficialVideoEvent, eventVideoSeconds as coreEventVideoSeconds, eventVideoPosition as coreEventVideoPosition, estimateReviewGameTime as coreEstimateReviewGameTime, reviewPosition as coreReviewPosition, eventRealTimeFromVideoPosition as coreEventRealTimeFromVideoPosition, planEventVideoAlignment as corePlanEventVideoAlignment, videoScoutingEventStamp as coreVideoScoutingEventStamp, reconstructedGameClock as coreReconstructedGameClock, scoreAtVideoPosition as coreScoreAtVideoPosition, sortMatchEventsByGameTime as coreSortMatchEventsByGameTime, matchEventForVideoTime as coreMatchEventForVideoTime } from "./src/video-sync.js?v=154";
 import { createScenePlayback, localVideoAdapter, youtubeAdapter } from "./src/video-playback.js";
@@ -3277,6 +3277,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   const eventAttackPlayerId=e=>["save","block"].includes(e.type)?(e.throwerId??e.attackerId):(e.pId??e.attackerId??e.throwerId);
   function eventMatchesPlayer(e,id,type="all"){
     if(id==="all")return true;
+    if(id instanceof Set)return [...id].some(playerId=>eventMatchesPlayer(e,playerId,type));
     const pid=String(id);
     if(type==="defense")return eventDefensePlayerIds(e).has(pid);
     if(type==="save")return String(e.pId??"")===pid;
@@ -3293,8 +3294,28 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   const eventMatchesTag=(e,tag)=>tag==="all"||(tag==="__highlight__"&&Boolean(e.highlight))||normalizedTags(e).includes(tag);
   const matchesDimension=(value,filter)=>filter==="all"||(filter==="OT"&&["OTL","OTM","OTR"].includes(String(value??"")))||String(value??"")===String(filter);
   const eventMatchesType=(e,type)=>type==="all"||(type==="shot"&&["shot","goal","miss","save","block"].includes(e.type))||(type==="defense"&&eventDefensePlayerIds(e).size>0)||(type==="2min"&&penaltyEventTypes.includes(e.type))||e.type===type;
-  function filteredEvents(team,player,type,zone="all",target="all",phase="all",tag="all"){return state.events.filter(e=>eventMatchesRole(e,team,type)&&eventMatchesPlayer(e,player,type)&&eventMatchesType(e,type)&&matchesDimension(e.z,zone)&&matchesDimension(e.gz,target)&&matchesDimension(e.attackPhase,phase)&&eventMatchesTag(e,tag)).sort((a,b)=>(a.time||0)-(b.time||0))}
-  function populatePlayerFilter(select,role="all"){const value=select.value||"all",teams=role==="own"?[ownTeam]:role==="opponent"?[opponentTeam()]:[ownTeam,opponentTeam()];select.replaceChildren(new Option("Alle Spieler","all"));for(const team of teams){const group=document.createElement("optgroup");group.label=team===ownTeam?"Mein Team":"Gegner";for(const p of state[team].players||[])group.append(new Option(playerName(p),String(p.id)));select.append(group)}select.value=[...select.options].some(o=>o.value===value)?value:"all"}
+  function filteredEvents(team,player,type,zone="all",target="all",phase="all",tag="all"){const ids=matchPlayerGroup(player)?.ids||player;return state.events.filter(e=>eventMatchesRole(e,team,type)&&eventMatchesPlayer(e,ids,type)&&eventMatchesType(e,type)&&matchesDimension(e.z,zone)&&matchesDimension(e.gz,target)&&matchesDimension(e.attackPhase,phase)&&eventMatchesTag(e,tag)).sort((a,b)=>(a.time||0)-(b.time||0))}
+  function matchPlayerGroup(id){
+    const player=getPlayer(id);
+    return player?coreGroupMatchPlayers(state,player.team).find(group=>group.ids.has(String(id))):null;
+  }
+  function populatePlayerFilter(select,role="all",value=select.value||"all"){
+    value=String(value);
+    const teams=role==="own"?[ownTeam]:role==="opponent"?[opponentTeam()]:[ownTeam,opponentTeam()];
+    let selected="all";
+    select.replaceChildren(new Option("Alle Spieler","all"));
+    for(const team of teams){
+      const group=document.createElement("optgroup");
+      group.label=team===ownTeam?"Mein Team":"Gegner";
+      for(const {player,ids} of coreGroupMatchPlayers(state,team)){
+        const id=String(player.id);
+        group.append(new Option(playerName(player),id));
+        if(ids.has(value))selected=id;
+      }
+      select.append(group);
+    }
+    select.value=selected;
+  }
   function eventDescription(e){const players=e.type==="keyMoment"?(e.playerTags||[]).map(t=>getPlayer(t.pId)?playerName(getPlayer(t.pId)):(t.pName||"Spieler-ID "+t.pId)).join(", "):"";const main=e.type==="keyMoment"?([e.note,players].filter(Boolean).join(" · ")||(e.defenderUnknown?"Unbekannt":"Ohne Spieler")):e.type==="save"?e.throwerName||e.pName:e.pName||e.attackerName||e.note||"Ohne Spieler";const defense=e.type==="keyMoment"?[]:eventDefenseNames(e);return{title:eventLabels[e.type]||e.type||"Ereignis",main,defense}}
   function compactEventLabels(event,position=eventVideoPosition(event)){
     const description=eventDescription(event),seconds=position?.seconds;
@@ -3444,7 +3465,10 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const prevFrom=source.value,prevInto=target.value;
     for(const element of [source,target]){
       element.replaceChildren();
-      for(const row of options)element.add(new Option(row.label,row.key));
+      for(const row of options){
+        const identity=row.key.startsWith("h360:")?" · Handball360 "+row.key.slice(5):" · ohne Handball360-ID";
+        element.add(new Option(row.label+identity+" · "+row.games.size+(row.games.size===1?" Spiel":" Spiele"),row.key));
+      }
     }
     if(labels.has(prevFrom))source.value=prevFrom;
     if(labels.has(prevInto))target.value=prevInto;
@@ -8487,7 +8511,17 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   fillDimensionFilters();
   function attackingTeamOf(e){return coreAttackingTeamOf(e,getPlayer)}
   function defendingTeamOf(e){return coreDefendingTeamOf(e,getPlayer)}
-  function shotEventsForSelection(teamRole,playerId,zone="all",target="all",phase="all"){let shots=state.events.filter(e=>["shot","goal","miss","save","block"].includes(e.type));if(playerId!=="all")shots=shots.filter(e=>(["shot","goal","miss"].includes(e.type)&&String(e.pId)===String(playerId))||(["save","block"].includes(e.type)&&String(e.throwerId)===String(playerId)));else if(teamRole!=="all"){const team=teamRole==="own"?ownTeam:opponentTeam();shots=shots.filter(e=>attackingTeamOf(e)===team)}return shots.filter(e=>matchesDimension(e.z,zone)&&matchesDimension(e.gz,target)&&matchesDimension(e.attackPhase,phase))}
+  function shotEventsForSelection(teamRole,playerId,zone="all",target="all",phase="all"){
+    let shots=state.events.filter(e=>["shot","goal","miss","save","block"].includes(e.type));
+    if(playerId!=="all"){
+      const ids=matchPlayerGroup(playerId)?.ids||new Set([String(playerId)]);
+      shots=shots.filter(e=>ids.has(String(["save","block"].includes(e.type)?e.throwerId:e.pId)));
+    }else if(teamRole!=="all"){
+      const team=teamRole==="own"?ownTeam:opponentTeam();
+      shots=shots.filter(e=>attackingTeamOf(e)===team);
+    }
+    return shots.filter(e=>matchesDimension(e.z,zone)&&matchesDimension(e.gz,target)&&matchesDimension(e.attackPhase,phase));
+  }
   const pct=(a,b)=>corePercentage(a,b);
   function renderTrend(){const svg=$("analysisTrend"),goals=state.events.filter(e=>e.type==="goal").sort((a,b)=>(a.time||0)-(b.time||0)),maxT=Math.max(1,...state.events.map(e=>Number(e.time)||0)),final={home:goals.filter(e=>e.team==="home").length,away:goals.filter(e=>e.team==="away").length},maxScore=Math.max(1,final.home,final.away),totals={home:0,away:0},points={home:[[55,245]],away:[[55,245]]};for(const e of goals){if(!["home","away"].includes(e.team))continue;totals[e.team]++;const x=55+(Number(e.time)||0)/maxT*910,y=245-totals[e.team]/maxScore*190;points[e.team].push([x,points[e.team].at(-1)[1]],[x,y])}const grid=[0,1,2,3,4].map(i=>`<line class="chart-grid" x1="55" y1="${245-i*47.5}" x2="965" y2="${245-i*47.5}"/>`).join("");const path=team=>points[team].map((p,i)=>(i?"L":"M")+p.join(" ")).join(" ");const dots=team=>points[team].filter((_,i)=>i>0&&i%2===0).map(p=>`<circle class="chart-dot-${team}" cx="${p[0]}" cy="${p[1]}" r="3.5"/>`).join("");svg.innerHTML=`${grid}<line class="chart-grid" x1="55" y1="245" x2="965" y2="245"/><path class="chart-home" d="${path("home")}"/><path class="chart-away" d="${path("away")}"/>${dots("home")}${dots("away")}<text class="chart-axis" x="55" y="268">00:00</text><text class="chart-axis" x="930" y="268">${fmt(maxT)}</text>`;$("trendLegend").innerHTML=`<span><i style="background:var(--cyan)"></i>${state.home.name}</span><span><i style="background:#f5a000"></i>${state.away.name}</span>`}
   function teamMetrics(team){return coreTeamMetrics(state.events,team,getPlayer)}
@@ -8532,10 +8566,11 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const decided = shots.filter(event => inHalf(event) && event.type !== "shot");
     const goals = decided.filter(event => event.type === "goal").length;
     const team = teamRole === "own" ? ownTeam : teamRole === "opponent" ? opponentTeam() : null;
+    const playerIds=playerId==="all"?null:(matchPlayerGroup(playerId)?.ids||new Set([String(playerId)]));
     const errors = state.events.filter(event =>
       inHalf(event) && event.type === "error" &&
       (!team || attackingTeamOf(event) === team) &&
-      (playerId === "all" || String(event.pId) === String(playerId)) &&
+      (!playerIds || playerIds.has(String(event.pId))) &&
       matchesDimension(event.z,zone) &&
       matchesDimension(event.gz,target) &&
       matchesDimension(event.attackPhase,phase)
@@ -8559,7 +8594,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
         matchesDimension(event.gz,target) &&
         matchesDimension(event.attackPhase,phase)
       );
-      if(playerId !== "all")defensive = defensive.filter(event => eventMatchesPlayer(event,playerId));
+      if(playerIds)defensive = defensive.filter(event => eventMatchesPlayer(event,playerIds));
     }
     const saves = defensive.filter(event => event.type === "save").length;
     const items = [
@@ -8623,8 +8658,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     // (for example saves, marked defenders and goalkeepers on throws).
     $("videoTeamFilter").value="all";
     populatePlayerFilter($("videoPlayerFilter"),"all");
-    $("videoPlayerFilter").value=String(player.id);
-    if($("videoPlayerFilter").value!==String(player.id))
+    const representativeId=String(matchPlayerGroup(player.id)?.player.id??player.id);
+    $("videoPlayerFilter").value=representativeId;
+    if($("videoPlayerFilter").value!==representativeId)
       return toast("Spielerfilter konnte nicht gesetzt werden.");
     for(const id of ["videoTypeFilter","videoZoneFilter","videoTargetFilter","videoPhaseFilter","videoTagFilter"])
       $(id).value="all";
@@ -8634,11 +8670,12 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
   }
   function renderPlayerTable(team,tbodyId,role,playerFilter,zone,target,phase){
     const rows=[],selected=playerFilter==="all"?null:getPlayer(playerFilter),
-      players=(state[team].players||[]).filter(p=>!selected||String(p.id)===String(selected.id)),
+      players=coreGroupMatchPlayers(state,team).filter(group=>!selected||group.ids.has(String(selected.id))),
       showAssists=team===ownTeam;
     const selectedSeasonId=analysisSeasonActive()?analysisSelectedGameId:null;
-    for(const p of players){
-      const stats=corePlayerMetrics({player:p,team,ownTeam,events:state.events,
+    for(const {player,ids,isTW} of players){
+      const p={...player,isTW};
+      const stats=corePlayerMetrics({player:p,playerIds:ids,team,ownTeam,events:state.events,
         gameState:state,getPlayer,zone,target,phase}),
         attempts=stats.attempts===null?"–":stats.attempts,value=stats.value,
         name=escapeHtml(playerName(p)),
@@ -8652,7 +8689,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       ?'<tr><td colspan="8">Keine passenden Spieler.</td></tr>'
       :'<tr><td colspan="7">Keine passenden Spieler.</td></tr>');
     body.querySelectorAll(".analysis-player-videos").forEach((button,index)=>{
-      button.onclick=()=>void openAnalysisPlayerVideos(players[index].id,team,selectedSeasonId);
+      button.onclick=()=>void openAnalysisPlayerVideos(players[index].player.id,team,selectedSeasonId);
     });
   }
   let analysisSelectedGameId="";
@@ -9177,7 +9214,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("eventVideoComment").oninput=event=>{eventAnnotation(e,true).comment=event.target.value;renderAnnotation();persistSession()}
   }
   function setActiveVideoEvent(index,{seek=true,additive=false,range=false}={}){if(!Number.isInteger(index)||!state.events[index])return;if(range&&lastVideoEventIndex!==null){const visible=videoFilteredEntries().map(entry=>entry.index),a=visible.indexOf(lastVideoEventIndex),b=visible.indexOf(index);if(a>=0&&b>=0)for(let i=Math.min(a,b);i<=Math.max(a,b);i++)selectedVideoEvents.add(visible[i])}else if(additive){selectedVideoEvents.has(index)?selectedVideoEvents.delete(index):selectedVideoEvents.add(index)}else{selectedVideoEvents.clear();selectedVideoEvents.add(index)}activeVideoEventIndex=index;lastVideoEventIndex=index;renderVideoPlaylist();renderAnnotation();if(seek)seekEvent(state.events[index])}
-  function videoFilteredEntries(){const team=$("videoTeamFilter").value,events=filteredEvents(team,$("videoPlayerFilter").value,$("videoTypeFilter").value,$("videoZoneFilter").value,$("videoTargetFilter").value,$("videoPhaseFilter").value,$("videoTagFilter").value);return events.map(event=>({event,index:state.events.indexOf(event)}))}
+  function videoFilteredEntries(){const team=$("videoTeamFilter").value,player=$("videoPlayerFilter").value,events=filteredEvents(team,player,$("videoTypeFilter").value,$("videoZoneFilter").value,$("videoTargetFilter").value,$("videoPhaseFilter").value,$("videoTagFilter").value);return events.map(event=>({event,index:state.events.indexOf(event)}))}
   function renderVideoPlaylist(){updateVideoTabTimeButton();const teamFilter=$("videoTeamFilter").value;populatePlayerFilter($("videoPlayerFilter"),teamFilter);populateVideoTags();$("preRoll").value=state.video.preRoll??4;$("postRoll").value=state.video.postRoll??2;const entries=videoFilteredEntries(),host=$("videoPlaylist");syncVideoPortraitPlaylist();if(!entries.length){host.innerHTML='<div class="empty">Keine passenden Szenen.</div>';if(activeTab==="match"&&matchReviewMode)renderVideoEventEditor();renderClipPresetPreview();return}host.innerHTML=entries.map(({event:e,index})=>{const d=eventDescription(e),compact=compactEventLabels(e),videoTime=eventVideoSeconds(e),videoLabel=Number.isFinite(videoTime)?`Video ${fmt(videoTime,true)}${eventVideoPosition(e).status==="estimated"?" (geschätzt)":""}`:"Videozeit fehlt",tags=normalizedTags(e),details=[e.attackPhase,e.z].filter(Boolean).map(escapeHtml).join(" · "),noPlayer=d.main==="Ohne Spieler";return `<div class="clip${selectedVideoEvents.has(index)?' selected':''}${e.highlight?' highlight':''}" data-event-index="${index}" role="button" tabindex="0"><input class="clip-check" type="checkbox" aria-label="Ereignis auswählen" ${selectedVideoEvents.has(index)?'checked':''}><div class="clip-content"><div class="compact-event-labels"><strong class="compact-event-head">${escapeHtml(compact.headline)}</strong><span class="compact-event-player">${escapeHtml(compact.player)}</span><small class="compact-event-video">${escapeHtml(compact.videoTime)}</small></div><div class="expanded-event-labels"><strong class="clip-head">${e.highlight?'★ ':''}${escapeHtml(e.displayTime||fmt(e.time||0))} · ${escapeHtml(d.title)}</strong><br><span class="clip-player${noPlayer?' no-player':''}">${escapeHtml(d.main||"")}</span>${details?`<span class="clip-detail"> · ${details}</span>`:""}${d.defense.length?`<br class="clip-defense"><span class="defense-name clip-defense">Abwehr: ${escapeHtml(d.defense.join(", "))}</span>`:""}<br class="clip-video"><small class="clip-video">${escapeHtml(videoLabel)}</small>${tags.length?`<div class="event-tags">${tags.map(tag=>`<span class="event-tag">${escapeHtml(tag)}</span>`).join("")}</div>`:""}</div></div></div>`}).join("");host.querySelectorAll("[data-event-index]").forEach(row=>{const index=Number(row.dataset.eventIndex);row.onclick=event=>{if(event.target.classList.contains("clip-check"))return;setActiveVideoEvent(index,{additive:event.ctrlKey||event.metaKey,range:event.shiftKey})};row.onkeydown=event=>{if(event.key==="Enter"){event.preventDefault();setActiveVideoEvent(index,{additive:event.ctrlKey||event.metaKey,range:event.shiftKey})}else if(event.key===" "){event.preventDefault();setActiveVideoEvent(index,{seek:false,additive:true})}};row.querySelector(".clip-check").onclick=event=>{event.stopPropagation();setActiveVideoEvent(index,{seek:false,additive:true})}});if(activeTab==="match"&&matchReviewMode)renderVideoEventEditor();renderClipPresetPreview()}
   for(const id of ["videoTeamFilter","videoPlayerFilter","videoTypeFilter","videoZoneFilter","videoTargetFilter","videoPhaseFilter","videoTagFilter"])$(id).onchange=renderVideoPlaylist;
   const clipPresetFormat="handball-spielanalyse-filter-presets";
@@ -9201,7 +9238,7 @@ function renderClipPresetPreview(){const preset=selectedClipPreset(),host=$("cli
   $("editClipPreset").onclick=()=>{const preset=selectedClipPreset();if(!preset)return toast("Zuerst eine Vorlage auswählen.");openClipPresetDialog(preset)};
   $("duplicateClipPreset").onclick=()=>{const preset=selectedClipPreset();if(!preset)return toast("Zuerst eine Vorlage auswählen.");openClipPresetDialog({...structuredClone(preset),id:null,name:preset.name+" – Kopie"})};
   $("deleteClipPreset").onclick=()=>{const preset=selectedClipPreset();if(!preset)return toast("Zuerst eine Vorlage auswählen.");if(!confirm(`Vorlage „${preset.name}“ löschen?`))return;clipPresets=clipPresets.filter(item=>item.id!==preset.id);saveClipPresets();toast("Clip-Vorlage gelöscht")};
-  $("applyClipPreset").onclick=()=>{const preset=selectedClipPreset();if(!preset)return toast("Zuerst eine Vorlage auswählen.");const f=preset.filters||{};$("videoTeamFilter").value=f.team||"all";populatePlayerFilter($("videoPlayerFilter"),$("videoTeamFilter").value);$("videoPlayerFilter").value=[...$("videoPlayerFilter").options].some(option=>option.value===String(f.player))?String(f.player):"all";for(const [id,value] of [["videoTypeFilter",f.type],["videoZoneFilter",f.zone],["videoTargetFilter",f.target],["videoPhaseFilter",f.phase]])$(id).value=value||"all";populateVideoTags();if(f.tag&&![...$("videoTagFilter").options].some(option=>option.value===f.tag))$("videoTagFilter").add(new Option(f.tag,f.tag));$("videoTagFilter").value=f.tag||"all";state.video.preRoll=preset.clip?.preRoll??4;state.video.postRoll=preset.clip?.postRoll??2;renderVideoPlaylist();toast("Clip-Vorlage angewendet")};
+  $("applyClipPreset").onclick=()=>{const preset=selectedClipPreset();if(!preset)return toast("Zuerst eine Vorlage auswählen.");const f=preset.filters||{};$("videoTeamFilter").value=f.team||"all";populatePlayerFilter($("videoPlayerFilter"),$("videoTeamFilter").value,f.player??"all");for(const [id,value] of [["videoTypeFilter",f.type],["videoZoneFilter",f.zone],["videoTargetFilter",f.target],["videoPhaseFilter",f.phase]])$(id).value=value||"all";populateVideoTags();if(f.tag&&![...$("videoTagFilter").options].some(option=>option.value===f.tag))$("videoTagFilter").add(new Option(f.tag,f.tag));$("videoTagFilter").value=f.tag||"all";state.video.preRoll=preset.clip?.preRoll??4;state.video.postRoll=preset.clip?.postRoll??2;renderVideoPlaylist();toast("Clip-Vorlage angewendet")};
   $("exportClipPresets").onclick=()=>{const data={format:clipPresetFormat,version:1,presets:clipPresets};downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),"handball_match_flow_clip_vorlagen.json")};
   $("importClipPresets").onclick=()=>$("clipPresetInput").click();
   $("clipPresetInput").onchange=event=>{const file=event.target.files?.[0];event.target.value="";if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const data=JSON.parse(reader.result);if(data.format!==clipPresetFormat||!Array.isArray(data.presets))throw Error("Keine gültige Clip-Vorlagendatei.");const map=new Map(clipPresets.map(preset=>[preset.id,preset]));for(const preset of data.presets)if(preset?.id&&preset?.name)map.set(preset.id,preset);clipPresets=[...map.values()];saveClipPresets();toast(`${data.presets.length} Clip-Vorlagen importiert`)}catch(error){toast(error.message||"Clip-Vorlagen konnten nicht importiert werden")}};reader.readAsText(file)};

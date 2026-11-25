@@ -1,4 +1,5 @@
 import { percentage, playerMetrics } from "./analysis-core.js";
+import { HANDBALL_ID_FIELDS, normalizeHandballNetId } from "./roster.js";
 
 const SHOT_TYPES = ["shot", "goal", "save", "miss", "block"];
 
@@ -132,66 +133,101 @@ export function seasonPlayerNameKey(player) {
   return [last, first].join("|");
 }
 
+function seasonHandballId(player) {
+  for (const field of HANDBALL_ID_FIELDS) {
+    const id = normalizeHandballNetId(player?.[field]);
+    if (id) return id.toLowerCase();
+  }
+  return "";
+}
+
 export function seasonPlayerIdentityKey(player) {
   if (!player) return null;
-  const handballNetId = String(player.handballNetId || "").trim().toLowerCase();
+  const handballNetId = seasonHandballId(player);
   if (handballNetId) return "h360:" + handballNetId;
   const fallback = seasonPlayerFallbackKey(player);
   return fallback ? "legacy:" + fallback : null;
 }
 
-export function createSeasonPlayerKeyResolver(games = []) {
-  const idsByName = new Map();
-  const ambiguousNames = new Set();
+function fullPlayerName(player) {
+  const first = String(player?.vorname || "").trim();
+  const last = String(player?.nachname || "").trim();
+  let name = [first, last].filter(Boolean).join(" ");
+  if (!first || !last) {
+    const parts = name.split(",").map(part => part.trim());
+    if (parts.length === 2 && parts.every(Boolean)) name = parts.reverse().join(" ");
+    if (name.split(/\s+/).length < 2) return null;
+  }
+  return name.normalize("NFC").toLocaleLowerCase("de")
+    .replace(/[‘’ʼ]/g, "'")
+    .replace(/[\s\p{Dash_Punctuation}]+/gu, " ")
+    .trim();
+}
 
-  for (const game of games || []) {
-    // The season is always evaluated from the selected team's perspective.
-    // Do not associate a namesake from the opponent roster with our own player.
-    const teams = ["home", "away"].includes(game?.ownTeam)
-      ? [game.ownTeam] : ["home", "away"];
-    const namesInGame = new Map();
+export function createSeasonPlayerKeyResolver(games = []) {
+  const names = new Map();
+
+  for (const game of games) {
+    const teams = ["home", "away"].includes(game?.ownTeam) ? [game.ownTeam] : ["home", "away"];
     for (const team of teams) {
+      const jerseysByName = new Map();
       for (const player of game?.state?.[team]?.players || []) {
-        const nameKey = seasonPlayerNameKey(player);
-        if (!nameKey) continue;
-        const handballNetId = String(player.handballNetId || "").trim().toLowerCase();
+        const fullName = fullPlayerName(player);
+        if (!fullName) continue;
+        const group = names.get(fullName) || { ids: new Set(), keys: new Set(), splitKeys: new Set(), ambiguous: false };
+        names.set(fullName, group);
+        const id = seasonHandballId(player);
+        if (id) group.ids.add(id);
+        const key = seasonPlayerNameKey(player);
+        group.keys.add(key);
+        if (String(player.vorname || "").trim() && String(player.nachname || "").trim()) group.splitKeys.add(key);
+
         const jersey = String(player.nr ?? "").trim();
-        const seen = namesInGame.get(nameKey) || { ids: new Set(), numbered: new Set() };
-        if (handballNetId) seen.ids.add(handballNetId);
-        if (jersey) seen.numbered.add(jersey);
-        namesInGame.set(nameKey, seen);
-        if (!handballNetId) continue;
-        if (!idsByName.has(nameKey)) idsByName.set(nameKey, new Set());
-        idsByName.get(nameKey).add(handballNetId);
+        if (!jersey) continue;
+        const entries = jerseysByName.get(fullName) || [];
+        entries.push({ id, jersey });
+        jerseysByName.set(fullName, entries);
       }
-    }
-    // Numberless duplicates of a uniquely named, numbered player are common
-    // when old scouting files and official rosters coexist. Only treat a
-    // repeated name as ambiguous when IDs conflict or two numbered players
-    // share the full name in the same game.
-    for (const [nameKey,seen] of namesInGame) {
-      if (seen.ids.size > 1 || (seen.ids.size === 0 && seen.numbered.size > 1))
-        ambiguousNames.add(nameKey);
+      for (const [name, entries] of jerseysByName) {
+        if (entries.some(a => entries.some(b => a.jersey !== b.jersey && (!a.id || a.id !== b.id)))) {
+          names.get(name).ambiguous = true;
+        }
+      }
     }
   }
 
-  return (player) => {
-    if (!player) return null;
-    const handballNetId = String(player.handballNetId || "").trim().toLowerCase();
-    if (handballNetId) return "h360:" + handballNetId;
+  const keysByName = new Map();
+  for (const [name, group] of names) {
+    if (group.ambiguous || group.ids.size > 1) continue;
+    const keys = group.splitKeys.size ? group.splitKeys : group.keys;
+    keysByName.set(name, group.ids.size ? "h360:" + [...group.ids][0] : "name:" + [...keys].sort()[0]);
+  }
 
-    const nameKey = seasonPlayerNameKey(player);
-    const ids = nameKey ? idsByName.get(nameKey) : null;
-    if (nameKey && !ambiguousNames.has(nameKey) && (!ids || ids.size <= 1)) {
-      // A unique complete name is a stable fallback across changing/missing
-      // shirt numbers; a later H360 ID upgrades all corresponding legacy rows.
-      return ids?.size === 1 ? "h360:" + [...ids][0] : "name:" + nameKey;
-    }
-    // Two people with the same name, or conflicting H360 IDs, must not
-    // silently become one person. Keep the older number-sensitive fallback.
-    const fallback = seasonPlayerFallbackKey(player);
-    return fallback ? "legacy:" + fallback : null;
+  return player => {
+    const key = seasonPlayerIdentityKey(player);
+    if (!key || key.startsWith("h360:")) return key;
+    return keysByName.get(fullPlayerName(player)) || key;
   };
+}
+
+export function groupMatchPlayers(gameState, team) {
+  const resolve = createSeasonPlayerKeyResolver([{ state: gameState, ownTeam: team }]);
+  const groups = new Map();
+  for (const player of gameState?.[team]?.players || []) {
+    const key = resolve(player) || player;
+    const group = groups.get(key) || { player, ids: new Set(), isTW: false };
+    group.ids.add(String(player.id));
+    group.isTW ||= Boolean(player.isTW);
+    if (seasonPlayerLabelPriority(player) > seasonPlayerLabelPriority(group.player)) group.player = player;
+    groups.set(key, group);
+  }
+  return [...groups.values()];
+}
+
+function seasonPlayerLabelPriority(player) {
+  return (seasonHandballId(player) ? 4 : 0) +
+    (String(player.nr ?? "").trim() ? 2 : 0) +
+    (String(player.vorname || "").trim() && String(player.nachname || "").trim() ? 1 : 0);
 }
 
 /** Stored season-only mappings, never changes a match roster or event. */
@@ -229,7 +265,37 @@ export function setSeasonPlayerAlias(aliases, source, target) {
 
 export function createAliasedSeasonPlayerKeyResolver(games = [], aliases = {}) {
   const base = createSeasonPlayerKeyResolver(games);
-  return (player) => resolveSeasonPlayerAliasKey(base(player), aliases);
+  if (!Object.keys(aliases).length) return base;
+  const currentKeys = new Set();
+  const oldKeyCandidates = new Map();
+  for (const game of games) {
+    const teams = ["home", "away"].includes(game?.ownTeam) ? [game.ownTeam] : ["home", "away"];
+    for (const team of teams) {
+      for (const player of game?.state?.[team]?.players || []) {
+        const key = base(player);
+        if (!key) continue;
+        currentKeys.add(key);
+        const name = seasonPlayerNameKey(player);
+        if (!name || seasonHandballId(player)) continue;
+        const oldKey = "name:" + name;
+        const keys = oldKeyCandidates.get(oldKey) || new Set();
+        keys.add(key);
+        oldKeyCandidates.set(oldKey, keys);
+      }
+    }
+  }
+  return player => {
+    const key = base(player);
+    if (!key) return null;
+    const legacyName = seasonPlayerNameKey(player);
+    const oldKey = legacyName ? "name:" + legacyName : null;
+    const manualSource = !seasonHandballId(player) && oldKeyCandidates.get(oldKey)?.size === 1 &&
+      Object.hasOwn(aliases, oldKey) && !Object.hasOwn(aliases, key) ? oldKey : key;
+    const target = resolveSeasonPlayerAliasKey(manualSource, aliases);
+    if (currentKeys.has(target)) return target;
+    const candidates = oldKeyCandidates.get(target);
+    return candidates?.size === 1 ? [...candidates][0] : target;
+  };
 }
 
 
@@ -276,7 +342,7 @@ export function seasonPlayerAggregate(
         aggregated.set(key, {
           key,
           label: playerLabel(player),
-          displayHasNumber: player.nr !== null && player.nr !== undefined && String(player.nr).trim() !== "",
+          labelPriority: seasonPlayerLabelPriority(player),
           isTW: Boolean(player.isTW),
           games: new Set(),
           shots: 0,
@@ -291,11 +357,10 @@ export function seasonPlayerAggregate(
       }
 
       const target = aggregated.get(key);
-      // Prefer a numbered/identified roster label over an earlier '#?' row.
-      const hasNumber = p => p?.nr !== null && p?.nr !== undefined && String(p.nr).trim() !== "";
-      if (!target.displayHasNumber && hasNumber(player)) {
+      const priority = seasonPlayerLabelPriority(player);
+      if (priority > target.labelPriority) {
         target.label = playerLabel(player);
-        target.displayHasNumber = true;
+        target.labelPriority = priority;
       }
       target.isTW = target.isTW || Boolean(player.isTW);
       target.games.add(game.id);
@@ -360,19 +425,15 @@ export function seasonEventMatchesTeam(event, game, filter) {
 
 export function seasonEventMatchesPlayer(event, game, key, playerKey) {
   if (key === "all") return true;
-  if (seasonEventPlayerKey(event, game, playerKey) === key) return true;
-
-  const players = [
-    ...(game?.state?.home?.players || []),
-    ...(game?.state?.away?.players || [])
-  ];
-
-  return (event?.playerTags || []).some((tag) => {
-    const player = players.find(
-      (candidate) => String(candidate.id) === String(tag.pId)
-    );
-    return player && playerKey(player) === key;
-  });
+  if (!event || typeof playerKey !== "function") return false;
+  const teams = ["home", "away"].includes(game?.ownTeam) ? [game.ownTeam] : ["home", "away"];
+  const players = teams.flatMap(team => game?.state?.[team]?.players || []);
+  const primaryId = event.type === "save"
+    ? event.pId ?? event.throwerId
+    : event.pId ?? event.throwerId ?? event.attackerId;
+  const references = [primaryId, ...(event.playerTags || []).map(tag => tag.pId)]
+    .filter(id => id !== undefined && id !== null).map(String);
+  return players.some(player => references.includes(String(player.id)) && playerKey(player) === key);
 }
 
 export function seasonMatchesType(event, type) {

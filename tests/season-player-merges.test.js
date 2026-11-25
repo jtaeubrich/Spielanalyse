@@ -102,6 +102,61 @@ describe("safe season player merge", () => {
     expect(resolve(third.state[third.ownTeam].players[0])).toBe("legacy:beispiel|mia|99");
   });
 
+  test("matches a legacy full name in one field to the official roster spelling", () => {
+    const legacy = match("legacy", p => {
+      Object.assign(p, { vorname: "", nachname: "Pöhl, Jan–Mika", nr: 17, handballNetId: "" });
+    });
+    const official = match("official", p => {
+      Object.assign(p, { vorname: "Jan-Mika", nachname: "Pöhl", nr: 1, handball360Id: "stable-id" });
+    });
+    const games = [legacy, official];
+    const resolve = createSeasonPlayerKeyResolver(games);
+    expect(resolve(legacy.state[legacy.ownTeam].players[0])).toBe("h360:stable-id");
+    const rows = seasonPlayerAggregate(games, { playerKey: resolve, playerLabel: label });
+    expect(rows.find(row => row.key === "h360:stable-id")).toMatchObject({
+      label: "Jan-Mika Pöhl", games: new Set(["legacy", "official"])
+    });
+  });
+
+  test("keeps separately numbered namesakes in the same game apart when only one has an official ID", () => {
+    const game = match("same", (p, state) => {
+      Object.assign(p, { vorname: "Mia", nachname: "Beispiel", nr: 5, handballNetId: "official" });
+      state[state.ownTeam].players.push({
+        id: "local", nr: 7, vorname: "", nachname: "Mia Beispiel"
+      });
+    });
+    const players = game.state[game.ownTeam].players;
+    const resolve = createSeasonPlayerKeyResolver([game]);
+    expect(resolve(players[0])).toBe("h360:official");
+    expect(resolve(players.at(-1))).toBe("legacy:mia beispiel||7");
+  });
+
+  test("excludes an opponent with the same name from the own-player filter", () => {
+    const game = match("same");
+    const own = game.state[game.ownTeam].players[0];
+    const namesake = { ...own, id: "opponent-namesake", handballNetId: "" };
+    game.state[game.opponentTeam].players.push(namesake);
+    const resolve = createSeasonPlayerKeyResolver([game]);
+    const event = { type: "goal", team: game.opponentTeam, pId: namesake.id };
+    expect(seasonEventMatchesPlayer(event, game, resolve(own), resolve)).toBe(false);
+  });
+
+  test("retains a stored manual association when its legacy target acquires an H360 ID", () => {
+    const old = match("old", p => {
+      Object.assign(p, { vorname: "", nachname: "Mia Beispiel", handballNetId: "" });
+    });
+    const typo = match("typo", p => {
+      Object.assign(p, { vorname: "Mia", nachname: "Beispiell", handballNetId: "" });
+    });
+    const official = match("official", p => {
+      Object.assign(p, { vorname: "Mia", nachname: "Beispiel", handballNetId: "stable-id" });
+    });
+    const resolve = createAliasedSeasonPlayerKeyResolver([old, typo, official], {
+      "name:beispiell|mia": "name:mia beispiel|"
+    });
+    expect(resolve(typo.state[typo.ownTeam].players[0])).toBe("h360:stable-id");
+  });
+
   test("manual Pohl/Pöhl alias combines records, then removing it restores separation", () => {
     const first = match("one", p => {
       p.vorname = "Laurids"; p.nachname = "Pohl"; p.nr = 22; p.handballNetId = "";
