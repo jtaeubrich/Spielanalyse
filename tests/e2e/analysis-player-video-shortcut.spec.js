@@ -31,11 +31,10 @@ test("Analysis player video icon opens Video filtered for that player, regardles
   await page.locator('[data-tab="analysis"]').click();
   const player=source.away.players.find(p=>source.events.some(e=>String(e.pId)===String(p.id)));
   expect(player).toBeDefined();
-  const playerIndex=source.away.players.findIndex(p=>String(p.id)===String(player.id));
   const before=await stored(page);
   // Neutral analysis perspective shows Heim as the first player card,
   // independent of the original scouting ownTeam ("away").
-  await page.locator("#opponentPlayerRows .analysis-player-videos").nth(playerIndex).click();
+  await page.locator("#opponentPlayerRows tr").filter({hasText:player.nachname}).locator(".analysis-player-videos").click();
   await expect(page.locator('[data-tab="video"]')).toHaveClass(/active/);
   await expect(page.locator("#videoTeamFilter")).toHaveValue("all");
   await expect(page.locator("#videoPlayerFilter")).toHaveValue(String(player.id));
@@ -83,8 +82,7 @@ test("Season preview player video icon opens only the selected fixture and retai
   await page.locator('[data-tab="analysis"]').click();
   await expect(page.locator("#analysisGamePicker option:checked")).toContainText("2026-11-08");
   const target=second.away.players.find(p=>second.events.some(e=>String(e.pId)===String(p.id)));
-  const index=second.away.players.findIndex(p=>String(p.id)===String(target.id));
-  await page.locator("#ownPlayerRows .analysis-player-videos").nth(index).click();
+  await page.locator("#ownPlayerRows tr").filter({hasText:target.nachname}).locator(".analysis-player-videos").click();
   await expect(page.locator('[data-tab="video"]')).toHaveClass(/active/);
   await expect(page.locator("#videoPlayerFilter")).toHaveValue(String(target.id));
   const active=await stored(page);
@@ -104,7 +102,8 @@ test("Analysis combines a legacy and H360 roster entry and opens both video even
     isTW: false, handballNetId: "mia-h360"
   };
   const legacy = { id: "legacy-mia", vorname: "", nachname: "Mia Beispiel", nr: "" };
-  source.home.players = [legacy, official];
+  const unused = { id: "unused", vorname: "Kim", nachname: "Ohneinsatz", nr: 14 };
+  source.home.players = [legacy, official, unused];
   source.events = [legacy, official].map((p, index) => ({
     id: "goal-" + index, type: "goal", team: "home", pId: p.id,
     half: 1, time: 10 + index, realTime: 10000 + index * 1000
@@ -115,7 +114,9 @@ test("Analysis combines a legacy and H360 roster entry and opens both video even
   await page.locator("#continueGameInput").setInputFiles(upload("altbestand.json", source));
   await page.locator('[data-tab="analysis"]').click();
   const row = page.locator("#ownPlayerRows tr").filter({ hasText: "Mia Beispiel" });
+  await expect(page.locator("#ownPlayerRows tr")).toHaveCount(1);
   await expect(row).toHaveCount(1);
+  await expect(page.locator("#analysisPlayerFilter option[value=unused]")).toHaveCount(0);
   await expect(row.locator("td").first()).toContainText("#12 Mia Beispiel");
   await expect(row.locator("td").nth(2)).toHaveText("2");
   await expect(page.locator("#analysisPlayerFilter option").filter({ hasText: "Mia Beispiel" })).toHaveCount(1);
@@ -126,6 +127,6 @@ test("Analysis combines a legacy and H360 roster entry and opens both video even
   await expect(page.locator("#videoPlayerFilter")).toHaveValue(String(official.id));
   await expect(page.locator("#videoPlaylist .clip")).toHaveCount(2);
   const after = await stored(page);
-  expect(after.home.players.map(p => p.id)).toEqual([legacy.id, official.id]);
+  expect(after.home.players.map(p => p.id)).toEqual([legacy.id, official.id, unused.id]);
   expect(after.events.map(event => event.pId)).toEqual([legacy.id, official.id]);
 });

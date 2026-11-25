@@ -13,6 +13,7 @@ function asGame(surname) {
   player.nachname = surname;
   player.nr = 22;
   player.handballNetId = "";
+  data.events.push({type:"error",team:data.ownTeam,pId:player.id,half:1,time:3});
   return data;
 }
 function upload(name, json) {
@@ -84,15 +85,25 @@ test("exact names are aggregated regardless of shirt number", async ({ page }) =
   const b = asGame("Beispiel");
   a[a.ownTeam].players[0].nr = "";
   b[b.ownTeam].players[0].nr = 17;
+  const unused = {id:"unused",vorname:"Kim",nachname:"Ohneinsatz",nr:14};
+  for (const game of [a,b]) game[game.ownTeam].players.push(unused);
+  const noParticipation = asGame("Beispiel");
+  noParticipation.gameName = "Spiel ohne Laurids";
+  noParticipation.gameDate = "2026-11-21";
+  noParticipation.events = noParticipation.events.filter(event => event.pId !== noParticipation[noParticipation.ownTeam].players[0].id);
   await page.goto("/");
  await page.locator('[data-tab="setup"]').click();
   await page.locator('[data-tab="setup"]').click();
   await page.locator("#setupModeSeason").click();
   await page.locator("#seasonGameInput").setInputFiles([
-    upload("game_no_number.json", a), upload("game_with_number.json", b)
+    upload("game_no_number.json", a), upload("game_with_number.json", b),
+    upload("game_without_participation.json", noParticipation)
   ]);
   await expect(page.locator("#seasonPlayerRows tr").filter({hasText:"Laurids Beispiel"})).toHaveCount(1);
   const row = page.locator("#seasonPlayerRows tr").filter({hasText:"Laurids Beispiel"});
   await expect(row.locator("td").nth(1)).toHaveText("2");
   await expect(row.locator("td").first()).toContainText("#17");
+  await expect(page.locator("#seasonGameRows tr")).toHaveCount(3);
+  await expect(page.locator("#seasonPlayerRows")).not.toContainText("Kim Ohneinsatz");
+  await expect(page.locator("#seasonPlayerFilter option").filter({hasText:"Kim Ohneinsatz"})).toHaveCount(0);
 });

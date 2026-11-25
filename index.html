@@ -2708,7 +2708,7 @@ import { nuLigaUrlInfo, parseNuLigaScheduleHtml, buildNuLigaSeasonGame, parseNuL
 import { previewNuLigaEventMatches, applyNuLigaEventSelections } from "./src/nuliga-reconcile.js?v=1";
 import { previewVideoOfficialAdditions, applyVideoOfficialAdditions, applyVideoOfficialPlayerSelections, prepareHandball360VideoComparison } from "./src/video-official-reconcile.js?v=1";
 import { previewOfficialSeasonRosters, applyOfficialSeasonRosters } from "./src/season-roster-refresh.js?v=1";
-import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics, matchesGameHalf as coreMatchesGameHalf } from "./src/analysis-core.js";
+import { percentage as corePercentage, attackingTeamOf as coreAttackingTeamOf, defendingTeamOf as coreDefendingTeamOf, summarizeShots, teamMetrics as coreTeamMetrics, goalkeeperForGoal as coreGoalkeeperForGoal, playerMetrics as corePlayerMetrics, matchesGameHalf as coreMatchesGameHalf, trackedPlayerIds as coreTrackedPlayerIds } from "./src/analysis-core.js";
 import { seasonTrendSeries as coreSeasonTrendSeries, seasonPlayerComparison as coreSeasonPlayerComparison, seasonTrendYAxisTicks as coreSeasonTrendYAxisTicks } from "./src/season-trends.js?v=3";
 import { analysisViewSide, analysisVideoRole, analysisPerspectiveText } from "./src/analysis-perspective.js?v=1";
 import { selectSeasonPreviewGame } from "./src/season-selection.js?v=1";
@@ -3299,7 +3299,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const player=getPlayer(id);
     return player?coreGroupMatchPlayers(state,player.team).find(group=>group.ids.has(String(id))):null;
   }
-  function populatePlayerFilter(select,role="all",value=select.value||"all"){
+  function populatePlayerFilter(select,role="all",value=select.value||"all",groupsByTeam=null){
     value=String(value);
     const teams=role==="own"?[ownTeam]:role==="opponent"?[opponentTeam()]:[ownTeam,opponentTeam()];
     let selected="all";
@@ -3307,7 +3307,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     for(const team of teams){
       const group=document.createElement("optgroup");
       group.label=team===ownTeam?"Mein Team":"Gegner";
-      for(const {player,ids} of coreGroupMatchPlayers(state,team)){
+      for(const {player,ids} of groupsByTeam?.[team]??coreGroupMatchPlayers(state,team)){
         const id=String(player.id);
         group.append(new Option(playerName(player),id));
         if(ids.has(value))selected=id;
@@ -3450,7 +3450,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     });
   }
   function seasonMergedPlayers(games){
-    const rows=coreSeasonPlayerAggregate(games,{playerKey:seasonPlayerResolver(games),playerLabel:seasonPlayerLabel});
+    const rows=coreSeasonPlayerAggregate(games,{playerKey:seasonPlayerResolver(games),playerLabel:seasonPlayerLabel,participantsOnly:true});
     // A manually chosen destination defines the display label, not whichever
     // source roster happened to be read first.
     const labels=new Map(seasonUnmergedPlayers(games).map(row=>[row.key,row.label]));
@@ -4946,7 +4946,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     $("seasonStats").innerHTML=[seasonMetric("Spiele",games.length),seasonMetric("Gefilterte Events",events.length),seasonMetric("Würfe",shots),seasonMetric("Tore",goals,shots?`${Math.round(goals/shots*100)} %`:"0 %"),seasonMetric("Techn. Fehler",errors),seasonMetric("Zeitstrafen",penalties)].join("");
     $("seasonGameRows").innerHTML=games.map(game=>{const x=seasonGameSummary(game);return `<tr><td>${escapeHtml(game.state.gameName||game.fileName)}</td><td>${x.goals}</td><td>${x.against}</td><td>${x.ownShots}</td><td>${x.shotPct.toFixed(0)} %</td><td>${x.oppShots}</td><td>${x.saves}</td><td>${x.savePct.toFixed(0)} %</td><td>${x.errors}</td></tr>`}).join("")||'<tr><td colspan="9">Keine Spiele ausgewählt.</td></tr>';
     const players=seasonMergedPlayers(games);
-    $("seasonPlayerRows").innerHTML=players.sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const quote=p.isTW?(p.saves+p.against?p.rate+" %":"–"):(p.decidedShots?p.rate+" %":"–");return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.isTW?"–":p.shots}</td><td>${p.value}</td><td>${p.assists}</td><td>${quote}</td><td>${p.penalties}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="8">Keine Spielerdaten vorhanden.</td></tr>';
+    $("seasonPlayerRows").innerHTML=players.sort((a,b)=>a.label.localeCompare(b.label,"de")).map(p=>{const quote=p.isTW?(p.saves+p.against?p.rate+" %":"–"):(p.decidedShots?p.rate+" %":"–");return `<tr><td>${escapeHtml(p.label)}</td><td>${p.games.size}</td><td>${p.isTW?"–":p.shots}</td><td>${p.value}</td><td>${p.assists}</td><td>${quote}</td><td>${p.penalties}</td><td>${p.errors}</td></tr>`}).join("")||'<tr><td colspan="8">Keine Spieler mit erfasster Teilnahme.</td></tr>';
     renderSeasonGraphics();
   }
   function renderSeason(){$("seasonExport").disabled=!seasonGames.length;$("seasonExportDownload").disabled=!seasonGames.length;$("seasonExportDownload").classList.toggle("hidden",!isAppleTouchDevice());$("seasonExportText").disabled=!seasonGames.length;$("seasonExportText").classList.toggle("hidden",!isAppleTouchDevice());$("seasonExport").textContent=isAppleTouchDevice()?"Saison-JSON in Dateien sichern":"Saison als JSON exportieren";$("seasonArchiveExport").disabled=!seasonGames.length;$("seasonPersonalBackup").disabled=!seasonGames.length||!seasonPublishedSource;$("seasonPersonalBackup").classList.toggle("hidden",!seasonPublishedSource);if(analysisSeasonActive()&&!analysisSelectedGameId)analysisSelectedGameId=selectSeasonPreviewGame(seasonGames,seasonLastEditedGameId)?.id||"";renderAnalysisGamePicker();renderSeasonLibrary();$("seasonMergePlayers").disabled=!seasonGames.length;renderSetupSeasonPicker();$("seasonArchiveTeam").value=seasonArchiveTeam;seasonPopulatePreferredTeam();const seasonFilter=$("seasonTeamFilter");if(seasonFilter){const own=seasonFilter.querySelector('option[value="own"]'),opponent=seasonFilter.querySelector('option[value="opponent"]');if(own)own.textContent=seasonPreferredTeam?"Mein Team · "+seasonPreferredTeam:"Mannschaft A (aus Spieldaten)";if(opponent)opponent.textContent=seasonPreferredTeam?"Gegner":"Mannschaft B (aus Spieldaten)"}const nameInput=$("seasonName");if(nameInput&&document.activeElement!==nameInput)nameInput.value=seasonName;renderSeasonGames();seasonPopulateFilters();renderSeasonAnalysis();renderSeasonCloudStatus()}
@@ -8668,9 +8668,9 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
     const count=videoFilteredEntries().length;
     if(!count)toast("Für "+playerName(player)+" sind noch keine Ereignisse zugeordnet.");
   }
-  function renderPlayerTable(team,tbodyId,role,playerFilter,zone,target,phase){
+  function renderPlayerTable(team,tbodyId,groups,playerFilter,zone,target,phase){
     const rows=[],selected=playerFilter==="all"?null:getPlayer(playerFilter),
-      players=coreGroupMatchPlayers(state,team).filter(group=>!selected||group.ids.has(String(selected.id))),
+      players=groups.filter(group=>!selected||group.ids.has(String(selected.id))),
       showAssists=team===ownTeam;
     const selectedSeasonId=analysisSeasonActive()?analysisSelectedGameId:null;
     for(const {player,ids,isTW} of players){
@@ -8789,7 +8789,13 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       (ownTeam==="home"?"Heim · ":"Gast · ")+(state[ownTeam]?.name||"");
     $("analysisTeamFilter").querySelector('[value="opponent"]').textContent=
       (opponentTeam()==="home"?"Heim · ":"Gast · ")+(state[opponentTeam()]?.name||"");
-    const teamFilter=$("analysisTeamFilter").value;populatePlayerFilter($("analysisPlayerFilter"),teamFilter);const playerFilter=$("analysisPlayerFilter").value,zone=$("analysisZoneFilter").value,target=$("analysisTargetFilter").value,phase=$("analysisPhaseFilter").value,shots=shotEventsForSelection(teamFilter,playerFilter,zone,target,phase),summary=summarizeShots(shots);$("analysisStats").innerHTML=[["Tore",summary.goals],["Würfe",summary.shots],["Vom TW gehalten",summary.held],["Fehlwürfe",summary.misses],["Wurfeffektivität",summary.shotRate+" %"]].map(([l,v])=>`<div class="metric"><span>${l}</span><strong>${v}</strong></div>`).join("");renderTrend();renderComparison();renderAnalysisSpecialTeams();renderDonuts(shots,teamFilter,playerFilter,zone,target,phase);renderPhaseStats(shots);const selected=playerFilter==="all"?null:getPlayer(playerFilter),offPlayer=selected?.team===ownTeam?playerFilter:"all",defPlayer=selected?.team===opponentTeam()?playerFilter:"all",ownShots=shotEventsForSelection("own",offPlayer,zone,target,phase),opponentShots=shotEventsForSelection("opponent",defPlayer,zone,target,phase);$("offenseMapTitle").textContent=neutralAnalysis()?`Angriffe · Heim · ${state.home.name}`:`Offensive · ${state[ownTeam].name}`;
+    const groupsByTeam=Object.fromEntries(["home","away"].map(team=>{
+      const tracked=coreTrackedPlayerIds(state.events,team);
+      const groups=coreGroupMatchPlayers(state,team).filter(group=>[...group.ids].some(id=>tracked.has(id)));
+      return [team,groups];
+    }));
+    const teamFilter=$("analysisTeamFilter").value,playerSelect=$("analysisPlayerFilter");
+    populatePlayerFilter(playerSelect,teamFilter,playerSelect.value,groupsByTeam);const playerFilter=$("analysisPlayerFilter").value,zone=$("analysisZoneFilter").value,target=$("analysisTargetFilter").value,phase=$("analysisPhaseFilter").value,shots=shotEventsForSelection(teamFilter,playerFilter,zone,target,phase),summary=summarizeShots(shots);$("analysisStats").innerHTML=[["Tore",summary.goals],["Würfe",summary.shots],["Vom TW gehalten",summary.held],["Fehlwürfe",summary.misses],["Wurfeffektivität",summary.shotRate+" %"]].map(([l,v])=>`<div class="metric"><span>${l}</span><strong>${v}</strong></div>`).join("");renderTrend();renderComparison();renderAnalysisSpecialTeams();renderDonuts(shots,teamFilter,playerFilter,zone,target,phase);renderPhaseStats(shots);const selected=playerFilter==="all"?null:getPlayer(playerFilter),offPlayer=selected?.team===ownTeam?playerFilter:"all",defPlayer=selected?.team===opponentTeam()?playerFilter:"all",ownShots=shotEventsForSelection("own",offPlayer,zone,target,phase),opponentShots=shotEventsForSelection("opponent",defPlayer,zone,target,phase);$("offenseMapTitle").textContent=neutralAnalysis()?`Angriffe · Heim · ${state.home.name}`:`Offensive · ${state[ownTeam].name}`;
     $("defenseMapTitle").textContent=neutralAnalysis()?`Angriffe · Gast · ${state.away.name}`:`Defensive · ${state[ownTeam].name} gegen Würfe von ${state[opponentTeam()].name}`;
     const defensive=neutralAnalysis()?"offense":"defense";
     const legend=$("defenseMapCard").querySelector(".map-legend");
@@ -8797,7 +8803,7 @@ for(const [id,team] of [["activeOwnDefense","home"],["activeOpponentDefense","aw
       ?'<span><i class="legend-swatch success"></i>Grün: Tore</span><span><i class="legend-swatch failure"></i>Rot: Paraden, Fehlwürfe und Blocks</span><span>Prozent: Torquote</span>'
       :'<span><i class="legend-swatch success"></i>Grün: Paraden, Fehlwürfe und Blocks</span><span><i class="legend-swatch failure"></i>Rot: Gegentore</span><span>Prozent: Abwehrerfolg</span>';
     renderShotMap(ownShots,"offenseGoalMap","offenseCourtMap","offense","own");
-    renderShotMap(opponentShots,"defenseGoalMap","defenseCourtMap",defensive,"opponent");const showOwn=(teamFilter==="all"||teamFilter==="own")&&(!selected||selected.team===ownTeam),showOpponent=(teamFilter==="all"||teamFilter==="opponent")&&(!selected||selected.team===opponentTeam());$("ownPlayerStatsCard").classList.toggle("hidden",!showOwn);$("opponentPlayerStatsCard").classList.toggle("hidden",!showOpponent);$("ownPlayerStatsTitle").textContent=`Spielerstatistik · ${state[ownTeam].name}`;$("opponentPlayerStatsTitle").textContent=`Spielerstatistik · ${state[opponentTeam()].name}`;if(showOwn)renderPlayerTable(ownTeam,"ownPlayerRows","own",playerFilter,zone,target,phase);if(showOpponent)renderPlayerTable(opponentTeam(),"opponentPlayerRows","opponent",playerFilter,zone,target,phase)}
+    renderShotMap(opponentShots,"defenseGoalMap","defenseCourtMap",defensive,"opponent");const showOwn=(teamFilter==="all"||teamFilter==="own")&&(!selected||selected.team===ownTeam),showOpponent=(teamFilter==="all"||teamFilter==="opponent")&&(!selected||selected.team===opponentTeam());$("ownPlayerStatsCard").classList.toggle("hidden",!showOwn);$("opponentPlayerStatsCard").classList.toggle("hidden",!showOpponent);$("ownPlayerStatsTitle").textContent=`Spielerstatistik · ${state[ownTeam].name}`;$("opponentPlayerStatsTitle").textContent=`Spielerstatistik · ${state[opponentTeam()].name}`;if(showOwn)renderPlayerTable(ownTeam,"ownPlayerRows",groupsByTeam[ownTeam],playerFilter,zone,target,phase);if(showOpponent)renderPlayerTable(opponentTeam(),"opponentPlayerRows",groupsByTeam[opponentTeam()],playerFilter,zone,target,phase)}
   for(const id of ["analysisTeamFilter","analysisPlayerFilter","analysisTypeFilter","analysisZoneFilter","analysisTargetFilter","analysisPhaseFilter"])$(id).onchange=renderAnalysis;
   $("analysisEfficiencyHalfControls").addEventListener("click",event=>{
     const button=event.target.closest("button[data-efficiency-half]");

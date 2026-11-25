@@ -1,4 +1,4 @@
-import { percentage, playerMetrics } from "./analysis-core.js";
+import { percentage, playerMetrics, trackedPlayerIds } from "./analysis-core.js";
 import { HANDBALL_ID_FIELDS, normalizeHandballNetId } from "./roster.js";
 
 const SHOT_TYPES = ["shot", "goal", "save", "miss", "block"];
@@ -303,6 +303,7 @@ export function seasonPlayerAggregate(
   games = [],
   {
     playerKey,
+    participantsOnly = false,
     playerLabel = (player) =>
       [player?.vorname, player?.nachname].filter(Boolean).join(" ").trim() || "Unbekannt"
   } = {}
@@ -325,9 +326,14 @@ export function seasonPlayerAggregate(
     const getPlayer = (id) =>
       allPlayers.find((player) => String(player.id) === String(id)) || null;
 
-    for (const player of state[ownTeam]?.players || []) {
+    const roster = state[ownTeam]?.players || [];
+    const tracked = participantsOnly ? trackedPlayerIds(state.events, ownTeam) : null;
+    const confirmedKeys = tracked
+      ? new Set(roster.filter(player => tracked.has(String(player.id))).map(playerKey))
+      : null;
+    for (const player of roster) {
       const key = playerKey(player);
-      if (!key) continue;
+      if (!key || (confirmedKeys && !confirmedKeys.has(key))) continue;
 
       const stats = playerMetrics({
         player,

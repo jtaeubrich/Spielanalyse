@@ -10,6 +10,7 @@ import {
   teamMetrics,
   goalkeeperForGoal,
   playerMetrics,
+  trackedPlayerIds,
   matchesGameHalf
 } from "../src/analysis-core.js";
 
@@ -26,6 +27,16 @@ const getPlayer = (id) =>
   players.find((player) => String(player.id) === String(id)) || null;
 
 describe("analysis core", () => {
+  test("recognizes involvement in either team's events and ignores a bench penalty", () => {
+    const events = [
+      {team:"home", type:"goal", pId:"scorer", assistPId:"assist"},
+      {team:"away", type:"save", pId:"opponent", throwerId:"thrower"},
+      {team:"away", type:"goal", keeperId:"keeper", playerTags:[{team:"home",pId:"defender"}]},
+      {team:"home", type:"2min", pId:"bench", penalizedBank:true}
+    ];
+    expect(trackedPlayerIds(events, "home")).toEqual(new Set(["scorer","assist","thrower","keeper","defender"]));
+  });
+
   test("calculates percentages safely", () => {
     expect(percentage(3, 4)).toBe(75);
     expect(percentage(1, 3)).toBe(33);

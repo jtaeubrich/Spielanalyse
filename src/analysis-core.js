@@ -174,6 +174,29 @@ export function matchesAnalysisDimension(value, filter) {
   );
 }
 
+export function trackedPlayerIds(events = [], team) {
+  const ids = new Set();
+  const add = (...values) => {
+    for (const value of values) {
+      if (value != null && String(value).trim()) ids.add(String(value));
+    }
+  };
+
+  for (const event of events) {
+    if (!event) continue;
+    if (event.team === team) {
+      add(event.penalizedBank ? null : event.pId, event.assistPId, event.attackerId, event.defenderId);
+    } else if (event.team === "home" || event.team === "away") {
+      if (event.type === "save" || event.type === "block") add(event.throwerId);
+      add(event.againstTwId ?? event.twId ?? event.keeperId);
+    }
+    for (const tag of event.playerTags || []) {
+      if (tag?.team === team) add(tag.pId);
+    }
+  }
+  return ids;
+}
+
 export function playerMetrics({
   player,
   playerIds,

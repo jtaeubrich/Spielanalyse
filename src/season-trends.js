@@ -1,4 +1,4 @@
-import { percentage } from "./analysis-core.js";
+import { percentage, trackedPlayerIds } from "./analysis-core.js";
 import { seasonTeamAggregate, seasonPlayerAggregate, seasonAttackTeam } from "./season-core.js";
 
 export const TREND_METRICS = [
@@ -31,19 +31,8 @@ function assists(events=[],team){
 function hasTrackedPlayerEvent(game,playerKey,resolvePlayer){
   const own=game?.ownTeam;
   const roster=game?.state?.[own]?.players||[];
-  const ids=new Set(roster.filter(p=>resolvePlayer(p)===playerKey)
-    .map(p=>String(p?.id)).filter(id=>id&&id!=="undefined"&&id!=="null"));
-  if(!ids.size)return false;
-  const matches=id=>id!==null&&id!==undefined&&ids.has(String(id));
-  return (game?.state?.events||[]).some(event=>{
-    if(event.team===own&&[event.pId,event.assistPId,event.attackerId,event.defenderId].some(matches))
-      return true;
-    // An opponent save/block may identify our thrower, an opponent shot our keeper.
-    if(event.team&&event.team!==own&&
-       (((event.type==="save"||event.type==="block")&&matches(event.throwerId))||
-         matches(event.againstTwId)))return true;
-    return (event.playerTags||[]).some(tag=>tag?.team===own&&matches(tag.pId));
-  });
+  const ids = trackedPlayerIds(game?.state?.events, own);
+  return roster.some(player => ids.has(String(player.id)) && resolvePlayer(player) === playerKey);
 }
 function playerMetric(player,metric){
   if(metric==="shotRate")return {
